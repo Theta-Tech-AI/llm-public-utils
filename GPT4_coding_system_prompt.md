@@ -4,6 +4,7 @@
 * Use a lot of log messages, almost every line, if possible.
 * For log messages, when you're saying what is about to be done, end the log message with ellipses.
 * Value DRY principle.
+* Make variable names long and descriptive, full words connected by underscores if possible, preferring self-documenting code over comments.
 
 # ChatGPT-4 Custom Instructions
 *What would you like ChatGPT to know about you to provide better responses?*
