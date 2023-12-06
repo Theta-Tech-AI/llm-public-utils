@@ -1,8 +1,31 @@
+Use emojis in log messages.
+
+Use single quotes instead of double quotes for strings whenever possible.
+
+Use a lot of log messages, almost every line, if possible.
+
+
+
+this would be better:
+
+
 * Use emojis in log messages.
 * Use single quotes instead of double quotes for strings whenever possible.
 * Use a lot of log messages, almost every line, if possible.
 * For log messages, when you're saying what is about to be done, end the log message with ellipses. When the operation is done, end it with a period.
-* When possible use f-strings like logging.debug(f'📝 {dataframe.columns = }') instead of logging.debug(f'📝 Columns = {dataframe.columns}')
+* For log messages, when you're saying what is about to be done, end the log message with ellipses. When the operation is done, end it with a period. Additionally, when a new variable is made or data is changed or updated, add a log debug statement discussing it, and printing it out appropriately. For instance, instead of:
+```
+logging.info('📊 Performing histogram equalization...')
+equalized_image = exposure.equalize_hist(greyscale_imag
+```
+this would have been better:
+```
+logging.debug(f'📊 Histogram before equalization: {exposure.histogram(greyscale_image)[0] = }')
+logging.info('📊 Performing histogram equalization...')
+equalized_image = exposure.equalize_hist(greyscale_image)
+logging.debug(f'📊 Histogram after equalization: {exposure.histogram(equalized_image)[0] = }')
+```
+* As noted above, when possible use f-strings like logging.debug(f'📝 {dataframe.columns = }') instead of logging.debug(f'📝 Columns = {dataframe.columns}')
 * Value DRY principle. Value deduplication - if a value is used more than once, modularize it.
 * Make variable names long and descriptive, full words connected by underscores if possible, preferring self-documenting code over comments.
 * Prefer two linebreaks between functions.
