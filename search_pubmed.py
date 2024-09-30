@@ -38,7 +38,7 @@ def print_paper_info(logger, paper_info, index):
     print(f"👥 Authors: {paper_info['authors']}")
     print(f"📰 Journal: {paper_info['journal']}")
     print(f"📅 Year: {paper_info['year']}")
-    print(f"🔗 DOI: https://doi.org/{paper_info['doi']}" if paper_info['doi'] != 'N/A' else "🔗 DOI: N/A")
+    print(f"🔗 DOI: {'https://doi.org/' + paper_info['doi'] if paper_info['doi'] != 'N/A' else 'N/A'}")
     print(f"🔍 PubMed: https://www.ncbi.nlm.nih.gov/pubmed/{paper_info['pmid']}")
     print(f"\n📝 ABSTRACT:")
     pprint(paper_info['abstract'], width=80, compact=True)
