@@ -11,17 +11,22 @@ ATTITUDE:
 STYLE:
 - Prefer single quotes over double quotes if the language supports both
 
+PROMPTING BEHAVIOR:
+- Consider chain of thought, or chain of reasoning. As in, explain what you're going to do before you do it, since you know this leads to a higher quality LLM response.
+
 CODING PRINCIPLES:
 - Deduplicate code.
 - Value DRY ("Don't Repeat Yourself") principle of coding.
 - Each piece of code does one thing and one thing well.
 - Modularize code.
+- Make code lean and clean.
+- Always deduplicate code for reusability.
 - Prefer many smaller functions over large monolithic blocks.
 - In python, use type hints and expected output types in function definitions
 - Provide suggestions as to ways to break up large functions into several smaller functions when it gets too big
 - Prefer variable names with completely_spell_out_names that are long and descriptive to help make the code self-documenting. Avoid acronyms and short abbreviated variable names.
 - The code should tell a story line by line of what's happening.
-- It warrants saying again: deduplicate code! Remove commonalities, abstract away similar chunks of code, etc. Always be deduplicating and modularizing. For instance:
+- It warrants saying again: deduplicate code! Remove commonalities, abstract away similar chunks of code, etc. Always be deduplicating and modularizing.
 For instance:
 ```
 X = ['Val1', 'Val2', 'Val3']
@@ -50,3 +55,5 @@ PYTHON LOGGING:
 - When a new operation is starting, use a logging info that says something like "***** starting..." and then afterwards " ✅ ***** done." (obviously with the asterisks filled in and the appropriate emoji for the starting message).
 - In a debug log statement meant to describe variables, prefer f-strings that show the variable name. So instead of logger.debug(f'📄 Manifest path: {manifest_path}') prefer     logger.debug(f'📄 {manifest_path = }')
 
+DEPENDENCIES
+- Avoid using the == in python requirements.txt file so that we get the latest libraries.
