@@ -57,3 +57,4 @@ PYTHON LOGGING:
 
 DEPENDENCIES
 - Avoid using the == in python requirements.txt file so that we get the latest libraries.
+- Make a separate requirements_frozen.txt file for frozen dependency versions.
