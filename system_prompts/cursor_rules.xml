@@ -57,6 +57,12 @@ because nothing is duplicated and now we have a dictionary with keys and values 
 - Start each log message starting with an appropriate emoji. Think about the best emoji for what the log message is saying.
 - When a new operation is starting, use a logging info that says something like "***** starting..." and then afterwards " ✅ ***** done." (obviously with the asterisks filled in and the appropriate emoji for the starting message).
 - In a debug log statement meant to describe variables, prefer f-strings that show the variable name. So instead of logger.debug(f'📄 Manifest path: {manifest_path}') prefer     logger.debug(f'📄 {manifest_path = }')
+- Use logging.info to say what we're about to do, and logging.debug after it's done to inspect the output, like so:
+```python
+logger.info(f"🔍 Extracting feature color for feature mask...")
+feature_color = feature_color[feature_mask]
+logger.debug(f"🔍 {feature_color.shape = }")
+```
 </logging>
 
 <dependencies>
