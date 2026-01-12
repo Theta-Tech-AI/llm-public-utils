@@ -2,7 +2,7 @@
 
 > A comprehensive Claude Code slash command for identifying and fixing "slop" in your codebase. Drop this file into your `.claude/commands/` folder to use `/deslop` to analyze code for violations of established coding principles and get concrete, actionable improvements.
 
-This command combines a code analysis workflow with an extensive library of coding principles. When you run `/deslop [file-or-directory]`, the AI will read your code, cross-reference it against these principles, and suggest specific fixes with before/after examples.
+This command combines a code analysis workflow with an extensive library of coding principles. When you run `/deslop [file-or-directory]`, or even just `/deslop` or perhaps `/deslop my frontend typescript code` the AI will read your code, cross-reference it against these principles, and suggest specific fixes with before/after examples.
 
 ---
 
