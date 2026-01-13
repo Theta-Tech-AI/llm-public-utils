@@ -425,7 +425,7 @@ Before adding code: **Who needs this today?** (not "might need") — **What brea
 
 ### Core Concept
 
-Self-documenting code **naturally conveys its purpose** through human-readable names, clear structure, and logical organization—without relying on comments.
+Self-documenting code **naturally conveys its purpose** through human-readable names, clear structure, and logical organization—without relying on comments. Comments should explain *why* not *what*. The way the code is structured and named should tell a story.
 
 **Reveals:** What the code does, how it works (through naming and structure)
 **Cannot reveal:** Why decisions were made, rejected alternatives, system context (requires comments/docs)
