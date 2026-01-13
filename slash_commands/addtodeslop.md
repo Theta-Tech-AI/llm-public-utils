@@ -13,6 +13,16 @@ If provided: $ARGUMENTS
 
 If no argument provided, you will determine the best next principle to add.
 
+If an argument is provided, that's the coding principles to add to deslop.
+
+## Deslop
+
+There should be a deslop.md file in either the user's home directory (under ~/.claude/commands/) or perhaps in the code repository under ./.claude/commands/
+
+This contains a set of coding principles to use to analyze the code, and the goal of this command is to extend that file.
+
+At the end of running this command, your deslop.py file will have a new coding principle added to it.
+
 ## Process
 
 ### Phase 1: Discovery
