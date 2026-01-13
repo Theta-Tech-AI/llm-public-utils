@@ -51,7 +51,7 @@ At the end, figure out what you should actually change in the code and ask the u
 
 Analyze: $ARGUMENTS
 
-If no argument provided, ask the user what code they want analyzed.
+If no argument provided, operate on the current folder or current code base.
 
 ### Process
 
