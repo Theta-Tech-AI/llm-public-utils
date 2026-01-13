@@ -263,6 +263,7 @@ class Teacher:
 - **API**: Generate OpenAPI from code (FastAPI/Pydantic), don't maintain separately
 - **Config**: Centralize in one module, import everywhere
 - **Docs**: Single source of truth, reference elsewhere
+- **Infrastructure**: Similar infrastructure components may warrant deduplication.
 
 ### Summary
 
