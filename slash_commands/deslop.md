@@ -16,6 +16,7 @@ This command combines a code analysis workflow with an extensive library of codi
      - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
      - [Self-Documenting Code](#self-documenting-code)
      - [Separation of Concerns](#separation-of-concerns)
+     - [Boy Scout Rule](#boy-scout-rule)
    - [Object-Oriented Design](#object-oriented-design)
      - [SOLID Principles](#solid-principles)
      - [Composition Over Inheritance](#composition-over-inheritance)
@@ -33,6 +34,7 @@ This command combines a code analysis workflow with an extensive library of codi
    - [Reliability & Operations](#reliability--operations)
      - [Fail-Fast & Defensive Programming](#fail-fast--defensive-programming)
      - [Design by Contract](#design-by-contract)
+     - [Principle of Least Privilege](#principle-of-least-privilege)
      - [Resilience & Graceful Degradation](#resilience--graceful-degradation)
      - [Observability & Transparency](#observability--transparency)
    - [User Experience](#user-experience)
@@ -564,6 +566,133 @@ class OrderPresenter:
 2. **High cohesion, low coupling** — related together, unrelated separate
 3. **Natural boundaries** — separate where concerns genuinely differ
 4. **Avoid over-separation** — don't fragment for its own sake
+
+---
+
+## Boy Scout Rule
+
+> "Always leave the code better than you found it."
+> — Robert C. Martin (Uncle Bob), *Clean Code*
+
+### Core Concept
+
+The Boy Scout Rule applies the scouting principle of "leave the campground cleaner than you found it" to software development. **With each commit, leave the code slightly better than you found it**—even if you didn't make the mess.
+
+**The key insight**: Code quality degrades over time. Without active maintenance, technical debt accumulates. The Boy Scout Rule provides a sustainable alternative to periodic "big cleanup" sprints by making improvement continuous and incremental.
+
+**The philosophy**: "The act of leaving a mess in the code should be as socially unacceptable as littering."
+
+### Why It Works
+
+| Traditional Approach | Boy Scout Rule |
+|---------------------|----------------|
+| Accumulate debt, then "refactoring sprint" | Continuous small improvements |
+| Cleanup disrupts feature delivery | Cleanup happens alongside features |
+| Requires dedicated time allocation | Built into every commit |
+| Big changes = big risk | Small changes = low risk |
+| Code rot between sprints | Code improves continuously |
+
+### What "Better" Looks Like
+
+Small improvements that take seconds to minutes:
+
+| Category | Examples |
+|----------|----------|
+| **Naming** | Rename `$a` to `$account`, `proc()` to `process_order()` |
+| **Cleanup** | Remove unused imports, dead code, extra blank lines |
+| **Deprecations** | Replace deprecated API calls with current alternatives |
+| **Formatting** | Fix inconsistent indentation, add missing whitespace |
+| **Duplication** | Extract repeated logic into a helper (if pattern is proven) |
+| **Clarity** | Simplify a complex conditional into a named method |
+
+### The Campground, Not the Forest
+
+**Critical constraint**: Clean the campground, not the entire forest.
+
+```python
+# ❌ Wrong - Changed 350 files to remove blank lines project-wide
+# This makes code review impossible and introduces huge risk
+
+# ✅ Correct - Cleaned up the file you're actually working in
+def process_order(order_id: int) -> Order:
+    # While adding this method, noticed and fixed:
+    # - Renamed 'o' to 'order'
+    # - Removed unused import
+    # - Fixed inconsistent indentation
+    order = self.repository.get(order_id)
+    return self.apply_discount(order)
+```
+
+**Scope your cleanup to files you're already touching.** If you notice issues elsewhere, create a ticket—don't fix the world in one commit.
+
+### Common Violations
+
+**Code Smells Left Behind**:
+- Ignoring deprecation warnings
+- Leaving unused variables/imports
+- Not fixing obvious naming issues
+- Copying code instead of extracting
+
+**Verbal Cues**:
+- "I'll clean it up later" (you won't)
+- "That's not my code"
+- "It works, don't touch it"
+- "We need a refactoring sprint"
+
+### When NOT to Apply
+
+**The Counterargument**: Some argue the rule removes learning opportunities—when you fix others' mistakes silently, they never learn. Consider: if the author is available, quick feedback may be better than silent fixes.
+
+**Exceptions**:
+- **Unfamiliar code**: Don't "improve" code you don't fully understand
+- **No test coverage**: Risky refactors in untested code can introduce bugs
+- **Time-critical fixes**: Production incidents need the fix, not cleanup
+- **Shared/external code**: Extra care when changes affect other teams
+
+**The Middle Ground**: Clean up obvious issues. For larger concerns, create a ticket and inform the author.
+
+### Anti-Patterns
+
+```python
+# ❌ Wrong - "Not my problem" attitude
+def add_discount(order):
+    # Just adding my feature, ignoring the mess
+    o = order  # terrible variable name from legacy code
+    d = o.total * 0.1  # magic number
+    o.total = o.total - d
+    return o
+
+# ✅ Correct - Boy Scout approach
+def add_discount(order: Order) -> Order:
+    # Cleaned up while adding feature:
+    # - Renamed variables for clarity
+    # - Extracted magic number to constant
+    DISCOUNT_RATE = 0.1
+    discount = order.total * DISCOUNT_RATE
+    order.total = order.total - discount
+    return order
+```
+
+### Relationship to Other Principles
+
+| Principle | Connection |
+|-----------|------------|
+| **Broken Windows Theory** | Boy Scout Rule is the *antidote*—fix small issues before they invite bigger ones |
+| **DRY** | Boy Scout Rule helps you spot and fix duplication incrementally |
+| **Self-Documenting Code** | Rename unclear variables as you encounter them |
+| **YAGNI** | Delete unused code when you find it |
+| **Opportunistic Refactoring** | Same concept, different name—improve code while you're there |
+| **Technical Debt** | Boy Scout Rule is continuous debt payment |
+
+**The Broken Windows Connection**: In criminology, the "broken windows theory" suggests that visible signs of neglect invite more neglect. The same applies to code—if developers see messy code that nobody fixes, they're more likely to add to the mess. The Boy Scout Rule sends the opposite signal: "This code is cared for."
+
+### Summary
+
+1. **Leave code better than you found it** — Every commit is an opportunity
+2. **Small improvements compound** — Minutes daily beats weeks annually
+3. **Clean the campground, not the forest** — Scope to files you're touching
+4. **Don't ignore the mess** — "Not my code" is not an excuse
+5. **Make cleanup socially expected** — It should be as unacceptable to leave mess as to litter
 
 ---
 
@@ -1200,6 +1329,119 @@ Design by Contract (DbC) treats software construction as a series of agreements 
 2. **Invariants define valid object state** — Must hold after construction and every public method
 3. **Assertions are executable contracts** — Document and verify simultaneously
 4. **DbC complements defensive programming** — Use DbC internally, defensive at boundaries
+
+---
+
+## Principle of Least Privilege
+
+> "Every program and every user of the system should operate using the least set of privileges necessary to complete the job."
+> — Jerome Saltzer, *Protection and the Control of Information Sharing in Multics* (1974)
+
+### Core Concept
+
+The Principle of Least Privilege (PoLP) mandates that **every user, process, or program receives only the minimum permissions necessary to perform its intended function—and nothing more**.
+
+**Two critical security objectives:**
+1. **Minimize Attack Surface** — Fewer permissions mean fewer entry points for attackers
+2. **Limit Blast Radius** — When breaches occur, damage is contained to the compromised scope
+
+**The key insight**: 74% of data breaches start with privileged credential abuse. By limiting what any single entity can access, you limit what any single compromise can damage.
+
+### Why It Matters in Code
+
+PoLP isn't just an ops concern—it's a coding principle at every level:
+
+| Level | Example |
+|-------|---------|
+| **Function** | A function that reads config shouldn't have write access |
+| **Class** | A `ReportGenerator` shouldn't have user deletion capabilities |
+| **Service** | A payment microservice shouldn't access user profile data |
+| **Account** | A database user for reads shouldn't have DROP TABLE privileges |
+
+### Real-World Failures
+
+| Breach | What Happened | PoLP Failure |
+|--------|---------------|--------------|
+| **Equifax (2017)** | 143M records stolen; attackers executed 9,000 DB queries | Permissive access controls; no network segmentation |
+| **Target (2013)** | 40M credit cards via HVAC vendor | Third-party had excessive network access |
+
+### Common Violations
+
+**Code Smells**: Service accounts with `*` wildcard permissions, database connections with admin privileges, shared credentials across services, functions that accept more capabilities than needed.
+
+**Verbal Cues**: "Just give it admin access, it's easier", "We'll lock it down later", "It needs these permissions for debugging"
+
+### Anti-Patterns
+
+```python
+# ❌ Wrong - Over-privileged database connection
+def get_user_email(user_id: int) -> str:
+    conn = get_admin_connection()  # Has DELETE, DROP, etc.
+    return conn.execute("SELECT email FROM users WHERE id = ?", user_id)
+
+# ✅ Correct - Minimal privileges for the task
+def get_user_email(user_id: int) -> str:
+    conn = get_readonly_connection()  # Only SELECT privilege
+    return conn.execute("SELECT email FROM users WHERE id = ?", user_id)
+```
+
+```python
+# ❌ Wrong - Function accepts overly broad context
+def send_notification(user: User, db: DatabaseAdmin):
+    email = db.query(f"SELECT email FROM users WHERE id = {user.id}")
+    # db could delete the entire users table!
+
+# ✅ Correct - Function receives only what it needs
+def send_notification(email: str):
+    send_email(email, "Your notification...")  # Cannot access database
+```
+
+```yaml
+# ❌ Wrong - IAM policy with wildcard
+Effect: Allow
+Action: "s3:*"
+Resource: "*"
+
+# ✅ Correct - Scoped to specific actions and resources
+Effect: Allow
+Action: ["s3:GetObject", "s3:PutObject"]
+Resource: "arn:aws:s3:::my-bucket/uploads/*"
+```
+
+### Implementation Strategies
+
+| Strategy | Description |
+|----------|-------------|
+| **Default deny** | Start with no access, explicitly grant what's needed |
+| **Separate accounts by function** | Different credentials for read vs. write operations |
+| **Time-bounded access** | Temporary elevated privileges that expire |
+| **Audit unused permissions** | Regularly review and remove permissions not being used |
+
+### Privilege Creep
+
+**Privilege creep** occurs when permissions accumulate beyond current needs:
+- Role changes without revoking old permissions
+- Temporary access that becomes permanent
+- Misleading role names (a "read only" role that actually has write access)
+
+**Prevention**: Regular access reviews, automated permission expiration, minimal scope at design time.
+
+### Relationship to Zero Trust
+
+| Framework | Focus |
+|-----------|-------|
+| **Zero Trust** | Verify identity ("never trust, always verify") |
+| **Least Privilege** | Limit access ("need to know") |
+
+**They're partners**: Zero Trust ensures requests are authenticated; PoLP ensures authenticated users get only minimum necessary access. Together they form defense in depth.
+
+### Summary
+
+1. **Grant minimum necessary permissions** — Start with nothing, add only what's required
+2. **Scope permissions tightly** — Specific resources, specific actions, specific time windows
+3. **Separate credentials by function** — Read-only users for reads, write users for writes
+4. **Audit and prune regularly** — Permissions accumulate; actively remove unused access
+5. **Design for minimal access** — Functions, classes, and services should request only what they need
 
 ---
 
