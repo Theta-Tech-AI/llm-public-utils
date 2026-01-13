@@ -188,19 +188,21 @@ validate_email(email)
 
 ### Core Concept
 
-DRY is about **knowledge**, not code. Avoid duplication of *meaning and intent*, not just syntax. Two identical-looking code blocks may represent different business concepts—merging them creates harmful coupling.
+DRY is about **knowledge**, not necessarily code. Avoid duplication of *meaning and intent*, not just syntax. Two identical-looking code blocks may represent different business concepts—merging them creates harmful coupling.
 
 **Two types of "duplication":**
 1. **Knowledge Duplication** — Same business rule/concept in multiple places. **Always a code smell. Always fix.**
 2. **Incidental Duplication** — Code that *looks* similar but represents *different* concepts. **Not true duplication.** Merging it creates harmful coupling.
 
-**Critical insight**: If two code blocks look identical but encode *different* business concepts, they are not duplicates—they are coincidentally similar. Forcing them into one abstraction couples unrelated concerns.
+**Critical insight**: If two code blocks look identical but encode *different* business concepts, they are not necessarily duplicates—they may be coincidentally similar. Forcing them into one abstraction couples unrelated concerns.
 
 ### The Rule of Three
 
 > **First time**: Just write it. **Second time**: Note it. **Third time**: Abstract it.
 
 This is **not** permission to tolerate knowledge duplication—it's patience to find the *right* abstraction. With only two occurrences, you can't distinguish true knowledge duplication from incidental similarity. Three examples reveal the actual pattern.
+
+Sometimes it makes sense to deduplicate after two, and always after three.
 
 ### Recognizing True vs. Incidental Duplication
 
