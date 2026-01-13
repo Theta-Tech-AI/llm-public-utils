@@ -89,13 +89,14 @@ For each violation:
 ```
 
 **Why**: [Brief explanation referencing the principle]
-```
 
 #### Recommendations
 
 Prioritized list of changes, most impactful first.
 
 Then, ask the user if they'd like to implement some or all of the changes.
+
+If they affirm, then implement them next. When implementing them, consider if some of the changes could be implemented in parallel with async agents for efficiency.
 
 ### Important Notes
 
