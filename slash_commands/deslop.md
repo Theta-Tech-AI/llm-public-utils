@@ -95,6 +95,8 @@ For each violation:
 
 Prioritized list of changes, most impactful first.
 
+Then, ask the user if they'd like to implement some or all of the changes.
+
 ### Important Notes
 
 - **Don't over-engineer**: Suggesting abstractions for single-use code violates YAGNI/KISS
