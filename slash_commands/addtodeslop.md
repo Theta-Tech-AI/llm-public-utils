@@ -27,7 +27,7 @@ At the end of running this command, your deslop.py file will have a new coding p
 
 ### Phase 1: Discovery
 
-1. **Read the existing deslop.md** - Use the Read tool to examine `slash_commands/deslop.md`. Build a complete list of principles that are already documented in the "Coding Principles Reference" section. This is critical to avoid duplicating existing content.
+1. **Read the existing deslop.md** - Find and then use the Read tool to examine `deslop.md`. Build a complete list of principles that are already documented in the "Coding Principles Reference" section. This is critical to avoid duplicating existing content.
 
 2. **Identify the gap** - If no principle was specified, perform a web search for "most important software engineering coding principles" to discover well-established principles. Compare the search results against your list of already-documented principles to find gaps.
 
@@ -89,7 +89,6 @@ At the end of running this command, your deslop.py file will have a new coding p
 2. **[Point 2]** — [brief explanation]
 3. **[Point 3]** — [brief explanation]
 4. **[Point 4]** — [brief explanation]
-```
 
 **Important style notes:**
 - Keep sections concise like existing deslop.md entries (not full standalone docs)
@@ -114,6 +113,8 @@ For each of the 3 refinement cycles:
 10. **Compact** - Remove redundancy, tighten prose, ensure every sentence adds value. Match the concise style of existing deslop.md sections.
 
 Steps 9 and 10 are important: actually expand then compact. Repeated cycles increase information density.
+
+This is where the real magic happens.
 
 ### Phase 5: Merge into Deslop
 
