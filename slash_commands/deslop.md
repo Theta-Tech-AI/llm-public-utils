@@ -16,9 +16,12 @@ This command combines a code analysis workflow with an extensive library of codi
      - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
      - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
      - [Self-Documenting Code](#self-documenting-code)
+     - [Documentation Discipline](#documentation-discipline)
      - [Separation of Concerns](#separation-of-concerns)
      - [Boy Scout Rule](#boy-scout-rule)
      - [Small Functions](#small-functions)
+     - [Guard Clauses (Early Return)](#guard-clauses-early-return)
+     - [Convention Over Configuration](#convention-over-configuration)
    - [Object-Oriented Design](#object-oriented-design)
      - [SOLID Principles](#solid-principles)
      - [Composition Over Inheritance](#composition-over-inheritance)
@@ -34,6 +37,7 @@ This command combines a code analysis workflow with an extensive library of codi
      - [Dependency Injection](#dependency-injection)
      - [Command-Query Separation](#command-query-separation)
      - [Code Reusability](#code-reusability)
+     - [Postel's Law (Robustness Principle)](#postels-law-robustness-principle)
    - [Reliability & Operations](#reliability--operations)
      - [Fail-Fast & Defensive Programming](#fail-fast--defensive-programming)
      - [Design by Contract](#design-by-contract)
@@ -606,6 +610,131 @@ for attempt in range(MAX_RETRIES):
 
 ---
 
+## Documentation Discipline
+
+> "Code tells you how, comments tell you why."
+> — Jeff Atwood, Stack Overflow co-founder
+
+### Core Concept
+
+Documentation Discipline is the practice of **writing the right documentation at the right level**—knowing when a comment adds value and when it adds noise. While Self-Documenting Code teaches us to make code readable through naming, Documentation Discipline answers: what should be documented, where, and in what form?
+
+**The fundamental tension**: Comments don't compile. They can't be tested. They rot. Yet sometimes they're essential—explaining the "why" that code cannot express. The discipline lies in knowing the difference.
+
+### The Documentation Pyramid
+
+| Layer | Audience | Purpose |
+|-------|----------|---------|
+| **README** | New users/devs | First contact, setup, overview |
+| **API Docs** | Consumers | Contract, usage, edge cases |
+| **Docstrings** | Callers | What it does, params, returns |
+| **Inline Comments** | Maintainers | Why this specific implementation |
+
+**Key insight**: Move documentation to the highest appropriate level. If it applies to the whole module, put it in the README, not scattered across functions.
+
+### When Comments Add Value
+
+```python
+# ✅ Why - Business logic rationale
+# Orders over $1000 require manager approval per SOX compliance (POLICY-2019-04)
+if order.total > MANAGER_APPROVAL_THRESHOLD:
+    require_approval(order)
+
+# ✅ Why not - Explaining rejected alternatives
+# Using linear search instead of binary: list is always <10 items
+# and maintaining sort order would cost more than the lookup savings
+
+# ✅ Workarounds - External constraints
+# Firefox doesn't fire mouse events when dragging outside the window.
+# Workaround: capture position on mouseLeave and extrapolate.
+
+# ✅ Links - Attribution and context
+# Algorithm from https://stackoverflow.com/a/46018816 (CC-BY-SA)
+
+# ✅ Warnings - Prevent future mistakes
+# Don't use global isFinite()—it returns true for null values
+Number.isFinite(value)
+```
+
+### Comment Anti-Patterns
+
+| Anti-Pattern | Problem | Fix |
+|--------------|---------|-----|
+| **Parrot comments** | `i += 1  # increment i` | Delete—code already says this |
+| **Rotting comments** | Comment describes deleted code | Delete or update |
+| **Journal comments** | `// Fixed by John, 3/15` | Use git blame instead |
+| **Commented-out code** | Dead code polluting the file | Delete—git has history |
+| **Closing brace comments** | `} // end if` | Extract to smaller functions |
+| **Mandated comments** | Boilerplate on every method | Comment only when valuable |
+| **TODO graveyards** | `// TODO: fix this (2019)` | Create tickets or delete |
+
+```python
+# ❌ Wrong - Parrot comment
+def calculate_tax(amount):
+    tax_rate = 0.08  # Set tax rate to 0.08
+    return amount * tax_rate  # Return amount times tax rate
+
+# ✅ Correct - Explains the why
+def calculate_tax(amount):
+    # California state tax rate as of 2024. Updates tracked in POLICY-TAX-01.
+    CA_TAX_RATE = 0.08
+    return amount * CA_TAX_RATE
+```
+
+### The Rot Problem
+
+Comments have no compiler. They drift from code silently.
+
+```python
+# ❌ Rotting comment - Code changed, comment didn't
+def get_users():
+    # Returns active users sorted by name
+    return User.query.filter_by(status='active').order_by(User.created_at).all()
+    # ↑ Now sorted by created_at, comment lies
+```
+
+**Mitigation**: Keep comments close to code, review during code review, delete rather than let rot.
+
+### Docstrings Done Right
+
+```python
+# ❌ Wrong - Restates the obvious
+def add(a: int, b: int) -> int:
+    """Add two integers. Args: a: First integer. b: Second integer."""
+    return a + b
+
+# ✅ Correct - Documents non-obvious behavior
+def calculate_shipping(order: Order) -> Decimal:
+    """
+    Calculate shipping cost with business rules.
+
+    - Free shipping for orders over $100
+    - Hawaii/Alaska adds flat $15 (no free shipping)
+
+    Raises:
+        InvalidAddressError: If shipping address is incomplete
+    """
+```
+
+### Relationship to Other Principles
+
+| Principle | Connection |
+|-----------|------------|
+| **Self-Documenting Code** | Code shows *what/how*; comments explain *why/why not* |
+| **DRY** | Don't repeat in comments what the code already says |
+| **Single Source of Truth** | One authoritative place for each piece of documentation |
+| **Boy Scout Rule** | Fix stale comments when you touch the code |
+
+### Summary
+
+1. **Code tells how, comments tell why** — Never explain what code does; explain why it does it
+2. **Documentation has layers** — README → API docs → docstrings → inline comments
+3. **Comments rot** — Review them during code review; delete rather than let them lie
+4. **Anti-patterns abound** — Parrot, journal, and TODO graveyard comments add noise
+5. **When in doubt, refactor** — If you need a comment to explain what, the code is unclear
+
+---
+
 ## Separation of Concerns
 
 > "The separation of concerns, even if not perfectly possible, is yet the only available technique for effective ordering of one's thoughts."
@@ -901,6 +1030,300 @@ def get_active_users(user_ids: list[int]) -> list[User]:
 3. **Name the "what"** — Extract code and name the function after its purpose
 4. **Balance depth vs. breadth** — Avoid shallow modules with trivial functions
 5. **Optimize for the reader** — Newcomers should understand the code quickly
+
+---
+
+## Guard Clauses (Early Return)
+
+> "If you are using an if-then-else construct you are giving equal weight to the if leg and the else leg. This communicates to the reader that the legs are equally likely and important. Instead, the guard clause says, 'This is rare, and if it happens, do something and get out.'"
+> — Martin Fowler, *Refactoring*
+
+### Core Concept
+
+A guard clause is an early exit from a function when preconditions aren't met. Rather than nesting your main logic inside conditionals, you check for invalid states at the top and return immediately. This keeps the "happy path" at the outermost indentation level, making code dramatically easier to follow.
+
+The pattern fights **rightward drift**—the "arrow anti-pattern" where nested conditionals form an arrow pointing toward pain:
+
+```
+if () {
+    if () {
+        do {
+            if () {
+                if () {
+                    // actual logic buried here
+                }
+            }
+        }
+    }
+}
+```
+
+Guard clauses flatten this structure by handling exceptions first.
+
+### The Transformation
+
+Martin Fowler's classic refactoring "Replace Nested Conditional with Guard Clauses":
+
+```python
+# ❌ Wrong - Nested conditionals obscure the happy path
+def get_pay_amount(employee):
+    result = 0
+    if employee.is_dead:
+        result = dead_amount()
+    else:
+        if employee.is_separated:
+            result = separated_amount()
+        else:
+            if employee.is_retired:
+                result = retired_amount()
+            else:
+                result = normal_pay_amount()
+    return result
+
+# ✅ Correct - Guard clauses make special cases obvious
+def get_pay_amount(employee):
+    if employee.is_dead:
+        return dead_amount()
+    if employee.is_separated:
+        return separated_amount()
+    if employee.is_retired:
+        return retired_amount()
+    return normal_pay_amount()
+```
+
+### When to Use Guard Clauses
+
+Guard clauses excel at:
+
+1. **Precondition validation** — null checks, empty inputs, invalid states
+2. **Edge case handling** — special states that bypass normal logic
+3. **Base cases** — recursive function termination conditions
+
+```python
+# ✅ Classic guard clause pattern
+def send_welcome_email(user):
+    if user is None:
+        return
+    if not user.email:
+        return
+
+    # Main logic at natural indentation
+    mailer.send(user.email, "Welcome!")
+```
+
+### When NOT to Use Guard Clauses
+
+Not every `if` should become a guard clause. When both branches are equally valid, use conventional conditionals:
+
+```python
+# ❌ Misleading - Both branches are equally valid
+def process_order(order):
+    if order.is_express:
+        return handle_express_shipping(order)
+    return handle_standard_shipping(order)
+
+# ✅ Better - if/else signals equal weight
+def process_order(order):
+    if order.is_express:
+        handle_express_shipping(order)
+    else:
+        handle_standard_shipping(order)
+```
+
+A guard clause signals "this is unusual—handle it and leave." Equal-weight branches deserve equal-weight syntax.
+
+### The Single-Return Myth
+
+Some codebases enforce "single return point" rules—a practice from Dijkstra's era when early returns could cause resource leaks in C. In modern languages with garbage collection and `try/finally`, this constraint is obsolete. The single-return style forces mutable state to accumulate results:
+
+```python
+# ❌ Single-return requires mutable state
+def validate(data):
+    result = True
+    if not data.get('name'):
+        result = False
+    if result and not data.get('email'):
+        result = False
+    return result
+
+# ✅ Guard clauses are cleaner
+def validate(data):
+    if not data.get('name'):
+        return False
+    if not data.get('email'):
+        return False
+    return True
+```
+
+### Common Violations
+
+**Guard clause buried in the middle:**
+
+```python
+# ❌ Wrong - Guards belong at the top
+def process(item):
+    item.prepare()
+    item.validate()
+    if not item.is_ready:  # Too late
+        return None
+    return item.execute()
+
+# ✅ Correct - Check preconditions first
+def process(item):
+    if not item.can_process:
+        return None
+    item.prepare()
+    item.validate()
+    return item.execute()
+```
+
+### Relationship to Other Principles
+
+| Principle | Relationship |
+|-----------|--------------|
+| **Fail-Fast** | Guard clauses are fail-fast's implementation: detect problems immediately and exit |
+| **Cognitive Load** | Flattening nested conditionals reduces mental overhead |
+| **Small Functions** | Guards work best in small, focused functions |
+| **Design by Contract** | Guards enforce preconditions at runtime |
+
+### Summary
+
+1. **Exit early for exceptional cases** — handle invalid states at the top
+2. **Flatten nested conditionals** — each guard removes a nesting level
+3. **Signal intent** — guards = "unusual," if/else = "both paths normal"
+4. **Keep guards at the entrance** — preconditions belong at the top
+5. **Embrace multiple returns** — single-return is obsolete
+
+---
+
+## Convention Over Configuration
+
+> "You're not a beautiful and unique snowflake. By giving up vain individuality, you can leapfrog the toils of mundane decisions, and make faster progress in areas that really matter."
+> — David Heinemeier Hansson, The Rails Doctrine
+
+### Core Concept
+
+Convention Over Configuration (CoC) is the principle that frameworks and systems should provide **sensible defaults** that work out of the box, requiring explicit configuration only when you need to deviate from the norm. Instead of forcing developers to specify every detail, CoC assumes predictable patterns and only asks for decisions when the default doesn't fit.
+
+The principle was popularized by Ruby on Rails (2005) but has since influenced countless frameworks: Spring Boot, Django, Next.js, and more. The core insight: **most decisions aren't worth making**. If 90% of projects name their primary key `id`, why force every developer to specify it?
+
+### The Power of Defaults
+
+| Without CoC | With CoC |
+|------------|----------|
+| Specify database table name for every model | `User` class → `users` table automatically |
+| Configure primary key column | `id` assumed unless overridden |
+| Define foreign key naming | `user_id` derived from `User` association |
+| Set up file locations manually | `app/models/`, `app/views/`, etc. by convention |
+
+**The compound benefit**: Conventions compose. If we know `User` maps to `users` and foreign keys follow `{model}_id`, we can automatically resolve `has_many :posts` → `Post` class → `posts` table → `user_id` foreign key—all from a single declaration.
+
+### Real-World Examples
+
+| Framework | Convention | Override When Needed |
+|-----------|-----------|---------------------|
+| **Rails** | `User` → `users` table | `self.table_name = "legacy_accounts"` |
+| **Spring Boot** | Auto-configure from classpath | `@Configuration` for custom beans |
+| **Django** | `model_name` → `appname_modelname` table | `class Meta: db_table = "custom"` |
+| **Next.js** | `pages/about.js` → `/about` route | Custom routing configuration |
+| **pytest** | `test_*.py` files auto-discovered | `pytest.ini` for custom patterns |
+
+### When to Apply
+
+| Good Fit | Poor Fit |
+|----------|----------|
+| Repeated patterns across projects | Highly unique domain requirements |
+| Reducing boilerplate for common cases | Legacy systems with established conventions |
+| Framework/library design | When explicitness aids understanding |
+| Lowering barriers for beginners | Security-critical configurations |
+
+### Common Violations
+
+```python
+# ❌ Wrong - Forcing configuration for obvious defaults
+class UserService:
+    def __init__(
+        self,
+        table_name: str,
+        id_column: str,
+        created_at_column: str,
+        updated_at_column: str,
+    ):
+        self.table_name = table_name
+        self.id_column = id_column
+        # ... exhausting
+
+# Usage requires specifying everything
+service = UserService(
+    table_name="users",
+    id_column="id",
+    created_at_column="created_at",
+    updated_at_column="updated_at"
+)
+
+# ✅ Correct - Sensible defaults with escape hatches
+class UserService:
+    def __init__(
+        self,
+        table_name: str = "users",
+        id_column: str = "id",
+        timestamps: bool = True,
+    ):
+        self.table_name = table_name
+        self.id_column = id_column
+        self.timestamps = timestamps
+
+# Usage: zero config for common case
+service = UserService()  # Just works
+
+# Override only what differs
+legacy_service = UserService(table_name="legacy_accounts")
+```
+
+### The Dark Side
+
+**1. Hidden Magic**
+Conventions that "just work" can mystify newcomers. When behavior is implicit, debugging becomes harder—you can't search the codebase for configuration that doesn't exist.
+
+**2. Learning Cliff**
+To deviate from convention, you must first learn the convention. This creates a learning curve that only pays off if you stay within the ecosystem.
+
+**3. Rigidity at Scale**
+Conventions optimized for common cases may not scale to edge cases. Large codebases sometimes outgrow their framework's opinions.
+
+```python
+# When convention fails: trying to use a legacy database
+# Rails convention: User → users table
+# Reality: Legacy DB uses "tbl_usr_accounts"
+# Now you're fighting the framework instead of working with it
+```
+
+### Explicit vs. Implicit Trade-off
+
+| Approach | Advantages | Disadvantages |
+|----------|-----------|---------------|
+| **Explicit (Configuration)** | Clear, searchable, no surprises | Verbose, repetitive, decision fatigue |
+| **Implicit (Convention)** | Concise, consistent, fast start | Hidden behavior, learning curve |
+
+**The Python Perspective**: Python's "Explicit is better than implicit" (Zen of Python) seems to contradict CoC. The resolution: conventions should be *discoverable*. Django's admin auto-registration, pytest's test discovery, and FastAPI's type-based validation are all conventions—but they're well-documented and predictable.
+
+### Relationship to Other Principles
+
+| Principle | Relationship |
+|-----------|-------------|
+| **KISS** | Both reduce unnecessary complexity; CoC removes decision complexity |
+| **YAGNI** | Don't configure what you don't need to configure |
+| **DRY** | Conventions eliminate repetitive configuration |
+| **Cognitive Load** | Fewer decisions = lower mental burden |
+| **Principle of Least Surprise** | Good conventions match developer expectations |
+
+### Summary
+
+1. **Provide sensible defaults** — Common cases should require zero configuration
+2. **Allow overrides** — Escape hatches for when convention doesn't fit
+3. **Conventions compose** — Build deeper abstractions from consistent patterns
+4. **Document the magic** — Implicit behavior must be discoverable
+5. **Know when to deviate** — Convention serves you until it doesn't; then configure explicitly
 
 ---
 
@@ -1582,6 +2005,110 @@ The construction paradox: demolishing and rebuilding often costs less than renov
 3. **Dependencies are the enemy** — Minimize external coupling; a little copying beats a little dependency
 4. **Simple duplication can be better** — Isolated, obvious code often beats clever abstractions
 5. **Stable interfaces enable reuse** — Public APIs should change rarely
+
+---
+
+## Postel's Law (Robustness Principle)
+
+> "Be conservative in what you send, be liberal in what you accept."
+> — Jon Postel, RFC 793 (1981)
+
+### Core Concept
+
+Postel's Law is a design guideline for maximizing interoperability: generate output that strictly conforms to specifications, but accept non-conformant input as long as the meaning is clear. The principle was instrumental in the Internet's explosive growth—when every sender follows specs precisely and every receiver interprets generously, independently developed systems can work together.
+
+**The two halves:**
+- **Conservative output** — Follow specifications exactly; be predictable
+- **Liberal input** — Accept reasonable variations; enable extensibility
+
+### Real-World Examples
+
+| System | How Postel's Law Applied | Outcome |
+|--------|-------------------------|---------|
+| **HTML Browsers** | Render malformed HTML gracefully | Web grew explosively; browser code became nightmarishly complex |
+| **Unix Pipes** | Tools accept varied input, produce consistent output | Composable ecosystem; `cat`, `grep`, `sort` chain reliably |
+| **SMTP Email** | Accept lines >998 chars despite spec limit | Pragmatic interop; many systems now depend on non-standard behavior |
+| **JSON APIs** | Ignore unknown fields | Forward-compatible evolution; old clients work with new servers |
+
+### When to Apply
+
+| Context | Recommendation |
+|---------|----------------|
+| **Protocol extensions** | Ignore unknown fields; don't reject |
+| **Public APIs** | Accept variations; can't control all clients |
+| **Backward compatibility** | Old clients shouldn't break with new servers |
+| **Security-critical input** | Validate strictly; liberal acceptance creates attack surface |
+| **Internal systems** | Strict validation catches bugs early |
+
+### The Tolerant Reader Pattern
+
+For message consumers, ignore fields you don't understand rather than failing:
+
+```python
+# ❌ Wrong - Strict parsing breaks when API adds fields
+def parse_user(data: dict) -> User:
+    if set(data.keys()) != {"id", "name", "email"}:
+        raise ValueError("Unexpected fields in response")
+    return User(id=data["id"], name=data["name"], email=data["email"])
+
+# ✅ Correct - Tolerant reader ignores unknown fields
+def parse_user(data: dict) -> User:
+    return User(
+        id=data["id"],       # Required: fail if missing
+        name=data["name"],   # Required: fail if missing
+        email=data["email"]  # Required: fail if missing
+        # Unknown fields silently ignored - forward compatible
+    )
+```
+
+### The Dark Side
+
+Postel's Law has significant criticisms in modern hostile environments:
+
+| Problem | Description |
+|---------|-------------|
+| **Specification Rot** | Receivers accept malformed input → senders never fix bugs → incorrect behavior becomes de facto standard |
+| **Security Vulnerabilities** | "Reasonable" input may be crafted to exploit edge cases |
+| **Hidden Bugs** | Liberal receivers mask sender bugs; problems surface years later |
+| **Bug-for-Bug Compatibility** | New implementations must replicate bugs to maintain compatibility |
+
+**The HTML Lesson**: Browsers' tolerance of broken HTML enabled rapid web growth but created rendering nightmares. The "incorrect" way became the only way—exact opposite of the intended outcome.
+
+### Modern Balanced Approach
+
+```python
+# ✅ Balance: strict where it matters, tolerant for extensibility
+def process_webhook(data: dict) -> None:
+    # STRICT: Validate required fields (fail-fast)
+    if "event_type" not in data:
+        raise ValueError("Missing required field: event_type")
+    if "timestamp" not in data:
+        raise ValueError("Missing required field: timestamp")
+
+    # TOLERANT: Ignore unknown fields (enables future extensions)
+    event_type = data["event_type"]
+    payload = data.get("payload", {})
+
+    # CONSERVATIVE: Output follows strict contract
+    handle_event(event_type, payload)
+```
+
+### Relationship to Other Principles
+
+| Principle | Relationship |
+|-----------|-------------|
+| **Fail-Fast** | Tension: liberal acceptance delays failure detection; balance by validating *required* fields strictly |
+| **Resilience** | Supportive: liberal acceptance aids graceful degradation |
+| **Principle of Least Surprise** | Supportive: conservative output is predictable |
+| **Defensive Programming** | Tension: strict boundary validation vs. liberal acceptance |
+
+### Summary
+
+1. **Conservative output, liberal input** — Generate strictly, accept generously
+2. **Enables extensibility** — Unknown fields should be ignored, not rejected
+3. **Has a dark side** — Masks bugs, enables specification rot, creates security risks
+4. **Context matters** — Liberal for interop and extensibility; strict for security
+5. **Modern balance** — Validate required fields strictly, ignore unknowns, output predictably
 
 ---
 
