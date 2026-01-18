@@ -4,6 +4,8 @@
 
 This command combines a code analysis workflow with an extensive library of coding principles. When you run `/deslop [file-or-directory]`, or even just `/deslop` or perhaps `/deslop my frontend typescript code` the AI will read your code, cross-reference it against these principles, and suggest specific fixes with before/after examples.
 
+Whether or not you use this deslop command on your code base, you should read all the coding principles yourself, as a human - you might actually learn something useful.
+
 ---
 
 ## Table of Contents
