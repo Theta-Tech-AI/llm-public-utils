@@ -189,6 +189,8 @@ validate_email(email)
 
 # Simplicity & Minimalism
 
+*The foundation of clean code: do less, but better. These principles share a core insight—complexity is the enemy. KISS provides the philosophy, YAGNI prevents premature complexity, Small Functions break down complexity, and Guard Clauses eliminate nested complexity.*
+
 ---
 
 ## KISS: Keep It Simple, Stupid
@@ -613,6 +615,8 @@ def process(item):
 
 # Clarity & Readability
 
+*Code is read 10x more than it's written. Cognitive Load explains why clarity matters (working memory limits), while Self-Documenting Code and Documentation Discipline provide the how. Elegance adds the aesthetic dimension, and Principle of Least Surprise ensures predictability.*
+
 ---
 
 ## Cognitive Load
@@ -1006,9 +1010,9 @@ A component should behave in a way that users and developers expect. Never surpr
 
 ---
 
----
-
 # Organization & Structure
+
+*Where does this code belong? DRY and Single Source of Truth ensure knowledge lives in one place, Separation of Concerns defines boundaries between responsibilities, and Modularity packages those boundaries into self-contained units.*
 
 ---
 
@@ -1264,9 +1268,9 @@ Modularity is **dividing software into independent components** where each modul
 
 ---
 
----
-
 # Coupling & Dependencies
+
+*How do components relate to each other? These principles minimize unhealthy dependencies. Encapsulation hides internal state, Law of Demeter limits knowledge of other objects, Orthogonality ensures independent change, Dependency Injection makes dependencies explicit, and Composition Over Inheritance favors flexible composition.*
 
 ---
 
@@ -1365,12 +1369,6 @@ A method `m` of object `a` may only invoke methods of:
 2. **One dot rule** — `a.b()` good, `a.b().c()` suspect
 3. **Tell, don't ask** — command objects, don't interrogate
 4. **Exceptions exist** — builders, fluent APIs, DTOs are fine
-
----
-
-# Data & State Management
-
----
 
 ---
 
@@ -1506,9 +1504,9 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ---
 
----
-
 # Design Patterns & Conventions
+
+*Proven approaches to common problems. SOLID provides five foundational OO principles, Convention Over Configuration reduces boilerplate through sensible defaults, Command-Query Separation distinguishes actions from queries, and Code Reusability addresses when and how to make code reusable.*
 
 ---
 
@@ -1709,12 +1707,6 @@ Conventions optimized for common cases may not scale to edge cases. Large codeba
 3. **Conventions compose** — Build deeper abstractions from consistent patterns
 4. **Document the magic** — Implicit behavior must be discoverable
 5. **Know when to deviate** — Convention serves you until it doesn't; then configure explicitly
-
----
-
-# Object-Oriented Design
-
----
 
 ---
 
@@ -1929,9 +1921,9 @@ The construction paradox: demolishing and rebuilding often costs less than renov
 
 ---
 
----
-
 # Data & State
+
+*How should data behave? Immutability eliminates whole classes of bugs by preventing state changes after creation. Idempotency ensures operations can be safely repeated—essential in distributed systems where retries are inevitable.*
 
 ---
 
@@ -2038,13 +2030,9 @@ Idempotency is the property where executing an operation multiple times produces
 
 ---
 
-# Architecture & Design
-
----
-
----
-
 # Robustness & Safety
+
+*How does code handle the unexpected? Fail-Fast detects errors early, Design by Contract makes expectations explicit, Postel's Law enables interoperability, Resilience keeps systems running despite failures, and Principle of Least Privilege limits damage from breaches.*
 
 ---
 
@@ -2258,12 +2246,6 @@ def process_webhook(data: dict) -> None:
 
 ---
 
-# Reliability & Operations
-
----
-
----
-
 ## Resilience & Graceful Degradation
 
 
@@ -2432,9 +2414,9 @@ Resource: "arn:aws:s3:::my-bucket/uploads/*"
 
 ---
 
----
-
 # Maintainability & Operations
+
+*Code is a living artifact. The Boy Scout Rule keeps code improving incrementally with every change, while Observability & Transparency ensure you can understand what your systems are doing in production.*
 
 ---
 
@@ -2608,12 +2590,6 @@ def add_discount(order: Order) -> Order:
 3. **Propagate context** (request IDs, trace IDs)
 4. **Return metadata** in responses for transparency
 5. **Never log secrets** — sanitize sensitive data
-
----
-
-# User Experience
-
----
 
 ---
 
