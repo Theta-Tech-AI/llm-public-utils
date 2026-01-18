@@ -10,45 +10,25 @@ This command combines a code analysis workflow with an extensive library of codi
 
 1. [The Deslop Command](#the-deslop-command)
 2. [Coding Principles Reference](#coding-principles-reference)
-   - [Simplicity & Minimalism](#simplicity--minimalism)
-     - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
-     - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
-     - [Small Functions](#small-functions)
-     - [Guard Clauses (Early Return)](#guard-clauses-early-return)
-   - [Clarity & Readability](#clarity--readability)
-     - [Cognitive Load](#cognitive-load)
-     - [Self-Documenting Code](#self-documenting-code)
-     - [Documentation Discipline](#documentation-discipline)
-     - [Elegance](#elegance)
-     - [Principle of Least Surprise](#principle-of-least-surprise)
-   - [Organization & Structure](#organization--structure)
-     - [DRY: Don't Repeat Yourself](#dry-dont-repeat-yourself)
-     - [Single Source of Truth](#single-source-of-truth)
-     - [Separation of Concerns](#separation-of-concerns)
-     - [Modularity](#modularity)
-   - [Coupling & Dependencies](#coupling--dependencies)
-     - [Encapsulation](#encapsulation)
-     - [Law of Demeter](#law-of-demeter)
-     - [Orthogonality](#orthogonality)
-     - [Dependency Injection](#dependency-injection)
-     - [Composition Over Inheritance](#composition-over-inheritance)
-   - [Design Patterns & Conventions](#design-patterns--conventions)
-     - [SOLID Principles](#solid-principles)
-     - [Convention Over Configuration](#convention-over-configuration)
-     - [Command-Query Separation](#command-query-separation)
-     - [Code Reusability](#code-reusability)
-   - [Data & State](#data--state)
-     - [Immutability](#immutability)
-     - [Idempotency](#idempotency)
-   - [Robustness & Safety](#robustness--safety)
-     - [Fail-Fast & Defensive Programming](#fail-fast--defensive-programming)
-     - [Design by Contract](#design-by-contract)
-     - [Postel's Law (Robustness Principle)](#postels-law-robustness-principle)
-     - [Resilience & Graceful Degradation](#resilience--graceful-degradation)
-     - [Principle of Least Privilege](#principle-of-least-privilege)
-   - [Maintainability & Operations](#maintainability--operations)
-     - [Boy Scout Rule](#boy-scout-rule)
-     - [Observability & Transparency](#observability--transparency)
+   - [Part I: Clean Code](#part-i-clean-code) — *Writing clear, simple, readable code*
+     - [Simplicity & Minimalism](#simplicity--minimalism)
+       - [KISS](#kiss-keep-it-simple-stupid), [YAGNI](#yagni-you-arent-gonna-need-it), [Small Functions](#small-functions), [Guard Clauses](#guard-clauses-early-return)
+     - [Clarity & Readability](#clarity--readability)
+       - [Cognitive Load](#cognitive-load), [Self-Documenting Code](#self-documenting-code), [Documentation Discipline](#documentation-discipline), [Elegance](#elegance), [Least Surprise](#principle-of-least-surprise)
+   - [Part II: Architecture](#part-ii-architecture) — *Structuring and designing systems*
+     - [Organization & Structure](#organization--structure)
+       - [DRY](#dry-dont-repeat-yourself), [Single Source of Truth](#single-source-of-truth), [Separation of Concerns](#separation-of-concerns), [Modularity](#modularity)
+     - [Coupling & Dependencies](#coupling--dependencies)
+       - [Encapsulation](#encapsulation), [Law of Demeter](#law-of-demeter), [Orthogonality](#orthogonality), [Dependency Injection](#dependency-injection), [Composition Over Inheritance](#composition-over-inheritance)
+     - [Design Patterns & Conventions](#design-patterns--conventions)
+       - [SOLID](#solid-principles), [Convention Over Configuration](#convention-over-configuration), [Command-Query Separation](#command-query-separation), [Code Reusability](#code-reusability)
+     - [Data & State](#data--state)
+       - [Immutability](#immutability), [Idempotency](#idempotency)
+   - [Part III: Reliability](#part-iii-reliability) — *Building robust, maintainable systems*
+     - [Robustness & Safety](#robustness--safety)
+       - [Fail-Fast](#fail-fast--defensive-programming), [Design by Contract](#design-by-contract), [Postel's Law](#postels-law-robustness-principle), [Resilience](#resilience--graceful-degradation), [Least Privilege](#principle-of-least-privilege)
+     - [Maintainability & Operations](#maintainability--operations)
+       - [Boy Scout Rule](#boy-scout-rule), [Observability](#observability--transparency)
 
 ---
 
@@ -263,6 +243,12 @@ validate_email(email)
 | **Refused Bequest** | Subclass doesn't use inherited methods | Liskov, Composition |
 | **Comments as Deodorant** | Comments explaining bad code instead of fixing it | Self-Documenting |
 | **Cargo Cult** | Patterns used without understanding why | KISS, YAGNI |
+
+---
+
+# Part I: Clean Code
+
+> *Writing clear, simple, readable code. These principles govern the act of writing code itself—making each line, function, and file as clear as possible.*
 
 ---
 
@@ -1070,6 +1056,12 @@ A component should behave in a way that users and developers expect. Never surpr
 3. **Names must match behavior**: If you can't name it accurately, the design may be wrong
 4. **Consistency over cleverness**: Use established patterns
 5. **No hidden side effects**: Every behavior explicit in the signature and name
+
+---
+
+# Part II: Architecture
+
+> *Structuring and designing systems. These principles govern how code is organized, how components relate, and how systems are designed for change.*
 
 ---
 
@@ -2072,6 +2064,12 @@ Idempotency is the property where executing an operation multiple times produces
 3. **Prefer upserts** over inserts for database operations
 4. **Track processed messages** in queue consumers
 5. **Test by calling twice** and verifying same result
+
+---
+
+# Part III: Reliability
+
+> *Building robust, maintainable systems. These principles govern how code handles errors, maintains itself over time, and operates in production.*
 
 ---
 
