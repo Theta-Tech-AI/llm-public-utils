@@ -263,11 +263,9 @@ Before adding complexity: **Can a junior understand this?** — **Does it solve 
 1. **Fewer parts, fewer connections** — complexity kills maintainability
 2. **Simple ≠ Easy** — simple systems may require skill to build
 3. **Junior-readable code** — if they can't understand it, it's too complex
-4. **Hardcode first** — add configurability when proven necessary
+4. **Hardcode first** — add configurability when proven necessary (see also: [YAGNI](#yagni-you-arent-gonna-need-it))
 5. **Measure complexity** — cyclomatic ≤10, cognitive ≤15 per function
 6. **Simplest sufficient code** — not incomplete, not over-engineered
-
----
 
 ---
 
@@ -334,11 +332,9 @@ Before adding code: **Who needs this today?** (not "might need") — **What brea
 
 1. **Build only what's needed now** — ⅔ of speculative features fail
 2. **Delete speculative code** — git has history
-3. **Hardcode first** — configure when needed
-4. **Concrete over abstract** — until third occurrence
+3. **Hardcode first** — configure when needed (see also: [KISS](#kiss-keep-it-simple-stupid))
+4. **Concrete over abstract** — until third occurrence (see also: [DRY's Rule of Three](#dry-dont-repeat-yourself))
 5. **Keep code malleable** — YAGNI requires easy-to-change code
-
----
 
 ---
 
@@ -442,8 +438,6 @@ def get_active_users(user_ids: list[int]) -> list[User]:
 3. **Name the "what"** — Extract code and name the function after its purpose
 4. **Balance depth vs. breadth** — Avoid shallow modules with trivial functions
 5. **Optimize for the reader** — Newcomers should understand the code quickly
-
----
 
 ---
 
@@ -604,12 +598,10 @@ def process(item):
 ### Summary
 
 1. **Exit early for exceptional cases** — handle invalid states at the top
-2. **Flatten nested conditionals** — each guard removes a nesting level
+2. **Flatten nested conditionals** — each guard removes a nesting level (see also: [Cognitive Load](#cognitive-load))
 3. **Signal intent** — guards = "unusual," if/else = "both paths normal"
 4. **Keep guards at the entrance** — preconditions belong at the top
 5. **Embrace multiple returns** — single-return is obsolete
-
----
 
 ---
 
@@ -723,8 +715,6 @@ Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hund
 
 ---
 
----
-
 ## Self-Documenting Code
 
 
@@ -798,12 +788,10 @@ for attempt in range(MAX_RETRIES):
 
 ### Summary
 
-1. **Spell out names completely** — `user_count` not `usr_cnt`
+1. **Spell out names completely** — `user_count` not `usr_cnt` (reduces [Cognitive Load](#cognitive-load))
 2. **Eliminate magic values** — named constants explain meaning
 3. **Structure tells story** — one function, one purpose
-4. **Code shows what/how** — comments explain why/why not
-
----
+4. **Code shows what/how** — comments explain why/why not (see also: [Documentation Discipline](#documentation-discipline))
 
 ---
 
@@ -933,8 +921,6 @@ def calculate_shipping(order: Order) -> Decimal:
 
 ---
 
----
-
 ## Elegance
 
 
@@ -970,8 +956,6 @@ Elegance in code is **beauty through insight**. An elegant program solves its pr
 3. **Modesty** — avoid cleverness and showing off
 4. **Revelation** — show insight about the domain
 5. **Domain symmetry** — understanding the problem suffices to understand the code
-
----
 
 ---
 
@@ -1107,9 +1091,7 @@ class Teacher:
 2. **Incidental similarity is not duplication**—don't merge different concepts
 3. **Rule of Three**: Patience to find the *right* abstraction, not permission to ignore duplication
 4. **Wrong abstractions**: Delete and start over—they merged incidental similarity
-5. **Beyond code**: Databases, APIs, config, documentation—single source of truth everywhere
-
----
+5. **Beyond code**: Databases, APIs, config, documentation (see also: [Single Source of Truth](#single-source-of-truth))
 
 ---
 
@@ -1152,8 +1134,6 @@ Single Source of Truth (SSoT) is a data management principle: **every piece of d
 2. **Other systems should reference, not duplicate** authoritative data
 3. **Derived/computed values are acceptable** — they don't need synchronization
 4. **Ask "which is correct?"** — if you can't answer immediately, fix the design
-
----
 
 ---
 
@@ -1224,8 +1204,6 @@ class OrderPresenter:
 2. **High cohesion, low coupling** — related together, unrelated separate
 3. **Natural boundaries** — separate where concerns genuinely differ
 4. **Avoid over-separation** — don't fragment for its own sake
-
----
 
 ---
 
@@ -1321,8 +1299,6 @@ def process_order(order):
 
 ---
 
----
-
 ## Law of Demeter
 
 
@@ -1367,7 +1343,7 @@ A method `m` of object `a` may only invoke methods of:
 
 1. **Only talk to immediate friends** — don't reach through objects
 2. **One dot rule** — `a.b()` good, `a.b().c()` suspect
-3. **Tell, don't ask** — command objects, don't interrogate
+3. **Tell, don't ask** — command objects, don't interrogate (see also: [Encapsulation](#encapsulation))
 4. **Exceptions exist** — builders, fluent APIs, DTOs are fine
 
 ---
@@ -1399,8 +1375,6 @@ A helicopter's controls are all coupled—lowering the collective causes dip and
 2. **Coupling is viral** — a little leads to more
 3. **Measure orthogonality** by how many places change when one requirement changes
 4. **Techniques that help**: dependency injection, abstract interfaces, avoiding global state
-
----
 
 ---
 
@@ -1448,8 +1422,6 @@ class MovieLister:
 2. **Constructor injection is preferred** — explicit, immutable, testable
 3. **Too many dependencies = SRP violation** — DI makes this visible
 4. **Testability is the primary benefit** — swap real dependencies for test doubles
-
----
 
 ---
 
@@ -1573,8 +1545,6 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 | **LSP** | Subclass raises `NotImplementedError`, empty overrides, type checks |
 | **ISP** | Interfaces with 10+ methods, classes implement unused methods |
 | **DIP** | Direct instantiation in constructors, can't mock for testing |
-
----
 
 ---
 
@@ -1767,8 +1737,6 @@ def create_user(self, email: str) -> None:
 2. **Queries are safe** — Call them anywhere, cache them, parallelize them
 3. **Commands need care** — Order matters, test state changes explicitly
 4. **Break CQS pragmatically** — Atomic operations sometimes require both
-
----
 
 ---
 
@@ -1990,8 +1958,6 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 
 ---
 
----
-
 ## Idempotency
 
 
@@ -2089,10 +2055,8 @@ def __init__(self):
 1. **Validate early** — Check inputs at function entry, config at startup
 2. **Fail loudly** — Clear error messages beat silent corruption
 3. **Distinguish error types** — Transient (retry) vs. deterministic (fail) vs. bug (crash)
-4. **Use assertions for invariants** — Things that should never be false
+4. **Use assertions for invariants** — Things that should never be false (see also: [Design by Contract](#design-by-contract))
 5. **Trust validated data** — Don't re-validate inside trusted boundaries
-
----
 
 ---
 
@@ -2134,10 +2098,8 @@ Design by Contract (DbC) treats software construction as a series of agreements 
 
 1. **Contracts make responsibilities explicit** — Caller ensures preconditions; supplier ensures postconditions
 2. **Invariants define valid object state** — Must hold after construction and every public method
-3. **Assertions are executable contracts** — Document and verify simultaneously
+3. **Assertions are executable contracts** — Document and verify simultaneously (see also: [Fail-Fast](#fail-fast--defensive-programming))
 4. **DbC complements defensive programming** — Use DbC internally, defensive at boundaries
-
----
 
 ---
 
@@ -2295,8 +2257,6 @@ def get_recommendations(user_id: str) -> list[Product]:
 3. **Only retry transient errors** — Auth failures should fail fast
 4. **Use circuit breakers** — Prevent cascading failures
 5. **Always set timeouts** — Unbounded waits exhaust resources
-
----
 
 ---
 
@@ -2545,8 +2505,6 @@ def add_discount(order: Order) -> Order:
 3. **Clean the campground, not the forest** — Scope to files you're touching
 4. **Don't ignore the mess** — "Not my code" is not an excuse
 5. **Make cleanup socially expected** — It should be as unacceptable to leave mess as to litter
-
----
 
 ---
 
