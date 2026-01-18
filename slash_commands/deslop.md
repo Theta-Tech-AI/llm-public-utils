@@ -11,12 +11,14 @@ This command combines a code analysis workflow with an extensive library of codi
 1. [The Deslop Command](#the-deslop-command)
 2. [Coding Principles Reference](#coding-principles-reference)
    - [Core Principles](#core-principles)
+     - [Cognitive Load](#cognitive-load)
      - [DRY: Don't Repeat Yourself](#dry-dont-repeat-yourself)
      - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
      - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
      - [Self-Documenting Code](#self-documenting-code)
      - [Separation of Concerns](#separation-of-concerns)
      - [Boy Scout Rule](#boy-scout-rule)
+     - [Small Functions](#small-functions)
    - [Object-Oriented Design](#object-oriented-design)
      - [SOLID Principles](#solid-principles)
      - [Composition Over Inheritance](#composition-over-inheritance)
@@ -31,6 +33,7 @@ This command combines a code analysis workflow with an extensive library of codi
      - [Orthogonality](#orthogonality)
      - [Dependency Injection](#dependency-injection)
      - [Command-Query Separation](#command-query-separation)
+     - [Code Reusability](#code-reusability)
    - [Reliability & Operations](#reliability--operations)
      - [Fail-Fast & Defensive Programming](#fail-fast--defensive-programming)
      - [Design by Contract](#design-by-contract)
@@ -181,6 +184,109 @@ validate_email(email)
 ---
 
 # Core Principles
+
+---
+
+## Cognitive Load
+
+> "Cognitive load is how much a developer needs to think in order to complete a task."
+> — Artem Zakirullin
+
+### Core Concept
+
+Cognitive load is the mental effort required to understand, modify, or debug code. The human brain holds roughly **four chunks** in working memory at once. Exceed this, and comprehension collapses—bugs multiply, onboarding slows, productivity plummets.
+
+Cognitive Load Theory (CLT), developed by John Sweller in 1988, is backed by decades of research. The key insight: **we spend 10x more time reading code than writing it**. Every clever trick, unnecessary abstraction, and implicit dependency forces readers to hold more in their head. Code that feels good to write often creates pain for everyone who reads it later.
+
+### Three Types of Load
+
+| Type | Description | Reducible? |
+|------|-------------|------------|
+| **Intrinsic** | Inherent difficulty of the task | No—essential complexity |
+| **Extraneous** | Load from how information is presented | Yes—focus here |
+| **Germane** | Load that builds understanding | Desirable |
+
+**Focus ruthlessly on reducing extraneous load**—complexity added through poor naming, unnecessary abstractions, clever tricks, and convoluted control flow.
+
+### Common Violations
+
+```python
+# ❌ Wrong - Each condition fills working memory
+if val > THRESHOLD and (cond_a or cond_b) and (cond_c and not cond_d):
+    process(val)  # 🤯 Reader is lost
+
+# ✅ Correct - Named intermediates free working memory
+is_above_threshold = val > THRESHOLD
+is_allowed = cond_a or cond_b
+is_secure = cond_c and not cond_d
+
+if is_above_threshold and is_allowed and is_secure:  # 🧠 Fresh
+    process(val)
+```
+
+```python
+# ❌ Wrong - Deep nesting accumulates load
+if is_valid:           # 🧠+
+    if is_authorized:  # 🧠++
+        if has_quota:  # 🧠+++
+            process()  # 🤯
+
+# ✅ Correct - Early returns keep memory clear
+if not is_valid:
+    return
+if not is_authorized:
+    return
+if not has_quota:
+    return
+process()  # 🧠 All preconditions met
+```
+
+### The Familiarity Trap
+
+**Familiarity is not simplicity.** Code internalized into long-term memory feels easy—but newcomers face the full cognitive burden. The previous author created the mess incrementally; you're the first trying to grasp it all at once.
+
+| Symptom | Reality |
+|---------|---------|
+| "It makes sense once you understand our patterns" | High learning curve = high extraneous load |
+| "It's not that complicated" | Your long-term memory is doing the lifting |
+
+**Test**: Can a new developer contribute meaningful code within their first few hours?
+
+### Deep vs. Shallow Modules
+
+| Type | Interface | Implementation | Cognitive Load |
+|------|-----------|----------------|----------------|
+| **Deep** | Simple | Complex | Low—complexity hidden |
+| **Shallow** | Complex | Simple | High—overhead exceeds value |
+
+Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hundreds of thousands of lines. Contrast with `MetricsProviderFactoryFactory`—the name alone is more taxing than the implementation.
+
+### Anti-Patterns
+
+| Anti-Pattern | Problem |
+|--------------|---------|
+| **Too many tiny files** | Must hold all 80 class interactions in mind |
+| **Layered architecture for its own sake** | Each indirection layer adds overhead |
+| **Clever one-liners** | Reader must recreate author's thought process |
+| **Premature microservices** | Distributed debugging is exponentially harder |
+
+### Relationship to Other Principles
+
+| Principle | Connection |
+|-----------|------------|
+| **KISS** | Cognitive load is *why* simplicity matters |
+| **Self-Documenting Code** | Good names reduce mental translation |
+| **Small Functions** | Must balance: too many shallow functions *increase* load |
+| **Composition Over Inheritance** | Explicit dependencies reduce hidden context |
+| **Modularity** | Deep modules hide complexity behind simple interfaces |
+
+### Summary
+
+1. **Working memory holds ~4 chunks** — Exceed this and comprehension fails
+2. **Reduce extraneous load** — Focus on how code is presented
+3. **Familiarity ≠ simplicity** — Code you know feels easy; newcomers feel the burden
+4. **Prefer deep modules** — Simple interfaces hiding complex implementations
+5. **Write boring code** — The best code requires no mental effort to parse
 
 ---
 
@@ -693,6 +799,108 @@ def add_discount(order: Order) -> Order:
 3. **Clean the campground, not the forest** — Scope to files you're touching
 4. **Don't ignore the mess** — "Not my code" is not an excuse
 5. **Make cleanup socially expected** — It should be as unacceptable to leave mess as to litter
+
+---
+
+## Small Functions
+
+> "The first rule of functions is that they should be small. The second rule of functions is that they should be smaller than that."
+> — Robert C. Martin (Uncle Bob), *Clean Code*
+
+### Core Concept
+
+Small Functions is the principle that **functions should be short, focused, and do one thing well**. Decompose logic into small, named units that can be understood at a glance.
+
+**The key insight**: If you spend effort figuring out what code does, extract it into a function and name it after that "what." The name becomes documentation.
+
+**Guideline sizes** (not rigid rules):
+- **Ideal**: 5-15 lines
+- **Warning**: 20-30 lines
+- **Smell**: 50+ lines
+
+### Why Small Functions Work
+
+| Large Functions | Small Functions |
+|-----------------|-----------------|
+| Hard to name (does too many things) | Easy to name (does one thing) |
+| Multiple levels of abstraction | Single level of abstraction |
+| Difficult to test in isolation | Easy to unit test |
+| Changes risk breaking unrelated logic | Changes are localized |
+
+### The Stepdown Rule
+
+Code should read like a top-down narrative, descending one level of abstraction at a time:
+
+```python
+# ✅ Correct - Reads like a story
+def process_order(order: Order) -> Receipt:
+    validate_order(order)
+    apply_discounts(order)
+    charge_payment(order)
+    send_confirmation(order)
+    return create_receipt(order)
+```
+
+### Common Violations
+
+**Code Smells**:
+- Functions over 30 lines
+- Multiple `# Section` comments within one function
+- Deeply nested conditionals (3+ levels)
+- Functions with "And" in the name (`validateAndSave`)
+
+**Verbal Cues**:
+- "This function is long but it's all related"
+- "Let me add a comment to explain this section"
+- "I'll refactor it later when we have time"
+
+### When NOT to Apply
+
+**The Counterargument** (Cindy Sridharan's "Small Functions Considered Harmful"):
+- **Loss of locality**: Jumping across many files increases cognitive load
+- **Naming explosion**: More functions = more names to invent and remember
+- **Shallow modules**: Many trivial functions can be worse than fewer deep ones
+
+**When larger functions are acceptable**:
+- Sequential logic that must share context
+- State machines hard to decompose without passing lots of state
+- Performance-critical code where call overhead matters
+- One-off scripts that won't be maintained
+
+**The test**: Can a newcomer understand this function in one read? If yes, it's fine—regardless of line count.
+
+### Anti-Patterns
+
+```python
+# ❌ Too shallow - interface complexity exceeds implementation
+def is_empty(collection): return len(collection) == 0
+def is_not_empty(collection): return len(collection) > 0
+
+# ✅ Better - meaningful abstraction hiding complexity
+def get_active_users(user_ids: list[int]) -> list[User]:
+    """Fetches users, filters inactive, sorts by last_active."""
+    users = fetch_users_batch(user_ids)
+    active = [u for u in users if u.is_active]
+    return sorted(active, key=lambda u: u.last_active, reverse=True)
+```
+
+### Relationship to Other Principles
+
+| Principle | Connection |
+|-----------|------------|
+| **Single Responsibility** | Small Functions is the *how*, SRP is the *what* |
+| **Separation of Concerns** | Decompose by concern, then make each piece small |
+| **DRY** | Extract duplicated code into small reusable functions |
+| **Self-Documenting Code** | Function names replace comments when functions are small |
+| **KISS** | Small functions are simpler to understand |
+
+### Summary
+
+1. **Keep functions short** — 5-20 lines is a good target, 50+ is a smell
+2. **One level of abstraction** — Don't mix high-level flow with low-level details
+3. **Name the "what"** — Extract code and name the function after its purpose
+4. **Balance depth vs. breadth** — Avoid shallow modules with trivial functions
+5. **Optimize for the reader** — Newcomers should understand the code quickly
 
 ---
 
@@ -1226,6 +1434,154 @@ def create_user(self, email: str) -> None:
 2. **Queries are safe** — Call them anywhere, cache them, parallelize them
 3. **Commands need care** — Order matters, test state changes explicitly
 4. **Break CQS pragmatically** — Atomic operations sometimes require both
+
+---
+
+## Code Reusability
+
+> "A little copying is better than a little dependency."
+> — Rob Pike
+
+### Core Concept
+
+Code reusability is the practice of **designing code that can be used in multiple contexts** without modification. Unlike DRY (which eliminates existing duplication), reusability is forward-looking—it anticipates future use cases during initial design.
+
+**The paradox**: Code designed for reuse requires upfront investment in abstraction, documentation, and testing. Yet studies show reusable components cost 3-10x more to develop than single-use code. The payoff only materializes when the code is actually reused across multiple contexts.
+
+### Characteristics of Reusable Code
+
+| Trait | Description |
+|-------|-------------|
+| **Modular** | Self-contained with minimal external dependencies |
+| **Generic** | Handles a range of inputs without modification |
+| **Well-documented** | Clear API, usage examples, edge cases documented |
+| **Stable Interface** | Public API changes infrequently |
+| **Thoroughly Tested** | Works reliably across scenarios |
+
+### Types of Reuse
+
+| Type | Scope | Example |
+|------|-------|---------|
+| **Copy-paste** | Lowest | Snippets, templates |
+| **Functions** | Local | Utility functions within a project |
+| **Libraries** | Organization | Shared packages across teams |
+| **Frameworks** | Industry | Django, React, Rails |
+
+### The Reusability Trap
+
+Designing for reuse before proving need creates complexity without value. The Rule of Three applies here too: wait until you've used code in three different contexts before investing in making it truly reusable.
+
+**The Santa Claus Problem**: Open source gives you a billion reusable components. Good luck choosing. Finding, learning, and integrating a library often costs more than the reuse saves. The cost of understanding someone else's abstraction can exceed the cost of writing your own.
+
+```python
+# ❌ Wrong - Premature reusability (YAGNI violation)
+class GenericDataProcessor:
+    """Handles any data format with any transformation."""
+    def __init__(self, parser, transformer, validator, serializer):
+        self.parser = parser
+        self.transformer = transformer
+        self.validator = validator
+        self.serializer = serializer
+
+    def process(self, data, options=None):
+        options = options or {}
+        parsed = self.parser.parse(data, **options.get('parse', {}))
+        transformed = self.transformer.transform(parsed, **options.get('transform', {}))
+        if options.get('validate', True):
+            self.validator.validate(transformed)
+        return self.serializer.serialize(transformed, **options.get('serialize', {}))
+
+# ✅ Correct - Start specific, generalize when needed
+def parse_user_csv(csv_data: str) -> list[dict]:
+    """Parse user data from CSV format."""
+    rows = csv_data.strip().split('\n')
+    headers = rows[0].split(',')
+    return [dict(zip(headers, row.split(','))) for row in rows[1:]]
+```
+
+### Designing for Reusability
+
+When code has proven its need for reuse, apply these principles:
+
+**1. Minimize Dependencies**
+```python
+# ❌ Wrong - Tight coupling to specific libraries
+def format_date(date):
+    import pandas as pd  # Heavy dependency for simple task
+    return pd.Timestamp(date).strftime('%Y-%m-%d')
+
+# ✅ Correct - Use standard library
+from datetime import datetime
+
+def format_date(date: datetime) -> str:
+    return date.strftime('%Y-%m-%d')
+```
+
+**2. Accept Abstract Inputs**
+```python
+# ❌ Wrong - Only accepts specific type
+def process_users(users: list[User]) -> None:
+    for user in users:
+        send_email(user.email)
+
+# ✅ Correct - Accept any iterable of objects with email
+from typing import Protocol, Iterable
+
+class HasEmail(Protocol):
+    email: str
+
+def process_contacts(contacts: Iterable[HasEmail]) -> None:
+    for contact in contacts:
+        send_email(contact.email)
+```
+
+**3. Provide Sensible Defaults**
+```python
+# ❌ Wrong - Requires all parameters
+def retry(func, max_retries, delay, backoff_factor, exceptions):
+    ...
+
+# ✅ Correct - Sensible defaults, only specify what differs
+def retry(
+    func,
+    max_retries: int = 3,
+    delay: float = 1.0,
+    backoff_factor: float = 2.0,
+    exceptions: tuple = (Exception,),
+):
+    ...
+```
+
+### Common Violations
+
+**Code Smells**:
+- Over-parameterized functions trying to handle every case
+- Components that can't be tested in isolation
+- Libraries that require complex configuration before basic use
+- Code with implicit dependencies on global state
+
+**Organizational Barriers**:
+- Politics: Teams block other teams from using "their" code
+- Psychology: Developers view reuse as stifling creativity
+- NIH Syndrome: "Not Invented Here" bias against external solutions
+
+### When Reusability Hurts
+
+Verbose, redundant code sometimes beats elegant abstractions:
+- **Debugging**: Isolated code means problems stay isolated
+- **Onboarding**: Simple duplication is easier to understand than clever abstractions
+- **Change velocity**: Modifying copy-pasted code can't break other systems
+- **Coupling**: "Reusable" components become coupling points across systems
+
+The construction paradox: demolishing and rebuilding often costs less than renovating. Similarly, rewriting 50 lines sometimes beats understanding 500 lines of "reusable" framework code.
+
+### Summary
+
+1. **Reusability is earned, not designed** — Wait for three use cases before investing
+2. **Upfront cost is real** — Reusable code costs more to develop and understand
+3. **Dependencies are the enemy** — Minimize external coupling; a little copying beats a little dependency
+4. **Simple duplication can be better** — Isolated, obvious code often beats clever abstractions
+5. **Stable interfaces enable reuse** — Public APIs should change rarely
 
 ---
 
