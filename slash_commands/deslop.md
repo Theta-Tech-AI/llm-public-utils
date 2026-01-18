@@ -509,14 +509,14 @@ def get_active_users(user_ids: list[int]) -> list[User]:
 ## Guard Clauses (Early Return)
 
 
-> "If you are using an if-then-else construct you are giving equal weight to the if leg and the else leg. This communicates to the reader that the legs are equally likely and important. Instead, the guard clause says, 'This is rare, and if it happens, do something and get out.'"
+> "The guard clause says, 'This is rare, and if it happens, do something and get out.'"
 > — Martin Fowler, *Refactoring*
 
 ### Core Concept
 
-A guard clause is an early exit from a function when preconditions aren't met. Rather than nesting your main logic inside conditionals, you check for invalid states at the top and return immediately. This keeps the "happy path" at the outermost indentation level, making code dramatically easier to follow.
+Early exit when preconditions aren't met. Check invalid states at the top, return immediately. Keeps the "happy path" at outermost indentation.
 
-The pattern fights **rightward drift**—the "arrow anti-pattern" where nested conditionals form an arrow pointing toward pain:
+**Fights rightward drift**—the "arrow anti-pattern":
 
 ```
 if () {
@@ -532,11 +532,9 @@ if () {
 }
 ```
 
-Guard clauses flatten this structure by handling exceptions first.
+Guard clauses flatten this by handling exceptions first.
 
 ### The Transformation
-
-Martin Fowler's classic refactoring "Replace Nested Conditional with Guard Clauses":
 
 ```python
 # ❌ Wrong - Nested conditionals obscure the happy path
@@ -565,13 +563,11 @@ def get_pay_amount(employee):
     return normal_pay_amount()
 ```
 
-### When to Use Guard Clauses
-
-Guard clauses excel at:
+### When to Use
 
 1. **Precondition validation** — null checks, empty inputs, invalid states
 2. **Edge case handling** — special states that bypass normal logic
-3. **Base cases** — recursive function termination conditions
+3. **Base cases** — recursive function termination
 
 ```python
 # ✅ Classic guard clause pattern
@@ -585,9 +581,9 @@ def send_welcome_email(user):
     mailer.send(user.email, "Welcome!")
 ```
 
-### When NOT to Use Guard Clauses
+### When NOT to Use
 
-Not every `if` should become a guard clause. When both branches are equally valid, use conventional conditionals:
+When both branches are equally valid, use conventional conditionals:
 
 ```python
 # ❌ Misleading - Both branches are equally valid
@@ -684,19 +680,15 @@ def process(item):
 
 ### Core Concept
 
-Cognitive load is the mental effort required to understand, modify, or debug code. The human brain holds roughly **four chunks** in working memory at once. Exceed this, and comprehension collapses—bugs multiply, onboarding slows, productivity plummets.
-
-Cognitive Load Theory (CLT), developed by John Sweller in 1988, is backed by decades of research. The key insight: **we spend 10x more time reading code than writing it**. Every clever trick, unnecessary abstraction, and implicit dependency forces readers to hold more in their head. Code that feels good to write often creates pain for everyone who reads it later.
+Mental effort to understand code. Working memory holds ~**4 chunks**; exceed this and comprehension fails. **We read code 10x more than we write it**—every clever trick forces readers to hold more in their head.
 
 ### Three Types of Load
 
 | Type | Description | Reducible? |
 |------|-------------|------------|
-| **Intrinsic** | Inherent difficulty of the task | No—essential complexity |
-| **Extraneous** | Load from how information is presented | Yes—focus here |
-| **Germane** | Load that builds understanding | Desirable |
-
-**Focus ruthlessly on reducing extraneous load**—complexity added through poor naming, unnecessary abstractions, clever tricks, and convoluted control flow.
+| **Intrinsic** | Inherent task difficulty | No |
+| **Extraneous** | How info is presented | **Yes—focus here** |
+| **Germane** | Builds understanding | Desirable |
 
 ### Common Violations
 
@@ -733,14 +725,12 @@ process()  # 🧠 All preconditions met
 
 ### The Familiarity Trap
 
-**Familiarity is not simplicity.** Code internalized into long-term memory feels easy—but newcomers face the full cognitive burden. The previous author created the mess incrementally; you're the first trying to grasp it all at once.
+**Familiarity ≠ simplicity.** Code in long-term memory feels easy; newcomers face full burden.
 
 | Symptom | Reality |
 |---------|---------|
-| "It makes sense once you understand our patterns" | High learning curve = high extraneous load |
+| "It makes sense once you understand our patterns" | High learning curve = high load |
 | "It's not that complicated" | Your long-term memory is doing the lifting |
-
-**Test**: Can a new developer contribute meaningful code within their first few hours?
 
 ### Deep vs. Shallow Modules
 
@@ -897,10 +887,9 @@ validate_email_format(email)
 
 ### Core Concept
 
-Self-documenting code **naturally conveys its purpose** through human-readable names, clear structure, and logical organization—without relying on comments. Comments should explain *why* not *what*. The way the code is structured and named should tell a story.
+Code that **conveys purpose** through names, structure, and organization—without relying on comments. Comments explain *why*, code shows *what*.
 
-**Reveals:** What the code does, how it works (through naming and structure)
-**Cannot reveal:** Why decisions were made, rejected alternatives, system context (requires comments/docs)
+**Reveals:** What/how (through naming and structure) · **Cannot reveal:** Why/context (requires comments/docs)
 
 ### The Three Pillars
 
@@ -977,9 +966,7 @@ for attempt in range(MAX_RETRIES):
 
 ### Core Concept
 
-Documentation Discipline is the practice of **writing the right documentation at the right level**—knowing when a comment adds value and when it adds noise. While Self-Documenting Code teaches us to make code readable through naming, Documentation Discipline answers: what should be documented, where, and in what form?
-
-**The fundamental tension**: Comments don't compile. They can't be tested. They rot. Yet sometimes they're essential—explaining the "why" that code cannot express. The discipline lies in knowing the difference.
+**Right documentation at the right level.** Comments don't compile, can't be tested, and rot—yet sometimes they're essential for explaining "why." The discipline: knowing the difference.
 
 ### The Documentation Pyramid
 
@@ -990,7 +977,7 @@ Documentation Discipline is the practice of **writing the right documentation at
 | **Docstrings** | Callers | What it does, params, returns |
 | **Inline Comments** | Maintainers | Why this specific implementation |
 
-**Key insight**: Move documentation to the highest appropriate level. If it applies to the whole module, put it in the README, not scattered across functions.
+Move documentation to the highest appropriate level.
 
 ### When Comments Add Value
 
@@ -1043,7 +1030,7 @@ def calculate_tax(amount):
 
 ### The Rot Problem
 
-Comments have no compiler. They drift from code silently.
+Comments drift from code silently. Keep close to code, review during code review, delete rather than let rot.
 
 ```python
 # ❌ Rotting comment - Code changed, comment didn't
@@ -1052,8 +1039,6 @@ def get_users():
     return User.query.filter_by(status='active').order_by(User.created_at).all()
     # ↑ Now sorted by created_at, comment lies
 ```
-
-**Mitigation**: Keep comments close to code, review during code review, delete rather than let rot.
 
 ### Docstrings Done Right
 
@@ -1103,7 +1088,7 @@ def calculate_shipping(order: Order) -> Decimal:
 
 ### Core Concept
 
-Elegance in code is **beauty through insight**. An elegant program solves its problem with minimum complexity while revealing something fundamental about the domain.
+**Beauty through insight.** Solves the problem with minimum complexity while revealing something fundamental about the domain.
 
 ### Four Criteria
 
@@ -1141,15 +1126,15 @@ Elegance in code is **beauty through insight**. An elegant program solves its pr
 
 ### Core Concept
 
-A component should behave in a way that users and developers expect. Never surprise the user. An interface should behave exactly as the user thinks it behaves.
+Components behave as users expect. Never surprise the user.
 
-### Strategies for Reducing Surprise
+### Strategies
 
-1. **Command-Query Separation**: Separate methods that change state from those that return information
-2. **Naming Conventions That Communicate Intent**: Names match behavior
-3. **Consistent Return Types**: Methods with similar purposes return similar types
-4. **Sensible Defaults**: Default values are the most common, safest choice
-5. **No Hidden Side Effects**: Methods only do what signatures and names imply
+1. **Command-Query Separation**: Separate state-changing methods from queries
+2. **Names match behavior**: Naming conventions communicate intent
+3. **Consistent return types**: Similar methods return similar types
+4. **Sensible defaults**: Most common, safest choice
+5. **No hidden side effects**: Methods do only what signatures imply
 
 ### Common Anti-Patterns
 
@@ -1188,21 +1173,17 @@ A component should behave in a way that users and developers expect. Never surpr
 
 ### Core Concept
 
-DRY is about **knowledge**, not necessarily code. Avoid duplication of *meaning and intent*, not just syntax. Two identical-looking code blocks may represent different business concepts—merging them creates harmful coupling.
+DRY is about **knowledge**, not code. Avoid duplication of *meaning*, not syntax.
 
-**Two types of "duplication":**
-1. **Knowledge Duplication** — Same business rule/concept in multiple places. **Always a code smell. Always fix.**
-2. **Incidental Duplication** — Code that *looks* similar but represents *different* concepts. **Not true duplication.** Merging it creates harmful coupling.
-
-**Critical insight**: If two code blocks look identical but encode *different* business concepts, they are not necessarily duplicates—they may be coincidentally similar. Forcing them into one abstraction couples unrelated concerns.
+**Two types:**
+1. **Knowledge Duplication** — Same business rule in multiple places. **Always fix.**
+2. **Incidental Duplication** — Code *looks* similar but represents *different* concepts. **Leave it.** Merging couples unrelated concerns.
 
 ### The Rule of Three
 
-> **First time**: Just write it. **Second time**: Note it. **Third time**: Abstract it.
+> **First time**: Write it. **Second time**: Note it. **Third time**: Abstract it.
 
-This is **not** permission to tolerate knowledge duplication—it's patience to find the *right* abstraction. With only two occurrences, you can't distinguish true knowledge duplication from incidental similarity. Three examples reveal the actual pattern.
-
-Sometimes it makes sense to deduplicate after two, and always after three.
+Patience to find the *right* abstraction. Two occurrences can't distinguish true duplication from incidental similarity. Three reveal the pattern.
 
 ### Recognizing True vs. Incidental Duplication
 
@@ -1282,9 +1263,7 @@ class Teacher:
 
 ### Core Concept
 
-Single Source of Truth (SSoT) is a data management principle: **every piece of data should have exactly one authoritative location**. All other references should derive from or point to that single source.
-
-**The fundamental problem**: When data exists in multiple places, which one is correct when they disagree?
+**Every piece of data has exactly one authoritative location.** All other references derive from that source. The problem: when data exists in multiple places, which is correct?
 
 ### SSoT vs. DRY
 
@@ -1325,11 +1304,9 @@ Single Source of Truth (SSoT) is a data management principle: **every piece of d
 
 ### Core Concept
 
-Separation of Concerns (SoC) is the discipline of **decomposing a system into distinct parts, each addressing a single concern**. A "concern" is any aspect of functionality—business logic, persistence, UI, error handling, etc.
+**Decompose systems into distinct parts, each addressing one concern.** A "concern" = any aspect of functionality (business logic, persistence, UI, etc.).
 
-**Two measures of good separation:**
-1. **High cohesion** — related things grouped together
-2. **Low coupling** — unrelated things minimally dependent
+**Measures:** High cohesion (related things together) · Low coupling (unrelated things independent)
 
 ### Types of Concerns
 
@@ -1439,15 +1416,14 @@ Modularity is **dividing software into independent components** where each modul
 
 ### Core Concept
 
-Encapsulation is the principle of **bundling data and the methods that operate on that data into a single unit, while hiding internal implementation details behind a well-defined interface**.
+**Bundle data with behavior, hide internals behind interfaces.**
 
-**Two aspects:**
-1. **Bundling**: Grouping related data and behavior together
-2. **Information Hiding**: Restricting direct access to internal state
+1. **Bundling**: Group related data and behavior
+2. **Information Hiding**: Restrict direct access to internal state
 
 ### Tell, Don't Ask
 
-Instead of querying an object's state and making decisions externally, tell the object what to do and let it use its own state.
+Don't query state and decide externally—tell the object what to do.
 
 ```python
 # ❌ Wrong - Asking for state, making decisions externally
@@ -1487,7 +1463,7 @@ def process_order(order):
 
 ### Core Concept
 
-The Law of Demeter (LoD) is the discipline of **limiting an object's knowledge of other objects' internal structure**. An object should only interact with its immediate dependencies, not reach through them.
+**Limit knowledge of other objects' structure.** Only interact with immediate dependencies, not through them.
 
 ### The "One Dot" Rule
 
@@ -1536,11 +1512,7 @@ A method `m` of object `a` may only invoke methods of:
 
 ### Core Concept
 
-Two components are **orthogonal** if changes in one do not affect the other. Just as moving along the X-axis doesn't change your Y position, modifying an orthogonal component shouldn't ripple into unrelated parts.
-
-### The Helicopter Problem
-
-A helicopter's controls are all coupled—lowering the collective causes dip and turn, requiring compensating adjustments. This is precisely what happens in non-orthogonal code: fix a bug in one place, two more pop up elsewhere.
+**Changes in one component don't affect others.** Like a helicopter with coupled controls: fix one bug, two more pop up elsewhere.
 
 ### Common Violations
 
@@ -1566,13 +1538,13 @@ A helicopter's controls are all coupled—lowering the collective causes dip and
 
 ### Core Concept
 
-Dependency Injection (DI) is a technique where dependencies are "injected" from the outside rather than created internally. A class should declare what it needs, not how to get it.
+Dependencies "injected" from outside rather than created internally. A class declares what it needs, not how to get it.
 
-### Three Forms of Injection
+### Three Forms
 
-1. **Constructor Injection** (Preferred): Dependencies through constructor
-2. **Setter Injection**: Dependencies through setter methods after construction
-3. **Interface Injection**: Dependency provides an injector method
+1. **Constructor Injection** (Preferred): Through constructor
+2. **Setter Injection**: Through setters after construction
+3. **Interface Injection**: Dependency provides injector method
 
 ### Anti-Patterns
 
@@ -1613,11 +1585,10 @@ class MovieLister:
 
 ### Core Concept
 
-Composition Over Inheritance is the principle of **building complex behavior by combining objects rather than extending classes**.
+**Build complex behavior by combining objects rather than extending classes.**
 
-**The key distinction:**
-- **Inheritance** ("is-a"): White-box reuse — subclass sees parent internals
-- **Composition** ("has-a"): Black-box reuse — objects interact via interfaces only
+- **Inheritance** ("is-a"): White-box — subclass sees parent internals
+- **Composition** ("has-a"): Black-box — interact via interfaces only
 
 ### Why Composition Is Preferred
 
@@ -1736,9 +1707,7 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ### Core Concept
 
-Convention Over Configuration (CoC) is the principle that frameworks and systems should provide **sensible defaults** that work out of the box, requiring explicit configuration only when you need to deviate from the norm. Instead of forcing developers to specify every detail, CoC assumes predictable patterns and only asks for decisions when the default doesn't fit.
-
-The principle was popularized by Ruby on Rails (2005) but has since influenced countless frameworks: Spring Boot, Django, Next.js, and more. The core insight: **most decisions aren't worth making**. If 90% of projects name their primary key `id`, why force every developer to specify it?
+**Sensible defaults that work out of the box.** Explicit configuration only when deviating from norm. Core insight: most decisions aren't worth making—if 90% use `id` as primary key, don't force specification.
 
 ### The Power of Defaults
 
@@ -1749,7 +1718,7 @@ The principle was popularized by Ruby on Rails (2005) but has since influenced c
 | Define foreign key naming | `user_id` derived from `User` association |
 | Set up file locations manually | `app/models/`, `app/views/`, etc. by convention |
 
-**The compound benefit**: Conventions compose. If we know `User` maps to `users` and foreign keys follow `{model}_id`, we can automatically resolve `has_many :posts` → `Post` class → `posts` table → `user_id` foreign key—all from a single declaration.
+Conventions compose: `has_many :posts` resolves `Post` → `posts` table → `user_id` FK automatically.
 
 ### Real-World Examples
 
@@ -1815,14 +1784,9 @@ legacy_service = UserService(table_name="legacy_accounts")
 
 ### The Dark Side
 
-**1. Hidden Magic**
-Conventions that "just work" can mystify newcomers. When behavior is implicit, debugging becomes harder—you can't search the codebase for configuration that doesn't exist.
-
-**2. Learning Cliff**
-To deviate from convention, you must first learn the convention. This creates a learning curve that only pays off if you stay within the ecosystem.
-
-**3. Rigidity at Scale**
-Conventions optimized for common cases may not scale to edge cases. Large codebases sometimes outgrow their framework's opinions.
+1. **Hidden Magic** — implicit behavior hard to debug
+2. **Learning Cliff** — must learn convention to deviate
+3. **Rigidity at Scale** — common-case optimizations may not scale
 
 ```python
 # When convention fails: trying to use a legacy database
@@ -1838,7 +1802,7 @@ Conventions optimized for common cases may not scale to edge cases. Large codeba
 | **Explicit (Configuration)** | Clear, searchable, no surprises | Verbose, repetitive, decision fatigue |
 | **Implicit (Convention)** | Concise, consistent, fast start | Hidden behavior, learning curve |
 
-**The Python Perspective**: Python's "Explicit is better than implicit" (Zen of Python) seems to contradict CoC. The resolution: conventions should be *discoverable*. Django's admin auto-registration, pytest's test discovery, and FastAPI's type-based validation are all conventions—but they're well-documented and predictable.
+**Python's "Explicit > implicit"** seems contradictory. Resolution: conventions must be *discoverable* and well-documented.
 
 ### Relationship to Other Principles
 
@@ -1868,14 +1832,12 @@ Conventions optimized for common cases may not scale to edge cases. Large codeba
 
 ### Core Concept
 
-Command-Query Separation divides methods into two categories:
+| Type | Purpose | Returns | Side Effects |
+|------|---------|---------|--------------|
+| **Query** | Return info | Yes | None |
+| **Command** | Change state | None | Yes |
 
-| Type | Purpose | Return Value | Side Effects |
-|------|---------|--------------|--------------|
-| **Query** | Return information | Yes | None |
-| **Command** | Change state | None (void) | Yes |
-
-**The insight**: Methods that return values should not change observable state. Methods that change state should not return values.
+Methods returning values shouldn't change state. Methods changing state shouldn't return values.
 
 ### Why CQS Matters
 
@@ -1928,9 +1890,9 @@ def create_user(self, email: str) -> None:
 
 ### Core Concept
 
-Code reusability is the practice of **designing code that can be used in multiple contexts** without modification. Unlike DRY (which eliminates existing duplication), reusability is forward-looking—it anticipates future use cases during initial design.
+**Code usable in multiple contexts without modification.** Unlike DRY (eliminating existing duplication), reusability is forward-looking.
 
-**The paradox**: Code designed for reuse requires upfront investment in abstraction, documentation, and testing. Yet studies show reusable components cost 3-10x more to develop than single-use code. The payoff only materializes when the code is actually reused across multiple contexts.
+**The paradox**: Reusable components cost 3-10x more to develop. Payoff only materializes with actual reuse.
 
 ### Characteristics of Reusable Code
 
@@ -1953,9 +1915,9 @@ Code reusability is the practice of **designing code that can be used in multipl
 
 ### The Reusability Trap
 
-Designing for reuse before proving need creates complexity without value. The Rule of Three applies here too: wait until you've used code in three different contexts before investing in making it truly reusable.
+Designing for reuse before proving need creates complexity without value. Rule of Three applies: wait until three different contexts.
 
-**The Santa Claus Problem**: Open source gives you a billion reusable components. Good luck choosing. Finding, learning, and integrating a library often costs more than the reuse saves. The cost of understanding someone else's abstraction can exceed the cost of writing your own.
+**Santa Claus Problem**: A billion open source components—finding, learning, and integrating often costs more than the reuse saves.
 
 ```python
 # ❌ Wrong - Premature reusability (YAGNI violation)
@@ -2082,9 +2044,7 @@ The construction paradox: demolishing and rebuilding often costs less than renov
 
 ### Core Concept
 
-Parse, Don't Validate is the discipline of **transforming data into more precise types that make illegal states unrepresentable**, rather than checking data and discarding the knowledge gained. A validator returns nothing useful—it checks and throws away information. A parser checks AND returns a more constrained type that preserves what was learned.
-
-**The key insight**: Validation checks something then forgets it. Parsing checks something and *remembers* it in the type system. Parsing is validation with understanding—it transforms not just types but trust boundaries.
+**Transform data into precise types that make illegal states unrepresentable.** Validation checks then forgets. Parsing checks and *remembers* in the type system.
 
 ### Validation vs. Parsing
 
@@ -2115,12 +2075,11 @@ def process(items: NonEmptyList[T]) -> None:
 
 ### The Shotgun Parsing Anti-Pattern
 
-Validation scattered throughout code is called **shotgun parsing**—checks spread everywhere, hoping to catch bad data:
-
-1. **Redundant checks**: Same validation repeated in multiple places
-2. **Inconsistent coverage**: Easy to miss a check somewhere
-3. **Rollback hell**: Invalid data discovered after partial processing
-4. **Silent corruption**: Invalid state if any check is forgotten
+Checks spread everywhere hoping to catch bad data:
+1. **Redundant checks**: Same validation repeated
+2. **Inconsistent coverage**: Easy to miss checks
+3. **Rollback hell**: Invalid data after partial processing
+4. **Silent corruption**: Invalid state if check forgotten
 
 ```python
 # ❌ Wrong - Shotgun parsing
@@ -2146,9 +2105,9 @@ def get_user(user_id: UserId) -> User: ...      # No validation needed
 def update_user(user_id: UserId, data: dict): ...  # Type guarantees validity
 ```
 
-### Primitive Obsession: The Root Problem
+### Primitive Obsession
 
-**Primitive obsession** is over-reliance on built-in types (`str`, `int`, `dict`) to represent domain concepts. Primitives carry no context—if they were validated, that information is lost.
+Over-reliance on `str`, `int`, `dict` for domain concepts. Primitives carry no context—validation knowledge is lost.
 
 ```python
 # ❌ Wrong - Primitive obsession
@@ -2212,7 +2171,7 @@ def handle_request(request: CreateUserRequest) -> Response:
 
 ### Lightweight Parsing with NewType
 
-When full classes feel heavy, `NewType` marks validated data without runtime overhead:
+`NewType` marks validated data without runtime overhead:
 
 ```python
 from typing import NewType
@@ -2277,17 +2236,17 @@ users = TypeAdapter(list[User]).validate_json(raw_json)
 
 ### Core Concept
 
-Immutability is the principle that **once an object is created, its state cannot be modified**. Instead of changing existing data, you create new data structures with the desired changes.
+**Once created, state cannot be modified.** Create new structures with desired changes instead.
 
-**The key insight**: Mutable shared state is the root cause of most concurrency bugs and many aliasing bugs. Immutability eliminates these problems by design.
+Mutable shared state causes most concurrency and aliasing bugs. Immutability eliminates them by design.
 
 ### Benefits
 
-- **Thread Safety Without Locks**: Immutable objects can be freely shared between threads
-- **Eliminates Defensive Copying**: Immutable objects can be shared directly
-- **Simpler Reasoning**: Only understand where an object was created
-- **Safe Hash Keys**: Immutable objects can safely be dictionary keys
-- **Enables Caching**: Cached results remain valid indefinitely
+- **Thread safety without locks**: Share freely between threads
+- **No defensive copying**: Share directly
+- **Simpler reasoning**: Only understand creation site
+- **Safe hash keys**: Can be dictionary keys
+- **Enables caching**: Results remain valid indefinitely
 
 ### Common Violations
 
@@ -2339,9 +2298,7 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 
 ### Core Concept
 
-Idempotency is the property where executing an operation multiple times produces the same result as executing it once. In distributed systems, network failures, retries, and message redelivery make idempotency essential.
-
-**The key insight**: Duplicate requests are not bugs to eliminate—they are inevitable realities to design around.
+**Multiple executions produce same result as one.** In distributed systems, duplicate requests are inevitable—design around them.
 
 ### Implementation Strategies
 
@@ -2390,10 +2347,9 @@ Idempotency is the property where executing an operation multiple times produces
 
 ### Core Concept
 
-Fail-fast is the discipline of **detecting and reporting errors at the earliest possible moment**. Rather than allowing invalid state to propagate, fail-fast code validates assumptions immediately and fails loudly.
+**Detect and report errors at the earliest possible moment.** Don't let invalid state propagate.
 
-**Two complementary practices:**
-1. **Fail-Fast** — Detect errors early, fail immediately with clear diagnostics
+1. **Fail-Fast** — Detect early, fail immediately with clear diagnostics
 2. **Defensive Programming** — Anticipate misuse, validate at boundaries
 
 ### Design by Contract
@@ -2448,7 +2404,7 @@ def __init__(self):
 
 ### Core Concept
 
-Design by Contract (DbC) treats software construction as a series of agreements between clients (callers) and suppliers (routines). Every function has a contract: it promises to deliver certain results (postconditions) **if and only if** the caller meets requirements (preconditions).
+**Agreements between callers and routines.** Functions promise results (postconditions) **if** callers meet requirements (preconditions).
 
 ### The Three Pillars
 
@@ -2491,11 +2447,10 @@ Design by Contract (DbC) treats software construction as a series of agreements 
 
 ### Core Concept
 
-Postel's Law is a design guideline for maximizing interoperability: generate output that strictly conforms to specifications, but accept non-conformant input as long as the meaning is clear. The principle was instrumental in the Internet's explosive growth—when every sender follows specs precisely and every receiver interprets generously, independently developed systems can work together.
+**Conservative output, liberal input.** Generate strictly conformant output; accept non-conformant input if meaning is clear. Instrumental in Internet's growth.
 
-**The two halves:**
-- **Conservative output** — Follow specifications exactly; be predictable
-- **Liberal input** — Accept reasonable variations; enable extensibility
+- **Conservative output** — Follow specs exactly
+- **Liberal input** — Accept reasonable variations
 
 ### Real-World Examples
 
@@ -2518,7 +2473,7 @@ Postel's Law is a design guideline for maximizing interoperability: generate out
 
 ### The Tolerant Reader Pattern
 
-For message consumers, ignore fields you don't understand rather than failing:
+Ignore unknown fields rather than failing:
 
 ```python
 # ❌ Wrong - Strict parsing breaks when API adds fields
@@ -2548,7 +2503,7 @@ Postel's Law has significant criticisms in modern hostile environments:
 | **Hidden Bugs** | Liberal receivers mask sender bugs; problems surface years later |
 | **Bug-for-Bug Compatibility** | New implementations must replicate bugs to maintain compatibility |
 
-**The HTML Lesson**: Browsers' tolerance of broken HTML enabled rapid web growth but created rendering nightmares. The "incorrect" way became the only way—exact opposite of the intended outcome.
+**HTML Lesson**: Browser tolerance enabled rapid growth but created nightmares—"incorrect" became the only way.
 
 ### Modern Balanced Approach
 
@@ -2596,7 +2551,7 @@ def process_webhook(data: dict) -> None:
 
 ### Core Concept
 
-Resilience is the ability of a system to **continue operating despite partial failures**. Resilient systems anticipate failure, implement recovery strategies, and degrade gracefully.
+**Continue operating despite partial failures.** Anticipate failure, implement recovery, degrade gracefully.
 
 ### The Three Pillars
 
@@ -2648,17 +2603,14 @@ def get_recommendations(user_id: str) -> list[Product]:
 
 ### Core Concept
 
-The Principle of Least Privilege (PoLP) mandates that **every user, process, or program receives only the minimum permissions necessary to perform its intended function—and nothing more**.
+**Minimum permissions necessary for intended function—nothing more.**
 
-**Two critical security objectives:**
-1. **Minimize Attack Surface** — Fewer permissions mean fewer entry points for attackers
-2. **Limit Blast Radius** — When breaches occur, damage is contained to the compromised scope
+1. **Minimize Attack Surface** — Fewer permissions = fewer entry points
+2. **Limit Blast Radius** — Contain damage when breaches occur
 
-**The key insight**: 74% of data breaches start with privileged credential abuse. By limiting what any single entity can access, you limit what any single compromise can damage.
+74% of breaches start with privileged credential abuse.
 
-### Why It Matters in Code
-
-PoLP isn't just an ops concern—it's a coding principle at every level:
+### Application at Every Level
 
 | Level | Example |
 |-------|---------|
@@ -2728,10 +2680,7 @@ Resource: "arn:aws:s3:::my-bucket/uploads/*"
 
 ### Privilege Creep
 
-**Privilege creep** occurs when permissions accumulate beyond current needs:
-- Role changes without revoking old permissions
-- Temporary access that becomes permanent
-- Misleading role names (a "read only" role that actually has write access)
+Permissions accumulate beyond current needs: role changes without revocation, temporary access becoming permanent, misleading role names.
 
 **Prevention**: Regular access reviews, automated permission expiration, minimal scope at design time.
 
@@ -2742,7 +2691,7 @@ Resource: "arn:aws:s3:::my-bucket/uploads/*"
 | **Zero Trust** | Verify identity ("never trust, always verify") |
 | **Least Privilege** | Limit access ("need to know") |
 
-**They're partners**: Zero Trust ensures requests are authenticated; PoLP ensures authenticated users get only minimum necessary access. Together they form defense in depth.
+Partners: Zero Trust authenticates requests; PoLP limits authenticated access. Defense in depth.
 
 ### Summary
 
@@ -2768,11 +2717,7 @@ Resource: "arn:aws:s3:::my-bucket/uploads/*"
 
 ### Core Concept
 
-The Boy Scout Rule applies the scouting principle of "leave the campground cleaner than you found it" to software development. **With each commit, leave the code slightly better than you found it**—even if you didn't make the mess.
-
-**The key insight**: Code quality degrades over time. Without active maintenance, technical debt accumulates. The Boy Scout Rule provides a sustainable alternative to periodic "big cleanup" sprints by making improvement continuous and incremental.
-
-**The philosophy**: "The act of leaving a mess in the code should be as socially unacceptable as littering."
+**With each commit, leave code slightly better than you found it.** Without active maintenance, technical debt accumulates. Continuous small improvements beat periodic "refactoring sprints."
 
 ### Why It Works
 
@@ -2799,7 +2744,7 @@ Small improvements that take seconds to minutes:
 
 ### The Campground, Not the Forest
 
-**Critical constraint**: Clean the campground, not the entire forest.
+Clean the campground, not the entire forest.
 
 ```python
 # ❌ Wrong - Changed 350 files to remove blank lines project-wide
@@ -2815,7 +2760,7 @@ def process_order(order_id: int) -> Order:
     return self.apply_discount(order)
 ```
 
-**Scope your cleanup to files you're already touching.** If you notice issues elsewhere, create a ticket—don't fix the world in one commit.
+Scope cleanup to files you're already touching. Issues elsewhere? Create a ticket.
 
 ### Common Violations
 
@@ -2833,15 +2778,13 @@ def process_order(order_id: int) -> Order:
 
 ### When NOT to Apply
 
-**The Counterargument**: Some argue the rule removes learning opportunities—when you fix others' mistakes silently, they never learn. Consider: if the author is available, quick feedback may be better than silent fixes.
-
 **Exceptions**:
 - **Unfamiliar code**: Don't "improve" code you don't fully understand
 - **No test coverage**: Risky refactors in untested code can introduce bugs
 - **Time-critical fixes**: Production incidents need the fix, not cleanup
 - **Shared/external code**: Extra care when changes affect other teams
 
-**The Middle Ground**: Clean up obvious issues. For larger concerns, create a ticket and inform the author.
+Clean up obvious issues; for larger concerns, create a ticket.
 
 ### Anti-Patterns
 
@@ -2876,7 +2819,7 @@ def add_discount(order: Order) -> Order:
 | **Opportunistic Refactoring** | Same concept, different name—improve code while you're there |
 | **Technical Debt** | Boy Scout Rule is continuous debt payment |
 
-**The Broken Windows Connection**: In criminology, the "broken windows theory" suggests that visible signs of neglect invite more neglect. The same applies to code—if developers see messy code that nobody fixes, they're more likely to add to the mess. The Boy Scout Rule sends the opposite signal: "This code is cared for."
+**Broken Windows**: Neglect invites more neglect. Boy Scout Rule signals "this code is cared for."
 
 ### Summary
 
@@ -2896,7 +2839,7 @@ def add_discount(order: Order) -> Order:
 
 ### Core Concept
 
-**Observability** makes system behavior visible through structured telemetry. In distributed systems, you cannot attach a debugger—observability becomes your primary debugging tool.
+**Make system behavior visible through structured telemetry.** In distributed systems, observability is your primary debugging tool.
 
 ### The Three Pillars
 
@@ -2950,15 +2893,9 @@ def add_discount(order: Order) -> Order:
 
 ### The Meta-Principle
 
-> **"Rules are for the guidance of wise men and the obedience of fools."**
-> — Douglas Bader
+> **"Rules are for the guidance of wise men and the obedience of fools."** — Douglas Bader
 
-Every principle in this document exists because it *usually* improves code. But context is king:
-
-1. **Principles are heuristics, not laws** — They have exceptions
-2. **Understand WHY before applying** — Cargo-culting principles is an anti-pattern
-3. **Measure the trade-off** — If following a principle makes code worse, don't follow it
-4. **Code for your context** — Solo project ≠ team project ≠ library ≠ framework
+Principles are heuristics, not laws. Understand WHY before applying. If following makes code worse, don't.
 
 ---
 
