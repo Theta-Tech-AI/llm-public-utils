@@ -117,6 +117,23 @@ If they affirm, then implement them next. When implementing them, consider if so
 - **Incidental similarity is not duplication**: Don't merge code that happens to look similar but represents different concepts
 - **Be specific**: Reference exact line numbers and provide concrete before/after code
 
+### Priority Matrix
+
+*Prioritize fixes by impact and effort.*
+
+| Priority | Type | Examples | Fix When |
+|----------|------|----------|----------|
+| **P0: Critical** | Security, data loss | SQL injection, unvalidated input, race conditions | Immediately |
+| **P1: High** | Bugs waiting to happen | Missing error handling, silent failures, unclear ownership | This PR |
+| **P2: Medium** | Maintainability | DRY violations (3+), god classes, deep nesting | When touching file |
+| **P3: Low** | Polish | Magic numbers, naming, minor duplication | If time permits |
+| **P4: Optional** | Style | Formatting, comment cleanup, minor refactors | Boy Scout Rule |
+
+**Effort modifiers:**
+- **Quick win** (< 5 min): Bump up one priority level
+- **Risky change** (no tests): Bump down one level, suggest adding tests first
+- **Requires coordination**: Note in recommendations, may need team discussion
+
 ### Example Output
 
 #### Summary
@@ -184,6 +201,68 @@ validate_email(email)
 3. Consider splitting `UserManager` into `UserService` and `UserRepository` (SRP - optional, low priority)
 
 ## Coding Principles Reference
+
+### Quick Diagnostic Guide
+
+*See a symptom? Jump to the relevant principle.*
+
+| Symptom | Likely Principle | Quick Fix |
+|---------|------------------|-----------|
+| Function > 50 lines | [Small Functions](#small-functions) | Extract named helpers |
+| Deep nesting (3+ levels) | [Guard Clauses](#guard-clauses-early-return), [Cognitive Load](#cognitive-load) | Early returns |
+| Copy-pasted code (3+ times) | [DRY](#dry-dont-repeat-yourself) | Extract shared function |
+| Magic numbers/strings | [Self-Documenting Code](#self-documenting-code) | Named constants |
+| Class doing many things | [SOLID (SRP)](#solid-principles), [Separation of Concerns](#separation-of-concerns) | Split by responsibility |
+| Long parameter lists (5+) | [Encapsulation](#encapsulation) | Parameter object |
+| `a.b().c().d()` chains | [Law of Demeter](#law-of-demeter) | Delegate to intermediate |
+| Speculative features | [YAGNI](#yagni-you-arent-gonna-need-it) | Delete until needed |
+| Comments explaining "what" | [Self-Documenting Code](#self-documenting-code) | Rename to be obvious |
+| Stale/wrong comments | [Documentation Discipline](#documentation-discipline) | Delete or fix |
+| Same data in multiple tables | [Single Source of Truth](#single-source-of-truth) | Designate authoritative source |
+| Tests require complex setup | [Dependency Injection](#dependency-injection) | Inject dependencies |
+| Inheritance hierarchy > 2 deep | [Composition Over Inheritance](#composition-over-inheritance) | Compose objects |
+| Boolean parameters | [Small Functions](#small-functions), [KISS](#kiss-keep-it-simple-stupid) | Separate functions |
+| Inconsistent error handling | [Fail-Fast](#fail-fast--defensive-programming) | Validate at entry |
+| Silent failures | [Fail-Fast](#fail-fast--defensive-programming), [Observability](#observability--transparency) | Fail loudly, log |
+| Getters exposing internals | [Encapsulation](#encapsulation) | Tell, don't ask |
+
+### Principle Tensions
+
+*Principles sometimes conflict. Here's how to resolve common tensions.*
+
+| Tension | Resolution |
+|---------|------------|
+| **DRY vs. Coupling** | Duplication is cheaper than wrong abstraction. Wait for Rule of Three. If abstracting requires parameters/conditionals to handle differences, keep separate. |
+| **YAGNI vs. Extensibility** | Build for today, but keep code malleable. Don't add extension points; ensure code is easy to modify when needed. |
+| **KISS vs. DRY** | Three lines of obvious code beats one line of clever abstraction. Optimize for reader comprehension. |
+| **Fail-Fast vs. Resilience** | Fail fast for bugs (programmer errors). Retry/degrade for operational failures (network, disk). |
+| **Encapsulation vs. Testing** | Prefer testing through public interface. If you need to test internals, the design may need work. |
+| **Postel's Law vs. Fail-Fast** | Be liberal on input *format* (accept trailing whitespace), but strict on *required data* (reject missing fields). |
+| **Small Functions vs. Cognitive Load** | Too many tiny functions forces readers to jump around. Balance: functions should do one thing, but that "thing" can be substantial. |
+| **DRY vs. Decoupling** | Shared code creates coupling. If two teams/services share code, changes affect both. Sometimes copy-paste is correct for independence. |
+| **Convention vs. Explicitness** | Conventions reduce boilerplate but hide behavior. Document conventions; allow overrides. |
+
+### Anti-Pattern Quick Reference
+
+*Fast detection of common code smells.*
+
+| Anti-Pattern | Symptoms | Violates |
+|--------------|----------|----------|
+| **God Class** | 500+ lines, "Manager"/"Handler" suffix, does everything | SRP, Modularity |
+| **Feature Envy** | Method uses another class's data more than its own | Encapsulation |
+| **Shotgun Surgery** | One change requires edits in 10+ files | Separation of Concerns |
+| **Primitive Obsession** | Passing `(str, str, int)` instead of `User` object | Encapsulation |
+| **Data Clumps** | Same 3-4 params always passed together | Encapsulation |
+| **Long Method** | Function > 50 lines, multiple levels of abstraction | Small Functions |
+| **Speculative Generality** | Unused interfaces, "for future use" code | YAGNI |
+| **Dead Code** | Unreachable code, unused functions | YAGNI, Boy Scout |
+| **Magic Numbers** | `if x > 86400` instead of `SECONDS_PER_DAY` | Self-Documenting |
+| **Inappropriate Intimacy** | Class accesses another's private details | Encapsulation, LoD |
+| **Message Chains** | `a.getB().getC().getD()` | Law of Demeter |
+| **Middle Man** | Class delegates everything, adds no value | KISS |
+| **Refused Bequest** | Subclass doesn't use inherited methods | Liskov, Composition |
+| **Comments as Deodorant** | Comments explaining bad code instead of fixing it | Self-Documenting |
+| **Cargo Cult** | Patterns used without understanding why | KISS, YAGNI |
 
 ---
 
@@ -2548,6 +2627,37 @@ def add_discount(order: Order) -> Order:
 3. **Propagate context** (request IDs, trace IDs)
 4. **Return metadata** in responses for transparency
 5. **Never log secrets** — sanitize sensitive data
+
+---
+
+## When to Relax Rules
+
+*Over-applying principles causes as much harm as ignoring them. Know when to make exceptions.*
+
+| Context | Relaxed Principles | Why |
+|---------|-------------------|-----|
+| **Prototypes/Spikes** | All | Exploring, not building. Throw it away. |
+| **Test Code** | DRY | DAMP (Descriptive And Meaningful Phrases) > DRY. Readability trumps deduplication. |
+| **Performance-Critical** | Abstractions, DI | Hot paths may need inlining. Profile first. |
+| **Scripts < 100 lines** | Modularity, SRP | Overhead exceeds benefit. Keep it simple. |
+| **Glue Code** | Most patterns | Thin integration layers don't need architecture. |
+| **Generated Code** | All | Don't hand-edit generated code. Fix the generator. |
+| **Legacy Migration** | Boy Scout | Large refactors need dedicated effort, not incremental changes. |
+| **Data Transfer Objects** | Encapsulation | DTOs are meant to expose data. That's their job. |
+| **Configuration** | YAGNI | Config flexibility is often worth it—cheaper than redeployment. |
+| **Security Boundaries** | Postel's Law | Be paranoid, not liberal. Validate everything strictly. |
+
+### The Meta-Principle
+
+> **"Rules are for the guidance of wise men and the obedience of fools."**
+> — Douglas Bader
+
+Every principle in this document exists because it *usually* improves code. But context is king:
+
+1. **Principles are heuristics, not laws** — They have exceptions
+2. **Understand WHY before applying** — Cargo-culting principles is an anti-pattern
+3. **Measure the trade-off** — If following a principle makes code worse, don't follow it
+4. **Code for your context** — Solo project ≠ team project ≠ library ≠ framework
 
 ---
 
