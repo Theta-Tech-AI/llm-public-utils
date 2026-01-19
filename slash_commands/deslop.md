@@ -1,4 +1,5 @@
 # Deslop: Code Quality Analysis Command
+<sub><sup>Note: This file is ≈27k tokens as of 2026-01-19</sup></sub>
 
 > A comprehensive slash command for identifying and fixing "slop" in your codebase. If you use Claude Code, drop this file into your `~/.claude/commands/` folder. If you use OpenCode, put it in `~/.opencode/commands/` folder. Then, restart your agent harness and run `/deslop`.
 
