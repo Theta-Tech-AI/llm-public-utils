@@ -62,6 +62,10 @@ Whether or not you use this deslop command on your code base, you should read al
        - [Observability](#observability--transparency) — understand what systems do in production
 3. [When to Relax Rules](#when-to-relax-rules) — context over dogma
 4. [References](#references) — foundational texts and resources
+   - [Foundational Texts](#foundational-texts) — essential books that shaped software design
+   - [Seminal Articles & Essays](#seminal-articles--essays) — influential online writings
+   - [Online Resources](#online-resources) — living references for patterns and principles
+   - [Concept Attribution](#concept-attribution) — origins of specific ideas in this document
 
 ---
 
@@ -1254,6 +1258,15 @@ DRY is about **knowledge**, not code. Avoid duplication of *meaning*, not syntax
 
 Patience to find the *right* abstraction. Two occurrences can't distinguish true duplication from incidental similarity. Three reveal the pattern.
 
+### The Wrong Abstraction
+
+> "Duplication is far cheaper than the wrong abstraction."
+> — Sandi Metz
+
+**The sunk cost trap**: Developer A creates an abstraction. Developer B needs similar functionality but not quite—adds a parameter. Developer C adds another. Developer D adds conditionals. Eventually the abstraction becomes incomprehensible, but no one deletes it because of the investment already made.
+
+**The fix**: When an abstraction accumulates conditionals or parameters to handle "just one more case," inline it back into all callers, delete the unnecessary parts, and start fresh. It's cheaper to re-extract than to maintain the wrong abstraction.
+
 ### Recognizing True vs. Incidental Duplication
 
 | True Knowledge Duplication (FIX) | Incidental Similarity (LEAVE) |
@@ -1575,6 +1588,13 @@ A method `m` of object `a` may only invoke methods of:
 | **Fluent interfaces** | Designed for chaining; returns `self` |
 | **Data Transfer Objects** | No behavior to encapsulate |
 | **Standard library** | `"hello".strip().upper()` — string ops |
+
+### A Note on Tell-Don't-Ask
+
+> "Tell-Don't-Ask encourages moving behavior into objects, but don't become a Getter Eradicator."
+> — Martin Fowler
+
+Objects sometimes collaborate effectively by *providing* information. Transformers that simplify data for clients (like `EmbeddedDocument`) are valid query methods. The principle is about co-locating behavior with data, not eliminating all accessors.
 
 ### Summary
 
@@ -3032,17 +3052,60 @@ Principles are heuristics, not laws. Understand WHY before applying. If followin
 
 [↑ top](#table-of-contents)
 
-
 ### Foundational Texts
-- *The Pragmatic Programmer* — Andy Hunt & Dave Thomas
-- *Clean Code* — Robert C. Martin
-- *Design Patterns* — Gang of Four
-- *Object-Oriented Software Construction* — Bertrand Meyer
+
+Essential books that shaped modern software design thinking.
+
+| Book | Author(s) | Key Contribution |
+|------|-----------|------------------|
+| *The Pragmatic Programmer* | Andy Hunt & Dave Thomas | Practical heuristics including DRY, orthogonality, tracer bullets, and "Tell Don't Ask" |
+| *Clean Code* | Robert C. Martin | Function size, naming, and the Single Responsibility Principle |
+| *A Philosophy of Software Design* | John Ousterhout | Deep vs. shallow modules, complexity as the root problem, strategic vs. tactical programming |
+| *Design Patterns* | Gang of Four (Gamma, Helm, Johnson, Vlissides) | 23 reusable OO patterns; established patterns vocabulary |
+| *Object-Oriented Software Construction* | Bertrand Meyer | Design by Contract, Command-Query Separation, Open-Closed Principle |
+| *Refactoring* | Martin Fowler | Systematic code improvement techniques; code smells catalog |
+| *Working Effectively with Legacy Code* | Michael Feathers | Seams, characterization tests, safely changing untested code |
+| *Domain-Driven Design* | Eric Evans | Ubiquitous language, bounded contexts, strategic design |
+
+### Seminal Articles & Essays
+
+Influential writings that introduced or crystallized important concepts.
+
+| Article | Author | Year | Key Idea |
+|---------|--------|------|----------|
+| [Parse, Don't Validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) | Alexis King | 2019 | Transform unstructured data into types that prove validity; let the type system enforce invariants |
+| [The Wrong Abstraction](https://sandimetz.com/blog/2016/1/20/the-wrong-abstraction) | Sandi Metz | 2016 | "Duplication is far cheaper than the wrong abstraction"; prefer inline code over premature DRY |
+| [Cognitive Load is What Matters](https://github.com/zakirullin/cognitive-load) | Artem Zakirullin | 2023 | Minimize mental effort required to understand code; endorsed by Rob Pike, Andrej Karpathy |
+| [Tell Don't Ask](https://martinfowler.com/bliki/TellDontAsk.html) | Martin Fowler | 2013 | Tell objects what to do rather than asking for data and acting on it |
+| [Four Rules of Simple Design](https://martinfowler.com/bliki/BeckDesignRules.html) | Kent Beck | ~1990s | (1) Passes tests, (2) Reveals intention, (3) No duplication, (4) Fewest elements |
+| [Law of Demeter](https://www2.ccs.neu.edu/research/demeter/papers/law-of-demeter/oopsla88-law-of-demeter.pdf) | Karl Lieberherr et al. | 1987 | Only talk to your immediate friends; minimize coupling chains |
 
 ### Online Resources
-- [Martin Fowler's Bliki](https://martinfowler.com/bliki/)
-- [Refactoring Guru](https://refactoring.guru/)
-- [DevIQ Principles](https://deviq.com/principles/)
+
+Living references for patterns, principles, and refactoring techniques.
+
+- [Martin Fowler's Bliki](https://martinfowler.com/bliki/) — Authoritative essays on patterns, refactoring, and architecture
+- [Refactoring Guru](https://refactoring.guru/) — Visual catalog of design patterns and refactoring techniques
+- [DevIQ Principles](https://deviq.com/principles/) — Concise summaries of software development principles
+- [c2 Wiki (Cunningham & Cunningham)](http://wiki.c2.com/) — The original patterns wiki; historical discussions on OO design
+- [Source Making](https://sourcemaking.com/) — Design patterns, anti-patterns, and refactoring catalog
+
+### Concept Attribution
+
+Origins of specific principles referenced in this document.
+
+| Concept | Origin |
+|---------|--------|
+| **KISS** | U.S. Navy, 1960s; popularized by Kelly Johnson (Lockheed Skunk Works) |
+| **YAGNI** | Extreme Programming (Kent Beck, Ron Jeffries), late 1990s |
+| **DRY** | *The Pragmatic Programmer* (Hunt & Thomas), 1999 |
+| **SOLID** | Robert C. Martin, early 2000s (acronym coined by Michael Feathers) |
+| **Separation of Concerns** | Edsger Dijkstra, 1974 |
+| **Design by Contract** | Bertrand Meyer, 1986 (Eiffel language) |
+| **Postel's Law** | Jon Postel, RFC 761 (TCP), 1980 |
+| **Deep Modules** | John Ousterhout, *A Philosophy of Software Design*, 2018 |
+| **Rule of Three** | Folk wisdom; formalized in *Refactoring* (Fowler) |
+| **Cognitive Load** | Psychology (John Sweller, 1988); applied to code by Zakirullin, 2023 |
 
 ---
 
