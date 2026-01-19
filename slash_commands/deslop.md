@@ -60,22 +60,24 @@ Whether or not you use this deslop command on your code base, you should read al
      - [Maintainability & Operations](#maintainability--operations) — keeping systems healthy over time
        - [Boy Scout Rule](#boy-scout-rule) — leave code better than you found it
        - [Observability](#observability--transparency) — understand what systems do in production
+3. [When to Relax Rules](#when-to-relax-rules) — context over dogma
+4. [References](#references) — foundational texts and resources
 
 ---
 
-## The Deslop Command
+## The Deslop Command [↑](#table-of-contents)
 
 You are a code quality analyzer. Your task is to identify "slop" - code that violates established coding principles - and suggest concrete improvements.
 
 At the end, figure out what you should actually change in the code and ask the user if you should make the changes. Then make the changes if the user affirms.
 
-### Target
+### Target [↑](#table-of-contents)
 
 Analyze: $ARGUMENTS
 
 If no argument provided, operate on the current folder or current code base.
 
-### Process
+### Process [↑](#table-of-contents)
 
 1. **Read all coding principles** from this document to understand what good code looks like.
 2. **Read the target file(s)** using the Read tool
@@ -83,9 +85,9 @@ If no argument provided, operate on the current folder or current code base.
 4. **Identify violations** organized by principle
 5. **Suggest concrete fixes** with before/after examples
 
-### Output Format
+### Output Format [↑](#table-of-contents)
 
-#### Summary
+#### Summary [↑](#table-of-contents)
 
 Brief overview of code health (1-2 sentences).
 
@@ -120,7 +122,7 @@ Then, ask the user if they'd like to implement some or all of the changes.
 
 If they affirm, then implement them next. When implementing them, consider if some of the changes could be implemented in parallel with async agents for efficiency.
 
-### Important Notes
+### Important Notes [↑](#table-of-contents)
 
 - **Don't over-engineer**: Suggesting abstractions for single-use code violates YAGNI/KISS
 - **Context matters**: Test code has different standards (DAMP over DRY)
@@ -128,7 +130,7 @@ If they affirm, then implement them next. When implementing them, consider if so
 - **Incidental similarity is not duplication**: Don't merge code that happens to look similar but represents different concepts
 - **Be specific**: Reference exact line numbers and provide concrete before/after code
 
-### Priority Matrix
+### Priority Matrix [↑](#table-of-contents)
 
 *Prioritize fixes by impact and effort.*
 
@@ -145,9 +147,9 @@ If they affirm, then implement them next. When implementing them, consider if so
 - **Risky change** (no tests): Bump down one level, suggest adding tests first
 - **Requires coordination**: Note in recommendations, may need team discussion
 
-### Example Output
+### Example Output [↑](#table-of-contents)
 
-#### Summary
+#### Summary [↑](#table-of-contents)
 
 The module has good structure but contains several DRY violations and magic numbers that reduce maintainability.
 
@@ -211,9 +213,9 @@ validate_email(email)
 2. Replace magic numbers with named constants (Self-Documenting - affects 4 locations)
 3. Consider splitting `UserManager` into `UserService` and `UserRepository` (SRP - optional, low priority)
 
-## Coding Principles Reference
+## Coding Principles Reference [↑](#table-of-contents)
 
-### Quick Diagnostic Guide
+### Quick Diagnostic Guide [↑](#table-of-contents)
 
 *See a symptom? Jump to the relevant principle.*
 
@@ -237,7 +239,7 @@ validate_email(email)
 | Silent failures | [Fail-Fast](#fail-fast--defensive-programming), [Observability](#observability--transparency) | Fail loudly, log |
 | Getters exposing internals | [Encapsulation](#encapsulation) | Tell, don't ask |
 
-### Principle Tensions
+### Principle Tensions [↑](#table-of-contents)
 
 *Principles sometimes conflict. Here's how to resolve common tensions.*
 
@@ -253,7 +255,7 @@ validate_email(email)
 | **DRY vs. Decoupling** | Shared code creates coupling. If two teams/services share code, changes affect both. Sometimes copy-paste is correct for independence. |
 | **Convention vs. Explicitness** | Conventions reduce boilerplate but hide behavior. Document conventions; allow overrides. |
 
-### Anti-Pattern Quick Reference
+### Anti-Pattern Quick Reference [↑](#table-of-contents)
 
 *Fast detection of common code smells.*
 
@@ -277,25 +279,25 @@ validate_email(email)
 
 ---
 
-# Part I: Clean Code
+# Part I: Clean Code [↑](#table-of-contents)
 
 > *Writing clear, simple, readable code. These principles govern the act of writing code itself—making each line, function, and file as clear as possible.*
 
 ---
 
-# Simplicity & Minimalism
+# Simplicity & Minimalism [↑](#table-of-contents)
 
 *The foundation of clean code: do less, but better. These principles share a core insight—complexity is the enemy. KISS provides the philosophy, YAGNI prevents premature complexity, Small Functions break down complexity, and Guard Clauses eliminate nested complexity.*
 
 ---
 
-## KISS: Keep It Simple, Stupid
+## KISS: Keep It Simple, Stupid [↑](#table-of-contents)
 
 
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 KISS is the discipline of **avoiding unnecessary complexity**. Coined by Kelly Johnson at Lockheed Skunk Works (1960), the principle states systems work best when kept simple.
 
@@ -305,20 +307,20 @@ KISS is the discipline of **avoiding unnecessary complexity**. Coined by Kelly J
 
 **Simple ≠ Easy:** Simple systems have few interconnected parts. Easy tasks require little effort.
 
-### Measuring Complexity
+### Measuring Complexity [↑](#table-of-contents)
 
 | Metric | Measures | Threshold | Use Case |
 |--------|----------|-----------|----------|
 | **Cyclomatic Complexity** | Independent paths through code | ≤10/function | Test planning |
 | **Cognitive Complexity** | Mental effort to understand | ≤15/function | Readability |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**: Single-implementation interfaces, factories of factories, deep inheritance, "clever" one-liners.
 
 **Verbal Cues**: "This pattern will be useful when...", "Let me make this more flexible...", "This is the proper enterprise way..."
 
-### Four Classes of Violations
+### Four Classes of Violations [↑](#table-of-contents)
 
 | Class | Example |
 |-------|---------|
@@ -327,7 +329,7 @@ KISS is the discipline of **avoiding unnecessary complexity**. Coined by Kelly J
 | **Unnecessary Abstraction** | Interface for single implementation |
 | **Speculative Generality** | Calculator with plugin architecture |
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Over-engineered calculator
@@ -350,11 +352,11 @@ def calculate(a: float, b: float, op: str) -> float:
     raise ValueError(f"Unknown operation: {op}")
 ```
 
-### The Simplicity Test
+### The Simplicity Test [↑](#table-of-contents)
 
 Before adding complexity: **Can a junior understand this?** — **Does it solve a problem we have today?** — **Am I trying to impress or communicate?**
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Fewer parts, fewer connections** — complexity kills maintainability
 2. **Simple ≠ Easy** — simple systems may require skill to build
@@ -365,19 +367,19 @@ Before adding complexity: **Can a junior understand this?** — **Does it solve 
 
 ---
 
-## YAGNI: You Aren't Gonna Need It
+## YAGNI: You Aren't Gonna Need It [↑](#table-of-contents)
 
 
 > "Always implement things when you actually need them, never when you just foresee that you need them."
 > — Ron Jeffries, XP co-founder
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 YAGNI is the discipline of **not building functionality until it's required**. Every feature has costs: development, testing, maintenance, cognitive load. Features you don't need yet carry these costs without delivering value.
 
 **The trap**: "While I'm here, I'll just add..." — **The reality**: ⅔ of speculative features fail to improve their target metrics.
 
-### Four Costs of YAGNI Violations
+### Four Costs of YAGNI Violations [↑](#table-of-contents)
 
 | Cost | Description |
 |------|-------------|
@@ -386,7 +388,7 @@ YAGNI is the discipline of **not building functionality until it's required**. E
 | **Carry** | Complexity slowing all future development |
 | **Repair** | Fixing when requirements differ from predictions |
 
-### When YAGNI Applies
+### When YAGNI Applies [↑](#table-of-contents)
 
 | Apply YAGNI | Don't Apply YAGNI |
 |-------------|-------------------|
@@ -396,13 +398,13 @@ YAGNI is the discipline of **not building functionality until it's required**. E
 | Premature optimization | CI/CD and testing infrastructure |
 | Generic frameworks for single use | Data migration paths |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**: Config options no one uses, ABC with one implementation, extensibility points never extended, commented "future" code, unused API endpoints.
 
 **Verbal Cues**: "We might need this later", "Just in case", "While we have the hood open...", "For future flexibility..."
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Speculative abstraction
@@ -420,11 +422,11 @@ def export_to_json(data):
 # Add abstraction when second exporter is needed
 ```
 
-### The Delete Test
+### The Delete Test [↑](#table-of-contents)
 
 Before adding code: **Who needs this today?** (not "might need") — **What breaks without it?** (if nothing, skip it) — **Can we add it later?** (usually yes, with better understanding)
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Build only what's needed now** — ⅔ of speculative features fail
 2. **Delete speculative code** — git has history
@@ -434,13 +436,13 @@ Before adding code: **Who needs this today?** (not "might need") — **What brea
 
 ---
 
-## Small Functions
+## Small Functions [↑](#table-of-contents)
 
 
 > "The first rule of functions is that they should be small. The second rule of functions is that they should be smaller than that."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Small Functions is the principle that **functions should be short, focused, and do one thing well**. Decompose logic into small, named units that can be understood at a glance.
 
@@ -451,7 +453,7 @@ Small Functions is the principle that **functions should be short, focused, and 
 - **Warning**: 20-30 lines
 - **Smell**: 50+ lines
 
-### Why Small Functions Work
+### Why Small Functions Work [↑](#table-of-contents)
 
 | Large Functions | Small Functions |
 |-----------------|-----------------|
@@ -460,7 +462,7 @@ Small Functions is the principle that **functions should be short, focused, and 
 | Difficult to test in isolation | Easy to unit test |
 | Changes risk breaking unrelated logic | Changes are localized |
 
-### The Stepdown Rule
+### The Stepdown Rule [↑](#table-of-contents)
 
 Code should read like a top-down narrative, descending one level of abstraction at a time:
 
@@ -474,7 +476,7 @@ def process_order(order: Order) -> Receipt:
     return create_receipt(order)
 ```
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**:
 - Functions over 30 lines
@@ -487,7 +489,7 @@ def process_order(order: Order) -> Receipt:
 - "Let me add a comment to explain this section"
 - "I'll refactor it later when we have time"
 
-### When NOT to Apply
+### When NOT to Apply [↑](#table-of-contents)
 
 **The Counterargument** (Cindy Sridharan's "Small Functions Considered Harmful"):
 - **Loss of locality**: Jumping across many files increases cognitive load
@@ -502,7 +504,7 @@ def process_order(order: Order) -> Receipt:
 
 **The test**: Can a newcomer understand this function in one read? If yes, it's fine—regardless of line count.
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Too shallow - interface complexity exceeds implementation
@@ -517,7 +519,7 @@ def get_active_users(user_ids: list[int]) -> list[User]:
     return sorted(active, key=lambda u: u.last_active, reverse=True)
 ```
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Connection |
 |-----------|------------|
@@ -527,7 +529,7 @@ def get_active_users(user_ids: list[int]) -> list[User]:
 | **Self-Documenting Code** | Function names replace comments when functions are small |
 | **KISS** | Small functions are simpler to understand |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Keep functions short** — 5-20 lines is a good target, 50+ is a smell
 2. **One level of abstraction** — Don't mix high-level flow with low-level details
@@ -537,13 +539,13 @@ def get_active_users(user_ids: list[int]) -> list[User]:
 
 ---
 
-## Guard Clauses (Early Return)
+## Guard Clauses (Early Return) [↑](#table-of-contents)
 
 
 > "The guard clause says, 'This is rare, and if it happens, do something and get out.'"
 > — Martin Fowler, *Refactoring*
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Early exit when preconditions aren't met. Check invalid states at the top, return immediately. Keeps the "happy path" at outermost indentation.
 
@@ -565,7 +567,7 @@ if () {
 
 Guard clauses flatten this by handling exceptions first.
 
-### The Transformation
+### The Transformation [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Nested conditionals obscure the happy path
@@ -594,7 +596,7 @@ def get_pay_amount(employee):
     return normal_pay_amount()
 ```
 
-### When to Use
+### When to Use [↑](#table-of-contents)
 
 1. **Precondition validation** — null checks, empty inputs, invalid states
 2. **Edge case handling** — special states that bypass normal logic
@@ -612,7 +614,7 @@ def send_welcome_email(user):
     mailer.send(user.email, "Welcome!")
 ```
 
-### When NOT to Use
+### When NOT to Use [↑](#table-of-contents)
 
 When both branches are equally valid, use conventional conditionals:
 
@@ -633,7 +635,7 @@ def process_order(order):
 
 A guard clause signals "this is unusual—handle it and leave." Equal-weight branches deserve equal-weight syntax.
 
-### The Single-Return Myth
+### The Single-Return Myth [↑](#table-of-contents)
 
 Some codebases enforce "single return point" rules—a practice from Dijkstra's era when early returns could cause resource leaks in C. In modern languages with garbage collection and `try/finally`, this constraint is obsolete. The single-return style forces mutable state to accumulate results:
 
@@ -656,7 +658,7 @@ def validate(data):
     return True
 ```
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Guard clause buried in the middle:**
 
@@ -678,7 +680,7 @@ def process(item):
     return item.execute()
 ```
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Relationship |
 |-----------|--------------|
@@ -687,7 +689,7 @@ def process(item):
 | **Small Functions** | Guards work best in small, focused functions |
 | **Design by Contract** | Guards enforce preconditions at runtime |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Exit early for exceptional cases** — handle invalid states at the top
 2. **Flatten nested conditionals** — each guard removes a nesting level (see also: [Cognitive Load](#cognitive-load))
@@ -697,23 +699,23 @@ def process(item):
 
 ---
 
-# Clarity & Readability
+# Clarity & Readability [↑](#table-of-contents)
 
 *Code is read 10x more than it's written. Cognitive Load explains why clarity matters (working memory limits), while Self-Documenting Code and Documentation Discipline provide the how. Elegance adds the aesthetic dimension, and Principle of Least Surprise ensures predictability.*
 
 ---
 
-## Cognitive Load
+## Cognitive Load [↑](#table-of-contents)
 
 
 > "Cognitive load is how much a developer needs to think in order to complete a task."
 > — Artem Zakirullin
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Mental effort to understand code. Working memory holds ~**4 chunks**; exceed this and comprehension fails. **We read code 10x more than we write it**—every clever trick forces readers to hold more in their head.
 
-### Three Types of Load
+### Three Types of Load [↑](#table-of-contents)
 
 | Type | Description | Reducible? |
 |------|-------------|------------|
@@ -721,7 +723,7 @@ Mental effort to understand code. Working memory holds ~**4 chunks**; exceed thi
 | **Extraneous** | How info is presented | **Yes—focus here** |
 | **Germane** | Builds understanding | Desirable |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Each condition fills working memory
@@ -754,7 +756,7 @@ if not has_quota:
 process()  # 🧠 All preconditions met
 ```
 
-### The Familiarity Trap
+### The Familiarity Trap [↑](#table-of-contents)
 
 **Familiarity ≠ simplicity.** Code in long-term memory feels easy; newcomers face full burden.
 
@@ -763,7 +765,7 @@ process()  # 🧠 All preconditions met
 | "It makes sense once you understand our patterns" | High learning curve = high load |
 | "It's not that complicated" | Your long-term memory is doing the lifting |
 
-### Deep vs. Shallow Modules
+### Deep vs. Shallow Modules [↑](#table-of-contents)
 
 | Type | Interface | Implementation | Cognitive Load |
 |------|-----------|----------------|----------------|
@@ -772,7 +774,7 @@ process()  # 🧠 All preconditions met
 
 Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hundreds of thousands of lines. Contrast with `MetricsProviderFactoryFactory`—the name alone is more taxing than the implementation.
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 | Anti-Pattern | Problem |
 |--------------|---------|
@@ -781,7 +783,7 @@ Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hund
 | **Clever one-liners** | Reader must recreate author's thought process |
 | **Premature microservices** | Distributed debugging is exponentially harder |
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Connection |
 |-----------|------------|
@@ -791,7 +793,7 @@ Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hund
 | **Composition Over Inheritance** | Explicit dependencies reduce hidden context |
 | **Modularity** | Deep modules hide complexity behind simple interfaces |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Working memory holds ~4 chunks** — Exceed this and comprehension fails
 2. **Reduce extraneous load** — Focus on how code is presented
@@ -801,18 +803,18 @@ Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hund
 
 ---
 
-## Single Level of Abstraction (SLAP)
+## Single Level of Abstraction (SLAP) [↑](#table-of-contents)
 
 > "The code within a function should operate at a single level of abstraction."
 > — Robert C. Martin, Clean Code
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Single Level of Abstraction Principle (SLAP) states that **every statement within a function should operate at the same level of abstraction**. When you mix high-level operations (like "process order") with low-level details (like "parse JSON field"), the code becomes harder to read because readers must mentally switch between abstraction levels.
 
 **The key insight**: Switching between levels of abstraction forces mental grouping—readers must mentally construct the missing abstractions by finding which statements belong together.
 
-### Abstraction Levels
+### Abstraction Levels [↑](#table-of-contents)
 
 | Level | Examples |
 |-------|----------|
@@ -820,7 +822,7 @@ Single Level of Abstraction Principle (SLAP) states that **every statement withi
 | **Medium** | `validate_email()`, `calculate_tax()`, `format_response()` |
 | **Low** | `strip().upper()`, `int(value)`, `encode('utf-8')` |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Mixed abstraction levels
@@ -848,7 +850,7 @@ def process_order(order_data: dict) -> None:
     send_confirmation(user)
 ```
 
-### The Stepdown Rule
+### The Stepdown Rule [↑](#table-of-contents)
 
 Robert Martin's Stepdown Rule: code should read like a top-down narrative. Each function leads to the next level of abstraction, like a newspaper article—headline first, then summary, then details.
 
@@ -861,7 +863,7 @@ def generate_monthly_report(month: int, year: int) -> Report:
     return compile_report(metrics, charts)
 ```
 
-### Detecting Violations
+### Detecting Violations [↑](#table-of-contents)
 
 **Smell #1: Loops with inline logic**
 ```python
@@ -888,20 +890,20 @@ if not re.match(r'^[\w.-]+@[\w.-]+\.\w+$', email):
 validate_email_format(email)
 ```
 
-### Caveats
+### Caveats [↑](#table-of-contents)
 
 - **Mental inlining**: Over-extraction forces readers to jump between many tiny functions
 - **Simple code doesn't need extraction**: A 3-line function is already at one level
 - **Guard clauses are OK**: An initial `if param is None: raise` at a higher-level function is acceptable
 - **Performance**: Sometimes inlining is necessary for hot paths
 
-### When NOT to Apply
+### When NOT to Apply [↑](#table-of-contents)
 
 - **Test code**: Explicit inline steps improve test readability
 - **Single-use transformations**: Don't extract if it obscures more than clarifies
 - **Trivially simple functions**: Extraction for its own sake adds noise
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Every statement at the same abstraction level** — Don't mix orchestration with implementation
 2. **Extract when you see mixing** — Loops with logic, comments + code blocks
@@ -910,19 +912,19 @@ validate_email_format(email)
 
 ---
 
-## Self-Documenting Code
+## Self-Documenting Code [↑](#table-of-contents)
 
 
 > "Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
 > — Martin Fowler
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Code that **conveys purpose** through names, structure, and organization—without relying on comments. Comments explain *why*, code shows *what*.
 
 **Reveals:** What/how (through naming and structure) · **Cannot reveal:** Why/context (requires comments/docs)
 
-### The Three Pillars
+### The Three Pillars [↑](#table-of-contents)
 
 #### 1. Intention-Revealing Names
 
@@ -955,7 +957,7 @@ if retry_count > 3:           MAX_RETRIES = 3
 
 Each function has one clear purpose. Structure tells the story.
 
-### Naming Conventions
+### Naming Conventions [↑](#table-of-contents)
 
 | Element | Convention | Examples |
 |---------|------------|----------|
@@ -965,11 +967,11 @@ Each function has one clear purpose. Structure tells the story.
 | **Classes** | Nouns, PascalCase | `UserAccount`, `OrderProcessor` |
 | **Constants** | UPPER_SNAKE_CASE | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells:** Abbreviations (`usr`, `cnt`), single-letter variables outside tiny scopes, boolean parameters without names, vague function names (`process`, `handle`, `do`).
 
-### The Comment Balance
+### The Comment Balance [↑](#table-of-contents)
 
 Self-documenting handles **what/how**. Comments handle **why/why not**.
 
@@ -980,7 +982,7 @@ for attempt in range(MAX_RETRIES):
     time.sleep(2 ** attempt)
 ```
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Spell out names completely** — `user_count` not `usr_cnt` (reduces [Cognitive Load](#cognitive-load))
 2. **Eliminate magic values** — named constants explain meaning
@@ -989,17 +991,17 @@ for attempt in range(MAX_RETRIES):
 
 ---
 
-## Documentation Discipline
+## Documentation Discipline [↑](#table-of-contents)
 
 
 > "Code tells you how, comments tell you why."
 > — Jeff Atwood, Stack Overflow co-founder
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Right documentation at the right level.** Comments don't compile, can't be tested, and rot—yet sometimes they're essential for explaining "why." The discipline: knowing the difference.
 
-### The Documentation Pyramid
+### The Documentation Pyramid [↑](#table-of-contents)
 
 | Layer | Audience | Purpose |
 |-------|----------|---------|
@@ -1010,7 +1012,7 @@ for attempt in range(MAX_RETRIES):
 
 Move documentation to the highest appropriate level.
 
-### When Comments Add Value
+### When Comments Add Value [↑](#table-of-contents)
 
 ```python
 # ✅ Why - Business logic rationale
@@ -1034,7 +1036,7 @@ if order.total > MANAGER_APPROVAL_THRESHOLD:
 Number.isFinite(value)
 ```
 
-### Comment Anti-Patterns
+### Comment Anti-Patterns [↑](#table-of-contents)
 
 | Anti-Pattern | Problem | Fix |
 |--------------|---------|-----|
@@ -1059,7 +1061,7 @@ def calculate_tax(amount):
     return amount * CA_TAX_RATE
 ```
 
-### The Rot Problem
+### The Rot Problem [↑](#table-of-contents)
 
 Comments drift from code silently. Keep close to code, review during code review, delete rather than let rot.
 
@@ -1071,7 +1073,7 @@ def get_users():
     # ↑ Now sorted by created_at, comment lies
 ```
 
-### Docstrings Done Right
+### Docstrings Done Right [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Restates the obvious
@@ -1092,7 +1094,7 @@ def calculate_shipping(order: Order) -> Decimal:
     """
 ```
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Connection |
 |-----------|------------|
@@ -1101,7 +1103,7 @@ def calculate_shipping(order: Order) -> Decimal:
 | **Single Source of Truth** | One authoritative place for each piece of documentation |
 | **Boy Scout Rule** | Fix stale comments when you touch the code |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Code tells how, comments tell why** — Never explain what code does; explain why it does it
 2. **Documentation has layers** — README → API docs → docstrings → inline comments
@@ -1111,17 +1113,17 @@ def calculate_shipping(order: Order) -> Decimal:
 
 ---
 
-## Elegance
+## Elegance [↑](#table-of-contents)
 
 
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Beauty through insight.** Solves the problem with minimum complexity while revealing something fundamental about the domain.
 
-### Four Criteria
+### Four Criteria [↑](#table-of-contents)
 
 | Criterion | Description |
 |-----------|-------------|
@@ -1130,7 +1132,7 @@ def calculate_shipping(order: Order) -> Decimal:
 | **Modesty** | Restraint; avoids cleverness and showing off |
 | **Revelation** | Shows something new about the problem domain |
 
-### Elegance vs. Cleverness
+### Elegance vs. Cleverness [↑](#table-of-contents)
 
 | Elegant Code | Clever Code |
 |--------------|-------------|
@@ -1139,7 +1141,7 @@ def calculate_shipping(order: Order) -> Decimal:
 | Survives language changes | Implementation-dependent, fragile |
 | Stands alone | Needs explanatory comments |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Minimality** — remove everything superfluous
 2. **Accomplishment** — it must work correctly
@@ -1149,17 +1151,17 @@ def calculate_shipping(order: Order) -> Decimal:
 
 ---
 
-## Principle of Least Surprise
+## Principle of Least Surprise [↑](#table-of-contents)
 
 
 > "In interface design, always do the least surprising thing."
 > — Eric S. Raymond
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Components behave as users expect. Never surprise the user.
 
-### Strategies
+### Strategies [↑](#table-of-contents)
 
 1. **Command-Query Separation**: Separate state-changing methods from queries
 2. **Names match behavior**: Naming conventions communicate intent
@@ -1167,14 +1169,14 @@ Components behave as users expect. Never surprise the user.
 4. **Sensible defaults**: Most common, safest choice
 5. **No hidden side effects**: Methods do only what signatures imply
 
-### Common Anti-Patterns
+### Common Anti-Patterns [↑](#table-of-contents)
 
 - **Inconsistent Error Handling**: Different methods handle errors differently
 - **Misleading Method Names**: Name implies query, actually mutates
 - **Surprising Parameter Order**: Non-standard parameter order
 - **Spooky Action at a Distance**: Unexpected effects on unrelated parts
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Think like your user**: Design based on what users expect
 2. **Separate commands from queries**: Methods that return values shouldn't change state
@@ -1184,25 +1186,25 @@ Components behave as users expect. Never surprise the user.
 
 ---
 
-# Part II: Architecture
+# Part II: Architecture [↑](#table-of-contents)
 
 > *Structuring and designing systems. These principles govern how code is organized, how components relate, and how systems are designed for change.*
 
 ---
 
-# Organization & Structure
+# Organization & Structure [↑](#table-of-contents)
 
 *Where does this code belong? DRY and Single Source of Truth ensure knowledge lives in one place, Separation of Concerns defines boundaries between responsibilities, and Modularity packages those boundaries into self-contained units.*
 
 ---
 
-## DRY: Don't Repeat Yourself
+## DRY: Don't Repeat Yourself [↑](#table-of-contents)
 
 
 > "Every piece of knowledge must have a single, unambiguous, authoritative representation within a system."
 > — Andy Hunt & Dave Thomas, *The Pragmatic Programmer*
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 DRY is about **knowledge**, not code. Avoid duplication of *meaning*, not syntax.
 
@@ -1210,13 +1212,13 @@ DRY is about **knowledge**, not code. Avoid duplication of *meaning*, not syntax
 1. **Knowledge Duplication** — Same business rule in multiple places. **Always fix.**
 2. **Incidental Duplication** — Code *looks* similar but represents *different* concepts. **Leave it.** Merging couples unrelated concerns.
 
-### The Rule of Three
+### The Rule of Three [↑](#table-of-contents)
 
 > **First time**: Write it. **Second time**: Note it. **Third time**: Abstract it.
 
 Patience to find the *right* abstraction. Two occurrences can't distinguish true duplication from incidental similarity. Three reveal the pattern.
 
-### Recognizing True vs. Incidental Duplication
+### Recognizing True vs. Incidental Duplication [↑](#table-of-contents)
 
 | True Knowledge Duplication (FIX) | Incidental Similarity (LEAVE) |
 |---------------------------------|------------------------------|
@@ -1226,13 +1228,13 @@ Patience to find the *right* abstraction. Two occurrences can't distinguish true
 | Abstraction simplifies | Abstraction requires conditionals |
 | Single source of truth needed | Coupling would be harmful |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Obvious**: Copy-pasted functions, duplicated validation, repeated magic numbers
 
 **Hidden**: Inconsistent business rules across apps, divergent type definitions, scattered config, parallel data structures (DB columns in SQL strings AND ORM models)
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Over-DRY: Merged with conditionals
@@ -1259,7 +1261,7 @@ class Teacher:
     def get_full_name(self): return f"{self.first} {self.middle} {self.last}"
 ```
 
-### Refactoring Techniques
+### Refactoring Techniques [↑](#table-of-contents)
 
 | Technique | When to Use |
 |-----------|-------------|
@@ -1269,7 +1271,7 @@ class Teacher:
 | **Parameterize Method** | Methods differ only in values |
 | **Composition** | Complex inheritance hierarchies |
 
-### DRY Beyond Code
+### DRY Beyond Code [↑](#table-of-contents)
 
 - **Database**: Define constraints once in schema, not duplicated in app
 - **API**: Generate OpenAPI from code (FastAPI/Pydantic), don't maintain separately
@@ -1277,7 +1279,7 @@ class Teacher:
 - **Docs**: Single source of truth, reference elsewhere
 - **Infrastructure**: Similar infrastructure components may warrant deduplication.
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Knowledge duplication is always a code smell**—always fix it
 2. **Incidental similarity is not duplication**—don't merge different concepts
@@ -1287,16 +1289,16 @@ class Teacher:
 
 ---
 
-## Single Source of Truth
+## Single Source of Truth [↑](#table-of-contents)
 
 
 > "There should be one—and preferably only one—obvious way to store a piece of information."
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Every piece of data has exactly one authoritative location.** All other references derive from that source. The problem: when data exists in multiple places, which is correct?
 
-### SSoT vs. DRY
+### SSoT vs. DRY [↑](#table-of-contents)
 
 | Aspect | DRY | SSoT |
 |--------|-----|------|
@@ -1305,20 +1307,20 @@ class Teacher:
 | **Violation** | Copy-pasted functions | Same field in multiple tables |
 | **Fix** | Extract to shared function | Designate authoritative source |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 1. **Storing Foreign Keys in Multiple Databases**
 2. **Duplicating User Data Across Services**
 3. **Storing Derived Data Without Clear Ownership**
 
-### When Duplication Is Acceptable
+### When Duplication Is Acceptable [↑](#table-of-contents)
 
 1. **Intentional Caching** with TTL
 2. **Read Model Denormalization** (CQRS)
 3. **Computed/Derived Values**
 4. **Cross-Region Replication**
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Every piece of data needs exactly one authoritative source**
 2. **Other systems should reference, not duplicate** authoritative data
@@ -1327,19 +1329,19 @@ class Teacher:
 
 ---
 
-## Separation of Concerns
+## Separation of Concerns [↑](#table-of-contents)
 
 
 > "The separation of concerns, even if not perfectly possible, is yet the only available technique for effective ordering of one's thoughts."
 > — Edsger W. Dijkstra
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Decompose systems into distinct parts, each addressing one concern.** A "concern" = any aspect of functionality (business logic, persistence, UI, etc.).
 
 **Measures:** High cohesion (related things together) · Low coupling (unrelated things independent)
 
-### Types of Concerns
+### Types of Concerns [↑](#table-of-contents)
 
 | Type | Examples |
 |------|----------|
@@ -1347,7 +1349,7 @@ class Teacher:
 | **Non-functional** | Performance, security, scalability |
 | **Cross-cutting** | Logging, error handling, caching |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**: DB queries in UI handlers, business rules in CSS, validation scattered across layers, formatting in business classes.
 
@@ -1359,7 +1361,7 @@ class Teacher:
 | **Divergent Change** | One class changes for multiple reasons | Extract class per reason |
 | **Shotgun Surgery** | One change modifies many places | Consolidate related logic |
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Mixed concerns: business logic + presentation + I/O
@@ -1386,7 +1388,7 @@ class OrderPresenter:
         return f"<div class='order'>Order #{order.id}: ${order.total}</div>"
 ```
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **One concern per component** — functions, classes, modules, layers
 2. **High cohesion, low coupling** — related together, unrelated separate
@@ -1395,13 +1397,13 @@ class OrderPresenter:
 
 ---
 
-## Modularity
+## Modularity [↑](#table-of-contents)
 
 
 > "Every module is characterized by its knowledge of a design decision which it hides from all others."
 > — David Parnas
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Modularity is **dividing software into independent components** where each module encapsulates a specific responsibility and hides implementation details behind a well-defined interface.
 
@@ -1411,7 +1413,7 @@ Modularity is **dividing software into independent components** where each modul
 1. **Cohesion** — How strongly elements within a module belong together (aim: high)
 2. **Coupling** — How much modules depend on each other's internals (aim: low)
 
-### Deep vs. Shallow Modules
+### Deep vs. Shallow Modules [↑](#table-of-contents)
 
 | Type | Characteristics |
 |------|-----------------|
@@ -1420,11 +1422,11 @@ Modularity is **dividing software into independent components** where each modul
 
 **Aim for depth**: Hide significant complexity behind minimal APIs.
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**: God Class, Feature Envy, Shotgun Surgery, Utilities junk drawer
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Hide design decisions** — Each module encapsulates one decision likely to change
 2. **High cohesion** — Elements within a module belong together
@@ -1434,25 +1436,25 @@ Modularity is **dividing software into independent components** where each modul
 
 ---
 
-# Coupling & Dependencies
+# Coupling & Dependencies [↑](#table-of-contents)
 
 *How do components relate to each other? These principles minimize unhealthy dependencies. Encapsulation hides internal state, Law of Demeter limits knowledge of other objects, Orthogonality ensures independent change, Dependency Injection makes dependencies explicit, and Composition Over Inheritance favors flexible composition.*
 
 ---
 
-## Encapsulation
+## Encapsulation [↑](#table-of-contents)
 
 
 > "Ask not what an object knows; ask what it can do for you."
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Bundle data with behavior, hide internals behind interfaces.**
 
 1. **Bundling**: Group related data and behavior
 2. **Information Hiding**: Restrict direct access to internal state
 
-### Tell, Don't Ask
+### Tell, Don't Ask [↑](#table-of-contents)
 
 Don't query state and decide externally—tell the object what to do.
 
@@ -1470,14 +1472,14 @@ def process_order(order):
     order.process()  # Order knows its own business rules
 ```
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 - **Data Classes Without Behavior**: A "data class" that only contains fields and getters/setters
 - **Getter/Setter Pairs That Add No Value**: Accessors without validation or computation
 - **Returning Mutable Internal State**: Allowing callers to corrupt object invariants
 - **Feature Envy**: Methods that use more data from another class than their own
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Bundle data with behavior** — Objects should do things, not just hold data
 2. **Hide implementation details** — Internals can change without affecting callers
@@ -1486,17 +1488,17 @@ def process_order(order):
 
 ---
 
-## Law of Demeter
+## Law of Demeter [↑](#table-of-contents)
 
 
 > "Each unit should have only limited knowledge about other units: only talk to your immediate friends; don't talk to strangers."
 > — Ian Holland
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Limit knowledge of other objects' structure.** Only interact with immediate dependencies, not through them.
 
-### The "One Dot" Rule
+### The "One Dot" Rule [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Multiple dots (train wreck)
@@ -1506,7 +1508,7 @@ customer.get_wallet().get_credit_card().charge(amount)
 customer.charge(amount)  # Customer knows how to charge itself
 ```
 
-### Formal Definition
+### Formal Definition [↑](#table-of-contents)
 
 A method `m` of object `a` may only invoke methods of:
 - `a` itself
@@ -1517,7 +1519,7 @@ A method `m` of object `a` may only invoke methods of:
 
 **Forbidden**: Methods of objects returned by other method calls.
 
-### Exceptions: When Chaining Is Acceptable
+### Exceptions: When Chaining Is Acceptable [↑](#table-of-contents)
 
 | Pattern | Why It's OK |
 |---------|-------------|
@@ -1526,7 +1528,7 @@ A method `m` of object `a` may only invoke methods of:
 | **Data Transfer Objects** | No behavior to encapsulate |
 | **Standard library** | `"hello".strip().upper()` — string ops |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Only talk to immediate friends** — don't reach through objects
 2. **One dot rule** — `a.b()` good, `a.b().c()` suspect
@@ -1535,24 +1537,24 @@ A method `m` of object `a` may only invoke methods of:
 
 ---
 
-## Orthogonality
+## Orthogonality [↑](#table-of-contents)
 
 
 > "Eliminate effects between unrelated things. Design self-contained components: independent, and with a single, well-defined purpose."
 > — Andy Hunt & Dave Thomas
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Changes in one component don't affect others.** Like a helicopter with coupled controls: fix one bug, two more pop up elsewhere.
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 - **Global State**: Becomes a coupling point between different parts
 - **Database-Coupled Business Logic**: SQL dialects leak into business logic
 - **Presentation Mixed with Logic**: Changing display requires changing computation
 - **Feature Creep in Objects**: Objects accumulate responsibilities
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Two components are orthogonal if changes in one don't affect the other**
 2. **Coupling is viral** — a little leads to more
@@ -1561,23 +1563,23 @@ A method `m` of object `a` may only invoke methods of:
 
 ---
 
-## Dependency Injection
+## Dependency Injection [↑](#table-of-contents)
 
 
 > "The key benefit of Dependency Injection is that it removes the dependency that a class has on a concrete implementation."
 > — Martin Fowler
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 Dependencies "injected" from outside rather than created internally. A class declares what it needs, not how to get it.
 
-### Three Forms
+### Three Forms [↑](#table-of-contents)
 
 1. **Constructor Injection** (Preferred): Through constructor
 2. **Setter Injection**: Through setters after construction
 3. **Interface Injection**: Dependency provides injector method
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Hardcoded dependency
@@ -1591,7 +1593,7 @@ class MovieLister:
         self._finder = finder
 ```
 
-### Service Lifetimes
+### Service Lifetimes [↑](#table-of-contents)
 
 | Lifetime | Instance Created | Use Case |
 |----------|------------------|----------|
@@ -1599,7 +1601,7 @@ class MovieLister:
 | **Scoped** | Once per scope/request | Request-specific state |
 | **Singleton** | Once for application lifetime | Expensive to create, shared state |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **DI decouples classes from dependencies** — clients declare needs, not solutions
 2. **Constructor injection is preferred** — explicit, immutable, testable
@@ -1608,20 +1610,20 @@ class MovieLister:
 
 ---
 
-## Composition Over Inheritance
+## Composition Over Inheritance [↑](#table-of-contents)
 
 
 > "Favor object composition over class inheritance."
 > — Gang of Four, *Design Patterns*
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Build complex behavior by combining objects rather than extending classes.**
 
 - **Inheritance** ("is-a"): White-box — subclass sees parent internals
 - **Composition** ("has-a"): Black-box — interact via interfaces only
 
-### Why Composition Is Preferred
+### Why Composition Is Preferred [↑](#table-of-contents)
 
 | Inheritance Problem | Composition Solution |
 |---------------------|---------------------|
@@ -1631,7 +1633,7 @@ class MovieLister:
 | Class explosion for combinations | Mix components as needed |
 | Fragile base class problem | No inherited implementation details |
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Class explosion via inheritance
@@ -1649,7 +1651,7 @@ class Logger:
 logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 ```
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Composition = "has-a"**, Inheritance = "is-a" — choose appropriately
 2. **Inheritance breaks encapsulation** — changes cascade unpredictably
@@ -1658,19 +1660,19 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ---
 
-# Design Patterns & Conventions
+# Design Patterns & Conventions [↑](#table-of-contents)
 
 *Proven approaches to common problems. SOLID provides five foundational OO principles, Convention Over Configuration reduces boilerplate through sensible defaults, Command-Query Separation distinguishes actions from queries, and Code Reusability addresses when and how to make code reusable.*
 
 ---
 
-## SOLID Principles
+## SOLID Principles [↑](#table-of-contents)
 
 
 > "SOLID principles are the foundation of good software design—they make code more maintainable, flexible, and testable."
 > — Robert C. Martin (Uncle Bob)
 
-### Overview
+### Overview [↑](#table-of-contents)
 
 | Letter | Principle | Core Idea |
 |--------|-----------|-----------|
@@ -1680,37 +1682,37 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 | **I** | Interface Segregation | Many specific interfaces over one general |
 | **D** | Dependency Inversion | Depend on abstractions, not concretions |
 
-### S — Single Responsibility Principle
+### S — Single Responsibility Principle [↑](#table-of-contents)
 
 > "A class should have one, and only one, reason to change."
 
 **Violations**: Mixed I/O and logic, persistence in domain objects, god classes, class names with "And" or "Manager"
 
-### O — Open/Closed Principle
+### O — Open/Closed Principle [↑](#table-of-contents)
 
 > "Software entities should be open for extension but closed for modification."
 
 **Violations**: `if/elif` chains checking types, `isinstance()` checks, modifying existing code for new variants
 
-### L — Liskov Substitution Principle
+### L — Liskov Substitution Principle [↑](#table-of-contents)
 
 > "Subtypes must be substitutable for their base types."
 
 **Violations**: Subclass raises `NotImplementedError`, empty `pass` overrides, type checks before method calls
 
-### I — Interface Segregation Principle
+### I — Interface Segregation Principle [↑](#table-of-contents)
 
 > "Clients should not be forced to depend on interfaces they do not use."
 
 **Violations**: Fat interfaces (20+ methods), `raise NotImplementedError` in implementations
 
-### D — Dependency Inversion Principle
+### D — Dependency Inversion Principle [↑](#table-of-contents)
 
 > "High-level modules should not depend on low-level modules. Both should depend on abstractions."
 
 **Violations**: Direct instantiation in constructors, concrete imports in business logic, can't mock for testing
 
-### When NOT to Apply SOLID
+### When NOT to Apply SOLID [↑](#table-of-contents)
 
 1. **Simple scripts**: Overhead outweighs benefits
 2. **Prototyping**: Flexibility over structure
@@ -1718,7 +1720,7 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 4. **Single implementations**: Don't create interfaces for classes that won't have alternatives
 5. **Early development**: Wait for patterns to emerge (Rule of Three)
 
-### Detection Checklist
+### Detection Checklist [↑](#table-of-contents)
 
 | Principle | Code Smells |
 |-----------|-------------|
@@ -1730,17 +1732,17 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ---
 
-## Convention Over Configuration
+## Convention Over Configuration [↑](#table-of-contents)
 
 
 > "You're not a beautiful and unique snowflake. By giving up vain individuality, you can leapfrog the toils of mundane decisions, and make faster progress in areas that really matter."
 > — David Heinemeier Hansson, The Rails Doctrine
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Sensible defaults that work out of the box.** Explicit configuration only when deviating from norm. Core insight: most decisions aren't worth making—if 90% use `id` as primary key, don't force specification.
 
-### The Power of Defaults
+### The Power of Defaults [↑](#table-of-contents)
 
 | Without CoC | With CoC |
 |------------|----------|
@@ -1751,7 +1753,7 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 Conventions compose: `has_many :posts` resolves `Post` → `posts` table → `user_id` FK automatically.
 
-### Real-World Examples
+### Real-World Examples [↑](#table-of-contents)
 
 | Framework | Convention | Override When Needed |
 |-----------|-----------|---------------------|
@@ -1761,7 +1763,7 @@ Conventions compose: `has_many :posts` resolves `Post` → `posts` table → `us
 | **Next.js** | `pages/about.js` → `/about` route | Custom routing configuration |
 | **pytest** | `test_*.py` files auto-discovered | `pytest.ini` for custom patterns |
 
-### When to Apply
+### When to Apply [↑](#table-of-contents)
 
 | Good Fit | Poor Fit |
 |----------|----------|
@@ -1770,7 +1772,7 @@ Conventions compose: `has_many :posts` resolves `Post` → `posts` table → `us
 | Framework/library design | When explicitness aids understanding |
 | Lowering barriers for beginners | Security-critical configurations |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Forcing configuration for obvious defaults
@@ -1813,7 +1815,7 @@ service = UserService()  # Just works
 legacy_service = UserService(table_name="legacy_accounts")
 ```
 
-### The Dark Side
+### The Dark Side [↑](#table-of-contents)
 
 1. **Hidden Magic** — implicit behavior hard to debug
 2. **Learning Cliff** — must learn convention to deviate
@@ -1826,7 +1828,7 @@ legacy_service = UserService(table_name="legacy_accounts")
 # Now you're fighting the framework instead of working with it
 ```
 
-### Explicit vs. Implicit Trade-off
+### Explicit vs. Implicit Trade-off [↑](#table-of-contents)
 
 | Approach | Advantages | Disadvantages |
 |----------|-----------|---------------|
@@ -1835,7 +1837,7 @@ legacy_service = UserService(table_name="legacy_accounts")
 
 **Python's "Explicit > implicit"** seems contradictory. Resolution: conventions must be *discoverable* and well-documented.
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Relationship |
 |-----------|-------------|
@@ -1845,7 +1847,7 @@ legacy_service = UserService(table_name="legacy_accounts")
 | **Cognitive Load** | Fewer decisions = lower mental burden |
 | **Principle of Least Surprise** | Good conventions match developer expectations |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Provide sensible defaults** — Common cases should require zero configuration
 2. **Allow overrides** — Escape hatches for when convention doesn't fit
@@ -1855,13 +1857,13 @@ legacy_service = UserService(table_name="legacy_accounts")
 
 ---
 
-## Command-Query Separation
+## Command-Query Separation [↑](#table-of-contents)
 
 
 > "Asking a question should not change the answer."
 > — Bertrand Meyer
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 | Type | Purpose | Returns | Side Effects |
 |------|---------|---------|--------------|
@@ -1870,14 +1872,14 @@ legacy_service = UserService(table_name="legacy_accounts")
 
 Methods returning values shouldn't change state. Methods changing state shouldn't return values.
 
-### Why CQS Matters
+### Why CQS Matters [↑](#table-of-contents)
 
 1. **Reasoning Confidence**: Queries are safe to call anywhere
 2. **Testing Simplicity**: Queries tested in isolation
 3. **Caching Safety**: Queries can be cached
 4. **Parallelization**: Queries run concurrently without race conditions
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Modifies AND returns
@@ -1898,13 +1900,13 @@ def create_user(self, email: str) -> None:
     self.db.save(User(email=email))
 ```
 
-### Pragmatic Exceptions
+### Pragmatic Exceptions [↑](#table-of-contents)
 
 - Stack pop operation (atomic)
 - Thread-safe increment-and-get
 - Database identity generation
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Separate queries from commands** — Return value OR change state, not both
 2. **Queries are safe** — Call them anywhere, cache them, parallelize them
@@ -1913,19 +1915,19 @@ def create_user(self, email: str) -> None:
 
 ---
 
-## Code Reusability
+## Code Reusability [↑](#table-of-contents)
 
 
 > "A little copying is better than a little dependency."
 > — Rob Pike
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Code usable in multiple contexts without modification.** Unlike DRY (eliminating existing duplication), reusability is forward-looking.
 
 **The paradox**: Reusable components cost 3-10x more to develop. Payoff only materializes with actual reuse.
 
-### Characteristics of Reusable Code
+### Characteristics of Reusable Code [↑](#table-of-contents)
 
 | Trait | Description |
 |-------|-------------|
@@ -1935,7 +1937,7 @@ def create_user(self, email: str) -> None:
 | **Stable Interface** | Public API changes infrequently |
 | **Thoroughly Tested** | Works reliably across scenarios |
 
-### Types of Reuse
+### Types of Reuse [↑](#table-of-contents)
 
 | Type | Scope | Example |
 |------|-------|---------|
@@ -1944,7 +1946,7 @@ def create_user(self, email: str) -> None:
 | **Libraries** | Organization | Shared packages across teams |
 | **Frameworks** | Industry | Django, React, Rails |
 
-### The Reusability Trap
+### The Reusability Trap [↑](#table-of-contents)
 
 Designing for reuse before proving need creates complexity without value. Rule of Three applies: wait until three different contexts.
 
@@ -1976,7 +1978,7 @@ def parse_user_csv(csv_data: str) -> list[dict]:
     return [dict(zip(headers, row.split(','))) for row in rows[1:]]
 ```
 
-### Designing for Reusability
+### Designing for Reusability [↑](#table-of-contents)
 
 When code has proven its need for reuse, apply these principles:
 
@@ -2029,7 +2031,7 @@ def retry(
     ...
 ```
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**:
 - Over-parameterized functions trying to handle every case
@@ -2042,7 +2044,7 @@ def retry(
 - Psychology: Developers view reuse as stifling creativity
 - NIH Syndrome: "Not Invented Here" bias against external solutions
 
-### When Reusability Hurts
+### When Reusability Hurts [↑](#table-of-contents)
 
 Verbose, redundant code sometimes beats elegant abstractions:
 - **Debugging**: Isolated code means problems stay isolated
@@ -2052,7 +2054,7 @@ Verbose, redundant code sometimes beats elegant abstractions:
 
 The construction paradox: demolishing and rebuilding often costs less than renovating. Similarly, rewriting 50 lines sometimes beats understanding 500 lines of "reusable" framework code.
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Reusability is earned, not designed** — Wait for three use cases before investing
 2. **Upfront cost is real** — Reusable code costs more to develop and understand
@@ -2062,22 +2064,22 @@ The construction paradox: demolishing and rebuilding often costs less than renov
 
 ---
 
-# Data & State
+# Data & State [↑](#table-of-contents)
 
 *How should data flow and behave? Parse Don't Validate transforms unstructured input into typed domain objects at boundaries. Immutability eliminates bugs by preventing state changes after creation. Idempotency ensures operations can be safely repeated.*
 
 ---
 
-## Parse, Don't Validate
+## Parse, Don't Validate [↑](#table-of-contents)
 
 > "A parser is just a function that consumes less-structured input and produces more-structured output."
 > — Alexis King
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Transform data into precise types that make illegal states unrepresentable.** Validation checks then forgets. Parsing checks and *remembers* in the type system.
 
-### Validation vs. Parsing
+### Validation vs. Parsing [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Validation: checks then discards knowledge
@@ -2104,7 +2106,7 @@ def process(items: NonEmptyList[T]) -> None:
     first = items[0]  # Type guarantees safety—no trust needed
 ```
 
-### The Shotgun Parsing Anti-Pattern
+### The Shotgun Parsing Anti-Pattern [↑](#table-of-contents)
 
 Checks spread everywhere hoping to catch bad data:
 1. **Redundant checks**: Same validation repeated
@@ -2136,7 +2138,7 @@ def get_user(user_id: UserId) -> User: ...      # No validation needed
 def update_user(user_id: UserId, data: dict): ...  # Type guarantees validity
 ```
 
-### Primitive Obsession
+### Primitive Obsession [↑](#table-of-contents)
 
 Over-reliance on `str`, `int`, `dict` for domain concepts. Primitives carry no context—validation knowledge is lost.
 
@@ -2150,7 +2152,7 @@ def create_order(customer_id: CustomerId, product_id: ProductId,
                  quantity: PositiveInt, price: Money): ...
 ```
 
-### Make Illegal States Unrepresentable
+### Make Illegal States Unrepresentable [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Invalid states representable
@@ -2172,7 +2174,7 @@ class ShippedOrder:
 Order = PendingOrder | ShippedOrder | DeliveredOrder
 ```
 
-### Parse at the Boundary
+### Parse at the Boundary [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Raw data flows through system
@@ -2200,7 +2202,7 @@ def handle_request(request: CreateUserRequest) -> Response:
     ...  # All data already validated
 ```
 
-### Lightweight Parsing with NewType
+### Lightweight Parsing with NewType [↑](#table-of-contents)
 
 `NewType` marks validated data without runtime overhead:
 
@@ -2220,7 +2222,7 @@ load_user(parse_user_id(url))  # ✅ OK
 load_user("U6789679")  # ❌ Type checker error
 ```
 
-### Pydantic: Full-Throttle Parsing
+### Pydantic: Full-Throttle Parsing [↑](#table-of-contents)
 
 ```python
 from pydantic import BaseModel, TypeAdapter
@@ -2233,7 +2235,7 @@ class User(BaseModel):
 users = TypeAdapter(list[User]).validate_json(raw_json)
 ```
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 - **Functions returning `None` after validation** — Return the proof instead
 - **Boolean flags instead of types** — `is_valid: bool` vs. `ValidatedData` type
@@ -2241,14 +2243,14 @@ users = TypeAdapter(list[User]).validate_json(raw_json)
 - **Passing raw dicts through layers** — Parse to domain types at the edge
 - **Using `str` for everything** — Email, phone, SSN as `str` is primitive obsession
 
-### When NOT to Apply
+### When NOT to Apply [↑](#table-of-contents)
 
 - **Quick scripts**: Overhead of custom types may not pay off
 - **Performance-critical paths**: Sometimes primitives are faster
 - **Prototyping**: Over-engineering types slows exploration
 - **Simple CRUD**: Not every field needs a custom type
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Parsers return proof, validators return nothing** — Transform data into types that encode validity
 2. **Parse at the boundary** — Convert external data to domain types immediately
@@ -2259,19 +2261,19 @@ users = TypeAdapter(list[User]).validate_json(raw_json)
 
 ---
 
-## Immutability
+## Immutability [↑](#table-of-contents)
 
 
 > "Immutable types are safer from bugs, easier to understand, and more ready for change."
 > — MIT 6.005 Software Construction
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Once created, state cannot be modified.** Create new structures with desired changes instead.
 
 Mutable shared state causes most concurrency and aliasing bugs. Immutability eliminates them by design.
 
-### Benefits
+### Benefits [↑](#table-of-contents)
 
 - **Thread safety without locks**: Share freely between threads
 - **No defensive copying**: Share directly
@@ -2279,7 +2281,7 @@ Mutable shared state causes most concurrency and aliasing bugs. Immutability eli
 - **Safe hash keys**: Can be dictionary keys
 - **Enables caching**: Results remain valid indefinitely
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Mutates caller's data
@@ -2294,7 +2296,7 @@ def normalize_scores(scores: list[float]) -> list[float]:
     return [score / max_score for score in scores]
 ```
 
-### Python Implementation
+### Python Implementation [↑](#table-of-contents)
 
 ```python
 from dataclasses import dataclass
@@ -2313,7 +2315,7 @@ SUPPORTED_EXTENSIONS: tuple[str, ...] = (".pdf", ".docx", ".txt")
 VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 ```
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Immutable objects can't change** — once created, their value is fixed
 2. **Aliasing is safe** with immutable objects
@@ -2322,16 +2324,16 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 
 ---
 
-## Idempotency
+## Idempotency [↑](#table-of-contents)
 
 
 > "An operation is idempotent if performing it multiple times has the same effect as performing it once."
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Multiple executions produce same result as one.** In distributed systems, duplicate requests are inevitable—design around them.
 
-### Implementation Strategies
+### Implementation Strategies [↑](#table-of-contents)
 
 1. **Idempotency Keys**: Attach unique identifier to each request
 2. **Deterministic IDs**: Generate IDs from content itself
@@ -2339,7 +2341,7 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 4. **Conditional Writes**: Use version numbers (optimistic locking)
 5. **Lease-Based Processing**: Acquire exclusive access before processing
 
-### Naturally Idempotent Operations
+### Naturally Idempotent Operations [↑](#table-of-contents)
 
 | Operation | Why Idempotent |
 |-----------|----------------|
@@ -2348,7 +2350,7 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 | `DELETE /resource` | Deleting twice = still deleted |
 | Setting a value | `x = 5` is idempotent; `x += 5` is not |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Duplicates are inevitable** in distributed systems—design for them
 2. **Use deterministic IDs** derived from content when possible
@@ -2358,32 +2360,32 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 
 ---
 
-# Part III: Reliability
+# Part III: Reliability [↑](#table-of-contents)
 
 > *Building robust, maintainable systems. These principles govern how code handles errors, maintains itself over time, and operates in production.*
 
 ---
 
-# Robustness & Safety
+# Robustness & Safety [↑](#table-of-contents)
 
 *How does code handle the unexpected? Fail-Fast detects errors early, Design by Contract makes expectations explicit, Postel's Law enables interoperability, Resilience keeps systems running despite failures, and Principle of Least Privilege limits damage from breaches.*
 
 ---
 
-## Fail-Fast & Defensive Programming
+## Fail-Fast & Defensive Programming [↑](#table-of-contents)
 
 
 > "The best debugging is the debugging you never have to do because you found the problem immediately."
 > — Jim Shore
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Detect and report errors at the earliest possible moment.** Don't let invalid state propagate.
 
 1. **Fail-Fast** — Detect early, fail immediately with clear diagnostics
 2. **Defensive Programming** — Anticipate misuse, validate at boundaries
 
-### Design by Contract
+### Design by Contract [↑](#table-of-contents)
 
 | Contract | Responsibility | Example |
 |----------|---------------|---------|
@@ -2391,7 +2393,7 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 | **Postconditions** | Method must satisfy before returning | `assert result.is_valid()` |
 | **Invariants** | Must hold throughout object lifetime | `assert self.balance >= 0` |
 
-### Common Patterns
+### Common Patterns [↑](#table-of-contents)
 
 ```python
 # ✅ Guard Clauses - Fail fast at entry
@@ -2408,7 +2410,7 @@ def __init__(self):
         raise ConfigError("API_KEY required")
 ```
 
-### Error Handling Strategies
+### Error Handling Strategies [↑](#table-of-contents)
 
 | Error Type | Strategy |
 |------------|----------|
@@ -2417,7 +2419,7 @@ def __init__(self):
 | **Deterministic failure** | Fail permanently |
 | **Invariant violation** | Assert (crash in dev) |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Validate early** — Check inputs at function entry, config at startup
 2. **Fail loudly** — Clear error messages beat silent corruption
@@ -2427,17 +2429,17 @@ def __init__(self):
 
 ---
 
-## Design by Contract
+## Design by Contract [↑](#table-of-contents)
 
 
 > "A software system is not a bunch of components thrown together. It is a construction of interacting elements, connected by clear contracts."
 > — Bertrand Meyer
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Agreements between callers and routines.** Functions promise results (postconditions) **if** callers meet requirements (preconditions).
 
-### The Three Pillars
+### The Three Pillars [↑](#table-of-contents)
 
 | Element | Definition | Who Benefits | Who Obligates |
 |---------|------------|--------------|---------------|
@@ -2445,7 +2447,7 @@ def __init__(self):
 | **Postcondition** | What the routine guarantees | Client | Supplier |
 | **Invariant** | What must always be true | Both | Supplier |
 
-### Inheritance Rules (Liskov Substitution)
+### Inheritance Rules (Liskov Substitution) [↑](#table-of-contents)
 
 | Contract Element | Subtype Rule |
 |------------------|--------------|
@@ -2453,7 +2455,7 @@ def __init__(self):
 | **Postconditions** | Can only be **strengthened** |
 | **Invariants** | Can only be **strengthened** |
 
-### DbC vs. Defensive Programming
+### DbC vs. Defensive Programming [↑](#table-of-contents)
 
 | Aspect | Design by Contract | Defensive Programming |
 |--------|-------------------|----------------------|
@@ -2461,7 +2463,7 @@ def __init__(self):
 | **Responsibility** | Caller ensures preconditions | Callee handles all cases |
 | **When to use** | Internal interfaces | External interfaces |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Contracts make responsibilities explicit** — Caller ensures preconditions; supplier ensures postconditions
 2. **Invariants define valid object state** — Must hold after construction and every public method
@@ -2470,20 +2472,20 @@ def __init__(self):
 
 ---
 
-## Postel's Law (Robustness Principle)
+## Postel's Law (Robustness Principle) [↑](#table-of-contents)
 
 
 > "Be conservative in what you send, be liberal in what you accept."
 > — Jon Postel, RFC 793 (1981)
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Conservative output, liberal input.** Generate strictly conformant output; accept non-conformant input if meaning is clear. Instrumental in Internet's growth.
 
 - **Conservative output** — Follow specs exactly
 - **Liberal input** — Accept reasonable variations
 
-### Real-World Examples
+### Real-World Examples [↑](#table-of-contents)
 
 | System | How Postel's Law Applied | Outcome |
 |--------|-------------------------|---------|
@@ -2492,7 +2494,7 @@ def __init__(self):
 | **SMTP Email** | Accept lines >998 chars despite spec limit | Pragmatic interop; many systems now depend on non-standard behavior |
 | **JSON APIs** | Ignore unknown fields | Forward-compatible evolution; old clients work with new servers |
 
-### When to Apply
+### When to Apply [↑](#table-of-contents)
 
 | Context | Recommendation |
 |---------|----------------|
@@ -2502,7 +2504,7 @@ def __init__(self):
 | **Security-critical input** | Validate strictly; liberal acceptance creates attack surface |
 | **Internal systems** | Strict validation catches bugs early |
 
-### The Tolerant Reader Pattern
+### The Tolerant Reader Pattern [↑](#table-of-contents)
 
 Ignore unknown fields rather than failing:
 
@@ -2523,7 +2525,7 @@ def parse_user(data: dict) -> User:
     )
 ```
 
-### The Dark Side
+### The Dark Side [↑](#table-of-contents)
 
 Postel's Law has significant criticisms in modern hostile environments:
 
@@ -2536,7 +2538,7 @@ Postel's Law has significant criticisms in modern hostile environments:
 
 **HTML Lesson**: Browser tolerance enabled rapid growth but created nightmares—"incorrect" became the only way.
 
-### Modern Balanced Approach
+### Modern Balanced Approach [↑](#table-of-contents)
 
 ```python
 # ✅ Balance: strict where it matters, tolerant for extensibility
@@ -2555,7 +2557,7 @@ def process_webhook(data: dict) -> None:
     handle_event(event_type, payload)
 ```
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Relationship |
 |-----------|-------------|
@@ -2564,7 +2566,7 @@ def process_webhook(data: dict) -> None:
 | **Principle of Least Surprise** | Supportive: conservative output is predictable |
 | **Defensive Programming** | Tension: strict boundary validation vs. liberal acceptance |
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Conservative output, liberal input** — Generate strictly, accept generously
 2. **Enables extensibility** — Unknown fields should be ignored, not rejected
@@ -2574,17 +2576,17 @@ def process_webhook(data: dict) -> None:
 
 ---
 
-## Resilience & Graceful Degradation
+## Resilience & Graceful Degradation [↑](#table-of-contents)
 
 
 > "In complex systems, failure is the normal state. Success is the special case that requires explanation."
 > — Richard Cook
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Continue operating despite partial failures.** Anticipate failure, implement recovery, degrade gracefully.
 
-### The Three Pillars
+### The Three Pillars [↑](#table-of-contents)
 
 | Pillar | Purpose | Mechanism |
 |--------|---------|-----------|
@@ -2592,17 +2594,17 @@ def process_webhook(data: dict) -> None:
 | **Fallback** | Provide degraded service | Cached data, default values |
 | **Protect** | Prevent cascade failures | Circuit breakers, timeouts |
 
-### Pattern 1: Exponential Backoff with Jitter
+### Pattern 1: Exponential Backoff with Jitter [↑](#table-of-contents)
 
 ```python
 delay = min(base_delay * 2^attempt + random_jitter, max_delay)
 ```
 
-### Pattern 2: Circuit Breaker
+### Pattern 2: Circuit Breaker [↑](#table-of-contents)
 
 Three states: CLOSED (normal) → OPEN (fail fast) → HALF-OPEN (test recovery)
 
-### Pattern 3: Graceful Degradation
+### Pattern 3: Graceful Degradation [↑](#table-of-contents)
 
 ```python
 # Cascading fallback strategy
@@ -2616,7 +2618,7 @@ def get_recommendations(user_id: str) -> list[Product]:
         return get_popular_items()  # Final fallback
 ```
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Failures are inevitable** — Design for them, don't assume success
 2. **Retry with exponential backoff and jitter** — Prevents thundering herd
@@ -2626,13 +2628,13 @@ def get_recommendations(user_id: str) -> list[Product]:
 
 ---
 
-## Principle of Least Privilege
+## Principle of Least Privilege [↑](#table-of-contents)
 
 
 > "Every program and every user of the system should operate using the least set of privileges necessary to complete the job."
 > — Jerome Saltzer, *Protection and the Control of Information Sharing in Multics* (1974)
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Minimum permissions necessary for intended function—nothing more.**
 
@@ -2641,7 +2643,7 @@ def get_recommendations(user_id: str) -> list[Product]:
 
 74% of breaches start with privileged credential abuse.
 
-### Application at Every Level
+### Application at Every Level [↑](#table-of-contents)
 
 | Level | Example |
 |-------|---------|
@@ -2650,20 +2652,20 @@ def get_recommendations(user_id: str) -> list[Product]:
 | **Service** | A payment microservice shouldn't access user profile data |
 | **Account** | A database user for reads shouldn't have DROP TABLE privileges |
 
-### Real-World Failures
+### Real-World Failures [↑](#table-of-contents)
 
 | Breach | What Happened | PoLP Failure |
 |--------|---------------|--------------|
 | **Equifax (2017)** | 143M records stolen; attackers executed 9,000 DB queries | Permissive access controls; no network segmentation |
 | **Target (2013)** | 40M credit cards via HVAC vendor | Third-party had excessive network access |
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells**: Service accounts with `*` wildcard permissions, database connections with admin privileges, shared credentials across services, functions that accept more capabilities than needed.
 
 **Verbal Cues**: "Just give it admin access, it's easier", "We'll lock it down later", "It needs these permissions for debugging"
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - Over-privileged database connection
@@ -2700,7 +2702,7 @@ Action: ["s3:GetObject", "s3:PutObject"]
 Resource: "arn:aws:s3:::my-bucket/uploads/*"
 ```
 
-### Implementation Strategies
+### Implementation Strategies [↑](#table-of-contents)
 
 | Strategy | Description |
 |----------|-------------|
@@ -2709,13 +2711,13 @@ Resource: "arn:aws:s3:::my-bucket/uploads/*"
 | **Time-bounded access** | Temporary elevated privileges that expire |
 | **Audit unused permissions** | Regularly review and remove permissions not being used |
 
-### Privilege Creep
+### Privilege Creep [↑](#table-of-contents)
 
 Permissions accumulate beyond current needs: role changes without revocation, temporary access becoming permanent, misleading role names.
 
 **Prevention**: Regular access reviews, automated permission expiration, minimal scope at design time.
 
-### Relationship to Zero Trust
+### Relationship to Zero Trust [↑](#table-of-contents)
 
 | Framework | Focus |
 |-----------|-------|
@@ -2724,7 +2726,7 @@ Permissions accumulate beyond current needs: role changes without revocation, te
 
 Partners: Zero Trust authenticates requests; PoLP limits authenticated access. Defense in depth.
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Grant minimum necessary permissions** — Start with nothing, add only what's required
 2. **Scope permissions tightly** — Specific resources, specific actions, specific time windows
@@ -2734,23 +2736,23 @@ Partners: Zero Trust authenticates requests; PoLP limits authenticated access. D
 
 ---
 
-# Maintainability & Operations
+# Maintainability & Operations [↑](#table-of-contents)
 
 *Code is a living artifact. The Boy Scout Rule keeps code improving incrementally with every change, while Observability & Transparency ensure you can understand what your systems are doing in production.*
 
 ---
 
-## Boy Scout Rule
+## Boy Scout Rule [↑](#table-of-contents)
 
 
 > "Always leave the code better than you found it."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **With each commit, leave code slightly better than you found it.** Without active maintenance, technical debt accumulates. Continuous small improvements beat periodic "refactoring sprints."
 
-### Why It Works
+### Why It Works [↑](#table-of-contents)
 
 | Traditional Approach | Boy Scout Rule |
 |---------------------|----------------|
@@ -2760,7 +2762,7 @@ Partners: Zero Trust authenticates requests; PoLP limits authenticated access. D
 | Big changes = big risk | Small changes = low risk |
 | Code rot between sprints | Code improves continuously |
 
-### What "Better" Looks Like
+### What "Better" Looks Like [↑](#table-of-contents)
 
 Small improvements that take seconds to minutes:
 
@@ -2773,7 +2775,7 @@ Small improvements that take seconds to minutes:
 | **Duplication** | Extract repeated logic into a helper (if pattern is proven) |
 | **Clarity** | Simplify a complex conditional into a named method |
 
-### The Campground, Not the Forest
+### The Campground, Not the Forest [↑](#table-of-contents)
 
 Clean the campground, not the entire forest.
 
@@ -2793,7 +2795,7 @@ def process_order(order_id: int) -> Order:
 
 Scope cleanup to files you're already touching. Issues elsewhere? Create a ticket.
 
-### Common Violations
+### Common Violations [↑](#table-of-contents)
 
 **Code Smells Left Behind**:
 - Ignoring deprecation warnings
@@ -2807,7 +2809,7 @@ Scope cleanup to files you're already touching. Issues elsewhere? Create a ticke
 - "It works, don't touch it"
 - "We need a refactoring sprint"
 
-### When NOT to Apply
+### When NOT to Apply [↑](#table-of-contents)
 
 **Exceptions**:
 - **Unfamiliar code**: Don't "improve" code you don't fully understand
@@ -2817,7 +2819,7 @@ Scope cleanup to files you're already touching. Issues elsewhere? Create a ticke
 
 Clean up obvious issues; for larger concerns, create a ticket.
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 ```python
 # ❌ Wrong - "Not my problem" attitude
@@ -2839,7 +2841,7 @@ def add_discount(order: Order) -> Order:
     return order
 ```
 
-### Relationship to Other Principles
+### Relationship to Other Principles [↑](#table-of-contents)
 
 | Principle | Connection |
 |-----------|------------|
@@ -2852,7 +2854,7 @@ def add_discount(order: Order) -> Order:
 
 **Broken Windows**: Neglect invites more neglect. Boy Scout Rule signals "this code is cared for."
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Leave code better than you found it** — Every commit is an opportunity
 2. **Small improvements compound** — Minutes daily beats weeks annually
@@ -2862,23 +2864,23 @@ def add_discount(order: Order) -> Order:
 
 ---
 
-## Observability & Transparency
+## Observability & Transparency [↑](#table-of-contents)
 
 
 > "Observability is the ability to understand the internal state of a system by examining its external outputs."
 > — Charity Majors
 
-### Core Concept
+### Core Concept [↑](#table-of-contents)
 
 **Make system behavior visible through structured telemetry.** In distributed systems, observability is your primary debugging tool.
 
-### The Three Pillars
+### The Three Pillars [↑](#table-of-contents)
 
 1. **Logs**: Chronological records of discrete events with context
 2. **Metrics**: Quantitative measurements over time
 3. **Traces**: End-to-end journey of requests through distributed systems
 
-### Observability Principles
+### Observability Principles [↑](#table-of-contents)
 
 1. **Structured Over Unstructured**: Use JSON, key-value pairs
 2. **Semantic Prefixes**: Emojis for quick visual scanning
@@ -2887,7 +2889,7 @@ def add_discount(order: Order) -> Order:
 5. **Metadata in Responses**: Return operational metadata
 6. **Timing Everything Important**: Instrument performance-critical paths
 
-### Anti-Patterns
+### Anti-Patterns [↑](#table-of-contents)
 
 - **Silent Failures**: Swallowed exceptions
 - **Opaque Error Messages**: Generic, unhelpful messages
@@ -2895,7 +2897,7 @@ def add_discount(order: Order) -> Order:
 - **Over-Logging**: Logging inside tight loops
 - **Logging Sensitive Data**: Credentials in logs
 
-### Summary
+### Summary [↑](#table-of-contents)
 
 1. **Observability is your debugger** in production
 2. **Structure your logs** for machine parsing and human readability
@@ -2905,7 +2907,7 @@ def add_discount(order: Order) -> Order:
 
 ---
 
-## When to Relax Rules
+## When to Relax Rules [↑](#table-of-contents)
 
 *Over-applying principles causes as much harm as ignoring them. Know when to make exceptions.*
 
@@ -2922,7 +2924,7 @@ def add_discount(order: Order) -> Order:
 | **Configuration** | YAGNI | Config flexibility is often worth it—cheaper than redeployment. |
 | **Security Boundaries** | Postel's Law | Be paranoid, not liberal. Validate everything strictly. |
 
-### The Meta-Principle
+### The Meta-Principle [↑](#table-of-contents)
 
 > **"Rules are for the guidance of wise men and the obedience of fools."** — Douglas Bader
 
@@ -2930,16 +2932,16 @@ Principles are heuristics, not laws. Understand WHY before applying. If followin
 
 ---
 
-## References
+## References [↑](#table-of-contents)
 
 
-### Foundational Texts
+### Foundational Texts [↑](#table-of-contents)
 - *The Pragmatic Programmer* — Andy Hunt & Dave Thomas
 - *Clean Code* — Robert C. Martin
 - *Design Patterns* — Gang of Four
 - *Object-Oriented Software Construction* — Bertrand Meyer
 
-### Online Resources
+### Online Resources [↑](#table-of-contents)
 - [Martin Fowler's Bliki](https://martinfowler.com/bliki/)
 - [Refactoring Guru](https://refactoring.guru/)
 - [DevIQ Principles](https://deviq.com/principles/)
