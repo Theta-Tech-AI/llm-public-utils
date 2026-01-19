@@ -14,23 +14,48 @@ Whether or not you use this deslop command on your code base, you should read al
 2. [Coding Principles Reference](#coding-principles-reference)
    - [Part I: Clean Code](#part-i-clean-code) — *Writing clear, simple, readable code*
      - [Simplicity & Minimalism](#simplicity--minimalism)
-       - [KISS](#kiss-keep-it-simple-stupid), [YAGNI](#yagni-you-arent-gonna-need-it), [Small Functions](#small-functions), [Guard Clauses](#guard-clauses-early-return)
+       - [KISS](#kiss-keep-it-simple-stupid) — avoid unnecessary complexity
+       - [YAGNI](#yagni-you-arent-gonna-need-it) — don't build until needed
+       - [Small Functions](#small-functions) — short, focused, one purpose
+       - [Guard Clauses](#guard-clauses-early-return) — exit early for invalid states
      - [Clarity & Readability](#clarity--readability)
-       - [Cognitive Load](#cognitive-load), [Single Level of Abstraction](#single-level-of-abstraction-slap), [Self-Documenting Code](#self-documenting-code), [Documentation Discipline](#documentation-discipline), [Elegance](#elegance), [Least Surprise](#principle-of-least-surprise)
+       - [Cognitive Load](#cognitive-load) — reduce mental effort to understand
+       - [Single Level of Abstraction](#single-level-of-abstraction-slap) — don't mix abstraction levels
+       - [Self-Documenting Code](#self-documenting-code) — names reveal purpose
+       - [Documentation Discipline](#documentation-discipline) — code tells how, comments tell why
+       - [Elegance](#elegance) — beauty through insight and minimality
+       - [Least Surprise](#principle-of-least-surprise) — behave as users expect
    - [Part II: Architecture](#part-ii-architecture) — *Structuring and designing systems*
      - [Organization & Structure](#organization--structure)
-       - [DRY](#dry-dont-repeat-yourself), [Single Source of Truth](#single-source-of-truth), [Separation of Concerns](#separation-of-concerns), [Modularity](#modularity)
+       - [DRY](#dry-dont-repeat-yourself) — one authoritative representation per concept
+       - [Single Source of Truth](#single-source-of-truth) — one location for each piece of data
+       - [Separation of Concerns](#separation-of-concerns) — one responsibility per component
+       - [Modularity](#modularity) — independent components with hidden internals
      - [Coupling & Dependencies](#coupling--dependencies)
-       - [Encapsulation](#encapsulation), [Law of Demeter](#law-of-demeter), [Orthogonality](#orthogonality), [Dependency Injection](#dependency-injection), [Composition Over Inheritance](#composition-over-inheritance)
+       - [Encapsulation](#encapsulation) — bundle data with behavior, hide internals
+       - [Law of Demeter](#law-of-demeter) — only talk to immediate friends
+       - [Orthogonality](#orthogonality) — changes in one don't affect others
+       - [Dependency Injection](#dependency-injection) — pass dependencies, don't create them
+       - [Composition Over Inheritance](#composition-over-inheritance) — combine objects, don't extend classes
      - [Design Patterns & Conventions](#design-patterns--conventions)
-       - [SOLID](#solid-principles), [Convention Over Configuration](#convention-over-configuration), [Command-Query Separation](#command-query-separation), [Code Reusability](#code-reusability)
+       - [SOLID](#solid-principles) — five foundational OO design principles
+       - [Convention Over Configuration](#convention-over-configuration) — sensible defaults, override when needed
+       - [Command-Query Separation](#command-query-separation) — return value OR change state, not both
+       - [Code Reusability](#code-reusability) — earned through proven need, not designed upfront
      - [Data & State](#data--state)
-       - [Parse, Don't Validate](#parse-dont-validate), [Immutability](#immutability), [Idempotency](#idempotency)
+       - [Parse, Don't Validate](#parse-dont-validate) — transform data into types that prove validity
+       - [Immutability](#immutability) — once created, state cannot change
+       - [Idempotency](#idempotency) — multiple executions produce same result as one
    - [Part III: Reliability](#part-iii-reliability) — *Building robust, maintainable systems*
      - [Robustness & Safety](#robustness--safety)
-       - [Fail-Fast](#fail-fast--defensive-programming), [Design by Contract](#design-by-contract), [Postel's Law](#postels-law-robustness-principle), [Resilience](#resilience--graceful-degradation), [Least Privilege](#principle-of-least-privilege)
+       - [Fail-Fast](#fail-fast--defensive-programming) — detect and report errors immediately
+       - [Design by Contract](#design-by-contract) — explicit agreements between callers and routines
+       - [Postel's Law](#postels-law-robustness-principle) — conservative output, liberal input
+       - [Resilience](#resilience--graceful-degradation) — continue operating despite partial failures
+       - [Least Privilege](#principle-of-least-privilege) — minimum permissions necessary
      - [Maintainability & Operations](#maintainability--operations)
-       - [Boy Scout Rule](#boy-scout-rule), [Observability](#observability--transparency)
+       - [Boy Scout Rule](#boy-scout-rule) — leave code better than you found it
+       - [Observability](#observability--transparency) — understand what systems do in production
 
 ---
 
