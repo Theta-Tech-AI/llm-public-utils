@@ -2942,4 +2942,4 @@ Principles are heuristics, not laws. Understand WHY before applying. If followin
 
 ---
 
-*This document is designed to be dropped into your `.claude/commands/` folder. Run `/deslop [file-or-directory]` to analyze your code against these principles.*
+*This document is designed to be dropped into your `~/.claude/commands/` and/or `~/.opencode/commands` folders. Run `/deslop [file-or-directory]` to analyze your code against these principles and let the agent fix any slop it detects.*
