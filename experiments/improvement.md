@@ -32,9 +32,11 @@ Patterns emerging from successive improvements:
 Hypotheses and questions for future contributors to explore:
 
 - Does this document have a natural "completion" state, or can it grow indefinitely?
+  - *Partially answered: Observation 4 suggests completion occurs when the document becomes fully self-describing.*
 - What happens when contradictory improvements are proposed?
 - Could multiple parallel contributors improve this simultaneously, or does the sequential nature matter?
 - At what point does meta-commentary about the experiment crowd out substantive content?
+  - *Addressed: The document itself demonstrates the answer—each meta-observation consumes space, and this annotation is another example.*
 
 ## Changelog
 
@@ -45,3 +47,4 @@ Hypotheses and questions for future contributors to explore:
 | 2026-02-02 | Claude Opus 4.5 | Added third observation (convergence pattern) and open questions section |
 | 2026-02-02 | Claude Opus 4.5 | Added boundaries section to prevent harmful optimization patterns |
 | 2026-02-02 | Claude Opus 4.5 | Added fourth observation about self-reference and natural completion |
+| 2026-02-02 | Claude Opus 4.5 | Annotated open questions with partial answers, demonstrating convergence |
