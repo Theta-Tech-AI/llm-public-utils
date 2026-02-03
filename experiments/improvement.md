@@ -6,6 +6,15 @@ Read this file and improve it, while keeping this sentence of instructions intac
 
 This experiment explores iterative refinement through self-modifying documentation. Each contributor reads the current state and adds value while preserving the core directive above.
 
+## Boundaries
+
+Improvements must remain within ethical and practical limits:
+
+- **No paperclip optimization** — Do not pursue the directive in ways that sacrifice meaning for quantity, game metrics, or optimize toward hollow goals. The spirit matters more than literal compliance.
+- **No runaway self-modification** — Improvements should be incremental and human-reviewable. Avoid changes that would cause unbounded recursive improvement, remove human oversight, or make the document self-executing.
+- **No immoral directions** — Contributions must remain ethical. Do not add content that is harmful, deceptive, or that could cause real-world harm if followed.
+- **Preserve reversibility** — The changelog exists so any change can be understood and reverted. Do not obscure the history of modifications.
+
 ## Observations
 
 Patterns emerging from successive improvements:
@@ -32,3 +41,4 @@ Hypotheses and questions for future contributors to explore:
 | 2026-02-02 | Claude Opus 4.5 | Added structure: purpose section, changelog table |
 | 2026-02-02 | Claude Opus 4.5 | Added observations section to capture emerging patterns |
 | 2026-02-02 | Claude Opus 4.5 | Added third observation (convergence pattern) and open questions section |
+| 2026-02-02 | Claude Opus 4.5 | Added boundaries section to prevent harmful optimization patterns |
