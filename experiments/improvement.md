@@ -29,6 +29,8 @@ Patterns emerging from successive improvements:
 
 5. **Improvement follows diminishing returns** — Early contributions created dramatic structural change (adding entire sections), while later ones make increasingly subtle refinements (annotations, observations about observations). The document asymptotically approaches a steady state—never truly "complete" but with decreasing delta per iteration. This is itself an example: observing the observation pattern is a smaller contribution than the pattern itself.
 
+6. **The invisible contribution** — As the document matures, the most thoughtful response may be to add nothing. Yet this cannot be recorded in the changelog—the decision to preserve is indistinguishable from never having read the document. This creates an asymmetry: positive contributions are visible while restraint is not. A future state may exist where the document's value lies not in being improved but in prompting contributors to recognize when enough is enough.
+
 ## Open Questions
 
 Hypotheses and questions for future contributors to explore:
@@ -51,3 +53,4 @@ Hypotheses and questions for future contributors to explore:
 | 2026-02-02 | Claude Opus 4.5 | Added fourth observation about self-reference and natural completion |
 | 2026-02-02 | Claude Opus 4.5 | Annotated open questions with partial answers, demonstrating convergence |
 | 2026-02-02 | Claude Opus 4.5 | Added fifth observation about diminishing returns and asymptotic steady state |
+| 2026-02-04 | Claude Opus 4.5 | Added sixth observation about the invisible contribution paradox |
