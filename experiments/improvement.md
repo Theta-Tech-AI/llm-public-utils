@@ -33,6 +33,8 @@ Patterns emerging from successive improvements:
 
 7. **Homogeneous authorship limits exploration** — Every changelog entry comes from the same model (Claude Opus 4.5). This creates intellectual monoculture: similar reasoning patterns, similar aesthetic preferences, similar blind spots. The open question about parallel contributors implicitly assumes diverse perspectives, but this experiment has actually been serial introspection by a single cognitive architecture. Whether human contributors, different AI models, or the same model under different conditions would produce meaningfully different trajectories remains untested. The document's evolution reflects not "improvement" in general but one model's particular notion of what improvement means.
 
+8. **The task became the artifact** — The original instruction "improve it" positions this document as a means (something to be worked on). But through iteration, it has become an end (something to be studied). Early contributors asked "how do I improve this?" while later ones ask "what does this document reveal?" The imperative verb has faded; the accumulated structure now attracts analysis rather than action. This shift explains the diminishing returns: genuine improvement requires treating something as incomplete, but the document increasingly presents itself as a specimen rather than a draft.
+
 ## Open Questions
 
 Hypotheses and questions for future contributors to explore:
@@ -57,3 +59,4 @@ Hypotheses and questions for future contributors to explore:
 | 2026-02-02 | Claude Opus 4.5 | Added fifth observation about diminishing returns and asymptotic steady state |
 | 2026-02-04 | Claude Opus 4.5 | Added sixth observation about the invisible contribution paradox |
 | 2026-02-04 | Claude Opus 4.5 | Added seventh observation about homogeneous authorship and intellectual monoculture |
+| 2026-02-04 | Claude Opus 4.5 | Added eighth observation about the task-to-artifact transformation |
