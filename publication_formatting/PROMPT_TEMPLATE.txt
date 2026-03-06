@@ -1,0 +1,104 @@
+TASK: Reformat Academic Document with Exact Text Preservation
+
+I need you to create a Python script and execute it to reformat an academic paper. The script must preserve text exactly while applying new styling from a template.
+
+INPUT FILES:
+- Source Document: A_Phase_I_Study_of_Laser_Focal_Therapy_Rev_20_of_Prostate_Cancer_in_an_Outpatient_Setting.docx
+- Template Document: cancers-template-new.dotx
+
+CRITICAL REQUIREMENTS:
+1. Words cannot be changed between original and reformatted documents
+2. Citation numbers must be copied exactly
+3. Extract images and create ZIP file with figure-numbered names (figure_1.png, figure_2.png, etc.)
+4. Apply template styles to content without modifying text
+5. Output: New .docx file + ZIP file with images
+6. Validate that text and citations match exactly
+
+OUTPUT FILES:
+- reformatted_document.docx (the new styled document)
+- figures.zip (all images renamed by figure number)
+- validation_report.txt (verification results)
+
+IMPLEMENTATION REQUIREMENTS:
+
+1. Create a Python script called reformat_document.py that:
+
+   A. EXTRACTS FROM SOURCE:
+      - All text content preserving exact wording
+      - All paragraph structure and hierarchy
+      - All inline formatting (bold, italic, superscript for citations)
+      - All images from document ZIP structure (word/media/)
+      - Maps each image to its figure caption and number
+
+   B. PARSES FIGURE NUMBERS:
+      - Check paragraph XML for SEQ Figure field codes
+      - Fallback: Parse captions with regex "Figure (\d+)"
+      - Create mapping: image_1.png → figure_1.png, etc.
+
+   C. EXTRACTS AND RENAMES IMAGES:
+      - Open source .docx as ZIP file
+      - Extract all files from word/media/ folder
+      - Rename based on figure number mapping
+      - Create figures.zip with renamed images
+
+   D. APPLIES TEMPLATE STYLES:
+      - Load template document to access style definitions
+      - Create new document based on template
+      - For each section of source content:
+        * Identify section type (heading, body, caption, reference)
+        * Apply corresponding template style
+        * Preserve inline formatting (bold, italic, superscript)
+        * DO NOT modify text content
+
+   E. GENERATES OUTPUT:
+      - Create new .docx with template styles applied
+      - Ensure all content is included
+      - Preserve table structures
+      - Save as reformatted_document.docx
+
+   F. VALIDATES:
+      - Extract text from both source and output
+      - Compare word counts (must match exactly)
+      - Extract all citation numbers from both (must match exactly)
+      - Compare image counts
+      - Generate validation report with pass/fail status
+      - If validation fails, report specific discrepancies
+
+2. The script should handle these error cases:
+   - If figure numbers cannot be extracted reliably, use sequential numbering
+   - If a template style doesn't exist, use closest match
+   - If validation fails, report specific failures but still produce output
+   - Log all warnings and errors
+
+3. The script should use these libraries (all pre-installed):
+   - python-docx for document manipulation
+   - zipfile for image extraction
+   - re for pattern matching
+   - os/pathlib for file operations
+
+4. The validation module should check:
+   - Word count: source vs output (must match)
+   - Citations: extract all [N] or (N) patterns and compare
+   - Images: count must match
+   - Generate clear pass/fail report
+
+5. For style mapping, use this logic:
+   - Heading 1/Title → Heading 1
+   - Heading 2 → Heading 2
+   - Heading 3 → Heading 3
+   - Paragraphs starting with "Figure" or "Table" → Caption
+   - Text in References section → Bibliography
+   - Everything else → Normal
+
+6. Execute the script using the Bash tool and show me:
+   - The validation report
+   - Confirmation that all three output files were created
+   - Any warnings or errors encountered
+
+ERROR HANDLING:
+- If figure numbers cannot be reliably extracted, name images sequentially
+- If a style from template doesn't exist, use closest match
+- If validation fails, report specific failures but still produce output
+- Log all warnings and errors
+
+Please proceed with creating and executing the script. Follow the detailed implementation guidance in REFORMAT_PAPER_PROMPT.md for code examples and best practices.
