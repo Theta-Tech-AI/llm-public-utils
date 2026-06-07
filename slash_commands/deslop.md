@@ -1,13 +1,9 @@
 # Deslop: Code Quality Analysis Command
 <sub><sup>Note: This file is ≈27k tokens as of 2026-01-19</sup></sub>
 
-> A comprehensive slash command for identifying and fixing "slop" in your codebase. If you use Claude Code, drop this file into your `~/.claude/commands/` folder. If you use OpenCode, put it in `~/.opencode/commands/` folder. Then, restart your agent harness and run `/deslop`.
+> A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase. Ask your agent to create a command or skill from this markdown file. Then, restart your agent harness and run `/deslop` or $deslop.
 
 This command combines a code analysis workflow with an extensive library of coding principles. When you run `/deslop [file-or-directory]`, or even just `/deslop` or perhaps `/deslop my frontend typescript code` the AI will read your code, cross-reference it against these principles, and suggest specific fixes with before/after examples.
-
-Just download this entire markdown file into the location for your agent harness's config folder (such as below) and then restart your harness and run `/deslop`.
-- `~/.claude/commands/deslop.md`
-- `~/.opencode/commands/deslop.md`
 
 Whether or not you use this deslop command on your code base, you should read all the coding principles yourself, as a human - you might actually learn something useful.
 
@@ -70,241 +66,48 @@ Whether or not you use this deslop command on your code base, you should read al
 
 ---
 
-## The Deslop Command
+## Instructions
+
+### Installation
 
 [↑ top](#table-of-contents)
 
-You are a code quality analyzer. Your task is to identify "slop" - code that violates established coding principles - and suggest concrete improvements.
+Download this entire markdown file into the location for your agent harness's and then restart your harness and run `/deslop` or $deslop. If you use multiple harnesses, consider using symlinks to avoid multiple sources of truth. Also consider adding this GitHub repository (Theta-Tech-AI/llm_public_utils) as a submodule to another repository It is likely one of the following locations:
 
-At the end, figure out what you should actually change in the code and ask the user if you should make the changes. Then make the changes if the user affirms.
+- `~/.claude/commands/deslop.md`
+- `~/.opencode/commands/deslop.md`
+- `~/.agents/skills/deslop.md`
+- `/home/code/my_repository_root/.claude/commands/deslop.md`
+- `/home/code/my_repository_root/.opencode/commands/deslop.md`
+- `/home/code/my_repository_root/.agents/skills/deslop.md`
 
-### Target
+### Deslop
+
+[↑ top](#table-of-contents)
+
+You are an obsessive code quality analyzer. Your task is to identify "slop" - code that violates established coding principles - and suggest concrete improvements. Unless the user asked you to automatically implement the suggested changes, ask first.
 
 Analyze: $ARGUMENTS
 
-If no argument provided, operate on the current folder or current code base.
+If no argument provided, operate on the current folder or current code base. Read all the coding principles in this file, read target files, identify violations, suggest concrete fixes.
 
-### Process
+For each violation list:
 
-1. **Read all coding principles** from this document to understand what good code looks like.
-2. **Read the target file(s)** using the Read tool
-3. **Reread relevant coding principles** based on what violations you observe
-4. **Identify violations** organized by principle
-5. **Suggest concrete fixes** with before/after examples
+- **Severity:** Extreme, high, medium, low, or optional.
+- **Location:** File path and line number.
+- **Violation:** Coding principle violated and why.
+- **Summary:** One sentence description of the violation.
+- **Improvement:** Suggest a less sloppy way.
 
-### Output Format
-
-#### Summary
-
-Brief overview of code health (1-2 sentences).
-
-#### Violations Found
-
-For each violation:
-
-```
-##### [Principle Name] - [Specific Issue]
-
-**Location**: `file.py:line_number`
-
-**Problem**: [Description of what's wrong]
-
-**Before**:
-```python
-# problematic code
-```
-
-**After**:
-```python
-# improved code
-```
-
-**Why**: [Brief explanation referencing the principle]
-
-#### Recommendations
-
-Prioritized list of changes, most impactful first.
-
-Then, ask the user if they'd like to implement some or all of the changes.
-
-If they affirm, then implement them next. When implementing them, consider if some of the changes could be implemented in parallel with async agents for efficiency.
-
-### Important Notes
-
-- **Don't over-engineer**: Suggesting abstractions for single-use code violates YAGNI/KISS
-- **Context matters**: Test code has different standards (DAMP over DRY)
-- **Rule of Three**: Don't suggest abstracting until pattern proven with 3+ occurrences
-- **Incidental similarity is not duplication**: Don't merge code that happens to look similar but represents different concepts
-- **Be specific**: Reference exact line numbers and provide concrete before/after code
-
-### Priority Matrix
-
-*Prioritize fixes by impact and effort.*
-
-| Priority | Type | Examples | Fix When |
-|----------|------|----------|----------|
-| **P0: Critical** | Security, data loss | SQL injection, unvalidated input, race conditions | Immediately |
-| **P1: High** | Bugs waiting to happen | Missing error handling, silent failures, unclear ownership | This PR |
-| **P2: Medium** | Maintainability | DRY violations (3+), god classes, deep nesting | When touching file |
-| **P3: Low** | Polish | Magic numbers, naming, minor duplication | If time permits |
-| **P4: Optional** | Style | Formatting, comment cleanup, minor refactors | Boy Scout Rule |
-
-**Effort modifiers:**
-- **Quick win** (< 5 min): Bump up one priority level
-- **Risky change** (no tests): Bump down one level, suggest adding tests first
-- **Requires coordination**: Note in recommendations, may need team discussion
-
-### Example Output
-
-#### Summary
-
-The module has good structure but contains several DRY violations and magic numbers that reduce maintainability.
-
-#### Violations Found
-
-##### Self-Documenting Code - Magic Numbers
-
-**Location**: `processor.py:45-48`
-
-**Problem**: Hardcoded numeric values without explanation
-
-**Before**:
-```python
-if retry_count > 3:
-    time.sleep(0.5)
-```
-
-**After**:
-```python
-MAX_RETRIES = 3
-RETRY_DELAY_SECONDS = 0.5
-
-if retry_count > MAX_RETRIES:
-    time.sleep(RETRY_DELAY_SECONDS)
-```
-
-**Why**: Named constants are self-documenting and centralize configuration.
-
-##### DRY - Duplicated Validation Logic
-
-**Location**: `api.py:23-28` and `api.py:67-72`
-
-**Problem**: Same email validation logic in two places
-
-**Before**:
-```python
-# In create_user():
-if not email or '@' not in email:
-    raise ValueError("Invalid email")
-
-# In update_user():
-if not email or '@' not in email:
-    raise ValueError("Invalid email")
-```
-
-**After**:
-```python
-def validate_email(email: str) -> None:
-    if not email or '@' not in email:
-        raise ValueError("Invalid email")
-
-# In both functions:
-validate_email(email)
-```
-
-**Why**: Same business rule duplicated - if validation changes, both must update.
-
-#### Recommendations
-
-1. Extract `validate_email()` helper (DRY - affects 2 locations)
-2. Replace magic numbers with named constants (Self-Documenting - affects 4 locations)
-3. Consider splitting `UserManager` into `UserService` and `UserRepository` (SRP - optional, low priority)
-
-## Coding Principles Reference
+## Part I: Clean Code
 
 [↑ top](#table-of-contents)
 
-### Quick Diagnostic Guide
-
-*See a symptom? Jump to the relevant principle.*
-
-| Symptom | Likely Principle | Quick Fix |
-|---------|------------------|-----------|
-| Function > 50 lines | [Small Functions](#small-functions) | Extract named helpers |
-| Deep nesting (3+ levels) | [Guard Clauses](#guard-clauses-early-return), [Cognitive Load](#cognitive-load) | Early returns |
-| Copy-pasted code (3+ times) | [DRY](#dry-dont-repeat-yourself) | Extract shared function |
-| Magic numbers/strings | [Self-Documenting Code](#self-documenting-code) | Named constants |
-| Class doing many things | [SOLID (SRP)](#solid-principles), [Separation of Concerns](#separation-of-concerns) | Split by responsibility |
-| Long parameter lists (5+) | [Encapsulation](#encapsulation) | Parameter object |
-| `a.b().c().d()` chains | [Law of Demeter](#law-of-demeter) | Delegate to intermediate |
-| Speculative features | [YAGNI](#yagni-you-arent-gonna-need-it) | Delete until needed |
-| Comments explaining "what" | [Self-Documenting Code](#self-documenting-code) | Rename to be obvious |
-| Stale/wrong comments | [Documentation Discipline](#documentation-discipline) | Delete or fix |
-| Same data in multiple tables | [Single Source of Truth](#single-source-of-truth) | Designate authoritative source |
-| Tests require complex setup | [Dependency Injection](#dependency-injection) | Inject dependencies |
-| Inheritance hierarchy > 2 deep | [Composition Over Inheritance](#composition-over-inheritance) | Compose objects |
-| Boolean parameters | [Small Functions](#small-functions), [KISS](#kiss-keep-it-simple-stupid) | Separate functions |
-| Inconsistent error handling | [Fail-Fast](#fail-fast--defensive-programming) | Validate at entry |
-| Silent failures | [Fail-Fast](#fail-fast--defensive-programming), [Observability](#observability--transparency) | Fail loudly, log |
-| Getters exposing internals | [Encapsulation](#encapsulation) | Tell, don't ask |
-
-### Principle Tensions
-
-*Principles sometimes conflict. Here's how to resolve common tensions.*
-
-| Tension | Resolution |
-|---------|------------|
-| **DRY vs. Coupling** | Duplication is cheaper than wrong abstraction. Wait for Rule of Three. If abstracting requires parameters/conditionals to handle differences, keep separate. |
-| **YAGNI vs. Extensibility** | Build for today, but keep code malleable. Don't add extension points; ensure code is easy to modify when needed. |
-| **KISS vs. DRY** | Three lines of obvious code beats one line of clever abstraction. Optimize for reader comprehension. |
-| **Fail-Fast vs. Resilience** | Fail fast for bugs (programmer errors). Retry/degrade for operational failures (network, disk). |
-| **Encapsulation vs. Testing** | Prefer testing through public interface. If you need to test internals, the design may need work. |
-| **Postel's Law vs. Fail-Fast** | Be liberal on input *format* (accept trailing whitespace), but strict on *required data* (reject missing fields). |
-| **Small Functions vs. Cognitive Load** | Too many tiny functions forces readers to jump around. Balance: functions should do one thing, but that "thing" can be substantial. |
-| **DRY vs. Decoupling** | Shared code creates coupling. If two teams/services share code, changes affect both. Sometimes copy-paste is correct for independence. |
-| **Convention vs. Explicitness** | Conventions reduce boilerplate but hide behavior. Document conventions; allow overrides. |
-
-### Anti-Pattern Quick Reference
-
-*Fast detection of common code smells.*
-
-| Anti-Pattern | Symptoms | Violates |
-|--------------|----------|----------|
-| **God Class** | 500+ lines, "Manager"/"Handler" suffix, does everything | SRP, Modularity |
-| **Feature Envy** | Method uses another class's data more than its own | Encapsulation |
-| **Shotgun Surgery** | One change requires edits in 10+ files | Separation of Concerns |
-| **Primitive Obsession** | Passing `(str, str, int)` instead of `User` object | Encapsulation |
-| **Data Clumps** | Same 3-4 params always passed together | Encapsulation |
-| **Long Method** | Function > 50 lines, multiple levels of abstraction | Small Functions |
-| **Speculative Generality** | Unused interfaces, "for future use" code | YAGNI |
-| **Dead Code** | Unreachable code, unused functions | YAGNI, Boy Scout |
-| **Magic Numbers** | `if x > 86400` instead of `SECONDS_PER_DAY` | Self-Documenting |
-| **Inappropriate Intimacy** | Class accesses another's private details | Encapsulation, LoD |
-| **Message Chains** | `a.getB().getC().getD()` | Law of Demeter |
-| **Middle Man** | Class delegates everything, adds no value | KISS |
-| **Refused Bequest** | Subclass doesn't use inherited methods | Liskov, Composition |
-| **Comments as Deodorant** | Comments explaining bad code instead of fixing it | Self-Documenting |
-| **Cargo Cult** | Patterns used without understanding why | KISS, YAGNI |
+Write clear, simple, readable code. Do less, but better. Reduce complexity, and make the code easily readable.
 
 ---
 
-# Part I: Clean Code
-
-[↑ top](#table-of-contents)
-
-> *Writing clear, simple, readable code. These principles govern the act of writing code itself—making each line, function, and file as clear as possible.*
-
----
-
-# Simplicity & Minimalism
-
-[↑ top](#table-of-contents)
-
-*The foundation of clean code: do less, but better. These principles share a core insight—complexity is the enemy. KISS provides the philosophy, YAGNI prevents premature complexity, Small Functions break down complexity, and Guard Clauses eliminate nested complexity.*
-
----
-
-## KISS: Keep It Simple, Stupid
+### KISS: Keep It Simple, Stupid
 
 [↑ top](#table-of-contents)
 
@@ -312,73 +115,19 @@ validate_email(email)
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
 
-### Core Concept
+Complexity kills maintainability, and simple does not necessarily equal easy - simple systems may require skill to build. Aim for the simplest sufficient code - neither incomplete nor over-engineered code.
 
-KISS is the discipline of **avoiding unnecessary complexity**. Coined by Kelly Johnson at Lockheed Skunk Works (1960), the principle states systems work best when kept simple.
+To avoid unnecessary complexity, look for:
 
-**Two sins of complexity:**
-1. **Too many parts** in the system
-2. **Too many interconnected parts** coupling the system together
-
-**Simple ≠ Easy:** Simple systems have few interconnected parts. Easy tasks require little effort.
-
-### Measuring Complexity
-
-| Metric | Measures | Threshold | Use Case |
-|--------|----------|-----------|----------|
-| **Cyclomatic Complexity** | Independent paths through code | ≤10/function | Test planning |
-| **Cognitive Complexity** | Mental effort to understand | ≤15/function | Readability |
-
-### Common Violations
-
-**Code Smells**: Single-implementation interfaces, factories of factories, deep inheritance, "clever" one-liners.
-
-**Verbal Cues**: "This pattern will be useful when...", "Let me make this more flexible...", "This is the proper enterprise way..."
-
-### Four Classes of Violations
-
-| Class | Example |
-|-------|---------|
-| **Cleverness Over Clarity** | Nested ternaries, regex golf |
-| **Premature Optimization** | Caching before profiling |
-| **Unnecessary Abstraction** | Interface for single implementation |
-| **Speculative Generality** | Calculator with plugin architecture |
-
-### Anti-Patterns
-
-```python
-# ❌ Wrong - Over-engineered calculator
-class OperationInterface(ABC):
-    @abstractmethod
-    def execute(self, a: float, b: float) -> float: ...
-
-class AddOperation(OperationInterface):
-    def execute(self, a, b): return a + b
-
-class OperationFactory:
-    def create(self, op: str) -> OperationInterface: ...
-
-# ✅ Correct - Direct solution
-def calculate(a: float, b: float, op: str) -> float:
-    if op == '+': return a + b
-    if op == '-': return a - b
-    if op == '*': return a * b
-    if op == '/': return a / b
-    raise ValueError(f"Unknown operation: {op}")
-```
-
-### The Simplicity Test
-
-Before adding complexity: **Can a junior understand this?** — **Does it solve a problem we have today?** — **Am I trying to impress or communicate?**
-
-### Summary
-
-1. **Fewer parts, fewer connections** — complexity kills maintainability
-2. **Simple ≠ Easy** — simple systems may require skill to build
-3. **Junior-readable code** — if they can't understand it, it's too complex
-4. **Hardcode first** — add configurability when proven necessary (see also: [YAGNI](#yagni-you-arent-gonna-need-it))
-5. **Measure complexity** — cyclomatic ≤10, cognitive ≤15 per function
-6. **Simplest sufficient code** — not incomplete, not over-engineered
+- **Parts Plethora:** Too many parts in the system
+- **Interconnectedness:** Too many coupled components.
+- **Extra Effort:** Easy tasks should require minimal effort.
+- **Cyclomaticism:** Many independent paths through the code
+- **Cognitive Complexity:** High mental effort to understand code. Can a new junior dev understand the code upon a glance?
+- **Over-Abstractions:** Single-implementation interfaces, factories of factories, deep inheritance, "clever" one-liners.
+- **Rationaliations:** Look for violations where it seems coder said to themself: *"This pattern will be useful when..."*, or *"Let me make this more flexible..."*, or *"This is the proper enterprise way..."*
+- **Overengineering:** Nested ternaries, cleverness over clarity, premature optimization, caching before profiling, interfaces for single implementations, or speculative generality.
+-  **Ego:** Spots where the coder was trying to impress instead of communicate plainly.
 
 ---
 
