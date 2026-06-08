@@ -990,97 +990,40 @@ When reuse *is* warranted, minimize dependencies (a little copying beats a littl
 > "A parser is just a function that consumes less-structured input and produces more-structured output."
 > — Alexis King
 
-### Core Concept
-
-**Transform data into precise types that make illegal states unrepresentable.** Validation checks then forgets. Parsing checks and *remembers* in the type system.
-
-### Validation vs. Parsing
+Validation checks data and then forgets what it learned; parsing checks data and *remembers* the result in the type system. A validator returns nothing, so every downstream caller must trust that the check happened; a parser returns a more precise type that *proves* the check happened, so callers need no trust. Parse once at the boundary, convert external data into domain types immediately, and design those types so illegal states can't even be represented.
 
 ```python
-# ❌ Wrong - Validation: checks then discards knowledge
+# ❌ Validation: checks then discards the knowledge
 def validate_non_empty(items: list) -> None:
     if not items:
         raise ValueError("List cannot be empty")
-    # Returns nothing—knowledge is lost
 
 def process(items: list) -> None:
     validate_non_empty(items)
     first = items[0]  # Caller must trust validation happened
 
-# ✅ Correct - Parsing: checks and returns proof
-from typing import NewType, TypeVar
-T = TypeVar('T')
+# ✅ Parsing: checks and returns proof in the type
 NonEmptyList = NewType('NonEmptyList', list)
 
 def parse_non_empty(items: list[T]) -> NonEmptyList[T]:
     if not items:
         raise ValueError("List cannot be empty")
-    return NonEmptyList(items)  # Type proves non-emptiness
+    return NonEmptyList(items)
 
 def process(items: NonEmptyList[T]) -> None:
     first = items[0]  # Type guarantees safety—no trust needed
 ```
 
-### The Shotgun Parsing Anti-Pattern
-
-Checks spread everywhere hoping to catch bad data:
-1. **Redundant checks**: Same validation repeated
-2. **Inconsistent coverage**: Easy to miss checks
-3. **Rollback hell**: Invalid data after partial processing
-4. **Silent corruption**: Invalid state if check forgotten
+The opposite is "shotgun parsing" — the same `if not user_id` check scattered across every function, easy to miss and prone to leaving half-processed invalid data behind. It pairs with primitive obsession, where domain concepts ride around as raw `str`/`int`/`dict` (`create_order(customer_id: str, product_id: str, ...)` invites swapping arguments and allows negative quantities). Encode the constraints in the type instead, and make impossible combinations unrepresentable rather than guarding against them everywhere:
 
 ```python
-# ❌ Wrong - Shotgun parsing
-def get_user(user_id: str) -> User:
-    if not user_id:
-        raise ValueError("user_id required")
-    ...
-
-def update_user(user_id: str, data: dict) -> None:
-    if not user_id:  # Repeated check!
-        raise ValueError("user_id required")
-    ...
-
-# ✅ Correct - Parse once at the boundary
-UserId = NewType('UserId', str)
-
-def parse_user_id(raw: str) -> UserId:
-    if not raw or not raw.strip():
-        raise ValueError("user_id required")
-    return UserId(raw.strip())
-
-def get_user(user_id: UserId) -> User: ...      # No validation needed
-def update_user(user_id: UserId, data: dict): ...  # Type guarantees validity
-```
-
-### Primitive Obsession
-
-Over-reliance on `str`, `int`, `dict` for domain concepts. Primitives carry no context—validation knowledge is lost.
-
-```python
-# ❌ Wrong - Primitive obsession
-def create_order(customer_id: str, product_id: str, quantity: int, price: float): ...
-# Easy to swap customer_id/product_id; negative quantity allowed; what currency?
-
-# ✅ Correct - Domain types encode constraints
-def create_order(customer_id: CustomerId, product_id: ProductId,
-                 quantity: PositiveInt, price: Money): ...
-```
-
-### Make Illegal States Unrepresentable
-
-```python
-# ❌ Wrong - Invalid states representable
+# ❌ Invalid states representable
 @dataclass
 class Order:
-    status: str  # "pending", "shipped", "delivered"
-    shipped_at: datetime | None  # Bug: can be None when status="shipped"
+    status: str                  # "pending" | "shipped" | "delivered"
+    shipped_at: datetime | None  # Bug: can be None when status == "shipped"
 
-# ✅ Correct - Invalid states unrepresentable
-@dataclass
-class PendingOrder:
-    items: list[Item]
-
+# ✅ Invalid states unrepresentable
 @dataclass
 class ShippedOrder:
     items: list[Item]
@@ -1089,90 +1032,7 @@ class ShippedOrder:
 Order = PendingOrder | ShippedOrder | DeliveredOrder
 ```
 
-### Parse at the Boundary
-
-```python
-# ❌ Wrong - Raw data flows through system
-def handle_request(request: dict) -> Response:
-    user_id = request.get("user_id")
-    if not user_id:
-        raise ValueError("user_id required")
-    # More validation scattered deeper...
-
-# ✅ Correct - Parse at boundary, use typed data internally
-@dataclass(frozen=True)
-class CreateUserRequest:
-    user_id: UserId
-    email: Email
-    age: PositiveInt
-
-def parse_request(raw: dict) -> CreateUserRequest:
-    return CreateUserRequest(
-        user_id=parse_user_id(raw.get("user_id", "")),
-        email=parse_email(raw.get("email", "")),
-        age=parse_positive_int(raw.get("age", 0)),
-    )
-
-def handle_request(request: CreateUserRequest) -> Response:
-    ...  # All data already validated
-```
-
-### Lightweight Parsing with NewType
-
-`NewType` marks validated data without runtime overhead:
-
-```python
-from typing import NewType
-
-UserId = NewType('UserId', str)  # Still a str at runtime
-
-def parse_user_id(raw: str) -> UserId:
-    if not raw or not raw.startswith("U"):
-        raise ValueError("Invalid user ID")
-    return UserId(raw)
-
-def load_user(user_id: UserId) -> User: ...
-
-load_user(parse_user_id(url))  # ✅ OK
-load_user("U6789679")  # ❌ Type checker error
-```
-
-### Pydantic: Full-Throttle Parsing
-
-```python
-from pydantic import BaseModel, TypeAdapter
-
-class User(BaseModel):
-    username: str
-    age: int  # Coerced from string automatically
-    last_login: datetime
-
-users = TypeAdapter(list[User]).validate_json(raw_json)
-```
-
-### Common Violations
-
-- **Functions returning `None` after validation** — Return the proof instead
-- **Boolean flags instead of types** — `is_valid: bool` vs. `ValidatedData` type
-- **Re-validating inside trusted code** — Parse at boundaries only
-- **Passing raw dicts through layers** — Parse to domain types at the edge
-- **Using `str` for everything** — Email, phone, SSN as `str` is primitive obsession
-
-### When NOT to Apply
-
-- **Quick scripts**: Overhead of custom types may not pay off
-- **Performance-critical paths**: Sometimes primitives are faster
-- **Prototyping**: Over-engineering types slows exploration
-- **Simple CRUD**: Not every field needs a custom type
-
-### Summary
-
-1. **Parsers return proof, validators return nothing** — Transform data into types that encode validity
-2. **Parse at the boundary** — Convert external data to domain types immediately
-3. **Make illegal states unrepresentable** — Design types where invalid combinations can't exist
-4. **Eliminate shotgun parsing** — Centralize validation, then trust the types
-5. **Avoid primitive obsession** — Use domain types instead of raw `str`/`int`
-6. **Choose parsing depth** — `NewType` for lightweight, classes for rich, Pydantic for full (see also: [Fail-Fast](#fail-fast--defensive-programming), [Design by Contract](#design-by-contract), [Encapsulation](#encapsulation), [Immutability](#immutability))
+Choose the parsing depth to fit: `NewType` for a zero-overhead marker, a frozen dataclass for richer invariants, Pydantic when you want full coercion and validation at the edge. For quick scripts, prototypes, and simple CRUD, not every field needs its own type.
 
 ---
 
@@ -1184,21 +1044,7 @@ users = TypeAdapter(list[User]).validate_json(raw_json)
 > "Immutable types are safer from bugs, easier to understand, and more ready for change."
 > — MIT 6.005 Software Construction
 
-### Core Concept
-
-**Once created, state cannot be modified.** Create new structures with desired changes instead.
-
-Mutable shared state causes most concurrency and aliasing bugs. Immutability eliminates them by design.
-
-### Benefits
-
-- **Thread safety without locks**: Share freely between threads
-- **No defensive copying**: Share directly
-- **Simpler reasoning**: Only understand creation site
-- **Safe hash keys**: Can be dictionary keys
-- **Enables caching**: Results remain valid indefinitely
-
-### Common Violations
+Once created, an immutable object's value is fixed; to "change" it you create a new one. Mutable shared state causes most concurrency and aliasing bugs, and immutability eliminates them by design — objects become safe to share between threads without locks or defensive copies, usable as hash keys, and easy to reason about because you only need to understand the creation site. The common violation is a function that quietly mutates its caller's data; return a new structure instead.
 
 ```python
 # ❌ Wrong - Mutates caller's data
@@ -1213,31 +1059,7 @@ def normalize_scores(scores: list[float]) -> list[float]:
     return [score / max_score for score in scores]
 ```
 
-### Python Implementation
-
-```python
-from dataclasses import dataclass
-
-# ✅ Immutable dataclass
-@dataclass(frozen=True)
-class Document:
-    gdrive_id: str
-    file_name: str
-    content_hash: str
-
-# ✅ Use tuple instead of list for fixed data
-SUPPORTED_EXTENSIONS: tuple[str, ...] = (".pdf", ".docx", ".txt")
-
-# ✅ Use frozenset instead of set
-VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
-```
-
-### Summary
-
-1. **Immutable objects can't change** — once created, their value is fixed
-2. **Aliasing is safe** with immutable objects
-3. **Thread safety is free** — no locks needed
-4. **Prefer immutability** — use frozen dataclasses, tuples, frozensets (see also: [Parse, Don't Validate](#parse-dont-validate))
+In Python, reach for `@dataclass(frozen=True)`, `tuple` instead of `list` for fixed data, and `frozenset` instead of `set`.
 
 ---
 
@@ -1248,34 +1070,7 @@ VALID_STATUSES: frozenset[str] = frozenset({"pending", "done", "failed"})
 
 > "An operation is idempotent if performing it multiple times has the same effect as performing it once."
 
-### Core Concept
-
-**Multiple executions produce same result as one.** In distributed systems, duplicate requests are inevitable—design around them.
-
-### Implementation Strategies
-
-1. **Idempotency Keys**: Attach unique identifier to each request
-2. **Deterministic IDs**: Generate IDs from content itself
-3. **Database Upserts**: Use `INSERT ... ON CONFLICT`
-4. **Conditional Writes**: Use version numbers (optimistic locking)
-5. **Lease-Based Processing**: Acquire exclusive access before processing
-
-### Naturally Idempotent Operations
-
-| Operation | Why Idempotent |
-|-----------|----------------|
-| `GET /resource` | Reads don't change state |
-| `PUT /resource` | Full replacement, same result |
-| `DELETE /resource` | Deleting twice = still deleted |
-| Setting a value | `x = 5` is idempotent; `x += 5` is not |
-
-### Summary
-
-1. **Duplicates are inevitable** in distributed systems—design for them
-2. **Use deterministic IDs** derived from content when possible
-3. **Prefer upserts** over inserts for database operations
-4. **Track processed messages** in queue consumers
-5. **Test by calling twice** and verifying same result
+An idempotent operation produces the same result whether run once or many times. Duplicate requests are inevitable in distributed systems — retries, at-least-once queues, impatient users — so design around them rather than assuming exactly-once delivery. The main techniques: idempotency keys, deterministic IDs derived from content, database upserts (`INSERT ... ON CONFLICT`), conditional writes with version numbers, and lease-based processing. Some operations are naturally idempotent (`GET`, `PUT`, `DELETE`, and assignment `x = 5`) while others are not (`x += 5`). The cheap test is to call it twice and confirm the state matches.
 
 ---
 
