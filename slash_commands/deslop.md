@@ -447,7 +447,7 @@ In relation to other principles, guard clauses...
 > "Cognitive load is how much a developer needs to think in order to complete a task."
 > — Artem Zakirullin
 
-Code is read 10x more than it's written. Aim for clarity and readability. It requires effort to understand code and our working memory only holds limited pieces of information with full comprehension. Every clever trick forces readers to hold more in their head. While the developer may have been working on some code for a long time, they're often heavily relying on their long-term memory of how the code works and rarely realize how much cognitive effort it takes for newcomers to understand a piece of code seeing it for the first time. Comments are not an excuse for code that does not increase cognitive load. Clever one-liners, excessive layered approaches, prematurely build microservices, all increase the cognitive burden on the reader of the code.
+Code is read 10x more than it's written. Aim for clarity and readability. It requires effort to understand code and our working memory only holds limited pieces of information with full comprehension. Every clever trick forces readers to hold more in their head. While the developer may have been working on some code for a long time, they're often heavily relying on their long-term memory of how the code works and rarely realize how much cognitive effort it takes for newcomers to understand a piece of code seeing it for the first time. Comments are not an excuse for code that does not increase cognitive load. Clever one-liners, excessive layered approaches, prematurely build microservices, all increase the cognitive burden on the reader of the code. The best code requires no extra mental effort to parse.
 
 ```python
 # ❌ Wrong - Each condition fills working memory
@@ -472,12 +472,6 @@ In relation to other principles, cognitive load...
 | **Small Functions** | Must balance: too many shallow functions *increase* load |
 | **Composition Over Inheritance** | Explicit dependencies reduce hidden context |
 | **Modularity** | Deep modules hide complexity behind simple interfaces |
-
-1. **Working memory holds ~4 chunks** — Exceed this and comprehension fails
-2. **Reduce extraneous load** — Focus on how code is presented
-3. **Familiarity ≠ simplicity** — Code you know feels easy; newcomers feel the burden
-4. **Prefer deep modules** — Simple interfaces hiding complex implementations
-5. **Write boring code** — The best code requires no mental effort to parse
 
 ---
 
