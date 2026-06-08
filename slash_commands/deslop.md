@@ -1,5 +1,5 @@
 # Deslop: Code Quality Analysis Command
-<sub><sup>Note: This file is ≈16k tokens as of 2026-06-08</sup></sub>
+<sub><sup>Note: This file is ≈14k tokens as of 2026-06-08</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase. Ask your agent to create a command or skill from this markdown file. Then, restart your agent harness and run `/deslop` or $deslop.
 
@@ -11,203 +11,59 @@ Whether or not you use this deslop command on your code base, you should read al
 
 ## Table of Contents
 
-- [Deslop: Code Quality Analysis Command](#deslop-code-quality-analysis-command)
-  - [Table of Contents](#table-of-contents)
-  - [Instructions](#instructions)
-    - [Installation](#installation)
-    - [Deslop](#deslop)
-    - [Check for Updates](#check-for-updates)
-  - [Part 1: Clean Code](#part-1-clean-code)
-    - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
-    - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
-    - [Small Functions](#small-functions)
-    - [Guard Clauses](#guard-clauses)
-    - [Cognitive Load](#cognitive-load)
-    - [Single Level of Abstraction (SLAP)](#single-level-of-abstraction-slap)
-    - [Self-Documenting Code](#self-documenting-code)
-    - [Documentation Discipline](#documentation-discipline)
-    - [Elegance](#elegance)
-    - [Principle of Least Surprise](#principle-of-least-surprise)
-  - [Part 3: Architecture](#part-3-architecture)
-- [Organization \& Structure](#organization--structure)
-  - [DRY: Don't Repeat Yourself](#dry-dont-repeat-yourself)
-    - [Core Concept](#core-concept)
-    - [The Rule of Three](#the-rule-of-three)
-    - [The Wrong Abstraction](#the-wrong-abstraction)
-    - [Recognizing True vs. Incidental Duplication](#recognizing-true-vs-incidental-duplication)
-    - [Common Violations](#common-violations)
-    - [Anti-Patterns](#anti-patterns)
-    - [Refactoring Techniques](#refactoring-techniques)
-    - [DRY Beyond Code](#dry-beyond-code)
-    - [Summary](#summary)
-  - [Single Source of Truth](#single-source-of-truth)
-    - [Core Concept](#core-concept-1)
-    - [SSoT vs. DRY](#ssot-vs-dry)
-    - [Common Violations](#common-violations-1)
-    - [When Duplication Is Acceptable](#when-duplication-is-acceptable)
-    - [Summary](#summary-1)
-  - [Separation of Concerns](#separation-of-concerns)
-    - [Core Concept](#core-concept-2)
-    - [Types of Concerns](#types-of-concerns)
-    - [Common Violations](#common-violations-2)
-    - [Anti-Patterns](#anti-patterns-1)
-    - [Summary](#summary-2)
-  - [Modularity](#modularity)
-    - [Core Concept](#core-concept-3)
-    - [Deep vs. Shallow Modules](#deep-vs-shallow-modules)
-    - [Common Violations](#common-violations-3)
-    - [Summary](#summary-3)
-- [Coupling \& Dependencies](#coupling--dependencies)
-  - [Encapsulation](#encapsulation)
-    - [Core Concept](#core-concept-4)
-    - [Tell, Don't Ask](#tell-dont-ask)
-    - [Common Violations](#common-violations-4)
-    - [Summary](#summary-4)
-  - [Law of Demeter](#law-of-demeter)
-    - [Core Concept](#core-concept-5)
-    - [The "One Dot" Rule](#the-one-dot-rule)
-    - [Formal Definition](#formal-definition)
-    - [Exceptions: When Chaining Is Acceptable](#exceptions-when-chaining-is-acceptable)
-    - [A Note on Tell-Don't-Ask](#a-note-on-tell-dont-ask)
-    - [Summary](#summary-5)
-  - [Orthogonality](#orthogonality)
-    - [Core Concept](#core-concept-6)
-    - [Common Violations](#common-violations-5)
-    - [Summary](#summary-6)
-  - [Dependency Injection](#dependency-injection)
-    - [Core Concept](#core-concept-7)
-    - [Three Forms](#three-forms)
-    - [Anti-Patterns](#anti-patterns-2)
-    - [Service Lifetimes](#service-lifetimes)
-    - [Summary](#summary-7)
-  - [Composition Over Inheritance](#composition-over-inheritance)
-    - [Core Concept](#core-concept-8)
-    - [Why Composition Is Preferred](#why-composition-is-preferred)
-    - [Anti-Patterns](#anti-patterns-3)
-    - [Summary](#summary-8)
-- [Design Patterns \& Conventions](#design-patterns--conventions)
-  - [SOLID Principles](#solid-principles)
-    - [Overview](#overview)
-    - [S — Single Responsibility Principle](#s--single-responsibility-principle)
-    - [O — Open/Closed Principle](#o--openclosed-principle)
-    - [L — Liskov Substitution Principle](#l--liskov-substitution-principle)
-    - [I — Interface Segregation Principle](#i--interface-segregation-principle)
-    - [D — Dependency Inversion Principle](#d--dependency-inversion-principle)
-    - [When NOT to Apply SOLID](#when-not-to-apply-solid)
-    - [Detection Checklist](#detection-checklist)
-  - [Convention Over Configuration](#convention-over-configuration)
-    - [Core Concept](#core-concept-9)
-    - [The Power of Defaults](#the-power-of-defaults)
-    - [Real-World Examples](#real-world-examples)
-    - [When to Apply](#when-to-apply)
-    - [Common Violations](#common-violations-6)
-    - [The Dark Side](#the-dark-side)
-    - [Explicit vs. Implicit Trade-off](#explicit-vs-implicit-trade-off)
-    - [Relationship to Other Principles](#relationship-to-other-principles)
-    - [Summary](#summary-9)
-  - [Command-Query Separation](#command-query-separation)
-    - [Core Concept](#core-concept-10)
-    - [Why CQS Matters](#why-cqs-matters)
-    - [Anti-Patterns](#anti-patterns-4)
-    - [Pragmatic Exceptions](#pragmatic-exceptions)
-    - [Summary](#summary-10)
-  - [Code Reusability](#code-reusability)
-    - [Core Concept](#core-concept-11)
-    - [Characteristics of Reusable Code](#characteristics-of-reusable-code)
-    - [Types of Reuse](#types-of-reuse)
-    - [The Reusability Trap](#the-reusability-trap)
-    - [Designing for Reusability](#designing-for-reusability)
-    - [Common Violations](#common-violations-7)
-    - [When Reusability Hurts](#when-reusability-hurts)
-    - [Summary](#summary-11)
-- [Data \& State](#data--state)
-  - [Parse, Don't Validate](#parse-dont-validate)
-    - [Core Concept](#core-concept-12)
-    - [Validation vs. Parsing](#validation-vs-parsing)
-    - [The Shotgun Parsing Anti-Pattern](#the-shotgun-parsing-anti-pattern)
-    - [Primitive Obsession](#primitive-obsession)
-    - [Make Illegal States Unrepresentable](#make-illegal-states-unrepresentable)
-    - [Parse at the Boundary](#parse-at-the-boundary)
-    - [Lightweight Parsing with NewType](#lightweight-parsing-with-newtype)
-    - [Pydantic: Full-Throttle Parsing](#pydantic-full-throttle-parsing)
-    - [Common Violations](#common-violations-8)
-    - [When NOT to Apply](#when-not-to-apply)
-    - [Summary](#summary-12)
-  - [Immutability](#immutability)
-    - [Core Concept](#core-concept-13)
-    - [Benefits](#benefits)
-    - [Common Violations](#common-violations-9)
-    - [Python Implementation](#python-implementation)
-    - [Summary](#summary-13)
-  - [Idempotency](#idempotency)
-    - [Core Concept](#core-concept-14)
-    - [Implementation Strategies](#implementation-strategies)
-    - [Naturally Idempotent Operations](#naturally-idempotent-operations)
-    - [Summary](#summary-14)
+- [Instructions](#instructions)
+  - [Installation](#installation)
+  - [Deslop](#deslop)
+  - [Check for Updates](#check-for-updates)
+- [Part I: Clean Code](#part-i-clean-code)
+  - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
+  - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
+  - [Small Functions](#small-functions)
+  - [Guard Clauses](#guard-clauses)
+  - [Cognitive Load](#cognitive-load)
+  - [Single Level of Abstraction (SLAP)](#single-level-of-abstraction-slap)
+  - [Self-Documenting Code](#self-documenting-code)
+  - [Documentation Discipline](#documentation-discipline)
+  - [Elegance](#elegance)
+  - [Principle of Least Surprise](#principle-of-least-surprise)
+- [Part II: Architecture](#part-ii-architecture)
+  - [Organization & Structure](#organization--structure)
+    - [DRY: Don't Repeat Yourself](#dry-dont-repeat-yourself)
+    - [Single Source of Truth](#single-source-of-truth)
+    - [Separation of Concerns](#separation-of-concerns)
+    - [Modularity](#modularity)
+  - [Coupling & Dependencies](#coupling--dependencies)
+    - [Encapsulation](#encapsulation)
+    - [Law of Demeter](#law-of-demeter)
+    - [Orthogonality](#orthogonality)
+    - [Dependency Injection](#dependency-injection)
+    - [Composition Over Inheritance](#composition-over-inheritance)
+  - [Design Patterns & Conventions](#design-patterns--conventions)
+    - [SOLID Principles](#solid-principles)
+    - [Convention Over Configuration](#convention-over-configuration)
+    - [Command-Query Separation](#command-query-separation)
+    - [Code Reusability](#code-reusability)
+  - [Data & State](#data--state)
+    - [Parse, Don't Validate](#parse-dont-validate)
+    - [Immutability](#immutability)
+    - [Idempotency](#idempotency)
 - [Part III: Reliability](#part-iii-reliability)
-- [Robustness \& Safety](#robustness--safety)
-  - [Fail-Fast \& Defensive Programming](#fail-fast--defensive-programming)
-    - [Core Concept](#core-concept-15)
+  - [Robustness & Safety](#robustness--safety)
+    - [Fail-Fast & Defensive Programming](#fail-fast--defensive-programming)
     - [Design by Contract](#design-by-contract)
-    - [Common Patterns](#common-patterns)
-    - [Error Handling Strategies](#error-handling-strategies)
-    - [Summary](#summary-15)
-  - [Design by Contract](#design-by-contract-1)
-    - [Core Concept](#core-concept-16)
-    - [The Three Pillars](#the-three-pillars)
-    - [Inheritance Rules (Liskov Substitution)](#inheritance-rules-liskov-substitution)
-    - [DbC vs. Defensive Programming](#dbc-vs-defensive-programming)
-    - [Summary](#summary-16)
-  - [Postel's Law (Robustness Principle)](#postels-law-robustness-principle)
-    - [Core Concept](#core-concept-17)
-    - [Real-World Examples](#real-world-examples-1)
-    - [When to Apply](#when-to-apply-1)
-    - [The Tolerant Reader Pattern](#the-tolerant-reader-pattern)
-    - [The Dark Side](#the-dark-side-1)
-    - [Modern Balanced Approach](#modern-balanced-approach)
-    - [Relationship to Other Principles](#relationship-to-other-principles-1)
-    - [Summary](#summary-17)
-  - [Resilience \& Graceful Degradation](#resilience--graceful-degradation)
-    - [Core Concept](#core-concept-18)
-    - [The Three Pillars](#the-three-pillars-1)
-    - [Pattern 1: Exponential Backoff with Jitter](#pattern-1-exponential-backoff-with-jitter)
-    - [Pattern 2: Circuit Breaker](#pattern-2-circuit-breaker)
-    - [Pattern 3: Graceful Degradation](#pattern-3-graceful-degradation)
-    - [Summary](#summary-18)
-  - [Principle of Least Privilege](#principle-of-least-privilege)
-    - [Core Concept](#core-concept-19)
-    - [Application at Every Level](#application-at-every-level)
-    - [Real-World Failures](#real-world-failures)
-    - [Common Violations](#common-violations-10)
-    - [Anti-Patterns](#anti-patterns-5)
-    - [Implementation Strategies](#implementation-strategies-1)
-    - [Privilege Creep](#privilege-creep)
-    - [Relationship to Zero Trust](#relationship-to-zero-trust)
-    - [Summary](#summary-19)
-- [Maintainability \& Operations](#maintainability--operations)
-  - [Boy Scout Rule](#boy-scout-rule)
-    - [Core Concept](#core-concept-20)
-    - [Why It Works](#why-it-works)
-    - [What "Better" Looks Like](#what-better-looks-like)
-    - [The Campground, Not the Forest](#the-campground-not-the-forest)
-    - [Common Violations](#common-violations-11)
-    - [When NOT to Apply](#when-not-to-apply-1)
-    - [Anti-Patterns](#anti-patterns-6)
-    - [Relationship to Other Principles](#relationship-to-other-principles-2)
-    - [Summary](#summary-20)
-  - [Observability \& Transparency](#observability--transparency)
-    - [Core Concept](#core-concept-21)
-    - [The Three Pillars](#the-three-pillars-2)
-    - [Observability Principles](#observability-principles)
-    - [Anti-Patterns](#anti-patterns-7)
-    - [Summary](#summary-21)
-  - [When to Relax Rules](#when-to-relax-rules)
-    - [The Meta-Principle](#the-meta-principle)
-  - [References](#references)
-    - [Foundational Texts](#foundational-texts)
-    - [Seminal Articles \& Essays](#seminal-articles--essays)
-    - [Online Resources](#online-resources)
-    - [Concept Attribution](#concept-attribution)
+    - [Postel's Law (Robustness Principle)](#postels-law-robustness-principle)
+    - [Resilience & Graceful Degradation](#resilience--graceful-degradation)
+    - [Principle of Least Privilege](#principle-of-least-privilege)
+  - [Maintainability & Operations](#maintainability--operations)
+    - [Boy Scout Rule](#boy-scout-rule)
+    - [Observability & Transparency](#observability--transparency)
+- [When to Relax Rules](#when-to-relax-rules)
+  - [The Meta-Principle](#the-meta-principle)
+- [References](#references)
+  - [Foundational Texts](#foundational-texts)
+  - [Seminal Articles & Essays](#seminal-articles--essays)
+  - [Online Resources](#online-resources)
+  - [Concept Attribution](#concept-attribution)
 
 ---
 
@@ -247,7 +103,7 @@ For each violation list:
 ### Check for Updates
 At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
 
-## Part 1: Clean Code
+## Part I: Clean Code
 
 [↑ top](#table-of-contents)
 
@@ -621,7 +477,7 @@ Components should behave the way users expect. Separate state-changing commands 
 
 ---
 
-## Part 3: Architecture
+## Part II: Architecture
 
 [↑ top](#table-of-contents)
 
@@ -629,7 +485,7 @@ Components should behave the way users expect. Separate state-changing commands 
 
 ---
 
-# Organization & Structure
+### Organization & Structure
 
 [↑ top](#table-of-contents)
 
@@ -637,7 +493,7 @@ Components should behave the way users expect. Separate state-changing commands 
 
 ---
 
-## DRY: Don't Repeat Yourself
+#### DRY: Don't Repeat Yourself
 
 [↑ top](#table-of-contents)
 
@@ -673,7 +529,7 @@ DRY extends beyond code: define database constraints once in the schema, generat
 
 ---
 
-## Single Source of Truth
+#### Single Source of Truth
 
 [↑ top](#table-of-contents)
 
@@ -684,7 +540,7 @@ Every piece of data should have exactly one authoritative location; all other re
 
 ---
 
-## Separation of Concerns
+#### Separation of Concerns
 
 [↑ top](#table-of-contents)
 
@@ -721,7 +577,7 @@ class OrderPresenter:
 
 ---
 
-## Modularity
+#### Modularity
 
 [↑ top](#table-of-contents)
 
@@ -733,7 +589,7 @@ Divide software into independent components, each encapsulating one responsibili
 
 ---
 
-# Coupling & Dependencies
+### Coupling & Dependencies
 
 [↑ top](#table-of-contents)
 
@@ -741,7 +597,7 @@ Divide software into independent components, each encapsulating one responsibili
 
 ---
 
-## Encapsulation
+#### Encapsulation
 
 [↑ top](#table-of-contents)
 
@@ -768,7 +624,7 @@ The tells of broken encapsulation: anemic data classes that are just fields plus
 
 ---
 
-## Law of Demeter
+#### Law of Demeter
 
 [↑ top](#table-of-contents)
 
@@ -790,7 +646,7 @@ Chaining is fine where there's no structure being traversed: builders and fluent
 
 ---
 
-## Orthogonality
+#### Orthogonality
 
 [↑ top](#table-of-contents)
 
@@ -802,7 +658,7 @@ Two components are orthogonal when a change in one doesn't affect the other — 
 
 ---
 
-## Dependency Injection
+#### Dependency Injection
 
 [↑ top](#table-of-contents)
 
@@ -826,7 +682,7 @@ class MovieLister:
 
 ---
 
-## Composition Over Inheritance
+#### Composition Over Inheritance
 
 [↑ top](#table-of-contents)
 
@@ -854,7 +710,7 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ---
 
-# Design Patterns & Conventions
+### Design Patterns & Conventions
 
 [↑ top](#table-of-contents)
 
@@ -862,7 +718,7 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ---
 
-## SOLID Principles
+#### SOLID Principles
 
 [↑ top](#table-of-contents)
 
@@ -882,7 +738,7 @@ SOLID earns its keep in code that must evolve, but it's overhead in simple scrip
 
 ---
 
-## Convention Over Configuration
+#### Convention Over Configuration
 
 [↑ top](#table-of-contents)
 
@@ -915,7 +771,7 @@ The cost is hidden magic: implicit behavior is harder to debug, you must learn t
 
 ---
 
-## Command-Query Separation
+#### Command-Query Separation
 
 [↑ top](#table-of-contents)
 
@@ -946,7 +802,7 @@ def create_user(self, email: str) -> None:
 
 ---
 
-## Code Reusability
+#### Code Reusability
 
 [↑ top](#table-of-contents)
 
@@ -973,7 +829,7 @@ When reuse *is* warranted, minimize dependencies (a little copying beats a littl
 
 ---
 
-# Data & State
+### Data & State
 
 [↑ top](#table-of-contents)
 
@@ -981,7 +837,7 @@ When reuse *is* warranted, minimize dependencies (a little copying beats a littl
 
 ---
 
-## Parse, Don't Validate
+#### Parse, Don't Validate
 
 [↑ top](#table-of-contents)
 
@@ -1034,7 +890,7 @@ Choose the parsing depth to fit: `NewType` for a zero-overhead marker, a frozen 
 
 ---
 
-## Immutability
+#### Immutability
 
 [↑ top](#table-of-contents)
 
@@ -1061,7 +917,7 @@ In Python, reach for `@dataclass(frozen=True)`, `tuple` instead of `list` for fi
 
 ---
 
-## Idempotency
+#### Idempotency
 
 [↑ top](#table-of-contents)
 
@@ -1072,7 +928,7 @@ An idempotent operation produces the same result whether run once or many times.
 
 ---
 
-# Part III: Reliability
+## Part III: Reliability
 
 [↑ top](#table-of-contents)
 
@@ -1080,7 +936,7 @@ An idempotent operation produces the same result whether run once or many times.
 
 ---
 
-# Robustness & Safety
+### Robustness & Safety
 
 [↑ top](#table-of-contents)
 
@@ -1088,7 +944,7 @@ An idempotent operation produces the same result whether run once or many times.
 
 ---
 
-## Fail-Fast & Defensive Programming
+#### Fail-Fast & Defensive Programming
 
 [↑ top](#table-of-contents)
 
@@ -1115,7 +971,7 @@ def __init__(self):
 
 ---
 
-## Design by Contract
+#### Design by Contract
 
 [↑ top](#table-of-contents)
 
@@ -1127,7 +983,7 @@ A contract makes the agreement between caller and routine explicit: the function
 
 ---
 
-## Postel's Law (Robustness Principle)
+#### Postel's Law (Robustness Principle)
 
 [↑ top](#table-of-contents)
 
@@ -1153,7 +1009,7 @@ But it has a dark side: liberal receivers mask sender bugs, "incorrect" behavior
 
 ---
 
-## Resilience & Graceful Degradation
+#### Resilience & Graceful Degradation
 
 [↑ top](#table-of-contents)
 
@@ -1177,7 +1033,7 @@ def get_recommendations(user_id: str) -> list[Product]:
 
 ---
 
-## Principle of Least Privilege
+#### Principle of Least Privilege
 
 [↑ top](#table-of-contents)
 
@@ -1202,7 +1058,7 @@ Default to deny and grant explicitly, separate credentials by function (read vs.
 
 ---
 
-# Maintainability & Operations
+### Maintainability & Operations
 
 [↑ top](#table-of-contents)
 
@@ -1210,7 +1066,7 @@ Default to deny and grant explicitly, separate credentials by function (read vs.
 
 ---
 
-## Boy Scout Rule
+#### Boy Scout Rule
 
 [↑ top](#table-of-contents)
 
@@ -1240,7 +1096,7 @@ The excuses to distrust: "I'll clean it up later" (you won't), "that's not my co
 
 ---
 
-## Observability & Transparency
+#### Observability & Transparency
 
 [↑ top](#table-of-contents)
 
