@@ -645,30 +645,11 @@ Components should behave the way users expect. Separate state-changing commands 
 > "Every piece of knowledge must have a single, unambiguous, authoritative representation within a system."
 > — Andy Hunt & Dave Thomas, *The Pragmatic Programmer*
 
-### Core Concept
+DRY is about **knowledge**, not code — avoid duplicating *meaning*, not syntax. Knowledge duplication (the same business rule living in multiple places) must always be fixed. Incidental duplication (code that *looks* similar but represents *different* concepts that will evolve independently) should be left alone; merging it couples unrelated concerns. Apply the **Rule of Three**: write it the first time, note it the second, abstract it the third — two occurrences can't distinguish true duplication from coincidence, three reveal the pattern.
 
-DRY is about **knowledge**, not code. Avoid duplication of *meaning*, not syntax.
+> "Duplication is far cheaper than the wrong abstraction." — Sandi Metz
 
-**Two types:**
-1. **Knowledge Duplication** — Same business rule in multiple places. **Always fix.**
-2. **Incidental Duplication** — Code *looks* similar but represents *different* concepts. **Leave it.** Merging couples unrelated concerns.
-
-### The Rule of Three
-
-> **First time**: Write it. **Second time**: Note it. **Third time**: Abstract it.
-
-Patience to find the *right* abstraction. Two occurrences can't distinguish true duplication from incidental similarity. Three reveal the pattern.
-
-### The Wrong Abstraction
-
-> "Duplication is far cheaper than the wrong abstraction."
-> — Sandi Metz
-
-**The sunk cost trap**: Developer A creates an abstraction. Developer B needs similar functionality but not quite—adds a parameter. Developer C adds another. Developer D adds conditionals. Eventually the abstraction becomes incomprehensible, but no one deletes it because of the investment already made.
-
-**The fix**: When an abstraction accumulates conditionals or parameters to handle "just one more case," inline it back into all callers, delete the unnecessary parts, and start fresh. It's cheaper to re-extract than to maintain the wrong abstraction.
-
-### Recognizing True vs. Incidental Duplication
+The wrong abstraction is the more expensive failure. One developer extracts it; the next needs it slightly different and adds a parameter; the next adds a conditional; eventually it's incomprehensible but no one deletes it because of sunk cost. When an abstraction starts accumulating parameters and conditionals to handle "just one more case," inline it back into its callers and start fresh — re-extracting is cheaper than maintaining the wrong abstraction.
 
 | True Knowledge Duplication (FIX) | Incidental Similarity (LEAVE) |
 |---------------------------------|------------------------------|
@@ -676,15 +657,6 @@ Patience to find the *right* abstraction. Two occurrences can't distinguish true
 | Changes *must* affect all instances | Instances will evolve independently |
 | 3+ occurrences confirm the pattern | 1-2 occurrences—pattern unclear |
 | Abstraction simplifies | Abstraction requires conditionals |
-| Single source of truth needed | Coupling would be harmful |
-
-### Common Violations
-
-**Obvious**: Copy-pasted functions, duplicated validation, repeated magic numbers
-
-**Hidden**: Inconsistent business rules across apps, divergent type definitions, scattered config, parallel data structures (DB columns in SQL strings AND ORM models)
-
-### Anti-Patterns
 
 ```python
 # ❌ Over-DRY: Merged with conditionals
@@ -697,45 +669,7 @@ def get_user_by_id(user_id: int) -> User: ...
 def get_user_by_email(email: str) -> User: ...
 ```
 
-```python
-# ❌ Premature abstraction (Student/Teacher trap)
-class Person:
-    def get_full_name(self): return f"{self.first} {self.last}"
-class Student(Person): pass
-class Teacher(Person): pass  # Later needs middle name—abstraction wasted
-
-# ✅ Keep separate until pattern proven
-class Student:
-    def get_full_name(self): return f"{self.first} {self.last}"
-class Teacher:
-    def get_full_name(self): return f"{self.first} {self.middle} {self.last}"
-```
-
-### Refactoring Techniques
-
-| Technique | When to Use |
-|-----------|-------------|
-| **Extract Method** | Duplicated logic in same class |
-| **Extract Class** | Duplication spans multiple methods |
-| **Extract Superclass** | Multiple classes share behavior (Template Method) |
-| **Parameterize Method** | Methods differ only in values |
-| **Composition** | Complex inheritance hierarchies |
-
-### DRY Beyond Code
-
-- **Database**: Define constraints once in schema, not duplicated in app
-- **API**: Generate OpenAPI from code (FastAPI/Pydantic), don't maintain separately
-- **Config**: Centralize in one module, import everywhere
-- **Docs**: Single source of truth, reference elsewhere
-- **Infrastructure**: Similar infrastructure components may warrant deduplication.
-
-### Summary
-
-1. **Knowledge duplication is always a code smell**—always fix it
-2. **Incidental similarity is not duplication**—don't merge different concepts
-3. **Rule of Three**: Patience to find the *right* abstraction, not permission to ignore duplication
-4. **Wrong abstractions**: Delete and start over—they merged incidental similarity
-5. **Beyond code**: Databases, APIs, config, documentation (see also: [Single Source of Truth](#single-source-of-truth))
+DRY extends beyond code: define database constraints once in the schema, generate API contracts from code (FastAPI/Pydantic) rather than maintaining them separately, centralize config in one module, and keep a single authoritative source for documentation.
 
 ---
 
@@ -746,38 +680,7 @@ class Teacher:
 
 > "There should be one—and preferably only one—obvious way to store a piece of information."
 
-### Core Concept
-
-**Every piece of data has exactly one authoritative location.** All other references derive from that source. The problem: when data exists in multiple places, which is correct?
-
-### SSoT vs. DRY
-
-| Aspect | DRY | SSoT |
-|--------|-----|------|
-| **Focus** | Code and logic duplication | Data storage duplication |
-| **Scope** | Within a codebase | Across systems and databases |
-| **Violation** | Copy-pasted functions | Same field in multiple tables |
-| **Fix** | Extract to shared function | Designate authoritative source |
-
-### Common Violations
-
-1. **Storing Foreign Keys in Multiple Databases**
-2. **Duplicating User Data Across Services**
-3. **Storing Derived Data Without Clear Ownership**
-
-### When Duplication Is Acceptable
-
-1. **Intentional Caching** with TTL
-2. **Read Model Denormalization** (CQRS)
-3. **Computed/Derived Values**
-4. **Cross-Region Replication**
-
-### Summary
-
-1. **Every piece of data needs exactly one authoritative source**
-2. **Other systems should reference, not duplicate** authoritative data
-3. **Derived/computed values are acceptable** — they don't need synchronization
-4. **Ask "which is correct?"** — if you can't answer immediately, fix the design
+Every piece of data should have exactly one authoritative location; all other references derive from it. Where DRY targets duplicated *code and logic* within a codebase, SSoT targets duplicated *data storage* across systems and databases. The diagnostic question is simply "which copy is correct?" — if you can't answer immediately, the design is broken. Typical violations are the same foreign key stored in multiple databases, user data copied across services, and derived data with no clear owner. Duplication is fine when it's deliberate and synchronization isn't required: TTL caches, CQRS read-model denormalization, computed values, and cross-region replicas.
 
 ---
 
@@ -789,33 +692,7 @@ class Teacher:
 > "The separation of concerns, even if not perfectly possible, is yet the only available technique for effective ordering of one's thoughts."
 > — Edsger W. Dijkstra
 
-### Core Concept
-
-**Decompose systems into distinct parts, each addressing one concern.** A "concern" = any aspect of functionality (business logic, persistence, UI, etc.).
-
-**Measures:** High cohesion (related things together) · Low coupling (unrelated things independent)
-
-### Types of Concerns
-
-| Type | Examples |
-|------|----------|
-| **Functional** | Authentication, data processing, payment |
-| **Non-functional** | Performance, security, scalability |
-| **Cross-cutting** | Logging, error handling, caching |
-
-### Common Violations
-
-**Code Smells**: DB queries in UI handlers, business rules in CSS, validation scattered across layers, formatting in business classes.
-
-**SoC-Specific Anti-Patterns:**
-
-| Anti-Pattern | Description | Fix |
-|--------------|-------------|-----|
-| **Blob/God Object** | One class centralizes most functionality | Split into single-purpose classes |
-| **Divergent Change** | One class changes for multiple reasons | Extract class per reason |
-| **Shotgun Surgery** | One change modifies many places | Consolidate related logic |
-
-### Anti-Patterns
+Decompose systems into distinct parts, each addressing one concern — any aspect of functionality, whether functional (authentication, payment), non-functional (performance, security), or cross-cutting (logging, caching). The two measures are high cohesion (related things together) and low coupling (unrelated things independent). Watch for DB queries in UI handlers, business rules in CSS, validation scattered across layers, or formatting logic baked into business classes — and for the structural smells they create: the god object that centralizes everything, divergent change (one class edited for many unrelated reasons), and shotgun surgery (one change rippling across many files). Separate where concerns genuinely differ, but don't fragment for its own sake.
 
 ```python
 # ❌ Wrong - Mixed concerns: business logic + presentation + I/O
@@ -842,13 +719,6 @@ class OrderPresenter:
         return f"<div class='order'>Order #{order.id}: ${order.total}</div>"
 ```
 
-### Summary
-
-1. **One concern per component** — functions, classes, modules, layers
-2. **High cohesion, low coupling** — related together, unrelated separate
-3. **Natural boundaries** — separate where concerns genuinely differ
-4. **Avoid over-separation** — don't fragment for its own sake
-
 ---
 
 ## Modularity
@@ -859,36 +729,7 @@ class OrderPresenter:
 > "Every module is characterized by its knowledge of a design decision which it hides from all others."
 > — David Parnas
 
-### Core Concept
-
-Modularity is **dividing software into independent components** where each module encapsulates a specific responsibility and hides implementation details behind a well-defined interface.
-
-**The Parnas Principle**: Decompose systems by **design decisions likely to change**. Each module hides one decision.
-
-**Two measures:**
-1. **Cohesion** — How strongly elements within a module belong together (aim: high)
-2. **Coupling** — How much modules depend on each other's internals (aim: low)
-
-### Deep vs. Shallow Modules
-
-| Type | Characteristics |
-|------|-----------------|
-| **Deep** | Simple interface, complex implementation |
-| **Shallow** | Complex interface, little hidden |
-
-**Aim for depth**: Hide significant complexity behind minimal APIs.
-
-### Common Violations
-
-**Code Smells**: God Class, Feature Envy, Shotgun Surgery, Utilities junk drawer
-
-### Summary
-
-1. **Hide design decisions** — Each module encapsulates one decision likely to change
-2. **High cohesion** — Elements within a module belong together
-3. **Low coupling** — Modules depend only on interfaces
-4. **Deep over shallow** — Simple interface, complex implementation
-5. **No God modules** — If it does "everything," it encapsulates nothing
+Divide software into independent components, each encapsulating one responsibility and hiding its implementation behind a well-defined interface. The Parnas principle is to decompose by **design decisions likely to change**, so each module hides one such decision. Aim for high cohesion (elements within a module belong together) and low coupling (modules depend only on each other's interfaces, not internals). Prefer **deep** modules — a simple interface hiding complex implementation — over **shallow** ones that expose a complex interface while hiding little. A "God module" that does everything encapsulates nothing.
 
 ---
 
@@ -907,16 +748,7 @@ Modularity is **dividing software into independent components** where each modul
 
 > "Ask not what an object knows; ask what it can do for you."
 
-### Core Concept
-
-**Bundle data with behavior, hide internals behind interfaces.**
-
-1. **Bundling**: Group related data and behavior
-2. **Information Hiding**: Restrict direct access to internal state
-
-### Tell, Don't Ask
-
-Don't query state and decide externally—tell the object what to do.
+Bundle related data with the behavior that operates on it, and hide internal state behind an interface so it can change without breaking callers. The core habit is **tell, don't ask**: rather than querying an object's state and making decisions for it externally, command it to act and let it enforce its own rules.
 
 ```python
 # ❌ Wrong - Asking for state, making decisions externally
@@ -932,19 +764,7 @@ def process_order(order):
     order.process()  # Order knows its own business rules
 ```
 
-### Common Violations
-
-- **Data Classes Without Behavior**: A "data class" that only contains fields and getters/setters
-- **Getter/Setter Pairs That Add No Value**: Accessors without validation or computation
-- **Returning Mutable Internal State**: Allowing callers to corrupt object invariants
-- **Feature Envy**: Methods that use more data from another class than their own
-
-### Summary
-
-1. **Bundle data with behavior** — Objects should do things, not just hold data
-2. **Hide implementation details** — Internals can change without affecting callers
-3. **Tell, don't ask** — Command objects to act rather than querying their state
-4. **Protect invariants** — Use access control to enforce object validity (see also: [Parse, Don't Validate](#parse-dont-validate))
+The tells of broken encapsulation: anemic data classes that are just fields plus getters/setters, accessor pairs that add no validation or computation, methods that return mutable internal state for callers to corrupt, and feature envy (a method that uses another class's data more than its own).
 
 ---
 
@@ -956,11 +776,7 @@ def process_order(order):
 > "Each unit should have only limited knowledge about other units: only talk to your immediate friends; don't talk to strangers."
 > — Ian Holland
 
-### Core Concept
-
-**Limit knowledge of other objects' structure.** Only interact with immediate dependencies, not through them.
-
-### The "One Dot" Rule
+Limit how much one object knows about another's structure: only talk to immediate friends, never reach *through* them. Formally, a method may invoke methods on its own object, its parameters, objects it creates, and its object's direct attributes — but not on objects *returned* by other calls. In practice this is the "one dot" rule: `a.b()` is fine, `a.b().c().d()` is a train wreck.
 
 ```python
 # ❌ Wrong - Multiple dots (train wreck)
@@ -970,39 +786,7 @@ customer.get_wallet().get_credit_card().charge(amount)
 customer.charge(amount)  # Customer knows how to charge itself
 ```
 
-### Formal Definition
-
-A method `m` of object `a` may only invoke methods of:
-- `a` itself
-- `m`'s parameters
-- Objects created within `m`
-- `a`'s direct attributes
-- Global/module-level objects
-
-**Forbidden**: Methods of objects returned by other method calls.
-
-### Exceptions: When Chaining Is Acceptable
-
-| Pattern | Why It's OK |
-|---------|-------------|
-| **Builder pattern** | Same object returned; configures self |
-| **Fluent interfaces** | Designed for chaining; returns `self` |
-| **Data Transfer Objects** | No behavior to encapsulate |
-| **Standard library** | `"hello".strip().upper()` — string ops |
-
-### A Note on Tell-Don't-Ask
-
-> "Tell-Don't-Ask encourages moving behavior into objects, but don't become a Getter Eradicator."
-> — Martin Fowler
-
-Objects sometimes collaborate effectively by *providing* information. Transformers that simplify data for clients (like `EmbeddedDocument`) are valid query methods. The principle is about co-locating behavior with data, not eliminating all accessors.
-
-### Summary
-
-1. **Only talk to immediate friends** — don't reach through objects
-2. **One dot rule** — `a.b()` good, `a.b().c()` suspect
-3. **Tell, don't ask** — command objects, don't interrogate (see also: [Encapsulation](#encapsulation))
-4. **Exceptions exist** — builders, fluent APIs, DTOs are fine
+Chaining is fine where there's no structure being traversed: builders and fluent interfaces that return `self`, DTOs with no behavior to encapsulate, and standard-library value operations like `"hello".strip().upper()`. And as Fowler warns, don't become a "getter eradicator" — objects sometimes collaborate by *providing* information, and the point is co-locating behavior with data, not banning every accessor.
 
 ---
 
@@ -1014,23 +798,7 @@ Objects sometimes collaborate effectively by *providing* information. Transforme
 > "Eliminate effects between unrelated things. Design self-contained components: independent, and with a single, well-defined purpose."
 > — Andy Hunt & Dave Thomas
 
-### Core Concept
-
-**Changes in one component don't affect others.** Like a helicopter with coupled controls: fix one bug, two more pop up elsewhere.
-
-### Common Violations
-
-- **Global State**: Becomes a coupling point between different parts
-- **Database-Coupled Business Logic**: SQL dialects leak into business logic
-- **Presentation Mixed with Logic**: Changing display requires changing computation
-- **Feature Creep in Objects**: Objects accumulate responsibilities
-
-### Summary
-
-1. **Two components are orthogonal if changes in one don't affect the other**
-2. **Coupling is viral** — a little leads to more
-3. **Measure orthogonality** by how many places change when one requirement changes
-4. **Techniques that help**: dependency injection, abstract interfaces, avoiding global state
+Two components are orthogonal when a change in one doesn't affect the other — like a helicopter with coupled controls, non-orthogonal code means fixing one bug pops up two more elsewhere. Coupling is viral: a little leads to more. Measure orthogonality by how many places must change when one requirement changes. The usual culprits are global state, business logic coupled to a specific database dialect, presentation mixed with computation, and objects that accrete unrelated responsibilities. Dependency injection, abstract interfaces, and avoiding global state all push toward independence.
 
 ---
 
@@ -1042,17 +810,7 @@ Objects sometimes collaborate effectively by *providing* information. Transforme
 > "The key benefit of Dependency Injection is that it removes the dependency that a class has on a concrete implementation."
 > — Martin Fowler
 
-### Core Concept
-
-Dependencies "injected" from outside rather than created internally. A class declares what it needs, not how to get it.
-
-### Three Forms
-
-1. **Constructor Injection** (Preferred): Through constructor
-2. **Setter Injection**: Through setters after construction
-3. **Interface Injection**: Dependency provides injector method
-
-### Anti-Patterns
+Dependencies should be injected from outside rather than created internally — a class declares *what* it needs, not *how* to get it. Constructor injection is preferred (explicit, immutable, testable) over setter or interface injection. The primary payoff is testability: swap real dependencies for test doubles without touching the class. DI also makes SRP violations visible — a constructor demanding too many dependencies is a class doing too much.
 
 ```python
 # ❌ Wrong - Hardcoded dependency
@@ -1066,21 +824,6 @@ class MovieLister:
         self._finder = finder
 ```
 
-### Service Lifetimes
-
-| Lifetime | Instance Created | Use Case |
-|----------|------------------|----------|
-| **Transient** | Every time requested | Lightweight, stateless services |
-| **Scoped** | Once per scope/request | Request-specific state |
-| **Singleton** | Once for application lifetime | Expensive to create, shared state |
-
-### Summary
-
-1. **DI decouples classes from dependencies** — clients declare needs, not solutions
-2. **Constructor injection is preferred** — explicit, immutable, testable
-3. **Too many dependencies = SRP violation** — DI makes this visible
-4. **Testability is the primary benefit** — swap real dependencies for test doubles
-
 ---
 
 ## Composition Over Inheritance
@@ -1091,24 +834,7 @@ class MovieLister:
 > "Favor object composition over class inheritance."
 > — Gang of Four, *Design Patterns*
 
-### Core Concept
-
-**Build complex behavior by combining objects rather than extending classes.**
-
-- **Inheritance** ("is-a"): White-box — subclass sees parent internals
-- **Composition** ("has-a"): Black-box — interact via interfaces only
-
-### Why Composition Is Preferred
-
-| Inheritance Problem | Composition Solution |
-|---------------------|---------------------|
-| Tight coupling to parent | Loose coupling via interfaces |
-| Changes cascade to subclasses | Changes isolated to components |
-| Hierarchy fixed at compile-time | Components swappable at runtime |
-| Class explosion for combinations | Mix components as needed |
-| Fragile base class problem | No inherited implementation details |
-
-### Anti-Patterns
+Build complex behavior by combining objects ("has-a") rather than extending classes ("is-a"). Inheritance is white-box — the subclass sees and depends on parent internals, so changes cascade unpredictably and combinations breed a class explosion (`FileLoggerWithEncryptionAndCompression`). Composition is black-box — components interact through interfaces, stay loosely coupled, and can be mixed and swapped at runtime.
 
 ```python
 # ❌ Wrong - Class explosion via inheritance
@@ -1125,13 +851,6 @@ class Logger:
 
 logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 ```
-
-### Summary
-
-1. **Composition = "has-a"**, Inheritance = "is-a" — choose appropriately
-2. **Inheritance breaks encapsulation** — changes cascade unpredictably
-3. **Class explosion** — composition avoids combinatorial hierarchies
-4. **Runtime flexibility** — swap components without recompiling
 
 ---
 
