@@ -203,37 +203,14 @@ The "small function" principle is related to several other principles:
 
 ---
 
-## Guard Clauses (Early Return)
+### Guard Clauses (Early Return)
 
 [↑ top](#table-of-contents)
-
 
 > "The guard clause says, 'This is rare, and if it happens, do something and get out.'"
 > — Martin Fowler, *Refactoring*
 
-### Core Concept
-
-Early exit when preconditions aren't met. Check invalid states at the top, return immediately. Keeps the "happy path" at outermost indentation.
-
-**Fights rightward drift**—the "arrow anti-pattern":
-
-```
-if () {
-    if () {
-        do {
-            if () {
-                if () {
-                    // actual logic buried here
-                }
-            }
-        }
-    }
-}
-```
-
-Guard clauses flatten this by handling exceptions first.
-
-### The Transformation
+Early exit when preconditions aren't met. Check invalid states at the top, return immediately. Keeps the "happy path" at outermost indentation. Use it for null checks, empty inputs, invalid states, edge cases, or recursive termination. For instance:
 
 ```python
 # ❌ Wrong - Nested conditionals obscure the happy path
@@ -262,12 +239,6 @@ def get_pay_amount(employee):
     return normal_pay_amount()
 ```
 
-### When to Use
-
-1. **Precondition validation** — null checks, empty inputs, invalid states
-2. **Edge case handling** — special states that bypass normal logic
-3. **Base cases** — recursive function termination
-
 ```python
 # ✅ Classic guard clause pattern
 def send_welcome_email(user):
@@ -279,54 +250,6 @@ def send_welcome_email(user):
     # Main logic at natural indentation
     mailer.send(user.email, "Welcome!")
 ```
-
-### When NOT to Use
-
-When both branches are equally valid, use conventional conditionals:
-
-```python
-# ❌ Misleading - Both branches are equally valid
-def process_order(order):
-    if order.is_express:
-        return handle_express_shipping(order)
-    return handle_standard_shipping(order)
-
-# ✅ Better - if/else signals equal weight
-def process_order(order):
-    if order.is_express:
-        handle_express_shipping(order)
-    else:
-        handle_standard_shipping(order)
-```
-
-A guard clause signals "this is unusual—handle it and leave." Equal-weight branches deserve equal-weight syntax.
-
-### The Single-Return Myth
-
-Some codebases enforce "single return point" rules—a practice from Dijkstra's era when early returns could cause resource leaks in C. In modern languages with garbage collection and `try/finally`, this constraint is obsolete. The single-return style forces mutable state to accumulate results:
-
-```python
-# ❌ Single-return requires mutable state
-def validate(data):
-    result = True
-    if not data.get('name'):
-        result = False
-    if result and not data.get('email'):
-        result = False
-    return result
-
-# ✅ Guard clauses are cleaner
-def validate(data):
-    if not data.get('name'):
-        return False
-    if not data.get('email'):
-        return False
-    return True
-```
-
-### Common Violations
-
-**Guard clause buried in the middle:**
 
 ```python
 # ❌ Wrong - Guards belong at the top
@@ -346,7 +269,25 @@ def process(item):
     return item.execute()
 ```
 
-### Relationship to Other Principles
+However, when both branches are equally valid, use conventional conditionals. The guard clause is supposed to exit early on the unhappy path, and is not for simply choosing between two equally valid alternatives. It goes at the top of the function (not in the middle) to fail early. A guard clause signals "this is unusual—handle it and leave." Equal-weight branches deserve equal-weight syntax. For instance:
+ instance:
+
+```python
+# ❌ Misleading - Both branches are equally valid
+def process_order(order):
+    if order.is_express:
+        return handle_express_shipping(order)
+    return handle_standard_shipping(order)
+
+# ✅ Better - if/else signals equal weight
+def process_order(order):
+    if order.is_express:
+        handle_express_shipping(order)
+    else:
+        handle_standard_shipping(order)
+```
+
+In relation to other principles, guard clauses...
 
 | Principle | Relationship |
 |-----------|--------------|
@@ -354,14 +295,6 @@ def process(item):
 | **Cognitive Load** | Flattening nested conditionals reduces mental overhead |
 | **Small Functions** | Guards work best in small, focused functions |
 | **Design by Contract** | Guards enforce preconditions at runtime |
-
-### Summary
-
-1. **Exit early for exceptional cases** — handle invalid states at the top
-2. **Flatten nested conditionals** — each guard removes a nesting level (see also: [Cognitive Load](#cognitive-load))
-3. **Signal intent** — guards = "unusual," if/else = "both paths normal"
-4. **Keep guards at the entrance** — preconditions belong at the top
-5. **Embrace multiple returns** — single-return is obsolete
 
 ---
 
