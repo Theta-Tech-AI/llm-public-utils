@@ -1,5 +1,5 @@
 # Deslop: Code Quality Analysis Command
-<sub><sup>Note: This file is ≈27k tokens as of 2026-01-19</sup></sub>
+<sub><sup>Note: This file is ≈16k tokens as of 2026-06-08</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase. Ask your agent to create a command or skill from this markdown file. Then, restart your agent harness and run `/deslop` or $deslop.
 
