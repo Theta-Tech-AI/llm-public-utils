@@ -20,6 +20,24 @@ The boundary is **which repository the line of code lives in.**
 Smelting decides that boundary deliberately instead of letting it
 drift.
 
+> **Ownership gate — read this before any heuristic below.** Some code
+> belongs to the consumer repo by *ownership*, not by technical shape:
+> a contracted deliverable (e.g. an SOW work product the client owns),
+> a product's proprietary feature, domain/business logic that is the
+> reason the consumer exists. **This code is slag no matter what** —
+> even if it looks generic, even if a `cmp -s` says it is byte-identical
+> to upstream. Ownership is decided by contracts and product
+> boundaries, not by whether a line *could* be reused by a hypothetical
+> other downstream. For owned code, "identical to upstream" is not a
+> green light to delete the overlay — it is **evidence the boundary was
+> already breached** (the deliverable was wrongly copied upstream). The
+> fix is to *pull it back* into the overlay and *remove it from
+> upstream*, the opposite of a normal smelt. Every heuristic below
+> (the <15% diff smell, the byte-identical "pure waste" rule, the
+> decision tree) is subordinate to this gate. When you cannot state in
+> one sentence that a file is generic platform IP that the upstream
+> framework legitimately owns, it is slag — stop.
+
 ## When to smelt
 
 - The smelt audit flags a file with `< 15%` diff against upstream
@@ -33,13 +51,24 @@ drift.
   (backend) — almost certainly an alloy worth fractionating.
 - A `cmp -s` after `git -C <submodule> clean -fd && rsync overlay`
   shows a file is byte-identical to upstream: pure waste, smelt out
-  the whole file.
+  the whole file — **but only after clearing the ownership gate above.**
+  Byte-identical to upstream proves *redundancy*, never *ownership*. If
+  the file is owned deliverable / proprietary domain logic, identical
+  content means the boundary was already breached upstream; reverse it
+  (pull back to overlay, remove upstream), don't delete the overlay.
 
 ## Decision: metal or slag?
 
 Walk the filters top-down. First YES wins.
 
 ```
+Is this owned deliverable / proprietary / domain-defining code?
+(contracted work product the consumer owns, a product's secret-sauce
+feature, the business logic that is the consumer's reason to exist)
+       └─ YES → slag (overlay) — ALWAYS, even if byte-identical to
+                upstream. If it is already identical/present upstream,
+                the boundary was breached: pull back + remove upstream.
+       └─ NO  → ↓
 Touches provider-SDK imports / identity-specific logic / branding strings?
        └─ YES → slag (overlay)
        └─ NO  → ↓
@@ -296,6 +325,19 @@ findings before flipping the PR to ready.
   periods / example assumptions / branding strings that configure it
   are slag. Land the abstraction empty upstream; configure it from the
   overlay.
+- **Upstreaming owned deliverables (the cardinal sin).** Never move
+  contracted work product, proprietary features, or domain-defining
+  business logic upstream — regardless of how generic it looks or
+  whether it is byte-identical to existing upstream code. Doing so
+  silently reassigns ownership of the consumer's code to the framework
+  vendor. On a signed deliverable (an SOW work product the client
+  owns), that is not just carrying-cost waste — it misrepresents who
+  owns the code and is an integrity breach. The audit question is
+  literal: *if the owner opened the upstream repo and found their
+  deliverable there, could you justify it?* If not, it is slag, and any
+  copy already upstream must be pulled back and deleted from upstream.
+  Schema/migrations for owned tables follow the code: the deliverable's
+  database DDL lives in the owner's repo too, never upstream.
 - **Leaving a regression test behind.** If behavior moves upstream,
   its test migrates too. The consumer's tests should only cover the
   project implementation/adapter — never the generic behavior that's
