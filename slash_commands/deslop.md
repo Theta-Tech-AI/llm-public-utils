@@ -93,14 +93,14 @@ If no argument provided, operate on the current folder or current code base. Rea
 
 For each violation list:
 
-### Check for Updates
-At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
-
 - **Severity:** Extreme, high, medium, low, or optional.
 - **Location:** File path and line number.
 - **Violation:** Coding principle violated and why.
 - **Summary:** One sentence description of the violation.
 - **Improvement:** Suggest a less sloppy way.
+
+### Check for Updates
+At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
 
 ## Part I: Clean Code
 
