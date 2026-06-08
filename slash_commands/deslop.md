@@ -1098,56 +1098,22 @@ An idempotent operation produces the same result whether run once or many times.
 > "The best debugging is the debugging you never have to do because you found the problem immediately."
 > — Jim Shore
 
-### Core Concept
-
-**Detect and report errors at the earliest possible moment.** Don't let invalid state propagate.
-
-1. **Fail-Fast** — Detect early, fail immediately with clear diagnostics
-2. **Defensive Programming** — Anticipate misuse, validate at boundaries
-
-### Design by Contract
-
-[↑ top](#table-of-contents)
-
-| Contract | Responsibility | Example |
-|----------|---------------|---------|
-| **Preconditions** | Caller must satisfy before calling | `assert user_id is not None` |
-| **Postconditions** | Method must satisfy before returning | `assert result.is_valid()` |
-| **Invariants** | Must hold throughout object lifetime | `assert self.balance >= 0` |
-
-### Common Patterns
+Detect and report errors at the earliest possible moment, and never let invalid state propagate. Fail-fast means checking inputs at function entry and config at startup, then raising loudly — a clear error at the boundary beats silent corruption three layers downstream. Match the response to the error type: raise immediately on precondition violations, retry transient failures with backoff, fail permanently on deterministic ones, and assert invariants that should never be false. Once data has been validated at a boundary, trust it — don't re-validate inside.
 
 ```python
-# ✅ Guard Clauses - Fail fast at entry
+# ✅ Guard clauses - fail fast at entry
 def process_order(order):
     if order is None:
         raise ValueError("order required")
     if not order.items:
         raise ValueError("items required")
 
-# ✅ Config Validation at Startup
+# ✅ Config validation at startup
 def __init__(self):
     self.key = os.getenv("API_KEY")
     if not self.key:
         raise ConfigError("API_KEY required")
 ```
-
-### Error Handling Strategies
-
-| Error Type | Strategy |
-|------------|----------|
-| **Precondition violation** | Raise immediately |
-| **Transient failure** | Retry with backoff |
-| **Deterministic failure** | Fail permanently |
-| **Invariant violation** | Assert (crash in dev) |
-
-### Summary
-
-1. **Validate early** — Check inputs at function entry, config at startup
-2. **Fail loudly** — Clear error messages beat silent corruption
-3. **Distinguish error types** — Transient (retry) vs. deterministic (fail) vs. bug (crash)
-4. **Use assertions for invariants** — Things that should never be false (see also: [Design by Contract](#design-by-contract))
-5. **Trust validated data** — Don't re-validate inside trusted boundaries (see also: [Parse, Don't Validate](#parse-dont-validate))
 
 ---
 
@@ -1159,40 +1125,7 @@ def __init__(self):
 > "A software system is not a bunch of components thrown together. It is a construction of interacting elements, connected by clear contracts."
 > — Bertrand Meyer
 
-### Core Concept
-
-**Agreements between callers and routines.** Functions promise results (postconditions) **if** callers meet requirements (preconditions).
-
-### The Three Pillars
-
-| Element | Definition | Who Benefits | Who Obligates |
-|---------|------------|--------------|---------------|
-| **Precondition** | What must be true before | Supplier | Client |
-| **Postcondition** | What the routine guarantees | Client | Supplier |
-| **Invariant** | What must always be true | Both | Supplier |
-
-### Inheritance Rules (Liskov Substitution)
-
-| Contract Element | Subtype Rule |
-|------------------|--------------|
-| **Preconditions** | Can only be **weakened** |
-| **Postconditions** | Can only be **strengthened** |
-| **Invariants** | Can only be **strengthened** |
-
-### DbC vs. Defensive Programming
-
-| Aspect | Design by Contract | Defensive Programming |
-|--------|-------------------|----------------------|
-| **Philosophy** | Trust but verify at boundaries | Trust no one |
-| **Responsibility** | Caller ensures preconditions | Callee handles all cases |
-| **When to use** | Internal interfaces | External interfaces |
-
-### Summary
-
-1. **Contracts make responsibilities explicit** — Caller ensures preconditions; supplier ensures postconditions
-2. **Invariants define valid object state** — Must hold after construction and every public method
-3. **Assertions are executable contracts** — Document and verify simultaneously (see also: [Fail-Fast](#fail-fast--defensive-programming))
-4. **DbC complements defensive programming** — Use DbC internally, defensive at boundaries
+A contract makes the agreement between caller and routine explicit: the function guarantees its results (**postconditions**) *provided* the caller meets its requirements (**preconditions**), and **invariants** hold throughout the object's lifetime. Assertions are these contracts made executable — they document and verify at once. Under inheritance (Liskov substitution), a subtype may only *weaken* preconditions and only *strengthen* postconditions and invariants. DbC complements defensive programming rather than replacing it: trust-but-verify with contracts across internal interfaces where the caller is responsible for preconditions, and trust-no-one defensive checks at external boundaries.
 
 ---
 
@@ -1204,101 +1137,21 @@ def __init__(self):
 > "Be conservative in what you send, be liberal in what you accept."
 > — Jon Postel, RFC 793 (1981)
 
-### Core Concept
-
-**Conservative output, liberal input.** Generate strictly conformant output; accept non-conformant input if meaning is clear. Instrumental in Internet's growth.
-
-- **Conservative output** — Follow specs exactly
-- **Liberal input** — Accept reasonable variations
-
-### Real-World Examples
-
-| System | How Postel's Law Applied | Outcome |
-|--------|-------------------------|---------|
-| **HTML Browsers** | Render malformed HTML gracefully | Web grew explosively; browser code became nightmarishly complex |
-| **Unix Pipes** | Tools accept varied input, produce consistent output | Composable ecosystem; `cat`, `grep`, `sort` chain reliably |
-| **SMTP Email** | Accept lines >998 chars despite spec limit | Pragmatic interop; many systems now depend on non-standard behavior |
-| **JSON APIs** | Ignore unknown fields | Forward-compatible evolution; old clients work with new servers |
-
-### When to Apply
-
-| Context | Recommendation |
-|---------|----------------|
-| **Protocol extensions** | Ignore unknown fields; don't reject |
-| **Public APIs** | Accept variations; can't control all clients |
-| **Backward compatibility** | Old clients shouldn't break with new servers |
-| **Security-critical input** | Validate strictly; liberal acceptance creates attack surface |
-| **Internal systems** | Strict validation catches bugs early |
-
-### The Tolerant Reader Pattern
-
-Ignore unknown fields rather than failing:
+Be conservative in what you send and liberal in what you accept: generate strictly conformant output, but accept non-conformant input when the meaning is clear. This "tolerant reader" stance — ignore unknown fields rather than rejecting them — is what lets old clients keep working as servers evolve, and it powered the explosive growth of HTML, Unix pipes, SMTP, and JSON APIs.
 
 ```python
-# ❌ Wrong - Strict parsing breaks when API adds fields
+# ❌ Wrong - Strict parsing breaks when the API adds fields
 def parse_user(data: dict) -> User:
     if set(data.keys()) != {"id", "name", "email"}:
         raise ValueError("Unexpected fields in response")
     return User(id=data["id"], name=data["name"], email=data["email"])
 
-# ✅ Correct - Tolerant reader ignores unknown fields
+# ✅ Correct - Tolerant reader: require what you need, ignore the rest
 def parse_user(data: dict) -> User:
-    return User(
-        id=data["id"],       # Required: fail if missing
-        name=data["name"],   # Required: fail if missing
-        email=data["email"]  # Required: fail if missing
-        # Unknown fields silently ignored - forward compatible
-    )
+    return User(id=data["id"], name=data["name"], email=data["email"])
 ```
 
-### The Dark Side
-
-Postel's Law has significant criticisms in modern hostile environments:
-
-| Problem | Description |
-|---------|-------------|
-| **Specification Rot** | Receivers accept malformed input → senders never fix bugs → incorrect behavior becomes de facto standard |
-| **Security Vulnerabilities** | "Reasonable" input may be crafted to exploit edge cases |
-| **Hidden Bugs** | Liberal receivers mask sender bugs; problems surface years later |
-| **Bug-for-Bug Compatibility** | New implementations must replicate bugs to maintain compatibility |
-
-**HTML Lesson**: Browser tolerance enabled rapid growth but created nightmares—"incorrect" became the only way.
-
-### Modern Balanced Approach
-
-```python
-# ✅ Balance: strict where it matters, tolerant for extensibility
-def process_webhook(data: dict) -> None:
-    # STRICT: Validate required fields (fail-fast)
-    if "event_type" not in data:
-        raise ValueError("Missing required field: event_type")
-    if "timestamp" not in data:
-        raise ValueError("Missing required field: timestamp")
-
-    # TOLERANT: Ignore unknown fields (enables future extensions)
-    event_type = data["event_type"]
-    payload = data.get("payload", {})
-
-    # CONSERVATIVE: Output follows strict contract
-    handle_event(event_type, payload)
-```
-
-### Relationship to Other Principles
-
-| Principle | Relationship |
-|-----------|-------------|
-| **Fail-Fast** | Tension: liberal acceptance delays failure detection; balance by validating *required* fields strictly |
-| **Resilience** | Supportive: liberal acceptance aids graceful degradation |
-| **Principle of Least Surprise** | Supportive: conservative output is predictable |
-| **Defensive Programming** | Tension: strict boundary validation vs. liberal acceptance |
-
-### Summary
-
-1. **Conservative output, liberal input** — Generate strictly, accept generously
-2. **Enables extensibility** — Unknown fields should be ignored, not rejected
-3. **Has a dark side** — Masks bugs, enables specification rot, creates security risks
-4. **Context matters** — Liberal for interop and extensibility; strict for security
-5. **Modern balance** — Validate required fields strictly, ignore unknowns, output predictably
+But it has a dark side: liberal receivers mask sender bugs, "incorrect" behavior calcifies into a de facto standard (specification rot), and "reasonable" input can be crafted to exploit edge cases. The modern balance is to validate *required* fields strictly (fail-fast) while tolerantly ignoring unknown ones — and to be paranoid, not liberal, at security boundaries.
 
 ---
 
@@ -1310,32 +1163,10 @@ def process_webhook(data: dict) -> None:
 > "In complex systems, failure is the normal state. Success is the special case that requires explanation."
 > — Richard Cook
 
-### Core Concept
-
-**Continue operating despite partial failures.** Anticipate failure, implement recovery, degrade gracefully.
-
-### The Three Pillars
-
-| Pillar | Purpose | Mechanism |
-|--------|---------|-----------|
-| **Retry** | Recover from transient failures | Exponential backoff with jitter |
-| **Fallback** | Provide degraded service | Cached data, default values |
-| **Protect** | Prevent cascade failures | Circuit breakers, timeouts |
-
-### Pattern 1: Exponential Backoff with Jitter
+In any non-trivial system, partial failure is the normal state — design to keep operating through it rather than assuming success. Three pillars carry most of the load: **retry** transient failures with exponential backoff and jitter (`delay = min(base * 2^attempt + jitter, max)`) to recover without a thundering herd; **fall back** to cached or default data to degrade gracefully; and **protect** against cascades with circuit breakers (CLOSED → OPEN → HALF-OPEN) and timeouts on every external call. Only retry *transient* errors — an auth failure should fail fast, not loop.
 
 ```python
-delay = min(base_delay * 2^attempt + random_jitter, max_delay)
-```
-
-### Pattern 2: Circuit Breaker
-
-Three states: CLOSED (normal) → OPEN (fail fast) → HALF-OPEN (test recovery)
-
-### Pattern 3: Graceful Degradation
-
-```python
-# Cascading fallback strategy
+# Cascading fallback: personalized → cached → popular
 def get_recommendations(user_id: str) -> list[Product]:
     try:
         return recommendation_service.get_personalized(user_id)
@@ -1345,14 +1176,6 @@ def get_recommendations(user_id: str) -> list[Product]:
             return cached
         return get_popular_items()  # Final fallback
 ```
-
-### Summary
-
-1. **Failures are inevitable** — Design for them, don't assume success
-2. **Retry with exponential backoff and jitter** — Prevents thundering herd
-3. **Only retry transient errors** — Auth failures should fail fast
-4. **Use circuit breakers** — Prevent cascading failures
-5. **Always set timeouts** — Unbounded waits exhaust resources
 
 ---
 
@@ -1364,50 +1187,7 @@ def get_recommendations(user_id: str) -> list[Product]:
 > "Every program and every user of the system should operate using the least set of privileges necessary to complete the job."
 > — Jerome Saltzer, *Protection and the Control of Information Sharing in Multics* (1974)
 
-### Core Concept
-
-**Minimum permissions necessary for intended function—nothing more.**
-
-1. **Minimize Attack Surface** — Fewer permissions = fewer entry points
-2. **Limit Blast Radius** — Contain damage when breaches occur
-
-74% of breaches start with privileged credential abuse.
-
-### Application at Every Level
-
-| Level | Example |
-|-------|---------|
-| **Function** | A function that reads config shouldn't have write access |
-| **Class** | A `ReportGenerator` shouldn't have user deletion capabilities |
-| **Service** | A payment microservice shouldn't access user profile data |
-| **Account** | A database user for reads shouldn't have DROP TABLE privileges |
-
-### Real-World Failures
-
-| Breach | What Happened | PoLP Failure |
-|--------|---------------|--------------|
-| **Equifax (2017)** | 143M records stolen; attackers executed 9,000 DB queries | Permissive access controls; no network segmentation |
-| **Target (2013)** | 40M credit cards via HVAC vendor | Third-party had excessive network access |
-
-### Common Violations
-
-**Code Smells**: Service accounts with `*` wildcard permissions, database connections with admin privileges, shared credentials across services, functions that accept more capabilities than needed.
-
-**Verbal Cues**: "Just give it admin access, it's easier", "We'll lock it down later", "It needs these permissions for debugging"
-
-### Anti-Patterns
-
-```python
-# ❌ Wrong - Over-privileged database connection
-def get_user_email(user_id: int) -> str:
-    conn = get_admin_connection()  # Has DELETE, DROP, etc.
-    return conn.execute("SELECT email FROM users WHERE id = ?", user_id)
-
-# ✅ Correct - Minimal privileges for the task
-def get_user_email(user_id: int) -> str:
-    conn = get_readonly_connection()  # Only SELECT privilege
-    return conn.execute("SELECT email FROM users WHERE id = ?", user_id)
-```
+Every component should run with the minimum permissions its job requires — nothing more. Fewer permissions mean fewer entry points (smaller attack surface) and less damage when a breach happens (smaller blast radius); most breaches start with a privileged credential being abused, as Equifax (permissive DB access, no segmentation) and Target (an over-privileged HVAC vendor) both showed. The principle applies at every level: a config-reading function shouldn't have write access, a read path shouldn't hold a connection with `DROP TABLE`, a payment service shouldn't reach user profiles, and an IAM policy shouldn't say `Action: "s3:*", Resource: "*"`.
 
 ```python
 # ❌ Wrong - Function accepts overly broad context
@@ -1417,52 +1197,10 @@ def send_notification(user: User, db: DatabaseAdmin):
 
 # ✅ Correct - Function receives only what it needs
 def send_notification(email: str):
-    send_email(email, "Your notification...")  # Cannot access database
+    send_email(email, "Your notification...")  # Cannot touch the database
 ```
 
-```yaml
-# ❌ Wrong - IAM policy with wildcard
-Effect: Allow
-Action: "s3:*"
-Resource: "*"
-
-# ✅ Correct - Scoped to specific actions and resources
-Effect: Allow
-Action: ["s3:GetObject", "s3:PutObject"]
-Resource: "arn:aws:s3:::my-bucket/uploads/*"
-```
-
-### Implementation Strategies
-
-| Strategy | Description |
-|----------|-------------|
-| **Default deny** | Start with no access, explicitly grant what's needed |
-| **Separate accounts by function** | Different credentials for read vs. write operations |
-| **Time-bounded access** | Temporary elevated privileges that expire |
-| **Audit unused permissions** | Regularly review and remove permissions not being used |
-
-### Privilege Creep
-
-Permissions accumulate beyond current needs: role changes without revocation, temporary access becoming permanent, misleading role names.
-
-**Prevention**: Regular access reviews, automated permission expiration, minimal scope at design time.
-
-### Relationship to Zero Trust
-
-| Framework | Focus |
-|-----------|-------|
-| **Zero Trust** | Verify identity ("never trust, always verify") |
-| **Least Privilege** | Limit access ("need to know") |
-
-Partners: Zero Trust authenticates requests; PoLP limits authenticated access. Defense in depth.
-
-### Summary
-
-1. **Grant minimum necessary permissions** — Start with nothing, add only what's required
-2. **Scope permissions tightly** — Specific resources, specific actions, specific time windows
-3. **Separate credentials by function** — Read-only users for reads, write users for writes
-4. **Audit and prune regularly** — Permissions accumulate; actively remove unused access
-5. **Design for minimal access** — Functions, classes, and services should request only what they need
+Default to deny and grant explicitly, separate credentials by function (read vs. write), time-bound elevated access, and audit regularly — permissions accumulate as roles change and "temporary" access becomes permanent. Watch for the verbal tells: "just give it admin, it's easier," "we'll lock it down later," "it needs that for debugging." Least privilege partners with Zero Trust: Zero Trust authenticates *who* is making a request, PoLP limits what that authenticated identity can *do*.
 
 ---
 
@@ -1482,119 +1220,25 @@ Partners: Zero Trust authenticates requests; PoLP limits authenticated access. D
 > "Always leave the code better than you found it."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 
-### Core Concept
-
-**With each commit, leave code slightly better than you found it.** Without active maintenance, technical debt accumulates. Continuous small improvements beat periodic "refactoring sprints."
-
-### Why It Works
-
-| Traditional Approach | Boy Scout Rule |
-|---------------------|----------------|
-| Accumulate debt, then "refactoring sprint" | Continuous small improvements |
-| Cleanup disrupts feature delivery | Cleanup happens alongside features |
-| Requires dedicated time allocation | Built into every commit |
-| Big changes = big risk | Small changes = low risk |
-| Code rot between sprints | Code improves continuously |
-
-### What "Better" Looks Like
-
-Small improvements that take seconds to minutes:
-
-| Category | Examples |
-|----------|----------|
-| **Naming** | Rename `$a` to `$account`, `proc()` to `process_order()` |
-| **Cleanup** | Remove unused imports, dead code, extra blank lines |
-| **Deprecations** | Replace deprecated API calls with current alternatives |
-| **Formatting** | Fix inconsistent indentation, add missing whitespace |
-| **Duplication** | Extract repeated logic into a helper (if pattern is proven) |
-| **Clarity** | Simplify a complex conditional into a named method |
-
-### The Campground, Not the Forest
-
-Clean the campground, not the entire forest.
-
-```python
-# ❌ Wrong - Changed 350 files to remove blank lines project-wide
-# This makes code review impossible and introduces huge risk
-
-# ✅ Correct - Cleaned up the file you're actually working in
-def process_order(order_id: int) -> Order:
-    # While adding this method, noticed and fixed:
-    # - Renamed 'o' to 'order'
-    # - Removed unused import
-    # - Fixed inconsistent indentation
-    order = self.repository.get(order_id)
-    return self.apply_discount(order)
-```
-
-Scope cleanup to files you're already touching. Issues elsewhere? Create a ticket.
-
-### Common Violations
-
-**Code Smells Left Behind**:
-- Ignoring deprecation warnings
-- Leaving unused variables/imports
-- Not fixing obvious naming issues
-- Copying code instead of extracting
-
-**Verbal Cues**:
-- "I'll clean it up later" (you won't)
-- "That's not my code"
-- "It works, don't touch it"
-- "We need a refactoring sprint"
-
-### When NOT to Apply
-
-**Exceptions**:
-- **Unfamiliar code**: Don't "improve" code you don't fully understand
-- **No test coverage**: Risky refactors in untested code can introduce bugs
-- **Time-critical fixes**: Production incidents need the fix, not cleanup
-- **Shared/external code**: Extra care when changes affect other teams
-
-Clean up obvious issues; for larger concerns, create a ticket.
-
-### Anti-Patterns
+Leave the code slightly better than you found it with each commit. Continuous small improvements — renaming `o` to `order`, removing a dead import, extracting a magic number, simplifying a tangled conditional — compound and beat periodic "refactoring sprints," because each change is small enough to be low-risk and ride along with the feature you're already shipping. But clean the campground, not the forest: scope cleanup to the files you're already touching (a 350-file blank-line sweep makes review impossible), and file a ticket for anything larger.
 
 ```python
 # ❌ Wrong - "Not my problem" attitude
 def add_discount(order):
-    # Just adding my feature, ignoring the mess
-    o = order  # terrible variable name from legacy code
+    o = order          # terrible name from legacy code
     d = o.total * 0.1  # magic number
     o.total = o.total - d
     return o
 
-# ✅ Correct - Boy Scout approach
+# ✅ Correct - cleaned up while adding the feature
 def add_discount(order: Order) -> Order:
-    # Cleaned up while adding feature:
-    # - Renamed variables for clarity
-    # - Extracted magic number to constant
     DISCOUNT_RATE = 0.1
     discount = order.total * DISCOUNT_RATE
     order.total = order.total - discount
     return order
 ```
 
-### Relationship to Other Principles
-
-| Principle | Connection |
-|-----------|------------|
-| **Broken Windows Theory** | Boy Scout Rule is the *antidote*—fix small issues before they invite bigger ones |
-| **DRY** | Boy Scout Rule helps you spot and fix duplication incrementally |
-| **Self-Documenting Code** | Rename unclear variables as you encounter them |
-| **YAGNI** | Delete unused code when you find it |
-| **Opportunistic Refactoring** | Same concept, different name—improve code while you're there |
-| **Technical Debt** | Boy Scout Rule is continuous debt payment |
-
-**Broken Windows**: Neglect invites more neglect. Boy Scout Rule signals "this code is cared for."
-
-### Summary
-
-1. **Leave code better than you found it** — Every commit is an opportunity
-2. **Small improvements compound** — Minutes daily beats weeks annually
-3. **Clean the campground, not the forest** — Scope to files you're touching
-4. **Don't ignore the mess** — "Not my code" is not an excuse
-5. **Make cleanup socially expected** — It should be as unacceptable to leave mess as to litter
+The excuses to distrust: "I'll clean it up later" (you won't), "that's not my code," "it works, don't touch it." The exceptions to respect: don't "improve" code you don't understand or that has no test coverage, and don't fold cleanup into a time-critical production fix. This is the antidote to broken windows — neglect invites more neglect, and a tidy file signals the code is cared for.
 
 ---
 
@@ -1606,40 +1250,7 @@ def add_discount(order: Order) -> Order:
 > "Observability is the ability to understand the internal state of a system by examining its external outputs."
 > — Charity Majors
 
-### Core Concept
-
-**Make system behavior visible through structured telemetry.** In distributed systems, observability is your primary debugging tool.
-
-### The Three Pillars
-
-1. **Logs**: Chronological records of discrete events with context
-2. **Metrics**: Quantitative measurements over time
-3. **Traces**: End-to-end journey of requests through distributed systems
-
-### Observability Principles
-
-1. **Structured Over Unstructured**: Use JSON, key-value pairs
-2. **Semantic Prefixes**: Emojis for quick visual scanning
-3. **Log Levels Match Intent**: DEBUG, INFO, WARNING, ERROR, CRITICAL
-4. **Context Flows Through Systems**: Trace IDs, request IDs
-5. **Metadata in Responses**: Return operational metadata
-6. **Timing Everything Important**: Instrument performance-critical paths
-
-### Anti-Patterns
-
-- **Silent Failures**: Swallowed exceptions
-- **Opaque Error Messages**: Generic, unhelpful messages
-- **Missing Request Context**: No correlation IDs
-- **Over-Logging**: Logging inside tight loops
-- **Logging Sensitive Data**: Credentials in logs
-
-### Summary
-
-1. **Observability is your debugger** in production
-2. **Structure your logs** for machine parsing and human readability
-3. **Propagate context** (request IDs, trace IDs)
-4. **Return metadata** in responses for transparency
-5. **Never log secrets** — sanitize sensitive data
+Make system behavior visible through structured telemetry — in distributed systems, the logs, metrics, and traces you emit are your primary debugger, because you can't attach one in production. Structure logs for machine parsing (JSON, key-value pairs, semantic prefixes), match log levels to intent, propagate correlation IDs (request IDs, trace IDs) so one request reads as a single story across services, and return operational metadata in responses. The anti-patterns are the ones that leave you blind: silently swallowed exceptions, opaque generic error messages, missing request context, over-logging inside tight loops — and the one that's actively dangerous, logging secrets.
 
 ---
 
