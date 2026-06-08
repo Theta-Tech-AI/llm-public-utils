@@ -870,63 +870,15 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 > "SOLID principles are the foundation of good software design—they make code more maintainable, flexible, and testable."
 > — Robert C. Martin (Uncle Bob)
 
-### Overview
+| Letter | Principle | Core Idea | Code Smells |
+|--------|-----------|-----------|-------------|
+| **S** | Single Responsibility | One reason to change | Class name has "And"/"Manager", mixed I/O and logic, methods don't use most attributes |
+| **O** | Open/Closed | Open for extension, closed for modification | `if/elif`/`isinstance()` chains on type, modifying existing code for each new variant |
+| **L** | Liskov Substitution | Subtypes substitutable for base types | Subclass raises `NotImplementedError`, empty `pass` overrides, type checks before calls |
+| **I** | Interface Segregation | Many specific interfaces over one general | Fat interfaces (10+ methods), implementations that `raise NotImplementedError` |
+| **D** | Dependency Inversion | Depend on abstractions, not concretions | Direct instantiation in constructors, concrete imports in business logic, can't mock |
 
-| Letter | Principle | Core Idea |
-|--------|-----------|-----------|
-| **S** | Single Responsibility | One reason to change |
-| **O** | Open/Closed | Open for extension, closed for modification |
-| **L** | Liskov Substitution | Subtypes must be substitutable for base types |
-| **I** | Interface Segregation | Many specific interfaces over one general |
-| **D** | Dependency Inversion | Depend on abstractions, not concretions |
-
-### S — Single Responsibility Principle
-
-> "A class should have one, and only one, reason to change."
-
-**Violations**: Mixed I/O and logic, persistence in domain objects, god classes, class names with "And" or "Manager"
-
-### O — Open/Closed Principle
-
-> "Software entities should be open for extension but closed for modification."
-
-**Violations**: `if/elif` chains checking types, `isinstance()` checks, modifying existing code for new variants
-
-### L — Liskov Substitution Principle
-
-> "Subtypes must be substitutable for their base types."
-
-**Violations**: Subclass raises `NotImplementedError`, empty `pass` overrides, type checks before method calls
-
-### I — Interface Segregation Principle
-
-> "Clients should not be forced to depend on interfaces they do not use."
-
-**Violations**: Fat interfaces (20+ methods), `raise NotImplementedError` in implementations
-
-### D — Dependency Inversion Principle
-
-> "High-level modules should not depend on low-level modules. Both should depend on abstractions."
-
-**Violations**: Direct instantiation in constructors, concrete imports in business logic, can't mock for testing
-
-### When NOT to Apply SOLID
-
-1. **Simple scripts**: Overhead outweighs benefits
-2. **Prototyping**: Flexibility over structure
-3. **Performance-critical paths**: Abstractions add indirection
-4. **Single implementations**: Don't create interfaces for classes that won't have alternatives
-5. **Early development**: Wait for patterns to emerge (Rule of Three)
-
-### Detection Checklist
-
-| Principle | Code Smells |
-|-----------|-------------|
-| **SRP** | Class name has "And"/"Manager", methods don't use most attributes |
-| **OCP** | Adding features requires modifying existing classes, `isinstance()` chains |
-| **LSP** | Subclass raises `NotImplementedError`, empty overrides, type checks |
-| **ISP** | Interfaces with 10+ methods, classes implement unused methods |
-| **DIP** | Direct instantiation in constructors, can't mock for testing |
+SOLID earns its keep in code that must evolve, but it's overhead in simple scripts, prototypes, and performance-critical paths. Don't create an interface for a class that will only ever have one implementation, and wait for patterns to emerge (Rule of Three) before abstracting.
 
 ---
 
@@ -940,120 +892,28 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 
 ### Core Concept
 
-**Sensible defaults that work out of the box.** Explicit configuration only when deviating from norm. Core insight: most decisions aren't worth making—if 90% use `id` as primary key, don't force specification.
-
-### The Power of Defaults
-
-| Without CoC | With CoC |
-|------------|----------|
-| Specify database table name for every model | `User` class → `users` table automatically |
-| Configure primary key column | `id` assumed unless overridden |
-| Define foreign key naming | `user_id` derived from `User` association |
-| Set up file locations manually | `app/models/`, `app/views/`, etc. by convention |
-
-Conventions compose: `has_many :posts` resolves `Post` → `posts` table → `user_id` FK automatically.
-
-### Real-World Examples
-
-| Framework | Convention | Override When Needed |
-|-----------|-----------|---------------------|
-| **Rails** | `User` → `users` table | `self.table_name = "legacy_accounts"` |
-| **Spring Boot** | Auto-configure from classpath | `@Configuration` for custom beans |
-| **Django** | `model_name` → `appname_modelname` table | `class Meta: db_table = "custom"` |
-| **Next.js** | `pages/about.js` → `/about` route | Custom routing configuration |
-| **pytest** | `test_*.py` files auto-discovered | `pytest.ini` for custom patterns |
-
-### When to Apply
-
-| Good Fit | Poor Fit |
-|----------|----------|
-| Repeated patterns across projects | Highly unique domain requirements |
-| Reducing boilerplate for common cases | Legacy systems with established conventions |
-| Framework/library design | When explicitness aids understanding |
-| Lowering barriers for beginners | Security-critical configurations |
-
-### Common Violations
+Provide sensible defaults that work out of the box, and require explicit configuration only when deviating from the norm. Most decisions aren't worth making — if 90% use `id` as the primary key, don't force everyone to specify it. Rails turns a `User` class into a `users` table with a `user_id` foreign key automatically; Django, Spring Boot, Next.js routing, and pytest test discovery all work the same way, each with an escape hatch (`self.table_name = "legacy_accounts"`) for the cases that differ.
 
 ```python
 # ❌ Wrong - Forcing configuration for obvious defaults
-class UserService:
-    def __init__(
-        self,
-        table_name: str,
-        id_column: str,
-        created_at_column: str,
-        updated_at_column: str,
-    ):
-        self.table_name = table_name
-        self.id_column = id_column
-        # ... exhausting
-
-# Usage requires specifying everything
 service = UserService(
     table_name="users",
     id_column="id",
     created_at_column="created_at",
-    updated_at_column="updated_at"
+    updated_at_column="updated_at",
 )
 
 # ✅ Correct - Sensible defaults with escape hatches
 class UserService:
-    def __init__(
-        self,
-        table_name: str = "users",
-        id_column: str = "id",
-        timestamps: bool = True,
-    ):
+    def __init__(self, table_name: str = "users", id_column: str = "id"):
         self.table_name = table_name
         self.id_column = id_column
-        self.timestamps = timestamps
 
-# Usage: zero config for common case
-service = UserService()  # Just works
-
-# Override only what differs
-legacy_service = UserService(table_name="legacy_accounts")
+service = UserService()                              # Zero config for the common case
+legacy = UserService(table_name="legacy_accounts")  # Override only what differs
 ```
 
-### The Dark Side
-
-1. **Hidden Magic** — implicit behavior hard to debug
-2. **Learning Cliff** — must learn convention to deviate
-3. **Rigidity at Scale** — common-case optimizations may not scale
-
-```python
-# When convention fails: trying to use a legacy database
-# Rails convention: User → users table
-# Reality: Legacy DB uses "tbl_usr_accounts"
-# Now you're fighting the framework instead of working with it
-```
-
-### Explicit vs. Implicit Trade-off
-
-| Approach | Advantages | Disadvantages |
-|----------|-----------|---------------|
-| **Explicit (Configuration)** | Clear, searchable, no surprises | Verbose, repetitive, decision fatigue |
-| **Implicit (Convention)** | Concise, consistent, fast start | Hidden behavior, learning curve |
-
-**Python's "Explicit > implicit"** seems contradictory. Resolution: conventions must be *discoverable* and well-documented.
-
-### Relationship to Other Principles
-
-| Principle | Relationship |
-|-----------|-------------|
-| **KISS** | Both reduce unnecessary complexity; CoC removes decision complexity |
-| **YAGNI** | Don't configure what you don't need to configure |
-| **DRY** | Conventions eliminate repetitive configuration |
-| **Cognitive Load** | Fewer decisions = lower mental burden |
-| **Principle of Least Surprise** | Good conventions match developer expectations |
-
-### Summary
-
-1. **Provide sensible defaults** — Common cases should require zero configuration
-2. **Allow overrides** — Escape hatches for when convention doesn't fit
-3. **Conventions compose** — Build deeper abstractions from consistent patterns
-4. **Document the magic** — Implicit behavior must be discoverable
-5. **Know when to deviate** — Convention serves you until it doesn't; then configure explicitly
+The cost is hidden magic: implicit behavior is harder to debug, you must learn the convention before you can deviate, and convention-optimized common cases can fight you at the edges (a legacy DB named `tbl_usr_accounts` means fighting the framework). This is why Python prizes "explicit over implicit" — the resolution is that conventions must be *discoverable* and well documented. Convention serves you until it doesn't; then configure explicitly.
 
 ---
 
@@ -1065,23 +925,7 @@ legacy_service = UserService(table_name="legacy_accounts")
 > "Asking a question should not change the answer."
 > — Bertrand Meyer
 
-### Core Concept
-
-| Type | Purpose | Returns | Side Effects |
-|------|---------|---------|--------------|
-| **Query** | Return info | Yes | None |
-| **Command** | Change state | None | Yes |
-
-Methods returning values shouldn't change state. Methods changing state shouldn't return values.
-
-### Why CQS Matters
-
-1. **Reasoning Confidence**: Queries are safe to call anywhere
-2. **Testing Simplicity**: Queries tested in isolation
-3. **Caching Safety**: Queries can be cached
-4. **Parallelization**: Queries run concurrently without race conditions
-
-### Anti-Patterns
+A method should either return information (a query, no side effects) or change state (a command, returns nothing) — never both. Keeping them separate means queries are safe to call anywhere, cache, and parallelize without race conditions, while commands stay easy to reason about and test. Break the rule only for genuinely atomic operations that must do both — a stack `pop`, a thread-safe increment-and-get, database identity generation.
 
 ```python
 # ❌ Wrong - Modifies AND returns
@@ -1102,19 +946,6 @@ def create_user(self, email: str) -> None:
     self.db.save(User(email=email))
 ```
 
-### Pragmatic Exceptions
-
-- Stack pop operation (atomic)
-- Thread-safe increment-and-get
-- Database identity generation
-
-### Summary
-
-1. **Separate queries from commands** — Return value OR change state, not both
-2. **Queries are safe** — Call them anywhere, cache them, parallelize them
-3. **Commands need care** — Order matters, test state changes explicitly
-4. **Break CQS pragmatically** — Atomic operations sometimes require both
-
 ---
 
 ## Code Reusability
@@ -1125,146 +956,22 @@ def create_user(self, email: str) -> None:
 > "A little copying is better than a little dependency."
 > — Rob Pike
 
-### Core Concept
-
-**Code usable in multiple contexts without modification.** Unlike DRY (eliminating existing duplication), reusability is forward-looking.
-
-**The paradox**: Reusable components cost 3-10x more to develop. Payoff only materializes with actual reuse.
-
-### Characteristics of Reusable Code
-
-| Trait | Description |
-|-------|-------------|
-| **Modular** | Self-contained with minimal external dependencies |
-| **Generic** | Handles a range of inputs without modification |
-| **Well-documented** | Clear API, usage examples, edge cases documented |
-| **Stable Interface** | Public API changes infrequently |
-| **Thoroughly Tested** | Works reliably across scenarios |
-
-### Types of Reuse
-
-| Type | Scope | Example |
-|------|-------|---------|
-| **Copy-paste** | Lowest | Snippets, templates |
-| **Functions** | Local | Utility functions within a project |
-| **Libraries** | Organization | Shared packages across teams |
-| **Frameworks** | Industry | Django, React, Rails |
-
-### The Reusability Trap
-
-Designing for reuse before proving need creates complexity without value. Rule of Three applies: wait until three different contexts.
-
-**Santa Claus Problem**: A billion open source components—finding, learning, and integrating often costs more than the reuse saves.
+Reusability is forward-looking — code usable in multiple contexts without modification — where DRY is about eliminating duplication that already exists. It's earned, not designed up front: reusable components cost 3-10x more to build, and that cost only pays off with *actual* reuse. Designing for reuse before the need is proven is a YAGNI violation that buys complexity with no payoff (the `GenericDataProcessor` that takes a parser, transformer, validator, and serializer to handle "any" format). Wait for the Rule of Three, then generalize.
 
 ```python
 # ❌ Wrong - Premature reusability (YAGNI violation)
 class GenericDataProcessor:
-    """Handles any data format with any transformation."""
-    def __init__(self, parser, transformer, validator, serializer):
-        self.parser = parser
-        self.transformer = transformer
-        self.validator = validator
-        self.serializer = serializer
-
-    def process(self, data, options=None):
-        options = options or {}
-        parsed = self.parser.parse(data, **options.get('parse', {}))
-        transformed = self.transformer.transform(parsed, **options.get('transform', {}))
-        if options.get('validate', True):
-            self.validator.validate(transformed)
-        return self.serializer.serialize(transformed, **options.get('serialize', {}))
+    def __init__(self, parser, transformer, validator, serializer): ...
+    def process(self, data, options=None): ...  # endless option plumbing
 
 # ✅ Correct - Start specific, generalize when needed
 def parse_user_csv(csv_data: str) -> list[dict]:
-    """Parse user data from CSV format."""
     rows = csv_data.strip().split('\n')
     headers = rows[0].split(',')
     return [dict(zip(headers, row.split(','))) for row in rows[1:]]
 ```
 
-### Designing for Reusability
-
-When code has proven its need for reuse, apply these principles:
-
-**1. Minimize Dependencies**
-```python
-# ❌ Wrong - Tight coupling to specific libraries
-def format_date(date):
-    import pandas as pd  # Heavy dependency for simple task
-    return pd.Timestamp(date).strftime('%Y-%m-%d')
-
-# ✅ Correct - Use standard library
-from datetime import datetime
-
-def format_date(date: datetime) -> str:
-    return date.strftime('%Y-%m-%d')
-```
-
-**2. Accept Abstract Inputs**
-```python
-# ❌ Wrong - Only accepts specific type
-def process_users(users: list[User]) -> None:
-    for user in users:
-        send_email(user.email)
-
-# ✅ Correct - Accept any iterable of objects with email
-from typing import Protocol, Iterable
-
-class HasEmail(Protocol):
-    email: str
-
-def process_contacts(contacts: Iterable[HasEmail]) -> None:
-    for contact in contacts:
-        send_email(contact.email)
-```
-
-**3. Provide Sensible Defaults**
-```python
-# ❌ Wrong - Requires all parameters
-def retry(func, max_retries, delay, backoff_factor, exceptions):
-    ...
-
-# ✅ Correct - Sensible defaults, only specify what differs
-def retry(
-    func,
-    max_retries: int = 3,
-    delay: float = 1.0,
-    backoff_factor: float = 2.0,
-    exceptions: tuple = (Exception,),
-):
-    ...
-```
-
-### Common Violations
-
-**Code Smells**:
-- Over-parameterized functions trying to handle every case
-- Components that can't be tested in isolation
-- Libraries that require complex configuration before basic use
-- Code with implicit dependencies on global state
-
-**Organizational Barriers**:
-- Politics: Teams block other teams from using "their" code
-- Psychology: Developers view reuse as stifling creativity
-- NIH Syndrome: "Not Invented Here" bias against external solutions
-
-### When Reusability Hurts
-
-Verbose, redundant code sometimes beats elegant abstractions:
-- **Debugging**: Isolated code means problems stay isolated
-- **Onboarding**: Simple duplication is easier to understand than clever abstractions
-- **Change velocity**: Modifying copy-pasted code can't break other systems
-- **Coupling**: "Reusable" components become coupling points across systems
-
-The construction paradox: demolishing and rebuilding often costs less than renovating. Similarly, rewriting 50 lines sometimes beats understanding 500 lines of "reusable" framework code.
-
-### Summary
-
-1. **Reusability is earned, not designed** — Wait for three use cases before investing
-2. **Upfront cost is real** — Reusable code costs more to develop and understand
-3. **Dependencies are the enemy** — Minimize external coupling; a little copying beats a little dependency
-4. **Simple duplication can be better** — Isolated, obvious code often beats clever abstractions
-5. **Stable interfaces enable reuse** — Public APIs should change rarely
+When reuse *is* warranted, minimize dependencies (a little copying beats a little dependency), accept abstract inputs (a `Protocol`, not a concrete class), provide sensible defaults, and keep the public interface stable. But remember reuse cuts both ways: isolated, duplicated code keeps bugs and changes contained, where a "reusable" component becomes a coupling point across every system that depends on it. Rewriting 50 obvious lines often beats understanding 500 lines of someone's framework.
 
 ---
 
