@@ -11,58 +11,203 @@ Whether or not you use this deslop command on your code base, you should read al
 
 ## Table of Contents
 
-1. [The Deslop Command](#the-deslop-command)
-2. [Coding Principles Reference](#coding-principles-reference)
-   - [Part I: Clean Code](#part-i-clean-code) — *Writing clear, simple, readable code*
-     - [Simplicity & Minimalism](#simplicity--minimalism) — do less, but better
-       - [KISS](#kiss-keep-it-simple-stupid) — avoid unnecessary complexity
-       - [YAGNI](#yagni-you-arent-gonna-need-it) — don't build until needed
-       - [Small Functions](#small-functions) — short, focused, one purpose
-       - [Guard Clauses](#guard-clauses-early-return) — exit early for invalid states
-     - [Clarity & Readability](#clarity--readability) — code is read 10x more than written
-       - [Cognitive Load](#cognitive-load) — reduce mental effort to understand
-       - [Single Level of Abstraction](#single-level-of-abstraction-slap) — don't mix abstraction levels
-       - [Self-Documenting Code](#self-documenting-code) — names reveal purpose
-       - [Documentation Discipline](#documentation-discipline) — code tells how, comments tell why
-       - [Elegance](#elegance) — beauty through insight and minimality
-       - [Least Surprise](#principle-of-least-surprise) — behave as users expect
-   - [Part II: Architecture](#part-ii-architecture) — *Structuring and designing systems*
-     - [Organization & Structure](#organization--structure) — where does this code belong?
-       - [DRY](#dry-dont-repeat-yourself) — one authoritative representation per concept
-       - [Single Source of Truth](#single-source-of-truth) — one location for each piece of data
-       - [Separation of Concerns](#separation-of-concerns) — one responsibility per component
-       - [Modularity](#modularity) — independent components with hidden internals
-     - [Coupling & Dependencies](#coupling--dependencies) — how components relate to each other
-       - [Encapsulation](#encapsulation) — bundle data with behavior, hide internals
-       - [Law of Demeter](#law-of-demeter) — only talk to immediate friends
-       - [Orthogonality](#orthogonality) — changes in one don't affect others
-       - [Dependency Injection](#dependency-injection) — pass dependencies, don't create them
-       - [Composition Over Inheritance](#composition-over-inheritance) — combine objects, don't extend classes
-     - [Design Patterns & Conventions](#design-patterns--conventions) — proven approaches to common problems
-       - [SOLID](#solid-principles) — five foundational OO design principles
-       - [Convention Over Configuration](#convention-over-configuration) — sensible defaults, override when needed
-       - [Command-Query Separation](#command-query-separation) — return value OR change state, not both
-       - [Code Reusability](#code-reusability) — earned through proven need, not designed upfront
-     - [Data & State](#data--state) — how data flows and behaves
-       - [Parse, Don't Validate](#parse-dont-validate) — transform data into types that prove validity
-       - [Immutability](#immutability) — once created, state cannot change
-       - [Idempotency](#idempotency) — multiple executions produce same result as one
-   - [Part III: Reliability](#part-iii-reliability) — *Building robust, maintainable systems*
-     - [Robustness & Safety](#robustness--safety) — handling the unexpected
-       - [Fail-Fast](#fail-fast--defensive-programming) — detect and report errors immediately
-       - [Design by Contract](#design-by-contract) — explicit agreements between callers and routines
-       - [Postel's Law](#postels-law-robustness-principle) — conservative output, liberal input
-       - [Resilience](#resilience--graceful-degradation) — continue operating despite partial failures
-       - [Least Privilege](#principle-of-least-privilege) — minimum permissions necessary
-     - [Maintainability & Operations](#maintainability--operations) — keeping systems healthy over time
-       - [Boy Scout Rule](#boy-scout-rule) — leave code better than you found it
-       - [Observability](#observability--transparency) — understand what systems do in production
-3. [When to Relax Rules](#when-to-relax-rules) — context over dogma
-4. [References](#references) — foundational texts and resources
-   - [Foundational Texts](#foundational-texts) — essential books that shaped software design
-   - [Seminal Articles & Essays](#seminal-articles--essays) — influential online writings
-   - [Online Resources](#online-resources) — living references for patterns and principles
-   - [Concept Attribution](#concept-attribution) — origins of specific ideas in this document
+- [Deslop: Code Quality Analysis Command](#deslop-code-quality-analysis-command)
+  - [Table of Contents](#table-of-contents)
+  - [Instructions](#instructions)
+    - [Installation](#installation)
+    - [Deslop](#deslop)
+    - [Check for Updates](#check-for-updates)
+  - [Part 1: Clean Code](#part-1-clean-code)
+    - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
+    - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
+    - [Small Functions](#small-functions)
+    - [Guard Clauses](#guard-clauses)
+    - [Cognitive Load](#cognitive-load)
+    - [Single Level of Abstraction (SLAP)](#single-level-of-abstraction-slap)
+    - [Self-Documenting Code](#self-documenting-code)
+    - [Documentation Discipline](#documentation-discipline)
+    - [Elegance](#elegance)
+    - [Principle of Least Surprise](#principle-of-least-surprise)
+  - [Part 3: Architecture](#part-3-architecture)
+- [Organization \& Structure](#organization--structure)
+  - [DRY: Don't Repeat Yourself](#dry-dont-repeat-yourself)
+    - [Core Concept](#core-concept)
+    - [The Rule of Three](#the-rule-of-three)
+    - [The Wrong Abstraction](#the-wrong-abstraction)
+    - [Recognizing True vs. Incidental Duplication](#recognizing-true-vs-incidental-duplication)
+    - [Common Violations](#common-violations)
+    - [Anti-Patterns](#anti-patterns)
+    - [Refactoring Techniques](#refactoring-techniques)
+    - [DRY Beyond Code](#dry-beyond-code)
+    - [Summary](#summary)
+  - [Single Source of Truth](#single-source-of-truth)
+    - [Core Concept](#core-concept-1)
+    - [SSoT vs. DRY](#ssot-vs-dry)
+    - [Common Violations](#common-violations-1)
+    - [When Duplication Is Acceptable](#when-duplication-is-acceptable)
+    - [Summary](#summary-1)
+  - [Separation of Concerns](#separation-of-concerns)
+    - [Core Concept](#core-concept-2)
+    - [Types of Concerns](#types-of-concerns)
+    - [Common Violations](#common-violations-2)
+    - [Anti-Patterns](#anti-patterns-1)
+    - [Summary](#summary-2)
+  - [Modularity](#modularity)
+    - [Core Concept](#core-concept-3)
+    - [Deep vs. Shallow Modules](#deep-vs-shallow-modules)
+    - [Common Violations](#common-violations-3)
+    - [Summary](#summary-3)
+- [Coupling \& Dependencies](#coupling--dependencies)
+  - [Encapsulation](#encapsulation)
+    - [Core Concept](#core-concept-4)
+    - [Tell, Don't Ask](#tell-dont-ask)
+    - [Common Violations](#common-violations-4)
+    - [Summary](#summary-4)
+  - [Law of Demeter](#law-of-demeter)
+    - [Core Concept](#core-concept-5)
+    - [The "One Dot" Rule](#the-one-dot-rule)
+    - [Formal Definition](#formal-definition)
+    - [Exceptions: When Chaining Is Acceptable](#exceptions-when-chaining-is-acceptable)
+    - [A Note on Tell-Don't-Ask](#a-note-on-tell-dont-ask)
+    - [Summary](#summary-5)
+  - [Orthogonality](#orthogonality)
+    - [Core Concept](#core-concept-6)
+    - [Common Violations](#common-violations-5)
+    - [Summary](#summary-6)
+  - [Dependency Injection](#dependency-injection)
+    - [Core Concept](#core-concept-7)
+    - [Three Forms](#three-forms)
+    - [Anti-Patterns](#anti-patterns-2)
+    - [Service Lifetimes](#service-lifetimes)
+    - [Summary](#summary-7)
+  - [Composition Over Inheritance](#composition-over-inheritance)
+    - [Core Concept](#core-concept-8)
+    - [Why Composition Is Preferred](#why-composition-is-preferred)
+    - [Anti-Patterns](#anti-patterns-3)
+    - [Summary](#summary-8)
+- [Design Patterns \& Conventions](#design-patterns--conventions)
+  - [SOLID Principles](#solid-principles)
+    - [Overview](#overview)
+    - [S — Single Responsibility Principle](#s--single-responsibility-principle)
+    - [O — Open/Closed Principle](#o--openclosed-principle)
+    - [L — Liskov Substitution Principle](#l--liskov-substitution-principle)
+    - [I — Interface Segregation Principle](#i--interface-segregation-principle)
+    - [D — Dependency Inversion Principle](#d--dependency-inversion-principle)
+    - [When NOT to Apply SOLID](#when-not-to-apply-solid)
+    - [Detection Checklist](#detection-checklist)
+  - [Convention Over Configuration](#convention-over-configuration)
+    - [Core Concept](#core-concept-9)
+    - [The Power of Defaults](#the-power-of-defaults)
+    - [Real-World Examples](#real-world-examples)
+    - [When to Apply](#when-to-apply)
+    - [Common Violations](#common-violations-6)
+    - [The Dark Side](#the-dark-side)
+    - [Explicit vs. Implicit Trade-off](#explicit-vs-implicit-trade-off)
+    - [Relationship to Other Principles](#relationship-to-other-principles)
+    - [Summary](#summary-9)
+  - [Command-Query Separation](#command-query-separation)
+    - [Core Concept](#core-concept-10)
+    - [Why CQS Matters](#why-cqs-matters)
+    - [Anti-Patterns](#anti-patterns-4)
+    - [Pragmatic Exceptions](#pragmatic-exceptions)
+    - [Summary](#summary-10)
+  - [Code Reusability](#code-reusability)
+    - [Core Concept](#core-concept-11)
+    - [Characteristics of Reusable Code](#characteristics-of-reusable-code)
+    - [Types of Reuse](#types-of-reuse)
+    - [The Reusability Trap](#the-reusability-trap)
+    - [Designing for Reusability](#designing-for-reusability)
+    - [Common Violations](#common-violations-7)
+    - [When Reusability Hurts](#when-reusability-hurts)
+    - [Summary](#summary-11)
+- [Data \& State](#data--state)
+  - [Parse, Don't Validate](#parse-dont-validate)
+    - [Core Concept](#core-concept-12)
+    - [Validation vs. Parsing](#validation-vs-parsing)
+    - [The Shotgun Parsing Anti-Pattern](#the-shotgun-parsing-anti-pattern)
+    - [Primitive Obsession](#primitive-obsession)
+    - [Make Illegal States Unrepresentable](#make-illegal-states-unrepresentable)
+    - [Parse at the Boundary](#parse-at-the-boundary)
+    - [Lightweight Parsing with NewType](#lightweight-parsing-with-newtype)
+    - [Pydantic: Full-Throttle Parsing](#pydantic-full-throttle-parsing)
+    - [Common Violations](#common-violations-8)
+    - [When NOT to Apply](#when-not-to-apply)
+    - [Summary](#summary-12)
+  - [Immutability](#immutability)
+    - [Core Concept](#core-concept-13)
+    - [Benefits](#benefits)
+    - [Common Violations](#common-violations-9)
+    - [Python Implementation](#python-implementation)
+    - [Summary](#summary-13)
+  - [Idempotency](#idempotency)
+    - [Core Concept](#core-concept-14)
+    - [Implementation Strategies](#implementation-strategies)
+    - [Naturally Idempotent Operations](#naturally-idempotent-operations)
+    - [Summary](#summary-14)
+- [Part III: Reliability](#part-iii-reliability)
+- [Robustness \& Safety](#robustness--safety)
+  - [Fail-Fast \& Defensive Programming](#fail-fast--defensive-programming)
+    - [Core Concept](#core-concept-15)
+    - [Design by Contract](#design-by-contract)
+    - [Common Patterns](#common-patterns)
+    - [Error Handling Strategies](#error-handling-strategies)
+    - [Summary](#summary-15)
+  - [Design by Contract](#design-by-contract-1)
+    - [Core Concept](#core-concept-16)
+    - [The Three Pillars](#the-three-pillars)
+    - [Inheritance Rules (Liskov Substitution)](#inheritance-rules-liskov-substitution)
+    - [DbC vs. Defensive Programming](#dbc-vs-defensive-programming)
+    - [Summary](#summary-16)
+  - [Postel's Law (Robustness Principle)](#postels-law-robustness-principle)
+    - [Core Concept](#core-concept-17)
+    - [Real-World Examples](#real-world-examples-1)
+    - [When to Apply](#when-to-apply-1)
+    - [The Tolerant Reader Pattern](#the-tolerant-reader-pattern)
+    - [The Dark Side](#the-dark-side-1)
+    - [Modern Balanced Approach](#modern-balanced-approach)
+    - [Relationship to Other Principles](#relationship-to-other-principles-1)
+    - [Summary](#summary-17)
+  - [Resilience \& Graceful Degradation](#resilience--graceful-degradation)
+    - [Core Concept](#core-concept-18)
+    - [The Three Pillars](#the-three-pillars-1)
+    - [Pattern 1: Exponential Backoff with Jitter](#pattern-1-exponential-backoff-with-jitter)
+    - [Pattern 2: Circuit Breaker](#pattern-2-circuit-breaker)
+    - [Pattern 3: Graceful Degradation](#pattern-3-graceful-degradation)
+    - [Summary](#summary-18)
+  - [Principle of Least Privilege](#principle-of-least-privilege)
+    - [Core Concept](#core-concept-19)
+    - [Application at Every Level](#application-at-every-level)
+    - [Real-World Failures](#real-world-failures)
+    - [Common Violations](#common-violations-10)
+    - [Anti-Patterns](#anti-patterns-5)
+    - [Implementation Strategies](#implementation-strategies-1)
+    - [Privilege Creep](#privilege-creep)
+    - [Relationship to Zero Trust](#relationship-to-zero-trust)
+    - [Summary](#summary-19)
+- [Maintainability \& Operations](#maintainability--operations)
+  - [Boy Scout Rule](#boy-scout-rule)
+    - [Core Concept](#core-concept-20)
+    - [Why It Works](#why-it-works)
+    - [What "Better" Looks Like](#what-better-looks-like)
+    - [The Campground, Not the Forest](#the-campground-not-the-forest)
+    - [Common Violations](#common-violations-11)
+    - [When NOT to Apply](#when-not-to-apply-1)
+    - [Anti-Patterns](#anti-patterns-6)
+    - [Relationship to Other Principles](#relationship-to-other-principles-2)
+    - [Summary](#summary-20)
+  - [Observability \& Transparency](#observability--transparency)
+    - [Core Concept](#core-concept-21)
+    - [The Three Pillars](#the-three-pillars-2)
+    - [Observability Principles](#observability-principles)
+    - [Anti-Patterns](#anti-patterns-7)
+    - [Summary](#summary-21)
+  - [When to Relax Rules](#when-to-relax-rules)
+    - [The Meta-Principle](#the-meta-principle)
+  - [References](#references)
+    - [Foundational Texts](#foundational-texts)
+    - [Seminal Articles \& Essays](#seminal-articles--essays)
+    - [Online Resources](#online-resources)
+    - [Concept Attribution](#concept-attribution)
 
 ---
 
@@ -102,7 +247,7 @@ For each violation list:
 ### Check for Updates
 At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
 
-## Part I: Clean Code
+## Part 1: Clean Code
 
 [↑ top](#table-of-contents)
 
@@ -203,14 +348,14 @@ The "small function" principle is related to several other principles:
 
 ---
 
-### Guard Clauses (Early Return)
+### Guard Clauses
 
 [↑ top](#table-of-contents)
 
 > "The guard clause says, 'This is rare, and if it happens, do something and get out.'"
 > — Martin Fowler, *Refactoring*
 
-Early exit when preconditions aren't met. Check invalid states at the top, return immediately. Keeps the "happy path" at outermost indentation. Use it for null checks, empty inputs, invalid states, edge cases, or recursive termination. For instance:
+Check for invalidate states at the start of a function and exit early when preconditions are not met. This keeps the "happy path" at outermost indentation and fails fast. Use it for null checks, empty inputs, invalid states, edge cases, or recursive termination. Use it to handle the unhappy cases early, not for selecting between equally weighted paths. For instance:
 
 ```python
 # ❌ Wrong - Nested conditionals obscure the happy path
@@ -269,9 +414,6 @@ def process(item):
     return item.execute()
 ```
 
-However, when both branches are equally valid, use conventional conditionals. The guard clause is supposed to exit early on the unhappy path, and is not for simply choosing between two equally valid alternatives. It goes at the top of the function (not in the middle) to fail early. A guard clause signals "this is unusual—handle it and leave." Equal-weight branches deserve equal-weight syntax. For instance:
- instance:
-
 ```python
 # ❌ Misleading - Both branches are equally valid
 def process_order(order):
@@ -298,35 +440,14 @@ In relation to other principles, guard clauses...
 
 ---
 
-# Clarity & Readability
+### Cognitive Load
 
 [↑ top](#table-of-contents)
-
-*Code is read 10x more than it's written. Cognitive Load explains why clarity matters (working memory limits), while Self-Documenting Code and Documentation Discipline provide the how. Elegance adds the aesthetic dimension, and Principle of Least Surprise ensures predictability.*
-
----
-
-## Cognitive Load
-
-[↑ top](#table-of-contents)
-
 
 > "Cognitive load is how much a developer needs to think in order to complete a task."
 > — Artem Zakirullin
 
-### Core Concept
-
-Mental effort to understand code. Working memory holds ~**4 chunks**; exceed this and comprehension fails. **We read code 10x more than we write it**—every clever trick forces readers to hold more in their head.
-
-### Three Types of Load
-
-| Type | Description | Reducible? |
-|------|-------------|------------|
-| **Intrinsic** | Inherent task difficulty | No |
-| **Extraneous** | How info is presented | **Yes—focus here** |
-| **Germane** | Builds understanding | Desirable |
-
-### Common Violations
+Code is read 10x more than it's written. Aim for clarity and readability. It requires effort to understand code and our working memory only holds limited pieces of information with full comprehension. Every clever trick forces readers to hold more in their head. While the developer may have been working on some code for a long time, they're often heavily relying on their long-term memory of how the code works and rarely realize how much cognitive effort it takes for newcomers to understand a piece of code seeing it for the first time. Comments are not an excuse for code that does not increase cognitive load. Clever one-liners, excessive layered approaches, prematurely build microservices, all increase the cognitive burden on the reader of the code.
 
 ```python
 # ❌ Wrong - Each condition fills working memory
@@ -342,51 +463,7 @@ if is_above_threshold and is_allowed and is_secure:  # 🧠 Fresh
     process(val)
 ```
 
-```python
-# ❌ Wrong - Deep nesting accumulates load
-if is_valid:           # 🧠+
-    if is_authorized:  # 🧠++
-        if has_quota:  # 🧠+++
-            process()  # 🤯
-
-# ✅ Correct - Early returns keep memory clear
-if not is_valid:
-    return
-if not is_authorized:
-    return
-if not has_quota:
-    return
-process()  # 🧠 All preconditions met
-```
-
-### The Familiarity Trap
-
-**Familiarity ≠ simplicity.** Code in long-term memory feels easy; newcomers face full burden.
-
-| Symptom | Reality |
-|---------|---------|
-| "It makes sense once you understand our patterns" | High learning curve = high load |
-| "It's not that complicated" | Your long-term memory is doing the lifting |
-
-### Deep vs. Shallow Modules
-
-| Type | Interface | Implementation | Cognitive Load |
-|------|-----------|----------------|----------------|
-| **Deep** | Simple | Complex | Low—complexity hidden |
-| **Shallow** | Complex | Simple | High—overhead exceeds value |
-
-Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hundreds of thousands of lines. Contrast with `MetricsProviderFactoryFactory`—the name alone is more taxing than the implementation.
-
-### Anti-Patterns
-
-| Anti-Pattern | Problem |
-|--------------|---------|
-| **Too many tiny files** | Must hold all 80 class interactions in mind |
-| **Layered architecture for its own sake** | Each indirection layer adds overhead |
-| **Clever one-liners** | Reader must recreate author's thought process |
-| **Premature microservices** | Distributed debugging is exponentially harder |
-
-### Relationship to Other Principles
+In relation to other principles, cognitive load...
 
 | Principle | Connection |
 |-----------|------------|
@@ -396,8 +473,6 @@ Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hund
 | **Composition Over Inheritance** | Explicit dependencies reduce hidden context |
 | **Modularity** | Deep modules hide complexity behind simple interfaces |
 
-### Summary
-
 1. **Working memory holds ~4 chunks** — Exceed this and comprehension fails
 2. **Reduce extraneous load** — Focus on how code is presented
 3. **Familiarity ≠ simplicity** — Code you know feels easy; newcomers feel the burden
@@ -406,20 +481,18 @@ Unix I/O: five functions (`open`, `read`, `write`, `lseek`, `close`) hiding hund
 
 ---
 
-## Single Level of Abstraction (SLAP)
+### Single Level of Abstraction (SLAP)
 
 [↑ top](#table-of-contents)
 
 > "The code within a function should operate at a single level of abstraction."
 > — Robert C. Martin, Clean Code
 
-### Core Concept
-
 Single Level of Abstraction Principle (SLAP) states that **every statement within a function should operate at the same level of abstraction**. When you mix high-level operations (like "process order") with low-level details (like "parse JSON field"), the code becomes harder to read because readers must mentally switch between abstraction levels.
 
 **The key insight**: Switching between levels of abstraction forces mental grouping—readers must mentally construct the missing abstractions by finding which statements belong together.
 
-### Abstraction Levels
+Abstraction Levels
 
 | Level | Examples |
 |-------|----------|
@@ -427,7 +500,7 @@ Single Level of Abstraction Principle (SLAP) states that **every statement withi
 | **Medium** | `validate_email()`, `calculate_tax()`, `format_response()` |
 | **Low** | `strip().upper()`, `int(value)`, `encode('utf-8')` |
 
-### Common Violations
+Common Violations
 
 ```python
 # ❌ Wrong - Mixed abstraction levels
@@ -455,7 +528,7 @@ def process_order(order_data: dict) -> None:
     send_confirmation(user)
 ```
 
-### The Stepdown Rule
+The Stepdown Rule
 
 Robert Martin's Stepdown Rule: code should read like a top-down narrative. Each function leads to the next level of abstraction, like a newspaper article—headline first, then summary, then details.
 
@@ -468,7 +541,7 @@ def generate_monthly_report(month: int, year: int) -> Report:
     return compile_report(metrics, charts)
 ```
 
-### Detecting Violations
+Detecting Violations
 
 **Smell #1: Loops with inline logic**
 ```python
@@ -495,20 +568,20 @@ if not re.match(r'^[\w.-]+@[\w.-]+\.\w+$', email):
 validate_email_format(email)
 ```
 
-### Caveats
+Caveats
 
 - **Mental inlining**: Over-extraction forces readers to jump between many tiny functions
 - **Simple code doesn't need extraction**: A 3-line function is already at one level
 - **Guard clauses are OK**: An initial `if param is None: raise` at a higher-level function is acceptable
 - **Performance**: Sometimes inlining is necessary for hot paths
 
-### When NOT to Apply
+When NOT to Apply
 
 - **Test code**: Explicit inline steps improve test readability
 - **Single-use transformations**: Don't extract if it obscures more than clarifies
 - **Trivially simple functions**: Extraction for its own sake adds noise
 
-### Summary
+Summary
 
 1. **Every statement at the same abstraction level** — Don't mix orchestration with implementation
 2. **Extract when you see mixing** — Loops with logic, comments + code blocks
@@ -517,7 +590,7 @@ validate_email_format(email)
 
 ---
 
-## Self-Documenting Code
+### Self-Documenting Code
 
 [↑ top](#table-of-contents)
 
@@ -525,15 +598,13 @@ validate_email_format(email)
 > "Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
 > — Martin Fowler
 
-### Core Concept
-
 Code that **conveys purpose** through names, structure, and organization—without relying on comments. Comments explain *why*, code shows *what*.
 
 **Reveals:** What/how (through naming and structure) · **Cannot reveal:** Why/context (requires comments/docs)
 
-### The Three Pillars
+The Three Pillars
 
-#### 1. Intention-Revealing Names
+1. Intention-Revealing Names
 
 Names express purpose, not implementation. **Spell words out completely**—abbreviations force mental translation.
 
@@ -548,7 +619,7 @@ def calculate_billable_hours(days_worked: int, weeks: int) -> int:
     return days_worked * weeks * hours_per_day
 ```
 
-#### 2. Eliminate Magic Values
+2. Eliminate Magic Values
 
 Replace hardcoded numbers with named constants.
 
@@ -560,11 +631,11 @@ if retry_count > 3:           MAX_RETRIES = 3
                                   time.sleep(RETRY_DELAY_SECONDS)
 ```
 
-#### 3. Structured Organization
+3. Structured Organization
 
 Each function has one clear purpose. Structure tells the story.
 
-### Naming Conventions
+Naming Conventions
 
 | Element | Convention | Examples |
 |---------|------------|----------|
@@ -574,11 +645,11 @@ Each function has one clear purpose. Structure tells the story.
 | **Classes** | Nouns, PascalCase | `UserAccount`, `OrderProcessor` |
 | **Constants** | UPPER_SNAKE_CASE | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
 
-### Common Violations
+Common Violations
 
 **Code Smells:** Abbreviations (`usr`, `cnt`), single-letter variables outside tiny scopes, boolean parameters without names, vague function names (`process`, `handle`, `do`).
 
-### The Comment Balance
+The Comment Balance
 
 Self-documenting handles **what/how**. Comments handle **why/why not**.
 
@@ -589,7 +660,7 @@ for attempt in range(MAX_RETRIES):
     time.sleep(2 ** attempt)
 ```
 
-### Summary
+Summary
 
 1. **Spell out names completely** — `user_count` not `usr_cnt` (reduces [Cognitive Load](#cognitive-load))
 2. **Eliminate magic values** — named constants explain meaning
@@ -598,7 +669,7 @@ for attempt in range(MAX_RETRIES):
 
 ---
 
-## Documentation Discipline
+### Documentation Discipline
 
 [↑ top](#table-of-contents)
 
@@ -606,11 +677,11 @@ for attempt in range(MAX_RETRIES):
 > "Code tells you how, comments tell you why."
 > — Jeff Atwood, Stack Overflow co-founder
 
-### Core Concept
+Core Concept
 
 **Right documentation at the right level.** Comments don't compile, can't be tested, and rot—yet sometimes they're essential for explaining "why." The discipline: knowing the difference.
 
-### The Documentation Pyramid
+The Documentation Pyramid
 
 | Layer | Audience | Purpose |
 |-------|----------|---------|
@@ -621,7 +692,7 @@ for attempt in range(MAX_RETRIES):
 
 Move documentation to the highest appropriate level.
 
-### When Comments Add Value
+When Comments Add Value
 
 ```python
 # ✅ Why - Business logic rationale
@@ -645,7 +716,7 @@ if order.total > MANAGER_APPROVAL_THRESHOLD:
 Number.isFinite(value)
 ```
 
-### Comment Anti-Patterns
+Comment Anti-Patterns
 
 | Anti-Pattern | Problem | Fix |
 |--------------|---------|-----|
@@ -670,7 +741,7 @@ def calculate_tax(amount):
     return amount * CA_TAX_RATE
 ```
 
-### The Rot Problem
+The Rot Problem
 
 Comments drift from code silently. Keep close to code, review during code review, delete rather than let rot.
 
@@ -682,7 +753,7 @@ def get_users():
     # ↑ Now sorted by created_at, comment lies
 ```
 
-### Docstrings Done Right
+Docstrings Done Right
 
 ```python
 # ❌ Wrong - Restates the obvious
@@ -703,7 +774,7 @@ def calculate_shipping(order: Order) -> Decimal:
     """
 ```
 
-### Relationship to Other Principles
+Relationship to Other Principles
 
 | Principle | Connection |
 |-----------|------------|
@@ -712,7 +783,7 @@ def calculate_shipping(order: Order) -> Decimal:
 | **Single Source of Truth** | One authoritative place for each piece of documentation |
 | **Boy Scout Rule** | Fix stale comments when you touch the code |
 
-### Summary
+Summary
 
 1. **Code tells how, comments tell why** — Never explain what code does; explain why it does it
 2. **Documentation has layers** — README → API docs → docstrings → inline comments
@@ -722,7 +793,7 @@ def calculate_shipping(order: Order) -> Decimal:
 
 ---
 
-## Elegance
+### Elegance
 
 [↑ top](#table-of-contents)
 
@@ -730,11 +801,11 @@ def calculate_shipping(order: Order) -> Decimal:
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
 
-### Core Concept
+Core Concept
 
 **Beauty through insight.** Solves the problem with minimum complexity while revealing something fundamental about the domain.
 
-### Four Criteria
+Four Criteria
 
 | Criterion | Description |
 |-----------|-------------|
@@ -743,7 +814,7 @@ def calculate_shipping(order: Order) -> Decimal:
 | **Modesty** | Restraint; avoids cleverness and showing off |
 | **Revelation** | Shows something new about the problem domain |
 
-### Elegance vs. Cleverness
+Elegance vs. Cleverness
 
 | Elegant Code | Clever Code |
 |--------------|-------------|
@@ -752,7 +823,7 @@ def calculate_shipping(order: Order) -> Decimal:
 | Survives language changes | Implementation-dependent, fragile |
 | Stands alone | Needs explanatory comments |
 
-### Summary
+Summary
 
 1. **Minimality** — remove everything superfluous
 2. **Accomplishment** — it must work correctly
@@ -762,19 +833,18 @@ def calculate_shipping(order: Order) -> Decimal:
 
 ---
 
-## Principle of Least Surprise
+### Principle of Least Surprise
 
 [↑ top](#table-of-contents)
-
 
 > "In interface design, always do the least surprising thing."
 > — Eric S. Raymond
 
-### Core Concept
+Core Concept
 
 Components behave as users expect. Never surprise the user.
 
-### Strategies
+Strategies
 
 1. **Command-Query Separation**: Separate state-changing methods from queries
 2. **Names match behavior**: Naming conventions communicate intent
@@ -782,14 +852,14 @@ Components behave as users expect. Never surprise the user.
 4. **Sensible defaults**: Most common, safest choice
 5. **No hidden side effects**: Methods do only what signatures imply
 
-### Common Anti-Patterns
+Common Anti-Patterns
 
 - **Inconsistent Error Handling**: Different methods handle errors differently
 - **Misleading Method Names**: Name implies query, actually mutates
 - **Surprising Parameter Order**: Non-standard parameter order
 - **Spooky Action at a Distance**: Unexpected effects on unrelated parts
 
-### Summary
+Summary
 
 1. **Think like your user**: Design based on what users expect
 2. **Separate commands from queries**: Methods that return values shouldn't change state
@@ -799,7 +869,7 @@ Components behave as users expect. Never surprise the user.
 
 ---
 
-# Part II: Architecture
+## Part 3: Architecture
 
 [↑ top](#table-of-contents)
 
