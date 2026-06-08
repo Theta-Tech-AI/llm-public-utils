@@ -482,27 +482,14 @@ In relation to other principles, cognitive load...
 > "The code within a function should operate at a single level of abstraction."
 > — Robert C. Martin, Clean Code
 
-Single Level of Abstraction Principle (SLAP) states that **every statement within a function should operate at the same level of abstraction**. When you mix high-level operations (like "process order") with low-level details (like "parse JSON field"), the code becomes harder to read because readers must mentally switch between abstraction levels.
-
-**The key insight**: Switching between levels of abstraction forces mental grouping—readers must mentally construct the missing abstractions by finding which statements belong together.
-
-Abstraction Levels
-
-| Level | Examples |
-|-------|----------|
-| **High** | `process_order()`, `authenticate_user()`, `generate_report()` |
-| **Medium** | `validate_email()`, `calculate_tax()`, `format_response()` |
-| **Low** | `strip().upper()`, `int(value)`, `encode('utf-8')` |
-
-Common Violations
+Every statement within a function should operate at the same level of abstraction. When you mix high-level operations ("process order") with low-level details ("parse a JSON field", `strip().upper()`), readers must mentally switch between levels and reconstruct the missing abstractions themselves — figuring out which statements belong together. The fix is to extract the low-level details into named functions so the caller reads as a top-down narrative. This is Robert Martin's "stepdown rule": code descends one level of abstraction at a time, like a newspaper article moving from headline to summary to details.
 
 ```python
 # ❌ Wrong - Mixed abstraction levels
 def process_order(order_data: dict) -> None:
     user = get_user(order_data["user_id"])  # High-level
 
-    # Low-level detail mixed in
-    items = []
+    items = []  # Low-level detail mixed in
     for item in order_data.get("items", []):
         items.append({
             "sku": item["sku"].strip().upper(),
@@ -522,65 +509,7 @@ def process_order(order_data: dict) -> None:
     send_confirmation(user)
 ```
 
-The Stepdown Rule
-
-Robert Martin's Stepdown Rule: code should read like a top-down narrative. Each function leads to the next level of abstraction, like a newspaper article—headline first, then summary, then details.
-
-```python
-# ✅ Reads top-down at consistent level
-def generate_monthly_report(month: int, year: int) -> Report:
-    data = fetch_monthly_data(month, year)
-    metrics = calculate_metrics(data)
-    charts = generate_visualizations(metrics)
-    return compile_report(metrics, charts)
-```
-
-Detecting Violations
-
-**Smell #1: Loops with inline logic**
-```python
-# ❌ Extract the loop body
-for entity in entities:
-    dto = ResultDto()
-    dto.shoe_size = entity.shoe_size
-    dto.age = compute_age(entity.birthday)
-    results.append(dto)
-
-# ✅ Single statement in loop
-for entity in entities:
-    results.append(to_dto(entity))
-```
-
-**Smell #2: Comment + code block**
-```python
-# ❌ Comment indicates missing abstraction
-# Validate email format
-if not re.match(r'^[\w.-]+@[\w.-]+\.\w+$', email):
-    raise ValueError("Invalid email")
-
-# ✅ Named function replaces comment
-validate_email_format(email)
-```
-
-Caveats
-
-- **Mental inlining**: Over-extraction forces readers to jump between many tiny functions
-- **Simple code doesn't need extraction**: A 3-line function is already at one level
-- **Guard clauses are OK**: An initial `if param is None: raise` at a higher-level function is acceptable
-- **Performance**: Sometimes inlining is necessary for hot paths
-
-When NOT to Apply
-
-- **Test code**: Explicit inline steps improve test readability
-- **Single-use transformations**: Don't extract if it obscures more than clarifies
-- **Trivially simple functions**: Extraction for its own sake adds noise
-
-Summary
-
-1. **Every statement at the same abstraction level** — Don't mix orchestration with implementation
-2. **Extract when you see mixing** — Loops with logic, comments + code blocks
-3. **Use the stepdown rule** — High-level functions call medium-level, which call low-level
-4. **Avoid over-extraction** — Balance SLAP against readability (see also: [Small Functions](#small-functions), [Cognitive Load](#cognitive-load), [Separation of Concerns](#separation-of-concerns))
+The usual tells are loops with inline body logic (extract the body) and a comment introducing a code block (the comment is naming a function that should exist). Don't over-extract, though: a 3-line function is already at one level, an initial guard clause at a higher-level function is fine, and test code, single-use transformations, and hot paths often read better inlined.
 
 ---
 
@@ -592,15 +521,7 @@ Summary
 > "Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
 > — Martin Fowler
 
-Code that **conveys purpose** through names, structure, and organization—without relying on comments. Comments explain *why*, code shows *what*.
-
-**Reveals:** What/how (through naming and structure) · **Cannot reveal:** Why/context (requires comments/docs)
-
-The Three Pillars
-
-1. Intention-Revealing Names
-
-Names express purpose, not implementation. **Spell words out completely**—abbreviations force mental translation.
+Code should convey its purpose through names, structure, and organization rather than relying on comments. Names express intent and should be spelled out completely — abbreviations like `usr` or `cnt` force mental translation. Replace magic numbers and strings with named constants, and give each function one clear purpose so the structure itself tells the story. Code reveals *what* and *how*; comments are reserved for *why* and *why not*.
 
 ```python
 # ❌ Wrong
@@ -613,24 +534,6 @@ def calculate_billable_hours(days_worked: int, weeks: int) -> int:
     return days_worked * weeks * hours_per_day
 ```
 
-2. Eliminate Magic Values
-
-Replace hardcoded numbers with named constants.
-
-```python
-# ❌ Wrong                    # ✅ Correct
-if retry_count > 3:           MAX_RETRIES = 3
-    time.sleep(0.5)           RETRY_DELAY_SECONDS = 0.5
-                              if retry_count > MAX_RETRIES:
-                                  time.sleep(RETRY_DELAY_SECONDS)
-```
-
-3. Structured Organization
-
-Each function has one clear purpose. Structure tells the story.
-
-Naming Conventions
-
 | Element | Convention | Examples |
 |---------|------------|----------|
 | **Variables** | Nouns, fully spelled out | `user_count`, `retry_delay_seconds` |
@@ -639,27 +542,13 @@ Naming Conventions
 | **Classes** | Nouns, PascalCase | `UserAccount`, `OrderProcessor` |
 | **Constants** | UPPER_SNAKE_CASE | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
 
-Common Violations
-
-**Code Smells:** Abbreviations (`usr`, `cnt`), single-letter variables outside tiny scopes, boolean parameters without names, vague function names (`process`, `handle`, `do`).
-
-The Comment Balance
-
-Self-documenting handles **what/how**. Comments handle **why/why not**.
+Watch for abbreviations, single-letter variables outside tiny scopes, unnamed boolean parameters, and vague names like `process`, `handle`, or `do`. When a comment *is* warranted, make it explain the rationale the code can't:
 
 ```python
-# ✅ Correct - Comment explains why
 # Exponential backoff: upstream API rate-limits during peak hours (ISSUE-1234)
 for attempt in range(MAX_RETRIES):
     time.sleep(2 ** attempt)
 ```
-
-Summary
-
-1. **Spell out names completely** — `user_count` not `usr_cnt` (reduces [Cognitive Load](#cognitive-load))
-2. **Eliminate magic values** — named constants explain meaning
-3. **Structure tells story** — one function, one purpose
-4. **Code shows what/how** — comments explain why/why not (see also: [Documentation Discipline](#documentation-discipline))
 
 ---
 
@@ -671,11 +560,7 @@ Summary
 > "Code tells you how, comments tell you why."
 > — Jeff Atwood, Stack Overflow co-founder
 
-Core Concept
-
-**Right documentation at the right level.** Comments don't compile, can't be tested, and rot—yet sometimes they're essential for explaining "why." The discipline: knowing the difference.
-
-The Documentation Pyramid
+Comments don't compile, can't be tested, and rot — yet sometimes they're essential for explaining *why*. The discipline is knowing the difference and moving documentation to the highest appropriate level.
 
 | Layer | Audience | Purpose |
 |-------|----------|---------|
@@ -684,33 +569,7 @@ The Documentation Pyramid
 | **Docstrings** | Callers | What it does, params, returns |
 | **Inline Comments** | Maintainers | Why this specific implementation |
 
-Move documentation to the highest appropriate level.
-
-When Comments Add Value
-
-```python
-# ✅ Why - Business logic rationale
-# Orders over $1000 require manager approval per SOX compliance (POLICY-2019-04)
-if order.total > MANAGER_APPROVAL_THRESHOLD:
-    require_approval(order)
-
-# ✅ Why not - Explaining rejected alternatives
-# Using linear search instead of binary: list is always <10 items
-# and maintaining sort order would cost more than the lookup savings
-
-# ✅ Workarounds - External constraints
-# Firefox doesn't fire mouse events when dragging outside the window.
-# Workaround: capture position on mouseLeave and extrapolate.
-
-# ✅ Links - Attribution and context
-# Algorithm from https://stackoverflow.com/a/46018816 (CC-BY-SA)
-
-# ✅ Warnings - Prevent future mistakes
-# Don't use global isFinite()—it returns true for null values
-Number.isFinite(value)
-```
-
-Comment Anti-Patterns
+Comments earn their place when they explain business-rule rationale, justify a rejected alternative, document a workaround for an external constraint, attribute a borrowed algorithm, or warn about a non-obvious footgun. They don't earn it when they parrot what the code already says, journal who-changed-what (use git blame), pile up as a TODO graveyard, or preserve commented-out dead code (git has the history).
 
 | Anti-Pattern | Problem | Fix |
 |--------------|---------|-----|
@@ -718,44 +577,13 @@ Comment Anti-Patterns
 | **Rotting comments** | Comment describes deleted code | Delete or update |
 | **Journal comments** | `// Fixed by John, 3/15` | Use git blame instead |
 | **Commented-out code** | Dead code polluting the file | Delete—git has history |
-| **Closing brace comments** | `} // end if` | Extract to smaller functions |
 | **Mandated comments** | Boilerplate on every method | Comment only when valuable |
 | **TODO graveyards** | `// TODO: fix this (2019)` | Create tickets or delete |
 
-```python
-# ❌ Wrong - Parrot comment
-def calculate_tax(amount):
-    tax_rate = 0.08  # Set tax rate to 0.08
-    return amount * tax_rate  # Return amount times tax rate
-
-# ✅ Correct - Explains the why
-def calculate_tax(amount):
-    # California state tax rate as of 2024. Updates tracked in POLICY-TAX-01.
-    CA_TAX_RATE = 0.08
-    return amount * CA_TAX_RATE
-```
-
-The Rot Problem
-
-Comments drift from code silently. Keep close to code, review during code review, delete rather than let rot.
+Comments drift from code silently, so keep them next to the code they describe, review them during code review, and delete rather than let them lie. Docstrings should document non-obvious behavior — business rules, edge cases, what gets raised — not restate a signature the reader can already see.
 
 ```python
-# ❌ Rotting comment - Code changed, comment didn't
-def get_users():
-    # Returns active users sorted by name
-    return User.query.filter_by(status='active').order_by(User.created_at).all()
-    # ↑ Now sorted by created_at, comment lies
-```
-
-Docstrings Done Right
-
-```python
-# ❌ Wrong - Restates the obvious
-def add(a: int, b: int) -> int:
-    """Add two integers. Args: a: First integer. b: Second integer."""
-    return a + b
-
-# ✅ Correct - Documents non-obvious behavior
+# ✅ Documents non-obvious behavior
 def calculate_shipping(order: Order) -> Decimal:
     """
     Calculate shipping cost with business rules.
@@ -768,23 +596,6 @@ def calculate_shipping(order: Order) -> Decimal:
     """
 ```
 
-Relationship to Other Principles
-
-| Principle | Connection |
-|-----------|------------|
-| **Self-Documenting Code** | Code shows *what/how*; comments explain *why/why not* |
-| **DRY** | Don't repeat in comments what the code already says |
-| **Single Source of Truth** | One authoritative place for each piece of documentation |
-| **Boy Scout Rule** | Fix stale comments when you touch the code |
-
-Summary
-
-1. **Code tells how, comments tell why** — Never explain what code does; explain why it does it
-2. **Documentation has layers** — README → API docs → docstrings → inline comments
-3. **Comments rot** — Review them during code review; delete rather than let them lie
-4. **Anti-patterns abound** — Parrot, journal, and TODO graveyard comments add noise
-5. **When in doubt, refactor** — If you need a comment to explain what, the code is unclear
-
 ---
 
 ### Elegance
@@ -795,35 +606,7 @@ Summary
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
 
-Core Concept
-
-**Beauty through insight.** Solves the problem with minimum complexity while revealing something fundamental about the domain.
-
-Four Criteria
-
-| Criterion | Description |
-|-----------|-------------|
-| **Minimality** | Shortness and simplicity; no superfluous parts |
-| **Accomplishment** | Does exactly what it should (non-negotiable) |
-| **Modesty** | Restraint; avoids cleverness and showing off |
-| **Revelation** | Shows something new about the problem domain |
-
-Elegance vs. Cleverness
-
-| Elegant Code | Clever Code |
-|--------------|-------------|
-| Reveals domain insight | Exploits language tricks |
-| Reader says "of course!" | Reader says "how does this work?" |
-| Survives language changes | Implementation-dependent, fragile |
-| Stands alone | Needs explanatory comments |
-
-Summary
-
-1. **Minimality** — remove everything superfluous
-2. **Accomplishment** — it must work correctly
-3. **Modesty** — avoid cleverness and showing off
-4. **Revelation** — show insight about the domain
-5. **Domain symmetry** — understanding the problem suffices to understand the code
+Elegant code solves the problem with minimum complexity while revealing something fundamental about the domain. Four criteria define it: **minimality** (no superfluous parts), **accomplishment** (it does exactly what it should — non-negotiable), **modesty** (restraint, no showing off), and **revelation** (it shows something new about the problem). The test is the reader's reaction: elegant code makes them say "of course," where clever code makes them ask "how does this work?" Elegance reveals domain insight and survives language changes; cleverness exploits language tricks and stays fragile.
 
 ---
 
@@ -834,32 +617,7 @@ Summary
 > "In interface design, always do the least surprising thing."
 > — Eric S. Raymond
 
-Core Concept
-
-Components behave as users expect. Never surprise the user.
-
-Strategies
-
-1. **Command-Query Separation**: Separate state-changing methods from queries
-2. **Names match behavior**: Naming conventions communicate intent
-3. **Consistent return types**: Similar methods return similar types
-4. **Sensible defaults**: Most common, safest choice
-5. **No hidden side effects**: Methods do only what signatures imply
-
-Common Anti-Patterns
-
-- **Inconsistent Error Handling**: Different methods handle errors differently
-- **Misleading Method Names**: Name implies query, actually mutates
-- **Surprising Parameter Order**: Non-standard parameter order
-- **Spooky Action at a Distance**: Unexpected effects on unrelated parts
-
-Summary
-
-1. **Think like your user**: Design based on what users expect
-2. **Separate commands from queries**: Methods that return values shouldn't change state
-3. **Names must match behavior**: If you can't name it accurately, the design may be wrong
-4. **Consistency over cleverness**: Use established patterns
-5. **No hidden side effects**: Every behavior explicit in the signature and name
+Components should behave the way users expect. Separate state-changing commands from queries, make names match behavior, return consistent types from similar methods, choose sensible defaults, and never hide side effects the signature doesn't imply. The usual surprises: methods whose names imply a query but secretly mutate, non-standard parameter order, inconsistent error handling across sibling methods, and "spooky action at a distance" where one call perturbs something unrelated. If you can't name a thing accurately, the design — not the name — is probably wrong.
 
 ---
 
