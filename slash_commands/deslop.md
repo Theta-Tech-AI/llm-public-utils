@@ -71,7 +71,7 @@ Whether or not you use this deslop command on your code base, you should read al
     - [Index What You Filter, Join, and Sort On](#index-what-you-filter-join-and-sort-on)
     - [Match the Index to the Query Shape](#match-the-index-to-the-query-shape)
     - [Know What Defeats an Index](#know-what-defeats-an-index)
-    - [Don't Over-Index](#dont-over-index)
+    - [Every Index Is Used or It's Dropped](#every-index-is-used-or-its-dropped)
   - [The Common Slop Tells](#the-common-slop-tells)
 - [When to Relax Rules](#when-to-relax-rules)
   - [The Meta-Principle](#the-meta-principle)
@@ -1278,7 +1278,7 @@ CREATE INDEX idx_document_project ON document (project_id);   -- NOT automatic �
 
 #### Index What You Filter, Join, and Sort On
 
-Beyond foreign keys, the index set is dictated by the queries the table actually serves: every column that recurs in a `WHERE`, a `JOIN` condition, or an `ORDER BY` is an index candidate. Don't guess — collect the real queries against the table and index their access paths. An `ORDER BY created_at DESC LIMIT 20` feed wants `created_at DESC` indexed so the database reads 20 rows instead of sorting the whole table; a recurring `WHERE status = ?` wants `status` reachable by index. The discipline is bidirectional: a hot predicate with no index to use is a latent slow query, and an index no query ever uses is pure write-time cost (see Don't Over-Index).
+Beyond foreign keys, the index set is dictated by the queries the table actually serves: every column that recurs in a `WHERE`, a `JOIN` condition, or an `ORDER BY` is an index candidate. Don't guess — collect the real queries against the table and index their access paths. An `ORDER BY created_at DESC LIMIT 20` feed wants `created_at DESC` indexed so the database reads 20 rows instead of sorting the whole table; a recurring `WHERE status = ?` wants `status` reachable by index. The discipline is bidirectional: a hot predicate with no index to use is a latent slow query, and an index no query ever uses is pure write-time cost (see "Every Index Is Used or It's Dropped").
 
 ---
 
@@ -1313,9 +1313,9 @@ The arbiter is `EXPLAIN (ANALYZE, BUFFERS)` on the real query at real data volum
 
 ---
 
-#### Don't Over-Index
+#### Every Index Is Used or It's Dropped
 
-Every index is paid for on **write**: each `INSERT`/`UPDATE`/`DELETE` maintains every index on the table, plus storage and planner cost. Indexes are not free insurance — add the ones the queries need, not the ones they might. Delete the dead weight: a plain index that is a left-prefix of an existing composite (`(a)` when `(a, b)` exists), a non-unique index duplicating a `UNIQUE` constraint, and indexes that `pg_stat_user_indexes` reports have never been scanned (`idx_scan = 0`). An over-indexed write-heavy table is its own performance bug — the mirror image of the missing-index one.
+An index is not a quantity to minimize — it's a binary. Either a real query uses it, so it earns the write cost it imposes on every `INSERT`/`UPDATE`/`DELETE` (plus storage and planner time), or no query uses it and it is pure loss. There is no "nice to have" index. So the *count* is irrelevant: ten indexes that each serve a query are all correct; one index that serves none is the bug. Judge each index by that single question — *which query uses this, and does the planner actually pick it?* — and `EXPLAIN` to confirm. The ones that reliably fail the test and should be deleted: a plain index that is a left-prefix of an existing composite (`(a)` when `(a, b)` exists — the composite already serves `a`), a non-unique index duplicating a `UNIQUE` constraint (the unique index already serves every read the plain one would), and any index `pg_stat_user_indexes` reports has never been scanned (`idx_scan = 0`). If you can't name the query an index serves, that's your answer.
 
 ---
 
