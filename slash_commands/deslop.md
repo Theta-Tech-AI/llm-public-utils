@@ -67,7 +67,11 @@ Whether or not you use this deslop command on your code base, you should read al
     - [Enforce Invariants with Constraints, Not Application Code](#enforce-invariants-with-constraints-not-application-code)
     - [Generate Identity and Order in the Database](#generate-identity-and-order-in-the-database)
   - [Access Paths](#access-paths)
-    - [Index Every Foreign Key and Query Predicate](#index-every-foreign-key-and-query-predicate)
+    - [Index Every Foreign Key](#index-every-foreign-key)
+    - [Index What You Filter, Join, and Sort On](#index-what-you-filter-join-and-sort-on)
+    - [Match the Index to the Query Shape](#match-the-index-to-the-query-shape)
+    - [Know What Defeats an Index](#know-what-defeats-an-index)
+    - [Don't Over-Index](#dont-over-index)
   - [The Common Slop Tells](#the-common-slop-tells)
 - [When to Relax Rules](#when-to-relax-rules)
   - [The Meta-Principle](#the-meta-principle)
@@ -1193,6 +1197,8 @@ CHECK (ends_at >= starts_at)
 
 [↑ top](#table-of-contents)
 
+> *Foreign keys, timestamps, uniqueness, immutability — these are mechanical invariants, not business decisions. Enforcing them in the database is [Separation of Concerns](#separation-of-concerns): the data layer owns "the data is always well-formed," which frees the application layer to read as what it actually **decides**. Every `updated_at = now()` or hand-rolled uniqueness check sitting in application code is mechanism that has leaked upward — it raises [cognitive load](#cognitive-load) on every future reader, who now has to separate the load-bearing logic from the bookkeeping. Push the bookkeeping down so the code that's left is the decisions; a reader should never have to wonder whether a timestamp or a referential check is where the real logic lives.*
+
 ---
 
 #### Let the Database Own Timestamps and Derived Values
@@ -1255,21 +1261,61 @@ db.execute("""INSERT INTO membership (team_id, user_id) VALUES (%s, %s)
 
 [↑ top](#table-of-contents)
 
+> *Indexes are what keep a database fast as it grows — and the first thing single-table-at-a-time code skips, because a missing index "works" on an empty dev table and only bites at production scale. The loop is the same every time: know the queries the table must serve, index for them, and `EXPLAIN` to confirm the planner actually uses what you built. A query with no index to use and an index no query uses are equal and opposite smells.*
+
 ---
 
-#### Index Every Foreign Key and Query Predicate
+#### Index Every Foreign Key
 
-Postgres indexes primary keys and unique constraints automatically — but *not* foreign keys. An unindexed FK means every parent delete scans the whole child table to check references, and every join filters by sequential scan. Index every FK column and every column that appears in a `WHERE`, `JOIN`, or `ORDER BY`, then match the index *shape* to the query: a composite index is only useful left-to-right (an index on `(a, b)` can't serve a filter on `b` alone), so order columns by the actual predicate; use partial indexes for "active rows" queries; reach for GIN/trigram on `LIKE '%...%'` and array containment, and GiST for range and 2-D bounding-box predicates a b-tree can't answer. Don't over-correct into redundant indexes — a plain index on `(a, b)` duplicating a `UNIQUE (a, b)` is dead weight on every write. `EXPLAIN` the real query; the planner tells you which path it actually takes.
+Postgres automatically indexes primary keys and unique constraints — but **not** foreign keys. An unindexed FK is a quiet two-way tax: every delete or update on the *parent* sequentially scans the whole child table to check for references (one parent row delete can read millions of child rows), and every join from parent to child has no index to ride. Add a plain B-tree index on every FK column. This is the single most common missing index precisely because the FK and the index that should accompany it are declared in different places — easy to write one and forget the other.
 
 ```sql
--- ❌ Wrong - FK with no index: parent deletes and joins go sequential
-project_id uuid NOT NULL REFERENCES project(id) ON DELETE CASCADE
+project_id uuid NOT NULL REFERENCES project(id) ON DELETE CASCADE;
+CREATE INDEX idx_document_project ON document (project_id);   -- NOT automatic — add it
+```
 
--- ✅ Correct - index the FK, and shape composites/partials to the query
-CREATE INDEX idx_document_project ON document (project_id);
-CREATE INDEX idx_document_active  ON document (project_id, created_at DESC)
+---
+
+#### Index What You Filter, Join, and Sort On
+
+Beyond foreign keys, the index set is dictated by the queries the table actually serves: every column that recurs in a `WHERE`, a `JOIN` condition, or an `ORDER BY` is an index candidate. Don't guess — collect the real queries against the table and index their access paths. An `ORDER BY created_at DESC LIMIT 20` feed wants `created_at DESC` indexed so the database reads 20 rows instead of sorting the whole table; a recurring `WHERE status = ?` wants `status` reachable by index. The discipline is bidirectional: a hot predicate with no index to use is a latent slow query, and an index no query ever uses is pure write-time cost (see Don't Over-Index).
+
+---
+
+#### Match the Index to the Query Shape
+
+An index helps only if its shape matches how the query reads. The rules that pay the most rent:
+
+- **Composite order is left-to-right.** An index on `(a, b, c)` serves predicates on `a`, on `a, b`, and on `a, b, c` — but **not** on `b` alone or `c` alone. Lead with the column that's always equality-filtered, then the range/sort column: `WHERE project_id = ? ORDER BY created_at DESC` wants `(project_id, created_at DESC)`, in that order.
+- **Partial indexes** for queries that always carry the same filter (`WHERE deleted_at IS NULL`, `WHERE status = 'active'`): the index covers only the live rows — smaller and faster — and a partial `UNIQUE` doubles as a clean "one active row per key" enforcement.
+- **Covering indexes** (`INCLUDE (...)`) let an index-only scan answer the query without touching the heap when you select a few extra columns alongside the key.
+- **Pick the index type for the data:** B-tree (default) for equality and ranges; **GIN** for `jsonb`, arrays, and full-text; **GiST** for ranges, geometry, and 2-D / bounding-box predicates a B-tree can't answer; **BRIN** for huge, naturally-ordered append-only tables (time-series) where a tiny block-range index beats a giant B-tree.
+- **Expression indexes** when you filter on a function of a column: `CREATE INDEX ON users (lower(email))` so `WHERE lower(email) = ?` is indexable.
+
+```sql
+-- ✅ Composite ordered for the query, partial to the live rows
+CREATE INDEX idx_doc_project_recent ON document (project_id, created_at DESC)
     WHERE deleted_at IS NULL;
 ```
+
+---
+
+#### Know What Defeats an Index
+
+Most "why is this slow" is a predicate written so the index *can't* be used. The recurring ones:
+
+- **Leading wildcard** — `LIKE '%term%'` cannot use a B-tree; use a `pg_trgm` GIN index (or full-text search).
+- **A function or cast on the indexed column** — `WHERE lower(email) = ?` or `WHERE created_at::date = ?` ignores a plain index on the bare column. Index the expression, or rewrite the predicate to leave the column bare (`created_at >= ? AND created_at < ?`).
+- **Implicit type mismatch** — comparing a `uuid` to a text literal, or `bigint` to `numeric`, can force a cast that skips the index.
+- **Low selectivity** — indexing a boolean, or a status that's 90% one value, rarely helps; a partial index on the rare value does.
+
+The arbiter is `EXPLAIN (ANALYZE, BUFFERS)` on the real query at real data volume: a `Seq Scan` where you expected an `Index Scan` is the bug. "Fast on my 100-row dev table" proves nothing — a sequential scan of 100 rows is instant and of 100 million is an outage.
+
+---
+
+#### Don't Over-Index
+
+Every index is paid for on **write**: each `INSERT`/`UPDATE`/`DELETE` maintains every index on the table, plus storage and planner cost. Indexes are not free insurance — add the ones the queries need, not the ones they might. Delete the dead weight: a plain index that is a left-prefix of an existing composite (`(a)` when `(a, b)` exists), a non-unique index duplicating a `UNIQUE` constraint, and indexes that `pg_stat_user_indexes` reports have never been scanned (`idx_scan = 0`). An over-indexed write-heavy table is its own performance bug — the mirror image of the missing-index one.
 
 ---
 
