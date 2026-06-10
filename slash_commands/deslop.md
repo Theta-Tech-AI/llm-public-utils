@@ -57,6 +57,17 @@ Whether or not you use this deslop command on your code base, you should read al
   - [Maintainability & Operations](#maintainability--operations)
     - [Boy Scout Rule](#boy-scout-rule)
     - [Observability & Transparency](#observability--transparency)
+- [Part IV: The Data Layer](#part-iv-the-data-layer)
+  - [Schema Integrity](#schema-integrity)
+    - [Foreign Keys Are Not Optional](#foreign-keys-are-not-optional)
+    - [Normalize to a Single Source of Truth](#normalize-to-a-single-source-of-truth)
+    - [Constrain the Domain in the Schema](#constrain-the-domain-in-the-schema)
+  - [Push Logic Into the Database](#push-logic-into-the-database)
+    - [Let the Database Own Timestamps and Derived Values](#let-the-database-own-timestamps-and-derived-values)
+    - [Enforce Invariants with Constraints, Not Application Code](#enforce-invariants-with-constraints-not-application-code)
+    - [Generate Identity and Order in the Database](#generate-identity-and-order-in-the-database)
+  - [Access Paths](#access-paths)
+    - [Index Every Foreign Key and Query Predicate](#index-every-foreign-key-and-query-predicate)
 - [When to Relax Rules](#when-to-relax-rules)
   - [The Meta-Principle](#the-meta-principle)
 - [References](#references)
@@ -1108,6 +1119,159 @@ Make system behavior visible through structured telemetry — in distributed sys
 
 ---
 
+## Part IV: The Data Layer
+
+[↑ top](#table-of-contents)
+
+> *Slop in the schema is the most expensive kind. Application code is rewritten, ported between languages, and bypassed by migrations, scripts, and the next service — but the database outlives all of them and is the one place an invariant can be made true for every writer at once. These principles govern integrity, where logic lives, and how rows are reached.*
+
+---
+
+### Schema Integrity
+
+[↑ top](#table-of-contents)
+
+---
+
+#### Foreign Keys Are Not Optional
+
+> "A foreign key is a promise the database keeps; a naming convention is a promise you hope everyone remembers."
+
+Every column holding another row's identity (`*_id`, `*_by`, `*_run_id`) must carry a `REFERENCES` constraint with an explicit `ON DELETE` action. A bare `uuid NOT NULL` named `project_id` is an unenforced reference — nothing stops an insert pointing at a project that never existed or was deleted years ago, and the orphan surfaces as a baffling error three joins away. The tell that the constraint was knowable and merely omitted: a sibling table in the same schema references the same parent correctly. Omitting the FK also forfeits cascade, so deletes get hand-rolled as multiple application `DELETE`s that drift out of sync with the schema. Choose the delete behavior deliberately; only a genuinely external identity (a row in a search index, an object store, another service's database) can't be a FK — document those as soft references rather than leaving every reference unconstrained.
+
+```sql
+-- ❌ Wrong - an unenforced reference; orphans on delete, integrity is "hope"
+CREATE TABLE document (
+    id          uuid PRIMARY KEY,
+    project_id  uuid NOT NULL,          -- looks like an FK, enforces nothing
+    created_by  uuid                    -- a user that may not exist
+);
+
+-- ✅ Correct - the database guarantees the graph stays connected
+CREATE TABLE document (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id  uuid NOT NULL REFERENCES project(id)  ON DELETE CASCADE,
+    created_by  uuid          REFERENCES app_user(id) ON DELETE SET NULL
+);
+```
+
+- `CASCADE` for owned children, `SET NULL` for optional links, `RESTRICT`/`NO ACTION` for rows that must not be orphaned (audit subjects, referenced catalogues).
+
+---
+
+#### Normalize to a Single Source of Truth
+
+This is [Single Source of Truth](#single-source-of-truth) applied to schema: each fact lives in exactly one column of one row, and everything else derives from it by join or computation. The recurring violations are a "current" snapshot column duplicated against an authoritative versions/history table and synced by application code; scalar columns promoted out of a JSON blob that still holds the same value; stored counts that are really `COUNT(*)` over a child table; and a `total` written by hand next to its parts. Each is two places one truth can live, and they diverge the instant one write path forgets the other — silently, because both reads still "work." Normalize until every non-key column depends on the key, the whole key, and nothing but the key. When you genuinely need a denormalized copy for performance, make the *database* own the derivation so it cannot drift — a generated column, a view, or a trigger — never a second hand-maintained column.
+
+```sql
+-- ❌ Wrong - total can disagree with its parts; nothing enforces the sum
+total_tokens integer  -- written by the app as input + output
+
+-- ✅ Correct - the database computes it; it can never drift
+total_tokens integer GENERATED ALWAYS AS (input_tokens + output_tokens) STORED
+```
+
+---
+
+#### Constrain the Domain in the Schema
+
+A `status text` column the application "knows" holds only five values is an unconstrained domain: the day a typo, a renamed constant, or a manual SQL fix writes a sixth, every `WHERE status IN (...)` and every partial index silently stops matching that row. Push the domain into the schema — a `CHECK (status IN (...))`, a real `ENUM`, or a foreign key to a lookup table — so the bad write fails at the boundary instead of corrupting query results downstream. This is [Parse, Don't Validate](#parse-dont-validate) and [Fail-Fast](#fail-fast--defensive-programming) for data at rest: the column's type, not a code comment, is the spec. `NOT NULL`, `UNIQUE`, range checks (`rank >= 1`), and cross-column checks belong here for the same reason — one enforcement point for every writer beats the same check copy-pasted into every service and forgotten by the next.
+
+```sql
+-- ❌ Wrong - the vocabulary lives only in Python; the DB accepts anything
+status text NOT NULL
+
+-- ✅ Correct - the illegal write is rejected where it happens
+status text NOT NULL CHECK (status IN ('pending', 'running', 'done', 'failed')),
+CHECK (ends_at >= starts_at)
+```
+
+---
+
+### Push Logic Into the Database
+
+[↑ top](#table-of-contents)
+
+---
+
+#### Let the Database Own Timestamps and Derived Values
+
+`created_at` and `updated_at` are the textbook case of logic that belongs one layer down. `created_at timestamptz NOT NULL DEFAULT now()` is set correctly on every insert from any client, forever. `updated_at` is the trap: a `DEFAULT now()` fires only on insert, so teams "fix" it by writing `updated_at = now()` in every `UPDATE` — which means every statement that forgets the clause silently ships a stale timestamp, and the ones that remember are redundant with each other and overwritten anyway. Maintain it with one `BEFORE UPDATE` trigger so the column is right whether the write came from the service, a migration, or a one-off `psql` session.
+
+```sql
+-- ❌ Wrong - every writer must remember; the one that forgets corrupts the trail
+UPDATE document SET title = %s, updated_at = now() WHERE id = %s;
+
+-- ✅ Correct - define it once; every UPDATE is covered, including ones you didn't write
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN NEW.updated_at = now(); RETURN NEW; END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_document_updated_at
+    BEFORE UPDATE ON document
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+```
+
+---
+
+#### Enforce Invariants with Constraints, Not Application Code
+
+Any rule of the form "X can never happen" belongs where X is written, not where the application happens to call. An append-only audit table needs `BEFORE UPDATE`/`BEFORE DELETE` triggers that raise — not a code-review convention that nobody issues a `DELETE`. A two-party state ("resolved" requires both parties' columns populated) is a `CHECK`. A polymorphic reference a plain FK can't express is a validation trigger. The test that an invariant is actually enforced is adversarial: as a writer who bypasses your service layer, attempt the forbidden write and confirm the database rejects it — "the application never does that" is not enforcement, because the next service, the next migration, and the analyst at a psql prompt are all writers too.
+
+```sql
+-- ✅ Append-only: the table itself refuses to be rewritten
+CREATE OR REPLACE FUNCTION block_mutation() RETURNS trigger AS $$
+BEGIN RAISE EXCEPTION 'audit rows are immutable'; END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_audit_block
+    BEFORE UPDATE OR DELETE ON audit_event
+    FOR EACH ROW EXECUTE FUNCTION block_mutation();
+```
+
+- Verify the trigger truly fires — a guard like `IF pg_trigger_depth() = 0` is never true inside a trigger body, a classic silent no-op.
+
+---
+
+#### Generate Identity and Order in the Database
+
+`SELECT max(seq) + 1` then `INSERT` is a race: two transactions read the same max and write the same number. It survives only behind a unique index — which turns the race into a surprise error — or a lock you remembered to take. Let the database generate monotonic values (`GENERATED ALWAYS AS IDENTITY`, a `SEQUENCE`, `gen_random_uuid()`/`uuidv7()` for keys) and enforce uniqueness with a constraint, never a `SELECT`-then-`INSERT` existence check. Pair that with `INSERT ... ON CONFLICT` so concurrent and retried writers converge instead of colliding. This is [Idempotency](#idempotency) at the storage layer: the unique constraint *is* the idempotency key, and the database is the only actor that sees all writers at once.
+
+```python
+# ❌ Wrong - check-then-act across two statements; races and double-writes
+row = db.execute("SELECT id FROM membership WHERE team=%s AND user=%s", ...)
+if not row:
+    db.execute("INSERT INTO membership ...")
+
+# ✅ Correct - one atomic statement; concurrent callers converge
+db.execute("""INSERT INTO membership (team_id, user_id) VALUES (%s, %s)
+              ON CONFLICT (team_id, user_id) DO NOTHING""", ...)
+```
+
+---
+
+### Access Paths
+
+[↑ top](#table-of-contents)
+
+---
+
+#### Index Every Foreign Key and Query Predicate
+
+Postgres indexes primary keys and unique constraints automatically — but *not* foreign keys. An unindexed FK means every parent delete scans the whole child table to check references, and every join filters by sequential scan. Index every FK column and every column that appears in a `WHERE`, `JOIN`, or `ORDER BY`, then match the index *shape* to the query: a composite index is only useful left-to-right (an index on `(a, b)` can't serve a filter on `b` alone), so order columns by the actual predicate; use partial indexes for "active rows" queries; reach for GIN/trigram on `LIKE '%...%'` and array containment, and GiST for range and 2-D bounding-box predicates a b-tree can't answer. Don't over-correct into redundant indexes — a plain index on `(a, b)` duplicating a `UNIQUE (a, b)` is dead weight on every write. `EXPLAIN` the real query; the planner tells you which path it actually takes.
+
+```sql
+-- ❌ Wrong - FK with no index: parent deletes and joins go sequential
+project_id uuid NOT NULL REFERENCES project(id) ON DELETE CASCADE
+
+-- ✅ Correct - index the FK, and shape composites/partials to the query
+CREATE INDEX idx_document_project ON document (project_id);
+CREATE INDEX idx_document_active  ON document (project_id, created_at DESC)
+    WHERE deleted_at IS NULL;
+```
+
+---
+
 ## When to Relax Rules
 
 [↑ top](#table-of-contents)
@@ -1126,6 +1290,7 @@ Make system behavior visible through structured telemetry — in distributed sys
 | **Data Transfer Objects** | Encapsulation | DTOs are meant to expose data. That's their job. |
 | **Configuration** | YAGNI | Config flexibility is often worth it—cheaper than redeployment. |
 | **Security Boundaries** | Postel's Law | Be paranoid, not liberal. Validate everything strictly. |
+| **Analytics/Read Models** | Normalization, SSoT | Star schemas and CQRS read models denormalize on purpose; the write side stays the source of truth. |
 
 ### The Meta-Principle
 
@@ -1193,6 +1358,7 @@ Origins of specific principles referenced in this document.
 | **Deep Modules** | John Ousterhout, *A Philosophy of Software Design*, 2018 |
 | **Rule of Three** | Folk wisdom; formalized in *Refactoring* (Fowler) |
 | **Cognitive Load** | Psychology (John Sweller, 1988); applied to code by Zakirullin, 2023 |
+| **Normalization / Normal Forms** | Edgar F. Codd, 1970 (relational model) |
 
 ---
 
