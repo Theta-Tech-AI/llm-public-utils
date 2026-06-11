@@ -37,6 +37,20 @@ drift.
 > decision tree) is subordinate to this gate. When you cannot state in
 > one sentence that a file is generic platform IP that the upstream
 > framework legitimately owns, it is slag — stop.
+>
+> **The observed failure mode is over-upstreaming, not under-upstreaming.**
+> In practice agents put too much in the upstream and assign too little
+> to the consumer repository: technical heuristics (byte-identity, low
+> diff %, "looks generic") all push code UP, while the ownership force
+> that pushes code DOWN exists only on paper — so the drift is one-way.
+> One past over-smelt deleted ~447 contracted-deliverable files from a
+> consumer repo because they were byte-identical to copies that should
+> never have been upstream in the first place. Calibrate accordingly:
+> the default for any uncertain file is the CONSUMER repo, an
+> upstreaming decision needs the explicit one-sentence ownership
+> justification (the reverse never does), and a periodic reverse audit
+> — "which upstream files are really the consumer's deliverable?" — is
+> as much a part of smelting as the overlay-dedup audit below.
 
 ## When to smelt
 
