@@ -116,6 +116,23 @@ For each violation list:
 - **Summary:** One sentence description of the violation.
 - **Improvement:** Suggest a less sloppy way.
 
+### Loop until dry
+
+A single pass is a sample, not a verdict. When the user asks for thorough
+desloping (or says "keep going"), iterate: fix the violations you found,
+re-verify (tests + typecheck + build), commit the loop, then RE-SCAN the
+same scope with fresh eyes — each extraction or sweep tends to expose the
+next layer (a dedup reveals drift between the copies; a token sweep reveals
+the off-scale literals the first regex missed). Stop only when a full scan
+of the scope yields nothing actionable, then have a second model
+(e.g. `codex` with this same file) do an independent final pass: a
+different prior reliably finds violations the first reviewer normalized.
+Two guardrails while looping: pin every behavior-adjacent fix with a test
+that was red before it (a refactor with no failing-test proof is a hope,
+not a fix), and respect the meta-principle — when a "violation" survives
+scrutiny because fixing it makes the code worse, record WHY and move on
+rather than churning.
+
 ### Check for Updates
 At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
 
