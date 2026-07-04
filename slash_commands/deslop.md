@@ -14,6 +14,8 @@ Whether or not you use this deslop command on your code base, you should read al
 - [Instructions](#instructions)
   - [Installation](#installation)
   - [Deslop](#deslop)
+  - [Loop until dry](#loop-until-dry)
+  - [Hunting Duplication — Beyond Token Scanners](#hunting-duplication--beyond-token-scanners)
   - [Check for Updates](#check-for-updates)
 - [Part I: Clean Code](#part-i-clean-code)
   - [KISS: Keep It Simple, Stupid](#kiss-keep-it-simple-stupid)
@@ -147,6 +149,70 @@ that was red before it (a refactor with no failing-test proof is a hope,
 not a fix), and respect the meta-principle — when a "violation" survives
 scrutiny because fixing it makes the code worse, record WHY and move on
 rather than churning.
+
+### Hunting Duplication — Beyond Token Scanners
+
+Mechanical clone detectors (jscpd, token/AST diffing) only catch byte-for-byte
+or near-identical text. The more expensive duplication is semantic: the same
+business rule reimplemented with different variable names, different control
+flow, or split across files — invisible to any scanner, visible only to
+someone who actually reads the code. A duplication hunt that only runs a
+scanner is a sample, not a sweep.
+
+**Drop the Rule of Three as a gate.** Two occurrences of the SAME knowledge —
+not two similar-looking blocks, the actual same business rule doing the same
+job on the same inputs — is duplication now, not a coincidence waiting for a
+third data point to confirm it. The Rule of Three exists to protect against
+over-abstracting *incidental* similarity; it was never a license to leave two
+*confirmed* instances of one rule unfixed. The question was always "is this
+the same knowledge," never "how many times does it appear." Apply the
+True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY section
+above starting at two occurrences, not three.
+
+**Concrete action items, in order:**
+
+1. **Dispatch read-only research agents per architectural surface area**, not
+   one scan of the whole repo. Split by directory/module/domain (e.g. "every
+   backend router," "the intake pages," "the auth dependency chain") so each
+   agent reads every file in its slice end-to-end instead of skimming scanner
+   hits. A single whole-repo pass misses cross-file business-rule duplication
+   a scanner would never flag — different variable names and different
+   control flow hiding the same underlying rule.
+2. **Read the code's own comments for self-admissions.** Duplication is
+   frequently already flagged by the developer who wrote it: "mirrors X's
+   fix," "same shape as Y," "consistent with the other 3 hops." Grep for
+   these cross-references — a strong, cheap signal pointing straight at a
+   duplicate that was never consolidated.
+3. **Verify skeptically before proposing any fix:**
+   - Confirm the SAME rule, not similar-looking code for genuinely different
+     concepts — a schema-level, safety-profile, or scope difference between
+     two "duplicate-looking" functions can mean they must NOT be merged.
+     Check class hierarchies, unique constraints, and transactional behavior
+     directly; don't take a resemblance at face value.
+   - Grep for an existing shared helper before proposing a new one.
+   - Grep the test suite for `patch.object(<module>, "<name>", ...)` (or the
+     language's equivalent mocking) on the exact functions about to move.
+     Name resolution is lexical in most dynamic languages: moving a shared
+     call into a new module silently defeats a test that patches the OLD
+     module's namespace. This is the single most common way an
+     ostensibly-safe extraction breaks a previously-green test.
+4. **Fix in an isolated copy or with a revert-compare, never blind.** Prove
+   the fix is behavior-preserving — run the affected tests before and after,
+   or stash the change to diff pre/post behavior on the identical input.
+   Never call a fix "safe" without having run something.
+5. **When a duplicate-looking pair turns out to have irreconcilable
+   differences** (different scope semantics, different safety guarantees,
+   different concurrency model), say so explicitly, document WHY, and look
+   for a smaller, independently-safe fix inside each copy instead of forcing
+   a merge (e.g. the same missing validation bug existing in both copies,
+   fixable in each without unifying the two implementations).
+6. **A duplicate finding is not "done" until it's fixed or explicitly ruled
+   out with a documented reason.** "Found it, moving on" with neither action
+   is a report, not a deslop pass.
+
+This complements, not replaces, the mechanical scanners — run both. When
+asked for a genuinely thorough dedup sweep, mechanical scanning alone is not
+sufficient; budget time for a subagent-driven, surface-by-surface manual read.
 
 ### Check for Updates
 At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
@@ -549,7 +615,7 @@ Components should behave the way users expect. Separate state-changing commands 
 > "Every piece of knowledge must have a single, unambiguous, authoritative representation within a system."
 > — Andy Hunt & Dave Thomas, *The Pragmatic Programmer*
 
-DRY is about **knowledge**, not code — avoid duplicating *meaning*, not syntax. Knowledge duplication (the same business rule living in multiple places) must always be fixed. Incidental duplication (code that *looks* similar but represents *different* concepts that will evolve independently) should be left alone; merging it couples unrelated concerns. Apply the **Rule of Three**: write it the first time, note it the second, abstract it the third — two occurrences can't distinguish true duplication from coincidence, three reveal the pattern.
+DRY is about **knowledge**, not code — avoid duplicating *meaning*, not syntax. Knowledge duplication (the same business rule living in multiple places) must always be fixed, starting at the SECOND occurrence — not the third. Incidental duplication (code that *looks* similar but represents *different* concepts that will evolve independently) should be left alone; merging it couples unrelated concerns. The distinguishing test is never the occurrence count, it's whether it's the same knowledge: see [Hunting Duplication — Beyond Token Scanners](#hunting-duplication--beyond-token-scanners) for how to tell the two apart and what to do about it once found.
 
 > "Duplication is far cheaper than the wrong abstraction." — Sandi Metz
 
@@ -559,7 +625,7 @@ The wrong abstraction is the more expensive failure. One developer extracts it; 
 |---------------------------------|------------------------------|
 | Same business rule/concept | Different business concepts |
 | Changes *must* affect all instances | Instances will evolve independently |
-| 3+ occurrences confirm the pattern | 1-2 occurrences—pattern unclear |
+| 2+ occurrences of the SAME rule | Similar-looking code, different concepts |
 | Abstraction simplifies | Abstraction requires conditionals |
 
 ```python
@@ -782,7 +848,7 @@ logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 | **I** | Interface Segregation | Many specific interfaces over one general | Fat interfaces (10+ methods), implementations that `raise NotImplementedError` |
 | **D** | Dependency Inversion | Depend on abstractions, not concretions | Direct instantiation in constructors, concrete imports in business logic, can't mock |
 
-SOLID earns its keep in code that must evolve, but it's overhead in simple scripts, prototypes, and performance-critical paths. Don't create an interface for a class that will only ever have one implementation, and wait for patterns to emerge (Rule of Three) before abstracting.
+SOLID earns its keep in code that must evolve, but it's overhead in simple scripts, prototypes, and performance-critical paths. Don't create an interface for a class that will only ever have one implementation — wait for real, concrete callers to reveal the actual shape before designing a flexible abstraction around a hypothetical one. (This is distinct from DRY's duplication question above: designing a speculative interface before it's needed is premature abstraction, not a duplication-count threshold — see [Hunting Duplication](#hunting-duplication--beyond-token-scanners) for when *duplication itself* should be fixed.)
 
 ---
 
@@ -858,7 +924,7 @@ def create_user(self, email: str) -> None:
 > "A little copying is better than a little dependency."
 > — Rob Pike
 
-Reusability is forward-looking — code usable in multiple contexts without modification — where DRY is about eliminating duplication that already exists. It's earned, not designed up front: reusable components cost 3-10x more to build, and that cost only pays off with *actual* reuse. Designing for reuse before the need is proven is a YAGNI violation that buys complexity with no payoff (the `GenericDataProcessor` that takes a parser, transformer, validator, and serializer to handle "any" format). Wait for the Rule of Three, then generalize.
+Reusability is forward-looking — code usable in multiple contexts without modification — where DRY is about eliminating duplication that already exists. It's earned, not designed up front: reusable components cost 3-10x more to build, and that cost only pays off with *actual* reuse. Designing for reuse before the need is proven is a YAGNI violation that buys complexity with no payoff (the `GenericDataProcessor` that takes a parser, transformer, validator, and serializer to handle "any" format). Wait for real, concrete callers to reveal the actual shape needed, then generalize — this is about not speculating on a future interface, not about how many times duplicated *knowledge* must appear before it's fixed (that's the DRY question — see [Hunting Duplication](#hunting-duplication--beyond-token-scanners)).
 
 ```python
 # ❌ Wrong - Premature reusability (YAGNI violation)
