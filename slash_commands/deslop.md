@@ -169,7 +169,36 @@ the same knowledge," never "how many times does it appear." Apply the
 True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY section
 above starting at two occurrences, not three.
 
-**Concrete action items, in order:**
+**Two complementary approaches — use both, they catch different things:**
+
+- **Token/AST matching (mechanical).** Tools like `jscpd`, `pmd-cpd`, or a
+  simple AST-diff catch byte-for-byte or near-identical text fast and
+  cheaply, with zero false negatives on literal copy-paste. Run one early in
+  a pass — it's the quickest way to find the "someone copy-pasted this file
+  and changed three lines" class of duplication, and it's exhaustive over
+  the whole repo in seconds where a manual read is not. Concretely:
+  `npx jscpd <path> --min-lines 5 --min-tokens 50 --reporters console,json`
+  (tune `--min-lines`/`--min-tokens` down for a small codebase, up for a
+  large monorepo to keep the hit list reviewable), then triage every hit —
+  a scanner has no concept of "same knowledge," so a hit can be incidental
+  (two unrelated 5-line blocks that happen to match) or load-bearing (the
+  same validation rule copy-pasted). Don't skip the triage step; a raw
+  jscpd report is a lead list, not a fix list.
+- **Semantic reading (manual/agent-driven).** Catches everything the
+  scanner is structurally blind to: the same business rule reimplemented
+  with different variable names, reordered conditions, or split across
+  files/languages. This is the more expensive but higher-yield approach for
+  a genuinely thorough sweep, and the one most dedup passes skip because
+  it doesn't have a single command to run. The action items below are how
+  to do this systematically instead of an unstructured skim.
+
+Run the token scanner first (cheap, fast, catches the obvious copy-paste),
+then do the semantic read for what it structurally cannot see. A dedup pass
+that only runs the scanner is a sample, not a sweep — the token-match tool
+finds *duplicated text*, not *duplicated knowledge*, and most of the
+duplication worth fixing in a mature codebase is the latter.
+
+**Concrete action items for the semantic read, in order:**
 
 1. **Dispatch read-only research agents per architectural surface area**, not
    one scan of the whole repo. Split by directory/module/domain (e.g. "every
@@ -210,9 +239,9 @@ above starting at two occurrences, not three.
    out with a documented reason.** "Found it, moving on" with neither action
    is a report, not a deslop pass.
 
-This complements, not replaces, the mechanical scanners — run both. When
-asked for a genuinely thorough dedup sweep, mechanical scanning alone is not
-sufficient; budget time for a subagent-driven, surface-by-surface manual read.
+When asked for a genuinely thorough dedup sweep, the token scanner alone is
+not sufficient — budget time for the subagent-driven, surface-by-surface
+semantic read too.
 
 ### Check for Updates
 At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
