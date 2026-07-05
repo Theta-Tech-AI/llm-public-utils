@@ -159,15 +159,12 @@ flow, or split across files — invisible to any scanner, visible only to
 someone who actually reads the code. A duplication hunt that only runs a
 scanner is a sample, not a sweep.
 
-**Drop the Rule of Three as a gate.** Two occurrences of the SAME knowledge —
-not two similar-looking blocks, the actual same business rule doing the same
-job on the same inputs — is duplication now, not a coincidence waiting for a
-third data point to confirm it. The Rule of Three exists to protect against
-over-abstracting *incidental* similarity; it was never a license to leave two
-*confirmed* instances of one rule unfixed. The question was always "is this
-the same knowledge," never "how many times does it appear." Apply the
-True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY section
-above starting at two occurrences, not three.
+**Use the Rule of Two for confirmed knowledge duplication.** Two occurrences
+of the SAME knowledge — not two similar-looking blocks, the actual same business
+rule doing the same job on the same inputs — is duplication now. The question
+is always "is this the same knowledge," never "how many times does it appear."
+Apply the True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY
+section above starting at the second occurrence.
 
 **Two complementary approaches — use both, they catch different things:**
 
@@ -684,7 +681,7 @@ is_superuser = "superuser" in groups
 
 If the code is sloppy, you'll find a bunch of classes and functions using those same 3 lines duplicated across the codebase. Deduplicate them into a shared `get_is_superuser(jwt_token)` function. Now you've reduced the lines of code (fewer lines of code is better in general), and made the code more readable and maintainable.
 
-Some argue that for simple things, the overhead of the abstraction is not worth it. Benchmark first to see if you're really losing performance in modern systems due to overhead; usually you're not. Some argue for the "Rule of Three" where you wait for 3 instances of the same lines of code to be repeated before deduplicating because they likely are unrelated and it may be simpler to let them each stay separate. I disagree; I'm an extremely aggressive deduplicator.
+Some argue that for simple things, the overhead of the abstraction is not worth it. Benchmark first to see if you're really losing performance in modern systems due to overhead; usually you're not. Once two occurrences represent the same knowledge, deduplicate them; do not wait for a third copy.
 
 **The deduplicated version — one shared helper, two callers:**
 
@@ -1607,7 +1604,6 @@ Origins of specific principles referenced in this document.
 | **Design by Contract** | Bertrand Meyer, 1986 (Eiffel language) |
 | **Postel's Law** | Jon Postel, RFC 761 (TCP), 1980 |
 | **Deep Modules** | John Ousterhout, *A Philosophy of Software Design*, 2018 |
-| **Rule of Three** | Folk wisdom; formalized in *Refactoring* (Fowler) |
 | **Cognitive Load** | Psychology (John Sweller, 1988); applied to code by Zakirullin, 2023 |
 | **Normalization / Normal Forms** | Edgar F. Codd, 1970 (relational model) |
 
