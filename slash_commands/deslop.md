@@ -159,6 +159,14 @@ flow, or split across files — invisible to any scanner, visible only to
 someone who actually reads the code. A duplication hunt that only runs a
 scanner is a sample, not a sweep.
 
+Be aggressively skeptical about duplication. Search for duplicate logic, data
+shape decisions, validation rules, error mapping, state transitions, SQL
+fragments, constants, tests, and UI workflow patterns — not only pasted code.
+When two places encode the same decision for the same reason, treat that as a
+real finding even if the syntax is different. Keep asking "what knowledge is
+being repeated here?" until the duplicated rule has one owner or you can clearly
+explain why the resemblance is incidental.
+
 **Use the Rule of Two for confirmed knowledge duplication.** Two occurrences
 of the SAME knowledge — not two similar-looking blocks, the actual same business
 rule doing the same job on the same inputs — is duplication now. The question
