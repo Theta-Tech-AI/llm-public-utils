@@ -670,6 +670,64 @@ def get_user_by_email(email: str) -> User: ...
 
 DRY extends beyond code: define database constraints once in the schema, generate API contracts from code (FastAPI/Pydantic) rather than maintaining them separately, centralize config in one module, and keep a single authoritative source for documentation.
 
+##### Worked Example: Two Classes Repeating the Same 3 Lines
+
+In coding, the D.R.Y. ("Don't Repeat Yourself") is one of the most important principles. If the same line(s) of code appear in more than one location, it should probably be abstracted away into a reusable function (or equivalent).
+
+Consider two different classes each writing:
+
+```python
+user = authenticate_user(jwt_token)
+groups = get_user_groups(user)
+is_superuser = "superuser" in groups
+```
+
+If the code is sloppy, you'll find a bunch of classes and functions using those same 3 lines duplicated across the codebase. Deduplicate them into a shared `get_is_superuser(jwt_token)` function. Now you've reduced the lines of code (fewer lines of code is better in general), and made the code more readable and maintainable.
+
+Some argue that for simple things, the overhead of the abstraction is not worth it. Benchmark first to see if you're really losing performance in modern systems due to overhead; usually you're not. Some argue for the "Rule of Three" where you wait for 3 instances of the same lines of code to be repeated before deduplicating because they likely are unrelated and it may be simpler to let them each stay separate. I disagree; I'm an extremely aggressive deduplicator.
+
+**The deduplicated version — one shared helper, two callers:**
+
+```python
+from typing import Sequence
+
+
+def get_is_superuser(jwt_token: str) -> bool:
+    """Resolve whether the bearer of `jwt_token` holds the superuser role.
+
+    Single authoritative implementation of the "authenticate -> list groups
+    -> check superuser" chain so every caller resolves superuser status the
+    same way. Fix the rule once here; every caller inherits the fix.
+    """
+    user = authenticate_user(jwt_token)
+    groups = get_user_groups(user)
+    return "superuser" in groups
+
+
+class AuditExporter:
+    """Exports audit events, redacting fields the caller may not read."""
+
+    def __init__(self, jwt_token: str) -> None:
+        self._is_superuser = get_is_superuser(jwt_token)
+
+    def can_read(self, event) -> bool:
+        return self._is_superuser or event.actor_id == "self"
+
+
+class AdminConsole:
+    """Gates admin-only operations behind the superuser check."""
+
+    def __init__(self, jwt_token: str) -> None:
+        self._is_superuser = get_is_superuser(jwt_token)
+
+    def delete_project(self, project_id: str) -> None:
+        if not self._is_superuser:
+            raise PermissionError("superuser required")
+        ...
+```
+
+The 3-line chain appeared in two classes; it now lives once in `get_is_superuser`. If the group lookup ever changes (e.g. switched to a Graph API call, or `"superuser"` renamed to `"system-administrator"`), there is one place to edit — not N. Feed this to your coding agents, have them make a skill for this, and have them scan your codebase for this slop violation — you'll be surprised how much this shows up.
+
 ---
 
 #### Single Source of Truth
