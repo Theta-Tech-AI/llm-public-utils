@@ -483,53 +483,45 @@ if (error instanceof ProgramThrow) {
 }
 ```
 
-The reflexive cleanup — and why it is not the fix — is to put the ladder inside a function:
+The reflexive cleanup — and why it is not the fix — is to put the ladder inside a function. Look at what that function IS: its signature admits it will cope with anything, and its body is nothing but the coping:
 
 ```typescript
-// ⚠️ Still slop, now tidier — the function COPES: it still believes it can receive
-// anything, still guesses four shapes, still needs the fallback pyramid.
-function describeThrownValue(value: unknown): string {
-  if (containsRuntimeReference(value)) return "a non-data value"
-  if (typeof value === "string") return value
-  if (value !== null && typeof value === "object") {
-    const message = (value as { message?: unknown }).message
-    if (typeof message === "string") return message
+// ⚠️ Still slop, now tidier — the function's signature accepts anything,
+// so its body must guess four shapes and stack three fallbacks.
+function executionFailure(value: unknown): ExecutionFailure {
+  let message: string
+  if (containsRuntimeReference(value)) {
+    message = "a non-data value"
+  } else if (typeof value === "string") {
+    message = value
+  } else if (
+    value !== null &&
+    typeof value === "object" &&
+    typeof (value as { message?: unknown }).message === "string"
+  ) {
+    message = (value as { message: string }).message
+  } else {
+    try {
+      message = JSON.stringify(copyOut(value)) ?? String(value)
+    } catch {
+      message = String(value)
+    }
   }
-  try {
-    return JSON.stringify(copyOut(value)) ?? String(value)
-  } catch {
-    return String(value)
-  }
-}
-
-if (error instanceof ProgramThrow) {
-  return { kind: "ExecutionFailure", message: `Uncaught: ${describeThrownValue(error.value)}` }
+  return { kind: "ExecutionFailure", message: `Uncaught: ${message}` }
 }
 ```
 
-Extraction improved the *packaging* — named behavior, early returns, testable — but the *mentality* is untouched: this function still copes with a universe of inputs that a well-architected codebase would never send it. Now the wisely-architected version, where the boundary **decides**:
+Now the same function in a wisely-architected codebase — the only change is that callers are required to supply the right type, and the entire body evaporates:
 
 ```typescript
-// ✅ Correct — the throw boundary decides ONCE what a thrown value is.
-// ProgramThrow cannot be constructed without a policy-checked string message.
-class ProgramThrow extends Error {
-  private constructor(readonly message: string) { super(message) }
-
-  static from(value: unknown): ProgramThrow {
-    // The single place in the system where "some thrown value" becomes "a message".
-    // Policy (redaction) lives here too — it cannot be reordered away downstream.
-    if (containsRuntimeReference(value)) return new ProgramThrow("a non-data value")
-    return new ProgramThrow(typeof value === "string" ? value : safeStringify(value))
-  }
-}
-
-// Every consumer, everywhere, forever:
-if (error instanceof ProgramThrow) {
-  return { kind: "ExecutionFailure", message: `Uncaught: ${error.message}` }
+// ✅ Correct — same function, input required to be a string.
+// Twenty-six lines of guessing become one line of doing.
+function executionFailure(message: string): ExecutionFailure {
+  return { kind: "ExecutionFailure", message: `Uncaught: ${message}` }
 }
 ```
 
-The consumer collapsed to one line — not because the branches were cleaned, but because they can no longer be needed. The "what shapes might arrive?" question was answered once, at construction, where the raw value actually exists; every handler, logger, and serializer downstream inherits that answer for free. That is the difference between putting coping code in a function and architecting so the function has nothing to cope with.
+Where did the ladder go? Nowhere — **it ceased to exist.** The one legitimate conversion (a thrown value into a policy-checked string) happens once at the throw boundary, where the raw value actually enters the system and where the redaction rule naturally lives. Every function past that boundary takes `message: string` and simply does its job. The consumer collapsed not because the branches were cleaned, but because they can no longer be needed. That is the difference between putting coping code inside a function and architecting so the function has nothing to cope with: compare the two `executionFailure` signatures — `(value: unknown)` is a confession that the codebase never decided what a thrown value is; `(message: string)` is the decision.
 
 How to review for it:
 
