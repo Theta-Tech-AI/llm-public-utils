@@ -451,7 +451,21 @@ In relation to other principles, guard clauses...
 
 A **coercion ladder** is a mutable accumulator threaded through an if/else-if chain of runtime type interrogation — `typeof` checks, `instanceof` tests, inline casts — that pokes at one loosely-typed value until some branch manages to coerce it into the shape the caller wants. LLM-generated error handlers and serialization shims produce this pattern constantly, and it usually has no name in review comments, so it survives. Name it and delete it on sight.
 
-The tells, each fixable on its own but almost always found together:
+**The root cause is almost never the ladder — it's the contract.** The ladder exists because some boundary accepted `unknown` when it should have demanded the shape the consumer actually needs. Every rung is a speculative edge case ("what if it's an object with a message? what if JSON.stringify throws?") that the code volunteered to handle instead of refusing. The first question is not "how do I clean up these branches?" but "**why is this not just a string?**" If you own the boundary where the value enters, require the right type there — normalize or reject once, at the edge — and the entire ladder disappears. That is Parse, Don't Validate plus YAGNI: one conversion at the boundary, zero heroics downstream.
+
+```typescript
+// ✅ Best — tighten the contract; the ladder never exists
+class ProgramThrow extends Error {
+  // The ONE place a thrown value becomes a message. Everything downstream sees a string.
+  constructor(readonly message: string) { super(message) }
+}
+
+if (error instanceof ProgramThrow) {
+  return { kind: "ExecutionFailure", message: `Uncaught: ${error.message}` }
+}
+```
+
+Only when the boundary is genuinely not yours to own (a foreign API, a wire format, user-thrown JS values you cannot intercept) does the coercion belong in your code at all — and then it gets exactly one named home. The tells of a ladder that survived when it shouldn't have, each fixable on its own but almost always found together:
 
 1. **`let result` + branch-assign instead of an extracted function.** The mutable accumulator exists *only because* the ladder wasn't extracted. Pull the whole ladder into a named, testable function and every branch becomes a `return` — the accumulator disappears and the behavior gets a name (`describe_thrown_value`, `to_display_string`).
 2. **Check-then-recast.** The condition casts the value to one anonymous shape to test a fact (`typeof (value as { message?: unknown }).message === "string"`), then the body casts it *again* to a different anonymous shape to use it (`(value as { message: string }).message`). Interrogate once, narrow into a typed local, use the local. Two casts to two ad-hoc types for one fact is validate-then-revalidate — the inverse of Parse, Don't Validate — and the two anonymous types drift independently.
@@ -483,7 +497,8 @@ if (error instanceof ProgramThrow) {
   return { kind: "ExecutionFailure", message: `Uncaught: ${message}` }
 }
 
-// ✅ Correct — named function, early returns, one narrowing, one fallback boundary
+// ⚠️ Acceptable ONLY at a boundary you don't own — named function, early returns,
+// one narrowing, one fallback boundary. If you can change the throw site instead, do that.
 const REDACTED_VALUE_MESSAGE = "a non-data value"
 
 function describeThrownValue(value: unknown): string {
@@ -514,17 +529,18 @@ if (error instanceof ProgramThrow) {
 }
 ```
 
-The refactor changes nothing observable — same branches, same fallbacks, same policy — but each concern now has a name, its own test surface, and exactly one home. The dispatch reads at a single level of abstraction, and the security rule can't be lost in a reorder.
+The extraction refactor is the *palliative* — it changes nothing observable but gives each concern a name, a test surface, and one home. The *cure* is upstream: require the right type at the boundary and delete the ladder outright. When reviewing, always try the cure first; reach for the palliative only when the boundary is provably out of your control, and say so in a comment at the ladder's single named home.
 
 In relation to other principles, the coercion ladder violates...
 
 | Principle | Relationship |
 |-----------|--------------|
-| **Guard Clauses** | Extraction turns branch-assigns into early returns; the accumulator vanishes |
-| **Parse, Don't Validate** | Check-then-recast interrogates the same fact twice instead of narrowing once |
+| **Parse, Don't Validate** | The cure: convert once at the boundary; downstream code never re-interrogates |
+| **YAGNI** | Every rung is a speculative edge case the contract should have made impossible |
+| **KISS** | One required type beats four guessed ones |
+| **Guard Clauses** | If a ladder must exist, extraction turns branch-assigns into early returns |
 | **Single Level of Abstraction** | Policy, type dispatch, and formatting sit at one indentation level |
 | **Self-Documenting Code** | The unnamed ladder hides a nameable behavior; extraction names it |
-| **Small Functions** | Each rung is a candidate function with an obvious contract |
 
 ---
 
