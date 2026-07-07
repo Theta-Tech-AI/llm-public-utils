@@ -22,6 +22,7 @@ Whether or not you use this deslop command on your code base, you should read al
   - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
   - [Small Functions](#small-functions)
   - [Guard Clauses](#guard-clauses)
+  - [The Coercion Ladder](#the-coercion-ladder)
   - [Cognitive Load](#cognitive-load)
   - [Single Level of Abstraction (SLAP)](#single-level-of-abstraction-slap)
   - [Self-Documenting Code](#self-documenting-code)
@@ -441,6 +442,89 @@ In relation to other principles, guard clauses...
 | **Cognitive Load** | Flattening nested conditionals reduces mental overhead |
 | **Small Functions** | Guards work best in small, focused functions |
 | **Design by Contract** | Guards enforce preconditions at runtime |
+
+---
+
+### The Coercion Ladder
+
+[↑ top](#table-of-contents)
+
+A **coercion ladder** is a mutable accumulator threaded through an if/else-if chain of runtime type interrogation — `typeof` checks, `instanceof` tests, inline casts — that pokes at one loosely-typed value until some branch manages to coerce it into the shape the caller wants. LLM-generated error handlers and serialization shims produce this pattern constantly, and it usually has no name in review comments, so it survives. Name it and delete it on sight.
+
+The tells, each fixable on its own but almost always found together:
+
+1. **`let result` + branch-assign instead of an extracted function.** The mutable accumulator exists *only because* the ladder wasn't extracted. Pull the whole ladder into a named, testable function and every branch becomes a `return` — the accumulator disappears and the behavior gets a name (`describe_thrown_value`, `to_display_string`).
+2. **Check-then-recast.** The condition casts the value to one anonymous shape to test a fact (`typeof (value as { message?: unknown }).message === "string"`), then the body casts it *again* to a different anonymous shape to use it (`(value as { message: string }).message`). Interrogate once, narrow into a typed local, use the local. Two casts to two ad-hoc types for one fact is validate-then-revalidate — the inverse of Parse, Don't Validate — and the two anonymous types drift independently.
+3. **Stacked fallbacks for the same purpose.** A fallback operator inside a `try` (`stringify(x) ?? String(x)`) *plus* another fallback in the `catch` (`String(x)` again). Two mechanisms covering overlapping failure modes force the reader to work out which path fires when, and each silently swallows a different error. Pick one fallback boundary; `try/catch` is not one more rung of the ladder.
+4. **Policy mixed into dispatch.** When one rung encodes a real rule (a security redaction, a compliance requirement) and its neighbors are mere formatting, the rule is one careless reorder away from silently breaking. Hoist the rule to its own named guard above the formatting ladder.
+
+```typescript
+// ❌ Wrong — coercion ladder: accumulator, double casts, stacked fallbacks, inline policy
+if (error instanceof ProgramThrow) {
+  const value = error.value
+  let message: string
+  if (containsRuntimeReference(value)) {
+    message = "a non-data value"        // security policy, buried mid-ladder
+  } else if (typeof value === "string") {
+    message = value
+  } else if (
+    value !== null &&
+    typeof value === "object" &&
+    typeof (value as { message?: unknown }).message === "string"
+  ) {
+    message = (value as { message: string }).message   // second cast, same fact
+  } else {
+    try {
+      message = JSON.stringify(copyOut(value)) ?? String(value)  // fallback #1 and #2
+    } catch {
+      message = String(value)                                    // fallback #3
+    }
+  }
+  return { kind: "ExecutionFailure", message: `Uncaught: ${message}` }
+}
+
+// ✅ Correct — named function, early returns, one narrowing, one fallback boundary
+const REDACTED_VALUE_MESSAGE = "a non-data value"
+
+function describeThrownValue(value: unknown): string {
+  // Thrown tool/function references must not leak internal structure.
+  if (containsRuntimeReference(value)) return REDACTED_VALUE_MESSAGE
+  if (typeof value === "string") return value
+  const message = errorLikeMessage(value)
+  if (message !== undefined) return message
+  return safeStringify(value)
+}
+
+function errorLikeMessage(value: unknown): string | undefined {
+  if (value === null || typeof value !== "object") return undefined
+  const message = (value as { message?: unknown }).message   // one cast, one narrowing
+  return typeof message === "string" ? message : undefined
+}
+
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(copyOut(value)) ?? String(value)
+  } catch {
+    return String(value)
+  }
+}
+
+if (error instanceof ProgramThrow) {
+  return { kind: "ExecutionFailure", message: `Uncaught: ${describeThrownValue(error.value)}` }
+}
+```
+
+The refactor changes nothing observable — same branches, same fallbacks, same policy — but each concern now has a name, its own test surface, and exactly one home. The dispatch reads at a single level of abstraction, and the security rule can't be lost in a reorder.
+
+In relation to other principles, the coercion ladder violates...
+
+| Principle | Relationship |
+|-----------|--------------|
+| **Guard Clauses** | Extraction turns branch-assigns into early returns; the accumulator vanishes |
+| **Parse, Don't Validate** | Check-then-recast interrogates the same fact twice instead of narrowing once |
+| **Single Level of Abstraction** | Policy, type dispatch, and formatting sit at one indentation level |
+| **Self-Documenting Code** | The unnamed ladder hides a nameable behavior; extraction names it |
+| **Small Functions** | Each rung is a candidate function with an obvious contract |
 
 ---
 
