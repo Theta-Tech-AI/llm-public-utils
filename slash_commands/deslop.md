@@ -22,7 +22,7 @@ Whether or not you use this deslop command on your code base, you should read al
   - [YAGNI: You Aren't Gonna Need It](#yagni-you-arent-gonna-need-it)
   - [Small Functions](#small-functions)
   - [Guard Clauses](#guard-clauses)
-  - [The Coercion Ladder](#the-coercion-ladder)
+  - [Decide, Don't Cope](#decide-dont-cope)
   - [Cognitive Load](#cognitive-load)
   - [Single Level of Abstraction (SLAP)](#single-level-of-abstraction-slap)
   - [Self-Documenting Code](#self-documenting-code)
@@ -445,40 +445,25 @@ In relation to other principles, guard clauses...
 
 ---
 
-### The Coercion Ladder
+### Decide, Don't Cope
 
 [↑ top](#table-of-contents)
 
-A **coercion ladder** is a mutable accumulator threaded through an if/else-if chain of runtime type interrogation — `typeof` checks, `instanceof` tests, inline casts — that pokes at one loosely-typed value until some branch manages to coerce it into the shape the caller wants. LLM-generated error handlers and serialization shims produce this pattern constantly, and it usually has no name in review comments, so it survives. Name it and delete it on sight.
+The most common shape of AI-generated slop is not a bad algorithm — it is a **coping mentality**. Generated code treats every input as a hostile mystery and copes with it locally: it accepts `unknown`, then builds an if/else-if ladder of `typeof` checks, `instanceof` tests, inline casts, try/catch rungs, and stacked fallbacks until *something* produces a usable value. Every rung handles a hypothetical ("what if it's an object with a message? what if stringify throws?") that no requirement ever asked for. The code optimizes for "never crash on any conceivable input **here**" instead of "invalid input cannot **reach** here."
 
-**The root cause is almost never the ladder — it's the contract.** The ladder exists because some boundary accepted `unknown` when it should have demanded the shape the consumer actually needs. Every rung is a speculative edge case ("what if it's an object with a message? what if JSON.stringify throws?") that the code volunteered to handle instead of refusing. The first question is not "how do I clean up these branches?" but "**why is this not just a string?**" If you own the boundary where the value enters, require the right type there — normalize or reject once, at the edge — and the entire ladder disappears. That is Parse, Don't Validate plus YAGNI: one conversion at the boundary, zero heroics downstream.
+Wise architecture inverts this. Somewhere, exactly once, a boundary **decides** what is allowed — normalizes or rejects — and everything downstream trusts that decision and stays on the happy path. The reviewer's question is never "are these branches clean?" but "**why does this function believe it can receive anything at all?**"
 
-```typescript
-// ✅ Best — tighten the contract; the ladder never exists
-class ProgramThrow extends Error {
-  // The ONE place a thrown value becomes a message. Everything downstream sees a string.
-  constructor(readonly message: string) { super(message) }
-}
+This is a mentality, not a typing trick. Stricter type annotations on the same coping code just move the casts around. The fix is architectural: pick the one place where the value enters the system, make it produce the right shape, and delete every downstream accommodation.
 
-if (error instanceof ProgramThrow) {
-  return { kind: "ExecutionFailure", message: `Uncaught: ${error.message}` }
-}
-```
-
-Only when the boundary is genuinely not yours to own (a foreign API, a wire format, user-thrown JS values you cannot intercept) does the coercion belong in your code at all — and then it gets exactly one named home. The tells of a ladder that survived when it shouldn't have, each fixable on its own but almost always found together:
-
-1. **`let result` + branch-assign instead of an extracted function.** The mutable accumulator exists *only because* the ladder wasn't extracted. Pull the whole ladder into a named, testable function and every branch becomes a `return` — the accumulator disappears and the behavior gets a name (`describe_thrown_value`, `to_display_string`).
-2. **Check-then-recast.** The condition casts the value to one anonymous shape to test a fact (`typeof (value as { message?: unknown }).message === "string"`), then the body casts it *again* to a different anonymous shape to use it (`(value as { message: string }).message`). Interrogate once, narrow into a typed local, use the local. Two casts to two ad-hoc types for one fact is validate-then-revalidate — the inverse of Parse, Don't Validate — and the two anonymous types drift independently.
-3. **Stacked fallbacks for the same purpose.** A fallback operator inside a `try` (`stringify(x) ?? String(x)`) *plus* another fallback in the `catch` (`String(x)` again). Two mechanisms covering overlapping failure modes force the reader to work out which path fires when, and each silently swallows a different error. Pick one fallback boundary; `try/catch` is not one more rung of the ladder.
-4. **Policy mixed into dispatch.** When one rung encodes a real rule (a security redaction, a compliance requirement) and its neighbors are mere formatting, the rule is one careless reorder away from silently breaking. Hoist the rule to its own named guard above the formatting ladder.
+**The canonical tell: the coercion ladder.** A mutable accumulator threaded through a chain of runtime type interrogation. Here is one from a real AI-generated error handler:
 
 ```typescript
-// ❌ Wrong — coercion ladder: accumulator, double casts, stacked fallbacks, inline policy
+// ❌ Slop — copes inline: accumulator, four guessed shapes, three stacked fallbacks
 if (error instanceof ProgramThrow) {
   const value = error.value
   let message: string
   if (containsRuntimeReference(value)) {
-    message = "a non-data value"        // security policy, buried mid-ladder
+    message = "a non-data value"
   } else if (typeof value === "string") {
     message = value
   } else if (
@@ -486,37 +471,30 @@ if (error instanceof ProgramThrow) {
     typeof value === "object" &&
     typeof (value as { message?: unknown }).message === "string"
   ) {
-    message = (value as { message: string }).message   // second cast, same fact
+    message = (value as { message: string }).message
   } else {
     try {
-      message = JSON.stringify(copyOut(value)) ?? String(value)  // fallback #1 and #2
+      message = JSON.stringify(copyOut(value)) ?? String(value)
     } catch {
-      message = String(value)                                    // fallback #3
+      message = String(value)
     }
   }
   return { kind: "ExecutionFailure", message: `Uncaught: ${message}` }
 }
+```
 
-// ⚠️ Acceptable ONLY at a boundary you don't own — named function, early returns,
-// one narrowing, one fallback boundary. If you can change the throw site instead, do that.
-const REDACTED_VALUE_MESSAGE = "a non-data value"
+The reflexive cleanup — and why it is not the fix — is to put the ladder inside a function:
 
+```typescript
+// ⚠️ Still slop, now tidier — the function COPES: it still believes it can receive
+// anything, still guesses four shapes, still needs the fallback pyramid.
 function describeThrownValue(value: unknown): string {
-  // Thrown tool/function references must not leak internal structure.
-  if (containsRuntimeReference(value)) return REDACTED_VALUE_MESSAGE
+  if (containsRuntimeReference(value)) return "a non-data value"
   if (typeof value === "string") return value
-  const message = errorLikeMessage(value)
-  if (message !== undefined) return message
-  return safeStringify(value)
-}
-
-function errorLikeMessage(value: unknown): string | undefined {
-  if (value === null || typeof value !== "object") return undefined
-  const message = (value as { message?: unknown }).message   // one cast, one narrowing
-  return typeof message === "string" ? message : undefined
-}
-
-function safeStringify(value: unknown): string {
+  if (value !== null && typeof value === "object") {
+    const message = (value as { message?: unknown }).message
+    if (typeof message === "string") return message
+  }
   try {
     return JSON.stringify(copyOut(value)) ?? String(value)
   } catch {
@@ -529,18 +507,47 @@ if (error instanceof ProgramThrow) {
 }
 ```
 
-The extraction refactor is the *palliative* — it changes nothing observable but gives each concern a name, a test surface, and one home. The *cure* is upstream: require the right type at the boundary and delete the ladder outright. When reviewing, always try the cure first; reach for the palliative only when the boundary is provably out of your control, and say so in a comment at the ladder's single named home.
+Extraction improved the *packaging* — named behavior, early returns, testable — but the *mentality* is untouched: this function still copes with a universe of inputs that a well-architected codebase would never send it. Now the wisely-architected version, where the boundary **decides**:
 
-In relation to other principles, the coercion ladder violates...
+```typescript
+// ✅ Correct — the throw boundary decides ONCE what a thrown value is.
+// ProgramThrow cannot be constructed without a policy-checked string message.
+class ProgramThrow extends Error {
+  private constructor(readonly message: string) { super(message) }
+
+  static from(value: unknown): ProgramThrow {
+    // The single place in the system where "some thrown value" becomes "a message".
+    // Policy (redaction) lives here too — it cannot be reordered away downstream.
+    if (containsRuntimeReference(value)) return new ProgramThrow("a non-data value")
+    return new ProgramThrow(typeof value === "string" ? value : safeStringify(value))
+  }
+}
+
+// Every consumer, everywhere, forever:
+if (error instanceof ProgramThrow) {
+  return { kind: "ExecutionFailure", message: `Uncaught: ${error.message}` }
+}
+```
+
+The consumer collapsed to one line — not because the branches were cleaned, but because they can no longer be needed. The "what shapes might arrive?" question was answered once, at construction, where the raw value actually exists; every handler, logger, and serializer downstream inherits that answer for free. That is the difference between putting coping code in a function and architecting so the function has nothing to cope with.
+
+How to review for it:
+
+1. **Trace the `unknown` upstream.** When you meet a type-sniffing ladder, find where the value was last known-good. If any code you own touched it between there and here, the fix belongs at that touchpoint, not here.
+2. **Count the shapes the code guesses.** Each guessed shape (string? object-with-message? JSON-able? unstringifiable?) is a speculative requirement. If no caller actually produces it, the branch is YAGNI bloat — delete it and let the boundary reject.
+3. **One decision point per value.** If two places both interrogate the same value's type, one of them is coping with the other's indecision. Merge them at the earlier one.
+4. **Extraction is the fallback, not the fix.** Only when the boundary is genuinely foreign — a wire format, a third-party API, user-thrown JS values you cannot intercept — does the coercion belong in your code, and then in exactly one named, tested function with a comment saying whose mess it absorbs.
+
+In relation to other principles, decide-don't-cope draws on...
 
 | Principle | Relationship |
 |-----------|--------------|
-| **Parse, Don't Validate** | The cure: convert once at the boundary; downstream code never re-interrogates |
-| **YAGNI** | Every rung is a speculative edge case the contract should have made impossible |
-| **KISS** | One required type beats four guessed ones |
-| **Guard Clauses** | If a ladder must exist, extraction turns branch-assigns into early returns |
-| **Single Level of Abstraction** | Policy, type dispatch, and formatting sit at one indentation level |
-| **Self-Documenting Code** | The unnamed ladder hides a nameable behavior; extraction names it |
+| **Parse, Don't Validate** | The mechanism: convert once at the boundary; downstream never re-interrogates |
+| **YAGNI** | Every guessed shape is a requirement nobody stated |
+| **KISS** | One required type beats four hypothetical ones |
+| **Fail-Fast** | Rejecting at the boundary beats coping in the interior |
+| **Design by Contract** | The boundary's decision IS the contract; consumers assume it holds |
+| **Single Level of Abstraction** | Coping code mixes policy, dispatch, and formatting at one level |
 
 ---
 
