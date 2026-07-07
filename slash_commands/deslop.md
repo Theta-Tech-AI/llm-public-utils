@@ -455,6 +455,14 @@ Wise architecture inverts this. Somewhere, exactly once, a boundary **decides** 
 
 This is a mentality, not a typing trick. Stricter type annotations on the same coping code just move the casts around. The fix is architectural: pick the one place where the value enters the system, make it produce the right shape, and delete every downstream accommodation.
 
+**The deeper unwisdom: refusing to make claims about the world.** Coping code is what a mind produces when it declines to commit to any statement about its own system. Every rung of a ladder is a question the author refused to answer — *can this value actually be a non-string here? should it ever be?* — converted into a runtime branch that every future reader must now answer instead, forever. Three failure modes of judgment drive it, in humans and in LLMs alike:
+
+1. **Local completion over global design.** The author's frame is "make *this snippet* survive anything so I can be done here," never "should this situation exist at all?" Adding a branch requires zero understanding of the surrounding system; changing a contract requires owning one. Branches are cheaper to *write*; decisions are cheaper to *own* — and slop authors always buy the former.
+2. **Blame-avoidance masquerading as robustness.** A crash looks like the author's failure; quiet complexity doesn't. So the code appeases: it accepts everything, asserts nothing, and holds no opinion about what is valid. That is tolerance, not robustness. Real robustness is a clear contract enforced loudly — a system that says "this cannot happen, and if it does, you will hear about it immediately" is more reliable than one that silently absorbs garbage and keeps going in an undefined state.
+3. **Deferred decisions compounding as entropy.** An unmade decision does not disappear — it becomes control flow. Most incidental complexity in a codebase is the fossil record of decisions nobody made: every "what if"-shaped branch, every `?? fallback ?? fallback`, every catch-and-continue is a commitment someone dodged, paid for on every subsequent read.
+
+The corrective habit: treat every speculative branch as a **claim you are refusing to make** — then make it. Assert the invariant, enforce it at the boundary, and let violations fail fast and loud. Code written by a mind willing to be wrong *once, at the edge, visibly* is always simpler than code written by a mind hedging everywhere, invisibly.
+
 **The canonical tell: the coercion ladder.** A mutable accumulator threaded through a chain of runtime type interrogation. Here is one from a real AI-generated error handler:
 
 ```typescript
