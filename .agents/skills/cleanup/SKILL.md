@@ -1,5 +1,6 @@
 ---
-description: End-to-end repo housekeeping pass — branch sync, submodule hygiene, stuck-deploy recovery, doc triage, E2E smoke. Reports surgically, only does what's safe.
+name: cleanup
+description: End-to-end repo housekeeping pass — branch sync, submodule hygiene, stuck-deploy recovery, doc triage, E2E smoke. Use at session start or when repo/deploy state is unclear. Reports surgically; only applies safe fixes.
 ---
 
 # /cleanup — repository housekeeping pass

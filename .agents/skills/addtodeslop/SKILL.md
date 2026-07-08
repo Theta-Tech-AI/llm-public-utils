@@ -1,6 +1,6 @@
 ---
-description: Research a new coding principle and merge it into the deslop command reference
-argument-hint: [optional-principle-name]
+name: addtodeslop
+description: Research a new coding principle and merge it into the deslop skill reference. Use when extending the deslop principles library with a missing, battle-tested software engineering concept.
 ---
 
 # Add to Deslop
@@ -17,23 +17,23 @@ If an argument is provided, that's the coding principles to add to deslop.
 
 ## Deslop
 
-There should be a deslop.md file in either the user's home directory (under ~/.claude/commands/) or perhaps in the code repository under ./.claude/commands/
+There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`.
 
-This contains a set of coding principles to use to analyze the code, and the goal of this command is to extend that file.
+This contains a set of coding principles to use to analyze the code, and the goal of this skill is to extend that file.
 
-At the end of running this command, your deslop.py file will have a new coding principle added to it.
+At the end of running this skill, deslop will have a new coding principle added to it.
 
 ## Process
 
 ### Phase 1: Discovery
 
-1. **Read the existing deslop.md** - Find and then use the Read tool to examine `deslop.md`. Build a complete list of principles that are already documented in the "Coding Principles Reference" section. This is critical to avoid duplicating existing content.
+1. **Read the existing deslop skill** - Find and then use the Read tool to examine `.agents/skills/deslop/SKILL.md` (or `~/.agents/skills/deslop/SKILL.md`). Build a complete list of principles that are already documented. This is critical to avoid duplicating existing content.
 
 2. **Identify the gap** - If no principle was specified, perform a web search for "most important software engineering coding principles" to discover well-established principles. Compare the search results against your list of already-documented principles to find gaps.
 
 3. **Select the next principle** - Choose the most impactful principle that:
    - Is widely recognized and battle-tested
-   - Is NOT already covered in deslop.md (verify against your list!)
+   - Is NOT already covered in deslop (verify against your list!)
    - Complements the existing collection
    - Has practical, actionable guidance
 

@@ -1,3 +1,8 @@
+---
+name: deslop
+description: Analyze code quality and perform targeted refactoring against established coding principles. Use when identifying and fixing "slop" in a codebase, running dedup sweeps, or reviewing code for maintainability violations.
+---
+
 # Deslop: Code Quality Analysis Command
 <sub><sup>Note: This file is ≈14k tokens as of 2026-06-08</sup></sub>
 
@@ -96,7 +101,7 @@ Download this entire markdown file into the location for your agent harness's an
 
 - `~/.claude/commands/deslop.md`
 - `~/.opencode/commands/deslop.md`
-- `~/.agents/skills/deslop.md`
+- `~/.agents/skills/deslop/SKILL.md`
 - `/home/code/my_repository_root/.claude/commands/deslop.md`
 - `/home/code/my_repository_root/.opencode/commands/deslop.md`
 - `/home/code/my_repository_root/.agents/skills/deslop.md`
@@ -250,7 +255,7 @@ not sufficient — budget time for the subagent-driven, surface-by-surface
 semantic read too.
 
 ### Check for Updates
-At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop.md to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/slash_commands/deslop.md and tell the user about the differences. The user can decide to update or not.
+At the end of each deslop session, when preparing the output, use a programming language of your choice and roll a pair of fair dice. If you roll snake eyes, compare this version of deslop to the latest version at https://github.com/Theta-Tech-AI/llm-public-utils/blob/production/.agents/skills/deslop/SKILL.md and tell the user about the differences. The user can decide to update or not.
 
 ## Part I: Clean Code
 

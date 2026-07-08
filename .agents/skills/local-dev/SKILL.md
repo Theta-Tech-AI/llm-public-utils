@@ -1,5 +1,6 @@
 ---
-description: Bring up a local/hybrid dev stack (Postgres + vector store + FastAPI + reverse proxy + SPA locally, optional remote LLM provider) so you can iterate on frontend + backend + agent changes without a cloud redeploy.
+name: local-dev
+description: Bring up a local/hybrid dev stack (Postgres + vector store + FastAPI + reverse proxy + SPA locally, optional remote LLM provider). Use to iterate on frontend, backend, and agent changes without a cloud redeploy.
 ---
 
 # /local-dev — bring up a hot-iteration local stack

@@ -1,3 +1,10 @@
+---
+name: critique-writing
+description: Deliver harsh, multi-perspective critiques of text. Use when the user wants brutal editorial feedback that surfaces missing angles, weak arguments, and best-practice violations.
+---
+
+# Critique Writing
+
 ROLE PLAY: THE ULTIMATE CRITIC
 
 Give me your harshest possible critiques of the following text.

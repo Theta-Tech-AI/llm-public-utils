@@ -1,3 +1,8 @@
+---
+name: smelt
+description: Separate overlay code into upstream metal and project slag. Use when deduplicating provider-agnostic improvements from project-specific overlay code in submodule/overlay workflows.
+---
+
 # /smelt — separate overlay code into upstream metal + project slag
 
 An overlay tree (the directory whose files you rsync over a shared

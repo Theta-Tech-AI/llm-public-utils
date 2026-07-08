@@ -1,3 +1,8 @@
+---
+name: shatter
+description: Break large files into focused, single-responsibility pieces. Use when a file exceeds size thresholds (~250 LOC frontend, ~400 LOC backend) or mixes multiple responsibilities.
+---
+
 # Shatter: Break Large Files Into Focused, Single-Responsibility Pieces
 
 > We hate large files. A file that crosses the size threshold or holds more than

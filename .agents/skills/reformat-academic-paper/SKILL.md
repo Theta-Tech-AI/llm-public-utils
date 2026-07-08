@@ -1,4 +1,11 @@
-# Academic Document Reformatting Prompt
+---
+name: reformat-academic-paper
+description: Reformat academic papers while preserving exact text, applying template styling, and extracting figures. Use when converting a .docx paper to a journal template with validation.
+---
+
+# Academic Document Reformatting
+
+> **Bundled asset:** For a copy-paste prompt without the full technical docs, use `PROMPT_TEMPLATE.txt` in this directory.
 
 ## Overview
 
