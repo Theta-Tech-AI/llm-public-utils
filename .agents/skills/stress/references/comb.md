@@ -26,8 +26,9 @@ But the end, you can run a super fine-toothed comb through the hair and it just 
 - Eventually, you *do* want to start finding more and more subtle bugs that will seem closer to "mischief", but by the time that happens, those are the only knots left and the hair is mostly smooth.
 
 ## Tools
-- **Agent Browser**: The "agent browser" skill is crucial here for webapps! This allows the agent to actually drive the app in a fully deployed state. It actually clicks the buttons instead of just driving it through the API. Now, also use the API and drive the app in expected and unexpected ways. It's faster. But really it's not the only tool in your toolchest, nor the best. The closest you can get to an actual user experience, the better.
-- **API**: The API is also useful for 
+- **Frontend: Agent Browser**: The "agent browser" skill is crucial here for webapps! This allows the agent to actually drive the app in a fully deployed state. It actually clicks the buttons instead of just driving it through the API. Now, also use the API and drive the app in expected and unexpected ways. It's faster. But really it's not the only tool in your toolchest, nor the best. The closest you can get to an actual user experience, the better.
+- **Backend: API**: The API is also useful for combing through the system. Simulate the "happy path" with a series of API calls. That's how the frontend would be communicating with the backend anyway.
+- **Infrastructure: CLI Tools**: Use cli tools like `az` (for Microsoft Azure) or `aws` (for Amazon Web Services) or scripts to actually check logs and telemetry of the infrastructure and backend.
 
 ## What to do with Knots?
 The option is to either fix the knot now, or file a GitHub issue for it. The default should be to file a GitHub issue for each knot and then tell the user what you filed with a full hyperlink. But sometimes, the user may want to just auto-fix the issues as you find them, so you can ask a clarifying question to the user if the instructions are unclear. TLDR: File github issues by default, or fix knots on the fly if the user wants.
