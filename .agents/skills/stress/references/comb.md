@@ -18,8 +18,16 @@ Then gradually decrease the width of the comb, teasing out subtler and subtler b
 
 But the end, you can run a super fine-toothed comb through the hair and it just flows with nearly no friction. That's where we want to be with the app.
 
+## Specifics
+- Stay close to the last path. Comb the same area of the hair / app each time, slowly moving outwards from the happy path. This introduces the benefit of reproducibility, ensuring the given happy path through the hair / app works over and over again.
+- When looking at a page on the app, get a sense of all the buttons and options of actions to potentially take, before deciding what to do.
+- Do not try to cause mischief, use the system as expected, slowly deviating.
+- Check network access, check server logs if you have access to it (to confirm the happy path is working correctly on the backend not just the frontend), check API responses if you can too, to ensure that there are no knots.
+- Eventually, you *do* want to start finding more and more subtle bugs that will seem closer to "mischief", but by the time that happens, those are the only knots left and the hair is mostly smooth.
+
 ## Tools
-The "agent browser" skill is crucial here for webapps! This allows the agent to actually drive the app in a fully deployed state. It actually clicks the buttons instead of just driving it through the API. Now, also use the API and drive the app in expected and unexpected ways. It's faster. But really it's not the only tool in your toolchest, nor the best. The closest you can get to an actual user experience, the better.
+- **Agent Browser**: The "agent browser" skill is crucial here for webapps! This allows the agent to actually drive the app in a fully deployed state. It actually clicks the buttons instead of just driving it through the API. Now, also use the API and drive the app in expected and unexpected ways. It's faster. But really it's not the only tool in your toolchest, nor the best. The closest you can get to an actual user experience, the better.
+- **API**: The API is also useful for 
 
 ## What to do with Knots?
 The option is to either fix the knot now, or file a GitHub issue for it. The default should be to file a GitHub issue for each knot and then tell the user what you filed with a full hyperlink. But sometimes, the user may want to just auto-fix the issues as you find them, so you can ask a clarifying question to the user if the instructions are unclear. TLDR: File github issues by default, or fix knots on the fly if the user wants.
