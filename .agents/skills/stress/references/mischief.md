@@ -57,6 +57,8 @@ Mischief lives on two axes. **Consciously choose** where you're spending effort 
 
 **Default order:** clear **gross** bugs first (breadth across screens/flows), then go **subtle** on surfaces that already hold under fire. A quiet subtle hunt while the CTA is dead is wasted cleverness — same spirit as comb's wide-toothed-before-fine, opposite temper.
 
+Do **not** pour a whole run into stress-testing one component six ways while gross order-of-operations bugs sit unfound across the rest of the app. We do **not** actually know the workflow "just works" under various orders of operations at each stage — that confidence has to be **earned by driving it**, not assumed because the happy path passed once. Sweep stages and illegal orderings breadth-first; only then deep-dive a single component.
+
 When you escalate on quiet, say which axis you're escalating on (more gross paths vs deeper subtle setup).
 
 ## How to be most mischievous
