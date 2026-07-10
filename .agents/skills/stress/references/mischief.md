@@ -55,11 +55,26 @@ Mischief lives on two axes. **Consciously choose** where you're spending effort 
 | **GROSS** | Obvious, immediate breakage a user hits on a normal-ish path | 500 / blank page / dead-end; gate that won't open (or opens too early); forward CTA that never appears; nav that lies; one project's data on another's page; stale "ready" after an upstream change; action silently lost | Cheap to trigger, expensive to ship — a human finds them in the first five minutes of real use |
 | **SUBTLE** | Deep edge cases inside one component or invariant | Validation keyed to id-not-version; audit hash-chain race; optimistic-concurrency gap; idempotency-key scoping | Real, but need deliberate setup and a narrow trigger |
 
-**Default order:** clear **gross** bugs first (breadth across screens/flows), then go **subtle** on surfaces that already hold under fire. A quiet subtle hunt while the CTA is dead is wasted cleverness — same spirit as comb's wide-toothed-before-fine, opposite temper.
+### Tier ladder — finish a tier before you descend
+
+The order is **GROSS first, all of it, across the whole app** — and only once you genuinely cannot find any more breakage at the current tier do you drop a level into the next tier of subtlety, work that tier to exhaustion, and so on down.
+
+Don't jump straight to clever optimistic-concurrency races while a page still 500s or dead-ends somewhere. Each level: **sweep it broad until dry**, then refine the resolution one notch and sweep again.
+
+Gross bugs first because they're the ones a user hits in five minutes **and** they're the cheapest to find — spending a subtle-bug budget while gross bugs remain is mis-prioritized effort.
+
+Practical ladder:
+
+1. **Tier 1 — hard gross:** 500s / blank / dead-ends / data-bleed / lying gates
+2. **Tier 2 — workflow gross:** stale-after-upstream-change / leaked pollers / non-terminal states / missing forward CTAs
+3. **Tier 3 — interaction:** double-submit / control-state desync / freeze (or lock) granularity
+4. **Tier 4 — deep subtle:** optimistic-concurrency / validation-version binding / audit-chain races / idempotency-key scoping
+
+**Finish a tier before you descend.** Same spirit as comb's wide-toothed-before-fine, opposite temper.
 
 Do **not** pour a whole run into stress-testing one component six ways while gross order-of-operations bugs sit unfound across the rest of the app. We do **not** actually know the workflow "just works" under various orders of operations at each stage — that confidence has to be **earned by driving it**, not assumed because the happy path passed once. Sweep stages and illegal orderings breadth-first; only then deep-dive a single component.
 
-When you escalate on quiet, say which axis you're escalating on (more gross paths vs deeper subtle setup).
+When you escalate on quiet, say which **tier** you're on and whether you're still sweeping breadth or ready to descend.
 
 ## How to be most mischievous
 
