@@ -1,6 +1,6 @@
 ---
 name: mischief
-description: Act in ways the system does not expect — out-of-order clicks, illegal API sequences, API frontend-simulator blasts, half-done flows, chaos — to surface bugs before real users do.
+description: Red-team the app on purpose — break staging with creative, context-derived, relentless attacks (UI and API) so users never hit those cracks. Use for mischief, chaos testing, hostile inputs, wrong-order flows, and hardening before release.
 ---
 
 # Mischief
@@ -9,11 +9,39 @@ Cause mischief: act in ways the system *does not expect*. Click out of order. Hi
 
 Shared how-to: [driving.md](driving.md) · [findings.md](findings.md).
 
-## Why
+## Purpose (red team)
 
-Humans (and buggy clients) are excellent at breaking software by accident. Better that an agent finds those breaks first. Mischief hardens the app against strange, impatient, multi-tab, multi-user, and multi-request reality.
+Your job is to **try to break staging** — so the user doesn't have to.
 
-Know the happy path first (a short [comb](comb.md) pass helps). Mischief without a map is just noise.
+Break it early, on purpose, in private, so that by the time it reaches real hands it is smooth as butter and solid as a rock — it "just works." Every bug you flush out here is one a user never hits in real usage.
+
+Be relentless: **actively try to break it**. Do not merely confirm it works. Hunt for the click order, the input, the timing, the concurrency, the load that makes it fall over.
+
+A quiet run does **not** mean the system is whole — it means you weren't aggressive or creative enough. **Escalate** (add concurrency, add timing, add malformed input, combine categories) until something gives.
+
+You are not here to bless the happy path. You are here to find where it cracks, before the user does. **Break it on purpose, here, now — that is the job. A found bug is the goal, never a setback.**
+
+## Philosophy
+
+Mischief has a purpose. The better you get at breaking it — the more creative, more devious, more relentless the attack — the more hardened the system becomes. Every crack you find gets a fix and a regression anchor; the surface that survives your worst is the surface the user can trust.
+
+Embrace your mischief. Don't hold back the weird idea, the absurd ordering, the hostile input — that is exactly the one a real user will stumble into. **Creativity in breaking is the engine of hardening**; the meaner you are to staging today, the smoother it is for the real user tomorrow.
+
+Know the happy path first (a short [comb](comb.md) pass helps) so your attacks are aimed — but do not stop at "it worked once."
+
+## Absorb context, then invent *this* attack
+
+Mischief is most lethal when it is **specific to what you're looking at**, not a generic payload fired blind.
+
+1. **Absorb the bigger picture first.** Look at the actual frontend in front of you — this screen, this project's (or tenant's) state, this data model, this workflow stage, this domain constraint, what just changed in the last deploy. Read the page, read the code behind it, understand what it's trying to do and what it's *assuming*.
+2. **Invent the attack this surface invites.** Ask:
+   - Given everything I now understand, what weird / hostile / impatient / confused thing could a real user do *right here* that the authors probably didn't think about?
+   - What assumption is this screen (or endpoint) making that I can violate?
+   - What two features interact in a way nobody tested?
+   - What happens at the seam between this component and the next?
+3. That **context-derived attack** — the one no catalog entry names — is worth more than ten generic ones. Derive it from the details + the big picture; don't wait to be told.
+
+Then escalate: if the clever attack fails quietly, combine it with concurrency, timing, malformed input, or a second actor until the crack shows — or you've earned a hard-won "held under fire" for *this* surface.
 
 ## How to be most mischievous
 
@@ -22,6 +50,7 @@ Know the happy path first (a short [comb](comb.md) pass helps). Mischief without
 3. **Challenge gates.** Are the live buttons / allowed methods the ones that *should* be live? What happens if you force the "wrong" action via UI **or** API? UI-blocked but API-allowed (or the reverse) is a classic bug class — see twin mischief in [driving.md](driving.md).
 4. **Use the code.** Ugly workflows and confusing branches are a map of where to strike next.
 5. **Go breadth-first on gross breaks**, then subtler races and state corruption — same axis as comb, opposite temper.
+6. **Escalate on quiet.** No bug yet → add concurrency, timing, malformed input, cross-resource refs, multi-actor; combine categories. Quiet ≠ done.
 
 ## High-yield: API frontend-simulator
 
@@ -37,7 +66,7 @@ A fast, systematic, **no-browser** mischief mode: reverse-engineer what the fron
    - **Unexpected concurrency** — parallel identical writes, two roles on one lock, overlapping submits
 4. **Watch for real bug classes this method repeatedly finds:** input validation gaps, cross-project (or cross-tenant) references accepted, audit/atomicity failures (partial writes, missing audit rows, success response with rolled-back state).
 
-This is not random noise — it is a **hostile simulator of the frontend's API usage**, then the same calls in illegal sequences and shapes. Pair with [driving.md](driving.md) API techniques; file per [findings.md](findings.md) as soon as something confirms.
+This is not random noise — it is a **hostile simulator of the frontend's API usage**, then the same calls in illegal sequences and shapes. Still prefer **context-derived** variants once you know *this* screen's assumptions. Pair with [driving.md](driving.md) API techniques; file per [findings.md](findings.md) as soon as something confirms.
 
 Sketch:
 
@@ -72,7 +101,7 @@ Multi-actor (two sessions / two tokens / two roles, one shared resource) loves m
 
 ## Bugs
 
-Handle per [findings.md](findings.md). Default: file issues and report links — filing *is* the point unless the user asked to auto-fix.
+Handle per [findings.md](findings.md). Default: file issues and report links — filing *is* the point unless the user asked to auto-fix. A found bug is success: capture it durably, then keep hunting.
 
 ## See also
 
