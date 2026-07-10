@@ -1,6 +1,6 @@
 ---
 name: findings
-description: What to do when stress testing finds a bug — GitHub issues by default, artifacts when needed, auto-fix only when asked. Over-document repros, evidence, fix suggestions, and labels (including severity and model).
+description: What to do when stress testing finds a bug — search before filing, file early, over-document repros/evidence/fixes/labels, Fixes/Closes on PRs, subagents must file issues not only final messages.
 ---
 
 # Findings: What To Do With Bugs
@@ -18,6 +18,16 @@ Shared policy for comb, mischief, and bug hunter. Modes decide *how* to hunt; th
 
 **GitHub smoke test:** before a batch of real issues, create a throwaway issue and delete it to prove permissions.
 
+### File early — durability over polish
+
+File or update a GitHub issue **as soon as a real bug or scoped follow-up is confirmed**. Do this **before or alongside** the fix — not after the deploy — so the finding survives if the session ends, the agent crashes, or context is lost.
+
+A final-message-only finding is **not durable**. Comments can always be added later to flesh out repro, evidence, or fix notes. Prefer: confirm → search → file/comment → then fix/deploy → comment again with verification.
+
+### Subagents must file too
+
+If you spawn subagents, their prompt must **explicitly require** GitHub issue creation or commenting for every confirmed finding (same detail bar as this doc). Do not let a subagent return bugs only in its final message to the parent — that dies with the session. The parent should verify issue URLs exist before treating the hunt as done.
+
 ## What counts as a "real" finding
 
 Do **not** file from a single flaky signal. Cross-check before filing:
@@ -32,6 +42,27 @@ A scary screenshot is not a bug until another layer agrees. A clean screenshot i
 Rule out false alarms: deploy/roll in flight, stale SPA, your own earlier mutations, tool limitations. See [driving.md](driving.md).
 
 One distinct bug per issue. Don't dump a whole session into a single ticket.
+
+---
+
+## Search before filing (avoid duplicates)
+
+Before opening a new issue, search existing ones (open **and** closed):
+
+```bash
+gh issue list --state all --limit 50 --search "keyword1 keyword2"
+# Examples:
+gh issue list --state all --search "double submit order"
+gh issue list --state all --search "workflow-state Continue enabled"
+```
+
+| Result | Action |
+|--------|--------|
+| **Close match exists** | **Comment** on that issue with the new evidence, environment, repro delta, and links — do **not** open a duplicate |
+| **Related but distinct** | Open a new issue; link the related one (`Related to #N`) and explain the difference |
+| **Nothing close** | Create a new issue with the full template below |
+
+When commenting on an existing issue, still be overly detailed: what you tried, what differed from the original report, new permalinks, whether it still reproduces on current SHA.
 
 ---
 
@@ -228,6 +259,44 @@ gh issue create --title "…" --body-file /tmp/issue.md \
 ```
 
 List first so you reuse existing names when close enough (`gh label list`), but **prefer adding a precise label** over overloading a vague one.
+
+---
+
+## Fixing and closing issues
+
+When you implement a fix:
+
+1. **Reference the issue from the commit and/or PR** so GitHub auto-closes it on merge:
+
+   ```text
+   Fixes #123
+   Closes #123
+   ```
+
+   Put `Fixes #N` / `Closes #N` in the PR body (and/or the merge commit message). Use `Refs #N` when the PR only partially addresses the issue.
+
+2. **File/update the issue before the fix lands** if it is not already filed (see File early above).
+
+3. **If the fix is committed but not live-verified**, comment on the issue with the **exact staging (or target-env) verification still required** — URL, account, steps, expected signal that proves the fix. Do not imply "done" until that verification has been run (or the user waives it).
+
+4. After live verification, comment with the result (SHA/deploy id, steps run, pass/fail). If it failed, reopen or leave open and say so.
+
+```bash
+gh issue comment 123 --body "$(cat <<'EOF'
+## Fix landed — live verify still required
+
+- PR: https://github.com/org/repo/pull/456
+- Commit: abcdef0
+- Not yet verified on staging.
+
+### Staging verification checklist
+1. Deploy/promote includes abcdef0
+2. As user X on https://staging.example.com/...
+3. Repro steps from issue body — expect <new behavior>
+4. Confirm API: `curl …` returns <expected>
+EOF
+)"
+```
 
 ---
 
