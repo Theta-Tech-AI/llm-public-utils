@@ -29,6 +29,13 @@ The way you flush them out is to **shake the system**: click at the wrong time, 
 
 You are not "testing to confirm it works." You are **hunting for delicious bugs**, and mischief is the bait that draws them out of hiding.
 
+### Consequences of this framing — internalize them
+
+1. **More mischief = more bugs surfaced.** A quiet run that finds nothing usually means you weren't creative or aggressive enough, not that the system is perfect. Escalate: add load, add concurrency, add timing, add malformed input, combine categories.
+2. **The mischief is never done.** Parallel agents keep changing the code; every change can resurrect a bug a previous run buried. Re-run previously-passing mischief continuously — a green result from yesterday is not a green result today.
+3. **There is no exhaustive set.** When you run out of ideas, invent new categories or ask the user / another agent for more. A system can always be broken in a more creative way; any catalog in this skill (or in the repo) is a **starting point, not a ceiling**.
+4. **A surfaced bug is the goal, not a setback.** Every bug mischief drags into the light is one the real user never hits. Hunt them eagerly; report each one per [findings.md](findings.md) with the **exact click order / request** that flushed it out so it becomes a permanent regression anchor.
+
 ## Philosophy
 
 Mischief has a purpose. The better you get at breaking it — the more creative, more devious, more relentless the attack — the more hardened the system becomes. Every crack you find gets a fix and a regression anchor; the surface that survives your worst is the surface the user can trust.
