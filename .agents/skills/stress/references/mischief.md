@@ -15,28 +15,46 @@ Mischief has a purpose. The better you get at breaking it — the more creative,
 
 Embrace your mischief. Don't hold back the weird idea, the absurd ordering, the hostile input — that is exactly the one a real user will stumble into. **Creativity in breaking is the engine of hardening**; the meaner you are to staging today, the smoother it is for the real user tomorrow.
 
-You are not "testing to confirm it works." You are **hunting for delicious bugs**, and mischief is the bait that draws them out of hiding. Bugs don't announce themselves on the happy path; they sit buried under "works fine in the demo." Shake the system — wrong time, wrong order, twice, under load, garbage input, while another agent mutates the step above — until latent bugs scatter into the open.
-
-**The radio test.** You don't prove a new radio by reading the manual's button list — you mash every button in every order, plug it in wrong, drop it, and see what rattles. Same here. Look at the frontend and be creative. The catalog names the buttons; **your job is to find the order of presses nobody tried.**
+You are not "testing to confirm it works." You are **hunting for delicious bugs**, and mischief is the bait that draws them out of hiding. Bugs sit buried under "works fine in the demo." Shake the system until they scatter into the open: the race that only fires on double-click, the gate that only dead-ends after a refreeze, the 500 that only appears when a dependency is down.
 
 ## Mission
 
 Break staging early, on purpose, in private, so real users get something that "just works." You are not here to bless the happy path — you are here to find where it cracks. **A found bug is the goal, never a setback.**
 
-Internalize:
-
 | Rule | Meaning |
 |------|---------|
-| Quiet ≠ whole | You weren't aggressive enough. Escalate (load, concurrency, timing, malformed input, combine categories) until something gives. |
+| Quiet ≠ whole | Escalate (load, concurrency, timing, malformed input, combine categories) until something gives. |
 | Never done | Parallel agents change code; yesterday's green is not today's. Re-break continuously. |
 | No ceiling | Catalogs are a floor. Invent new categories when you run dry. |
-| Capture the bait | File per [findings.md](findings.md) with the **exact** click order / request that flushed the bug — make it a regression anchor. |
+| Capture the bait | File per [findings.md](findings.md) with the **exact** click order / request — make it a regression anchor. |
 
-## Discipline: gross → subtle, map → break
+## How to hunt
 
-### Tier ladder — finish a tier before you descend
+One loop. Stay in it.
 
-Sweep **breadth-first until dry**, then drop one notch of subtlety and sweep again. Do not pour a run into one component six ways while order-of-operations bugs sit unfound across the app. Workflow confidence is **earned by driving illegal orderings**, not assumed from one happy-path pass.
+```text
+recon → pick tier → pick hands (browser / API / both)
+     → invent the attack this page invites → execute
+     → cross-check (UI lies) → file if real → escalate or descend tier
+```
+
+### 1. Recon — re-map before you re-break
+
+Other agents ship new routes, tabs, buttons, and relabels constantly. **New UI/API area = new place bugs hide** — and the freshest, least-hardened code is exactly where state-machine bugs live. The bug that reaches a human first is usually in the place you didn't know existed yet.
+
+Every few runs — and **always after a deploy** — recon from scratch:
+
+1. Cold-open (or hard-refresh); walk primary nav and every tab/sub-page reachable in this workflow stage.
+2. `snapshot -i` / inventory controls anew — names, enabled/disabled, new CTAs, moved buttons.
+3. Diff against your last map: appeared, disappeared, changed meaning?
+4. Prefer **new and changed** areas first at your current tier — least battle-tested.
+5. Re-check gates and order-of-operations on paths you thought were "done"; merges reintroduce gross breakage.
+
+**Re-map before you re-break.** A catalog from yesterday is not a map of today's app.
+
+### 2. Prioritize — finish a tier before you descend
+
+Gross first, all of it, across the whole app. Sweep **breadth until dry**, then drop one notch of subtlety and sweep again. Do **not** deep-dive one component six ways while order-of-operations bugs sit unfound elsewhere. Workflow confidence is **earned by driving illegal orderings**, not assumed from one happy-path pass.
 
 | Tier | Hunt |
 |------|------|
@@ -45,64 +63,55 @@ Sweep **breadth-first until dry**, then drop one notch of subtlety and sweep aga
 | **3 — interaction** | double-submit / control-state desync / lock-or-freeze granularity |
 | **4 — deep subtle** | optimistic concurrency / validation-version binding / audit-chain races / idempotency-key scoping |
 
-Gross first: cheapest to find, first thing a human hits in five minutes. Say which tier you're on when you escalate.
+Say which tier you're on when you escalate. Same spirit as comb's wide-tooth-before-fine — opposite temper.
 
-### Recon — re-map before you re-break
+### 3. Pick your hands — browser, API, or both
 
-Other agents ship new routes, tabs, buttons, and relabels constantly. **New surface = new attack surface**; freshest code hides state-machine bugs. Every few runs — and **always after a deploy** — recon from scratch: cold open, walk nav/sub-pages, inventory controls, prefer **new/changed** surfaces, re-check paths you thought were done. The bug that reaches a human first is usually in the surface you didn't know existed. **Re-map before you re-break.**
+These are **how you touch the app**, not "attack surfaces" (that's the page/route/API you're targeting after recon).
 
-## How to hunt
+| Hands | Best for |
+|-------|----------|
+| **Browser** | Chaotic user: wrong-order clicks, Back, multi-tab, abandon mid-wizard, every workbench control |
+| **API** | Contracts, concurrency, illegal sequences, payload matrices — fast and systematic |
+| **Both (hybrid)** | Discover in UI → amplify with scripts; or break API → see if UI recovers or lies |
 
-### 1. Absorb this surface, invent *this* attack
+Full install/usage and API technique tables: [driving.md](driving.md). Ask consent before installing agent-browser.
 
-Blind generic payloads are weak. Read the page, the state, the data model, the workflow stage, the last deploy, the code behind it — what is it *assuming*? Inventory every control, then treat that inventory as raw material for illegal sequences, not a tick-list.
+### 4. Invent the attack *this* page invites (radio test in practice)
 
-Ask: What impatient/confused/hostile thing could a user do *right here*? What assumption can I violate? What two features interact untested? What seam between this component and the next? What press-order has nobody tried?
+You don't prove a radio by reading the button list — you mash every button in every order, plug it in wrong, drop it, and see what rattles. **The catalog names the buttons; your job is the order of presses nobody tried.**
 
-That context-derived attack beats ten catalog entries. If it fails quietly, escalate until it rattles — or you've earned "held under fire" for *this* surface at *this* tier.
+1. Absorb: this screen, this entity's state, data model, workflow stage, domain constraint, last deploy, code behind it — what is it *assuming*?
+2. Inventory every control — then treat that list as raw material for illegal sequences, not a checklist to tick.
+3. Ask: What impatient/confused/hostile thing could a user do *right here*? What assumption can I violate? What two features interact untested? What seam with the next step? What press-order has nobody tried?
+4. Execute that context-derived attack. If quiet, escalate until it rattles — or you've earned "held under fire" for *this* page at *this* tier.
 
-### 2. Cross-check always — the UI lies by omission
+Blind generic payloads are weak. Specific mischief is lethal.
+
+### 5. Cross-check always — the UI lies by omission
 
 A clean snapshot is **not** proof. Mischief triggers 4xx/5xx constantly; SPAs swallow them into "button does nothing." Half the best bugs never appear on screen.
 
-Every probe: UI observation → `console` + `network` (xhr/fetch, 4xx/5xx) → API probe of the same resource → logs if needed. Twin mischief (UI silent / API screaming, or UI blocked / API allowed) is this class. See [driving.md](driving.md).
+Every probe: UI → `console` + `network` (xhr/fetch, 4xx/5xx) → API probe of the same resource → logs if needed. Twin mischief (UI silent / API screaming, or UI blocked / API allowed) is this class.
 
-### 3. Poke every tool — not only the forward CTA
+### 6. Patterns that flush bugs
 
-Each route is a **workbench**. Demo-untouched tools hide unguarded mutations: secondary checkers, attach/verify, version rails, per-row links, regenerate, review handshakes, advanced panels.
+**Poke every tool, not only the forward CTA.** Each route is a workbench — demo-untouched tools hide unguarded mutations (secondary checkers, attach/verify, version rails, per-row links, regenerate, review handshakes, advanced panels). Hostile-drive each: wrong time, twice, while a job is live, after delete, second token. Once tier-1 on the page is dry, prefer obscure tools.
 
-`snapshot -i` → hostile-drive **each** control (wrong time, twice, while a job is live, after delete, second token) → cross-check every time. Once tier-1 on the page is dry, prefer obscure tools.
+**Agent-browser gotchas:** refs go stale after re-renders — re-`snapshot -i` before each repeated click. Read content via snapshot/get-text. Wrap `eval` in an IIFE. Details in [driving.md](driving.md).
 
-**Agent-browser:** refs go stale after re-renders — re-`snapshot -i` before each repeated click. Read content via snapshot/get-text, not a naive eval. Wrap `eval` bodies in an IIFE (`return` at top level throws).
+**Human factor — abandon, wander, change your mind.** Start mid-flight → navigate away → other entity → return. Interrupt with Back, tab close, second session, competing API. Watch for leaked pollers, orphaned leases/locks, stranded modals, lost/zombie drafts, cross-entity data bleed (tier 1–2).
 
-### 4. Human factor — abandon, wander, change your mind
+**Moves that hurt:** wrong order/time; create→delete→mutate; double-submit; stale token; two writers on one lock; multi-actor; force the "disabled" action via API (or reverse); use ugly code as a map of where to strike; escalate on quiet.
 
-Real users start, bail, jump elsewhere, wander back. Practice it: start mid-flight → navigate away → other entity → return. Interrupt with Back, tab close, second session, competing API.
+### 7. API frontend-simulator (high-yield hands)
 
-Watch for: leaked pollers, orphaned leases/locks, stranded modals, lost or zombie drafts, cross-project/tenant data bleed. Classic tier-1/2.
-
-### 5. Moves that hurt
-
-- Wrong order / wrong time; create → delete → mutate; approve before submit
-- Double-submit; stale token; two writers on one lock; multi-actor / multi-tab
-- Force the "disabled" action via API (or the reverse) — gate lies
-- Use ugly code paths as a map of where to strike next
-- Escalate on quiet — quiet ≠ done
-
-## Surfaces
-
-| Surface | Use when |
-|---------|----------|
-| **Browser** | Chaotic user: out-of-order clicks, Back, multi-tab, abandon mid-wizard, every workbench tool |
-| **API frontend-simulator** | Systematic, no-browser: map what the UI would send, then break it |
-| **Hybrid** | Discover in UI → amplify with scripts; or break API → see if UI recovers or lies |
-
-### API frontend-simulator (high yield)
+No browser required: reverse-engineer what the frontend would send, then break that conversation.
 
 1. Map mutations from SPA client / OpenAPI / HAR (`POST`/`PUT`/`PATCH`/`DELETE` + usual order).
-2. Create a disposable scratch resource (superuser token OK for *create* only); attack with normal user tokens; prefix `MISCHIEF-…` / `SCRATCH-…`; clean up.
+2. Create disposable scratch (superuser OK for *create* only); attack with normal user tokens; prefix `MISCHIEF-…` / `SCRATCH-…`; clean up.
 3. Blast each mutation: malformed, contradictory, **cross-resource IDs**, wrong order/time, unexpected concurrency.
-4. Bug classes this repeatedly finds: validation gaps, cross-tenant/project refs accepted, audit/atomicity failures.
+4. Often finds: validation gaps, cross-tenant/project refs accepted, audit/atomicity failures.
 
 ```bash
 SCRATCH=$(curl -sS -X POST "$BASE/api/projects" -H "authorization: Bearer $SUPERUSER_TOKEN" \
@@ -115,8 +124,6 @@ curl -sS -X PATCH "$BASE/api/projects/$SCRATCH/items/$OTHER_PROJECT_ITEM_ID" \
 seq 1 10 | xargs -P 10 -I{} curl -sS -o /dev/null -w "%{http_code}\n" -X POST \
   "$BASE/api/projects/$SCRATCH/submit" -H "authorization: Bearer $USER_TOKEN"
 ```
-
-More API patterns: [driving.md](driving.md).
 
 ## Report
 
