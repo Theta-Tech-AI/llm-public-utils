@@ -180,6 +180,98 @@ is always "is this the same knowledge," never "how many times does it appear."
 Apply the True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY
 section above starting at the second occurrence.
 
+**A taxonomy of duplication — hunt on three axes.** "Duplication" is not one
+thing; a sweep that only imagines copy-pasted blocks misses most of it. Slice
+the hunt along three independent axes: WHAT is duplicated, WHERE it lives, and
+HOW it fails. Each cell of that grid is a different search technique.
+
+*Axis 1 — WHAT is duplicated (the substance):*
+
+1. **Text/token clones** — literal copy-paste, possibly renamed. The only kind
+   scanners catch. Cheapest to find, often the least interesting.
+2. **Logic/algorithm duplication** — the same computation re-expressed with
+   different names, reordered branches, or a different idiom.
+3. **Business-rule duplication** — the same *decision* (eligibility, gating,
+   validation, staleness) encoded independently at two decision points.
+4. **Flow/orchestration duplication** — the same multi-step sequence
+   (validate → mutate → audit → notify) re-scripted across handlers.
+5. **Control-flow skeleton duplication** — the same try/except/retry/branch
+   shell wrapped around different cores (retry loops, lock idioms).
+6. **Constant/literal duplication** — magic strings, status enums, sentinels,
+   thresholds, poll intervals, event-type names free-typed at each use site.
+7. **Data-structure/shape duplication** — one record shape declared as a
+   TypedDict AND a Pydantic model AND a TS interface AND a DDL column list.
+8. **Query/predicate duplication** — the same logical WHERE/JOIN ("latest
+   version of X", "active run for Y") re-derived in multiple queries with
+   subtly different SQL.
+9. **Schema/DDL duplication** — the same table/trigger shaped by more than
+   one ensure/migration path.
+10. **State duplication** — the same fact persisted in two stores
+    (client cache + server, two tables, derived column + source) with no
+    single writer.
+11. **Abstraction duplication** — two competing helpers/base classes/wrapper
+    layers for the same concept, each with partial adoption.
+12. **Utility duplication** — generic helpers (date formatting, retry,
+    slugify, clamping) re-implemented per module, or re-implemented locally
+    when a vendored/upstream utility already exists.
+13. **Interface/API duplication** — two endpoints doing the same job;
+    inconsistent error envelopes/pagination across sibling routes; duplicated
+    client wrappers.
+14. **Configuration duplication** — the same values/lists/section orders in
+    multiple config files, env templates, IaC modules, CI workflows.
+15. **Prompt/instruction duplication** — the same LLM rule (citation policy,
+    identity constraints, formatting) restated across prompt surfaces that
+    can drift independently.
+16. **Structural/organizational duplication** — parallel package trees or
+    file layouts that must evolve in lockstep; whole shadow/fork files
+    (overlay-vs-upstream) differing in a few lines.
+17. **Temporal duplication** — old and new implementations coexisting after a
+    migration ("dual paths", provider-order knobs, dead fallbacks).
+18. **Test-knowledge duplication** — fixtures, scaffolds, and patch-sets
+    encoding the same setup knowledge across suites (real, but usually the
+    lowest-priority tier).
+
+*Axis 2 — WHERE it lives (the boundary):* intra-function self-clone →
+intra-file → cross-file within a module → cross-module → cross-layer
+(frontend ↔ backend ↔ DB) → cross-artifact-type (code ↔ config ↔ prompt ↔
+schema ↔ docs) → cross-repo (overlay ↔ upstream, fork ↔ origin) →
+cross-language. Search cost rises along this axis — and so does drift damage,
+because fewer eyes ever see both copies at once.
+
+*Axis 3 — HOW it fails (why it matters):* silent drift (copies diverge and one
+becomes a lie); shotgun surgery (every change needs N synchronized edits);
+inconsistent behavior (the user hits a different rule depending on code path);
+misleading authority (readers trust the stale copy — worst when a doc or
+guidance file *claims* to quote the authoritative text); doubled test burden.
+Rank findings by failure mode, not by clone size: a 2-line already-drifted
+contract beats a 200-line mechanically-identical scaffold.
+
+**Empirical notes from mining ~900 real dedup findings** (multiple scanner
+generations over one production codebase):
+
+- **Where fixing pays:** local, mechanical, single-language clones — intra-file
+  self-clones, sibling-module logic clones, router/endpoint patterns, and
+  schema/DDL duplication had ~100% fix rates. **Where it stalls:** cross-layer
+  contract drift and config/prompt drift — real and dangerous, but the remedy
+  is a shared source of truth, codegen, or a sync contract test, not a code
+  move; file those with the remedy named or they rot.
+- **Dedupe the dedup tracker first.** Successive scanner generations re-file
+  the same clones (one triple-clone was filed 9–12 times). Before filing,
+  search open AND closed prior findings; before fixing, re-scan at HEAD — the
+  clone may already be gone.
+- **Deliberate symmetry is the dominant false positive.** Parallel domain
+  packages built to the same scaffold, framework DI idioms, per-model config
+  lines, parent→child prop passing, and belt-and-suspenders security checks
+  *look* duplicated and must not be merged. So do test seams: module-level
+  wrappers kept so tests can patch by name. Ask "would merging couple things
+  that evolve independently?" before proposing an extraction.
+- **The gold finding is already-drifted duplication**: two surfaces that claim
+  to state the same contract and already disagree. Diff every pair of
+  surfaces that *should* agree (guidance vs renderer, DB CHECK vs frontend
+  enum, template vs prompt) — where they differ, you have both a bug and the
+  proof the duplication matters. Where they still agree, pin them with a sync
+  contract test so the drift fails loudly next time.
+
 **Two complementary approaches — use both, they catch different things:**
 
 - **Token/AST matching (mechanical).** Tools like `jscpd`, `pmd-cpd`, or a
