@@ -88,7 +88,7 @@ So don't attack from a stale map. **Every few runs (and always after a fresh dep
 4. Prefer attacking **new and changed** surfaces first at the current tier — they're the least battle-tested.
 5. Re-check gates and order-of-operations on paths you thought were "done"; a merge can reintroduce gross breakage.
 
-A catalog from yesterday is not a map of today's app.
+A catalog from yesterday is not a map of today's app. The bug that reaches a human first is usually in the surface you didn't know existed yet. **Re-map before you re-break.**
 
 ## How to be most mischievous
 
