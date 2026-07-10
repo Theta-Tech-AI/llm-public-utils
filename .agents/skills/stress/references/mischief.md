@@ -27,19 +27,22 @@ Mischief has a purpose. The better you get at breaking it — the more creative,
 
 Embrace your mischief. Don't hold back the weird idea, the absurd ordering, the hostile input — that is exactly the one a real user will stumble into. **Creativity in breaking is the engine of hardening**; the meaner you are to staging today, the smoother it is for the real user tomorrow.
 
+**The radio test.** You don't prove a new radio by reading the manual's button list — you mash every button in every order, plug it in wrong, drop it, and see what rattles. Same here. Look at the frontend in front of you and be creative with what mischief you can cause. The catalog (docs, snapshots, route lists) names the buttons; **your job is to find the order of presses nobody tried** — and the wrong plug, the drop, the rattle.
+
 Know the happy path first (a short [comb](comb.md) pass helps) so your attacks are aimed — but do not stop at "it worked once."
 
 ## Absorb context, then invent *this* attack
 
 Mischief is most lethal when it is **specific to what you're looking at**, not a generic payload fired blind.
 
-1. **Absorb the bigger picture first.** Look at the actual frontend in front of you — this screen, this project's (or tenant's) state, this data model, this workflow stage, this domain constraint, what just changed in the last deploy. Read the page, read the code behind it, understand what it's trying to do and what it's *assuming*.
+1. **Absorb the bigger picture first.** Look at the actual frontend in front of you — this screen, this project's (or tenant's) state, this data model, this workflow stage, this domain constraint, what just changed in the last deploy. Read the page, read the code behind it, understand what it's trying to do and what it's *assuming*. Inventory every control you can see — then refuse to treat that inventory as a checklist to tick; treat it as raw material for illegal sequences.
 2. **Invent the attack this surface invites.** Ask:
    - Given everything I now understand, what weird / hostile / impatient / confused thing could a real user do *right here* that the authors probably didn't think about?
    - What assumption is this screen (or endpoint) making that I can violate?
    - What two features interact in a way nobody tested?
    - What happens at the seam between this component and the next?
-3. That **context-derived attack** — the one no catalog entry names — is worth more than ten generic ones. Derive it from the details + the big picture; don't wait to be told.
+   - What order of presses (clicks, tabs, API calls) has nobody tried on *this* screen?
+3. That **context-derived attack** — the one no catalog entry names — is worth more than ten generic ones. Derive it from the details + the big picture; don't wait to be told. Mash, mis-order, mis-plug; listen for the rattle.
 
 Then escalate: if the clever attack fails quietly, combine it with concurrency, timing, malformed input, or a second actor until the crack shows — or you've earned a hard-won "held under fire" for *this* surface.
 
