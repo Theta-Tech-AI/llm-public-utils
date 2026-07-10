@@ -16,3 +16,7 @@ Hey, guess what - you don't just have the ability to use the app and drive it vi
 
 ## What to do with bugs?
 If the user doesn't ask or redirect, the default behavior is to take the current repository's GitHub and file an issue, then tell the user at the end what you did with hyperlinks to that. Or maybe if they're not on GitHub they may want the mischief findings to go to a markdown or HTML file. Barring that, sometimes the user may want to direct you to auto-fix any bugs you find as you cause mischief. Use your judgment if you think that's the intention of the user given the context you have. But usually it's just cause mischief and file GitHub issues for each bug you find. Because that's the point of the mischief - to shake up the ground and let the bugs come to the surface.
+
+## See Also
+- [comb.md](comb.md)
+- [bug-hunter.md](bug-hunter.md)

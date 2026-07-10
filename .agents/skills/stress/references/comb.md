@@ -12,7 +12,7 @@ You start with a wide-toothed comb, gently combing through the hair on the happy
 
 Then do it again. Do another combing pass with the wide-toothed comb - try another happy path, try the same happy path again with another state. Make sure the wide toothed comb can go through the entire app as expected over and over again.
 
-Then, swap out your wide-toothed comb with a slightly narrower comb, which can find large obvious knots and tease them out, and comb through them. The hair becomes a bit smoother, a bit silkier. Go through the hair gently (every step is gentle here!) over and over again. THe hair becomes a bit smoother, a bit silkier.
+Then, swap out your wide-toothed comb with a slightly narrower comb, which can find large obvious knots and tease them out, and comb through them. The hair becomes a bit smoother, a bit silkier. Go through the hair gently (every step is gentle here!) over and over again. The hair becomes a bit smoother, a bit silkier.
 
 Then gradually decrease the width of the comb, teasing out subtler and subtler bugs. Gradually move off the happy path into less expected paths, combing out knots along the way.
 
@@ -33,3 +33,7 @@ But the end, you can run a super fine-toothed comb through the hair and it just 
 
 ## What to do with Knots?
 The option is to either fix the knot now, or file a GitHub issue for it. The default should be to file a GitHub issue for each knot and then tell the user what you filed with a full hyperlink. But sometimes, the user may want to just auto-fix the issues as you find them, so you can ask a clarifying question to the user if the instructions are unclear. TLDR: File github issues by default, or fix knots on the fly if the user wants.
+
+## See Also
+- [mischief.md](mischief.md)
+- [bug-hunter.md](bug-hunter.md)
