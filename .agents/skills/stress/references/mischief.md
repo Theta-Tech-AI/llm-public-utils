@@ -70,6 +70,20 @@ For every page you land on:
 - **Read rendered document/content via snapshot** (or dedicated get-text on a scoped ref). Some layouts do not expose body text to a naive page `eval`; don't conclude "empty/missing" from a bad eval.
 - **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
 
+## The human factor — abandon, wander, change your mind
+
+A real user does **not** move through the app's workflow as expected. They start something, change their mind, jump to a different part of the app, change their mind again, wander back.
+
+Every abandoned-mid-flight action is a chance to:
+
+- leak a poller / background timer
+- orphan a lease or lock
+- strand a half-open modal
+- lose an unsaved edit (or silently keep a draft that shouldn't exist)
+- bleed one project's (or tenant's) data onto another's page
+
+**Practice this on purpose.** Start a long-running or multi-step action → navigate away → come back → open another entity → return to the first. Interrupt with Back, tab close, second session, or a competing API call. Gross tier loves these; they show up in five minutes of impatient human use.
+
 ## Philosophy
 
 Mischief has a purpose. The better you get at breaking it — the more creative, more devious, more relentless the attack — the more hardened the system becomes. Every crack you find gets a fix and a regression anchor; the surface that survives your worst is the surface the user can trust.
