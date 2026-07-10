@@ -76,6 +76,20 @@ Do **not** pour a whole run into stress-testing one component six ways while gro
 
 When you escalate on quiet, say which **tier** you're on and whether you're still sweeping breadth or ready to descend.
 
+### Recon — don't attack from a stale map
+
+Other agents (and humans) continuously ship new routes, sub-pages, tabs, and buttons, and relabel/move existing controls. **New surface = new attack surface** — and the freshest, least-hardened code is exactly where state-machine bugs hide.
+
+So don't attack from a stale map. **Every few runs (and always after a fresh deploy lands), do a from-scratch recon:**
+
+1. Open the app cold (or hard-refresh); walk primary nav and every tab/sub-page you can reach in the current workflow stage.
+2. Snapshot or inventory controls anew — names, enabled/disabled, new CTAs, moved buttons.
+3. Diff mentally (or in notes) against your last map: what appeared, disappeared, or changed meaning?
+4. Prefer attacking **new and changed** surfaces first at the current tier — they're the least battle-tested.
+5. Re-check gates and order-of-operations on paths you thought were "done"; a merge can reintroduce gross breakage.
+
+A catalog from yesterday is not a map of today's app.
+
 ## How to be most mischievous
 
 1. **Look before you leap.** Observe current UI state *or* resource/API state. Guessing blind wastes probes.
