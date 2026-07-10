@@ -36,6 +36,23 @@ You are not "testing to confirm it works." You are **hunting for delicious bugs*
 3. **There is no exhaustive set.** When you run out of ideas, invent new categories or ask the user / another agent for more. A system can always be broken in a more creative way; any catalog in this skill (or in the repo) is a **starting point, not a ceiling**.
 4. **A surfaced bug is the goal, not a setback.** Every bug mischief drags into the light is one the real user never hits. Hunt them eagerly; report each one per [findings.md](findings.md) with the **exact click order / request** that flushed it out so it becomes a permanent regression anchor.
 
+## The UI lies by omission — hunt the swallowed failure
+
+The single most important driving habit — and it matters **more for mischief than for comb**: a clean snapshot is **not** proof.
+
+Half of mischief's best bugs are failures the screen never shows. You are deliberately triggering 4xx/5xx constantly, and the SPA often eats them — a 403 with an HTML body gets swallowed as something like "Could not parse error response body (status 403)" while on screen it reads as "the button just does nothing."
+
+Without looking at network/console/API truth, you log "button is a dead no-op" (wrong diagnosis) or miss the bug entirely. With it, you have the real knot: an ungraceful error the product hid.
+
+The whole point of mischief — surface ungraceful errors before a real user hits them — depends on catching the error the UI hid. Always cross-check:
+
+1. Agent-browser / UI observation
+2. `console` + `network requests` (filter xhr/fetch, status 4xx/5xx)
+3. Direct API probe of the same resource when unsure
+4. Backend/worker logs if the request never left or never returned cleanly
+
+See [driving.md](driving.md) and [findings.md](findings.md). Twin mischief (UI blocked vs API allowed, or UI silent vs API screaming) is often exactly this class.
+
 ## Philosophy
 
 Mischief has a purpose. The better you get at breaking it — the more creative, more devious, more relentless the attack — the more hardened the system becomes. Every crack you find gets a fix and a regression anchor; the surface that survives your worst is the surface the user can trust.
