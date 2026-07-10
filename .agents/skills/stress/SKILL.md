@@ -1,3 +1,8 @@
+---
+name: stress
+description: Stress-test webapps via combing, mischief, and bug-hunting. Use when the user wants to find bugs, knotty edge cases, or break an app before users do.
+---
+
 Read the following references:
 - comb.md - How to go through the happy path with the app and try to find subtle "knots".
 - mischief.md - Cause as much trouble as you can with the app to find and file issues.
