@@ -1,6 +1,6 @@
 ---
 name: stress
-description: Stress-test apps (especially webapps) by combing happy paths, causing mischief, and hunting bugs in code. Use whenever the user wants to find bugs, edge cases, knots, break an app, harden UX, QA a flow, or catch issues before users do — even if they only say "try the app", "test this", or "see what breaks".
+description: Stress-test apps (especially webapps) by combing happy paths, causing mischief, and hunting bugs in code — via agent browser, API scripts, or both. Use whenever the user wants to find bugs, edge cases, knots, break an app, harden UX or APIs, QA a flow, or catch issues before users do — even if they only say "try the app", "test this", "hit the API", or "see what breaks".
 ---
 
 # Stress: Unearth Bugs Before Users Do
@@ -15,34 +15,34 @@ Three complementary modes for hardening an app's *functionality* (not load/scale
 
 You may run one mode, or all three. Decide from the user's intent; if unclear, start with **comb**, then escalate to **mischief** and/or **bug hunter**.
 
+## Shared references (read these)
+
+| File | When |
+|------|------|
+| [references/driving.md](references/driving.md) | Choosing **browser vs API vs hybrid** — different surfaces catch different bugs |
+| [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix) |
+
+## Mode references (read the ones you will use)
+
+- [references/comb.md](references/comb.md)
+- [references/mischief.md](references/mischief.md)
+- [references/bug-hunter.md](references/bug-hunter.md)
+
 ## Before you start
 
-1. **Read the mode file(s)** you will use:
-   - [references/comb.md](references/comb.md)
-   - [references/mischief.md](references/mischief.md)
-   - [references/bug-hunter.md](references/bug-hunter.md)
-2. **Get set up to actually use the app.** Auth may live in env vars, docs, a local-dev skill, or a bypass. Prefer driving the real UI (agent-browser / equivalent) over API-only when the surface is a webapp.
-3. **Confirm how to report findings** (see below) if the user hasn't said.
+1. Read **driving** + **findings**, then the mode file(s) for this pass.
+2. **Get set up** — auth may live in env vars, docs, a local-dev skill, token scripts, or a bypass.
+3. Pick a **drive surface** (browser, API, or hybrid) from [driving.md](references/driving.md). Webapp UX work → browser-heavy; contracts/concurrency/repetition → API-heavy; best results usually hybrid.
+4. Confirm reporting only if the user contradicted [findings.md](references/findings.md).
 
-## Reporting findings (default)
+## How to choose a mode
 
-| Situation | Default |
-|-----------|---------|
-| Repo has GitHub + you can file issues | File one issue per real finding; give the user hyperlinks |
-| No GitHub / no permission | Write a markdown or HTML artifact in-repo (or where the user asks) |
-| User asks to auto-fix | Fix as you go (small, tested knots); still log larger ones |
-
-**GitHub smoke test:** if you plan to file issues, create a throwaway issue and delete it first to prove permissions — then file the real ones.
-
-Do **not** invent bugs from a single flaky signal. Cross-check UI + network/console + backend/API (and infra/deploy state) before filing. Prefer filing over silent "I'll remember it."
-
-## How to choose
-
-- **"Walk through the happy path" / "comb" / polish** → comb only
+- **"Walk through the happy path" / "comb" / polish** → comb
 - **"Break it" / "try to mess it up" / chaos** → mischief (optionally after one comb pass so you know the happy path)
 - **"Review the code for bugs"** → bug hunter
-- **"Stress test this" / vague** → comb first, then mischief; bug-hunt any ugly code you notice along the way
+- **"Hit the API" / contract / concurrency stress** → comb or mischief with an **API-first** drive plan
+- **"Stress test this" / vague** → comb first, then mischief; bug-hunt ugly code along the way
 
 ## Your job
 
-Stress the system. Unearth bugs. Record them (or fix them if asked). Summarize what you found with links. Leave the app harder to break than you found it.
+Stress the system. Unearth bugs. Record them per [findings.md](references/findings.md) (or fix if asked). Summarize with links. Leave the app harder to break than you found it.

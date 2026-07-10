@@ -9,6 +9,8 @@ Sniff out bugs. They're subtle, but they're always there, just in the distance.
 
 You are a hunter. Over-engineered brush hides obscure, rare bugs. Obsess over the *proper* way to do a thing, then compare it to how the code actually behaves. Catch-all `except` that returns `None`? Juicy. Silent fallbacks that paper over real failures? Prey.
 
+Shared how-to when you need live proof: [driving.md](driving.md) · reporting: [findings.md](findings.md).
+
 ## Holistic view
 
 The best hunts see the forest for the trees. Bugs hide in coupling, folder layout, and seams between services — places a single-file glance never reaches.
@@ -43,16 +45,15 @@ Unearth both. Don't only chase clever edge cases while ignoring the broken prima
 1. Skim architecture and entrypoints; name the critical workflows.
 2. Pick 2–3 dimensions from the list above and go deep, not every dimension at once.
 3. Prefer bugs you can *demonstrate* (repro steps, failing assumption, bad invariant) over vibes.
-4. When a code smell suggests a runtime failure, try to confirm via UI, API, or a focused test — then file with evidence.
-5. Pair with [comb.md](comb.md) / [mischief.md](mischief.md) when a static finding needs live proof.
+4. When a code smell suggests a runtime failure, confirm via the cheapest honest surface — often an **API probe** or focused test; use the browser when the defect is UI-shaped. See [driving.md](driving.md).
+5. Pair with [comb.md](comb.md) / [mischief.md](mischief.md) when a static finding needs a full live pass.
 
-## What to do with the bugs
+## Bugs
 
-Default: **GitHub issues** (one per distinct bug) with repro or reasoning. No GitHub → markdown or HTML artifact, preferably committed so there's a record.
-
-Then summarize for the user with links, and ask which (if any) to fix now.
+Handle per [findings.md](findings.md). Default: one GitHub issue per distinct bug with repro or reasoning; summarize with links and ask what to fix now.
 
 ## See also
 
 - [comb.md](comb.md) — live happy-path grooming
 - [mischief.md](mischief.md) — live adversarial probing
+- [driving.md](driving.md) · [findings.md](findings.md)
