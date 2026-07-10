@@ -53,6 +53,23 @@ The whole point of mischief — surface ungraceful errors before a real user hit
 
 See [driving.md](driving.md) and [findings.md](findings.md). Twin mischief (UI blocked vs API allowed, or UI silent vs API screaming) is often exactly this class.
 
+## Poke every tool on the page — not just the happy-path button
+
+Each route is a **workbench**. Knots and unguarded mutations hide in the tools the demo never touches — secondary checkers, attach/verify flows, version rails, per-row links, regenerate, review/comment handshakes, "advanced" panels, anything that isn't the big forward CTA.
+
+For every page you land on:
+
+1. `agent-browser snapshot -i` — enumerate **all** interactive controls, not just the primary button.
+2. Drive **each** control in a hostile way: wrong time in the workflow, twice, while a run/job is live, after delete, under a second tab/token.
+3. Cross-check **console + network + a backend probe** every time (see swallowed failures above).
+4. Prefer attacking obscure tools first once tier-1 gross paths on that page are dry — they're least demo-hardened.
+
+### Agent-browser gotchas while poking tools
+
+- **Refs shift** after every click that re-renders. For repeated clicks, grab the ref **fresh** each iteration (`snapshot -i` again) — do not reuse `@e3` from three actions ago.
+- **Read rendered document/content via snapshot** (or dedicated get-text on a scoped ref). Some layouts do not expose body text to a naive page `eval`; don't conclude "empty/missing" from a bad eval.
+- **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
+
 ## Philosophy
 
 Mischief has a purpose. The better you get at breaking it — the more creative, more devious, more relentless the attack — the more hardened the system becomes. Every crack you find gets a fix and a regression anchor; the surface that survives your worst is the surface the user can trust.
