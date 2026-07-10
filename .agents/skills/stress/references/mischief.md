@@ -46,6 +46,19 @@ Mischief is most lethal when it is **specific to what you're looking at**, not a
 
 Then escalate: if the clever attack fails quietly, combine it with concurrency, timing, malformed input, or a second actor until the crack shows — or you've earned a hard-won "held under fire" for *this* surface.
 
+## Two axes: gross vs subtle (pick deliberately)
+
+Mischief lives on two axes. **Consciously choose** where you're spending effort — don't drift into subtle land while gross cracks are still open.
+
+| Axis | What it is | Examples | Why it matters |
+|------|------------|----------|----------------|
+| **GROSS** | Obvious, immediate breakage a user hits on a normal-ish path | 500 / blank page / dead-end; gate that won't open (or opens too early); forward CTA that never appears; nav that lies; one project's data on another's page; stale "ready" after an upstream change; action silently lost | Cheap to trigger, expensive to ship — a human finds them in the first five minutes of real use |
+| **SUBTLE** | Deep edge cases inside one component or invariant | Validation keyed to id-not-version; audit hash-chain race; optimistic-concurrency gap; idempotency-key scoping | Real, but need deliberate setup and a narrow trigger |
+
+**Default order:** clear **gross** bugs first (breadth across screens/flows), then go **subtle** on surfaces that already hold under fire. A quiet subtle hunt while the CTA is dead is wasted cleverness — same spirit as comb's wide-toothed-before-fine, opposite temper.
+
+When you escalate on quiet, say which axis you're escalating on (more gross paths vs deeper subtle setup).
+
 ## How to be most mischievous
 
 1. **Look before you leap.** Observe current UI state *or* resource/API state. Guessing blind wastes probes.
