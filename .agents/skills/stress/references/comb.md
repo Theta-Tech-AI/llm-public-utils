@@ -1,39 +1,46 @@
 ---
 name: comb
-description: Repeatedly move through the "happy path" of an app and find small subtle, like combing your hair and finding little knots.
+description: Repeatedly walk the happy path of an app, gently teasing out subtle knots — like combing hair until it runs silky.
 ---
 
 # Comb
-## Overview
-To comb through the code base is to go through the happy path over and over again, with slight deviations, finding subtle little knots as you comb through the hair and app until it's silky smooth.
 
-## Combing Metaphor
-You start with a wide-toothed comb, gently combing through the hair on the happy easy path. Just gently go through the hair, ignore some knots, and just smooth the basic over. In our case, this means go through the happy path of the app. Just use it as expected. Don't try to break it or anything.
+Go through the happy path over and over, with slight deviations, until the app feels silky smooth. This is **grooming**, not sabotage (that's [mischief.md](mischief.md)) and not a code review (that's [bug-hunter.md](bug-hunter.md)). You are simulating a calm, competent user who keeps using the product the way it was meant to be used — then noticing every little snag.
 
-Then do it again. Do another combing pass with the wide-toothed comb - try another happy path, try the same happy path again with another state. Make sure the wide toothed comb can go through the entire app as expected over and over again.
+## The combing metaphor
 
-Then, swap out your wide-toothed comb with a slightly narrower comb, which can find large obvious knots and tease them out, and comb through them. The hair becomes a bit smoother, a bit silkier. Go through the hair gently (every step is gentle here!) over and over again. The hair becomes a bit smoother, a bit silkier.
+1. **Wide-toothed comb first.** Walk the happy path as expected. Don't try to break anything. Confirm the big strokes work: pages load, CTAs go where they should, gates tell the truth, primary outputs appear.
+2. **Same path again.** Repeat with another state, another project, another account if available. Reproducibility matters — comb the same area until it stays smooth.
+3. **Narrower teeth.** Tease out larger obvious knots (wrong labels, dead buttons, stale state, laggy spinners). Still gentle.
+4. **Finer and finer.** Drift slightly off the happy path into less-expected but still reasonable choices. Subtler bugs appear only after the coarse layer is clear.
+5. **Fine-toothed finish.** The path flows with almost no friction. That's the goal.
 
-Then gradually decrease the width of the comb, teasing out subtler and subtler bugs. Gradually move off the happy path into less expected paths, combing out knots along the way.
-
-But the end, you can run a super fine-toothed comb through the hair and it just flows with nearly no friction. That's where we want to be with the app.
+Start wide every time you hit a fresh surface or a new deploy. Breadth-first on gross tangles, then drill down. Polishing copy while a CTA points at the wrong page is wasted work.
 
 ## Specifics
-- Stay close to the last path. Comb the same area of the hair / app each time, slowly moving outwards from the happy path. This introduces the benefit of reproducibility, ensuring the given happy path through the hair / app works over and over again.
-- When looking at a page on the app, get a sense of all the buttons and options of actions to potentially take, before deciding what to do.
-- Do not try to cause mischief, use the system as expected, slowly deviating.
-- Check network access, check server logs if you have access to it (to confirm the happy path is working correctly on the backend not just the frontend), check API responses if you can too, to ensure that there are no knots.
-- Eventually, you *do* want to start finding more and more subtle bugs that will seem closer to "mischief", but by the time that happens, those are the only knots left and the hair is mostly smooth.
-- This is not a code review, this is an app user behavior simulator for finding bugs.
+
+- Stay close to the last path; move outward slowly so each knot is reproducible.
+- On each screen, inventory buttons and actions *before* choosing the next move.
+- Do not cause mischief. Use the system as expected; deviate only gradually.
+- Cross-check layers before you believe a knot: UI snapshot + console/network + API/backend (and infra/deploy health if you have it). A scary screenshot is not a bug until two more layers agree. A clean screenshot is not proof either.
+- Rule out false alarms: deploy/roll in flight, stale SPA chunks, your own earlier mutations, and tool limitations (e.g. undriveable custom widgets).
+- Watch your footprint. Prefer throwaway data; note when a verify left side effects.
+- Eventually the remaining knots look almost like mischief — that's fine; by then the hair is mostly smooth.
+- This is an app-user behavior simulator, not a static code review.
 
 ## Tools
-- **Frontend *Agent Browser*:** The "agent browser" skill is crucial here for webapps! This allows the agent to actually drive the app in a fully deployed state. It actually clicks the buttons instead of just driving it through the API. Now, also use the API and drive the app in expected and unexpected ways. It's faster. But really it's not the only tool in your toolchest, nor the best. The closest you can get to an actual user experience, the better.
-- **Backend *API:*** The API is also useful for combing through the system. Simulate the "happy path" with a series of API calls. That's how the frontend would be communicating with the backend anyway. Tools like `curl` or Python scripts can help.
-- **Infrastructure *CLI Tools*:** Use cli tools like `az` (for Microsoft Azure) or `aws` (for Amazon Web Services) or scripts to actually check logs and telemetry of the infrastructure and backend.
 
-## What to do with Knots?
-The option is to either fix the knot now, or file a GitHub issue for it. The default should be to file a GitHub issue for each knot and then tell the user what you filed with a full hyperlink. But sometimes, the user may want to just auto-fix the issues as you find them, so you can ask a clarifying question to the user if the instructions are unclear. TLDR: File github issues by default, or fix knots on the fly if the user wants.
+- **Agent browser (or equivalent):** Drive the real UI. Closest to a user wins. Prefer this for webapps.
+- **API / scripts:** Replay the happy path with `curl` or small scripts — faster for backend confirmation, not a substitute for UI.
+- **Infra CLIs / logs:** `az`, `aws`, `gh run list`, server logs, telemetry — confirm the happy path is healthy end-to-end, not just pretty on the frontend.
 
-## See Also
-- [mischief.md](mischief.md)
-- [bug-hunter.md](bug-hunter.md)
+## What to do with knots
+
+Default: **file a GitHub issue** per real knot and give the user the hyperlink. If there's no GitHub, write a markdown/HTML artifact.
+
+If the user wants auto-fix: fix small, additive, tested knots as you go; leave large/load-bearing ones filed. Ask once if instructions are unclear.
+
+## See also
+
+- [mischief.md](mischief.md) — opposite temper: break expected flow on purpose
+- [bug-hunter.md](bug-hunter.md) — code-first hunt across many dimensions
