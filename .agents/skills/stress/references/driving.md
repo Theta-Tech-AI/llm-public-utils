@@ -96,6 +96,12 @@ For deeper command reference, prefer `agent-browser skills get core` over copyin
 
 ---
 
+### Agent-browser gotchas while poking tools
+
+- **Refs shift** after every click that re-renders. For repeated clicks, grab the ref **fresh** each iteration (`snapshot -i` again) — do not reuse `@e3` from three actions ago.
+- **Read rendered document/content via snapshot** (or dedicated get-text on a scoped ref). Some layouts do not expose body text to a naive page `eval`; don't conclude "empty/missing" from a bad eval.
+- **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
+
 ## API driving
 
 Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different class** of bugs, often faster.
