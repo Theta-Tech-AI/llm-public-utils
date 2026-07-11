@@ -304,6 +304,19 @@ EOF
 
 If you cannot file issues, write `docs/stress-findings-YYYYMMDD.md` (or HTML) with the **same sections and detail bar**, including permalinks and suggested fixes. Commit when appropriate. Summarize with the file path.
 
+## Learn from bugs users found first
+
+The point of stressing is that a bug should never reach a human before your sweep does. So treat the bugs that *did* reach a human — user reports, issues originating from human feedback, anything a real person filed that your passes missed — as a map of your blind spots.
+
+Periodically:
+
+1. Pull the closed **and** open bugs that originated from human/user feedback (e.g. a `human-feedback` label, or issues filed by real users rather than agents).
+2. Cluster them by *class*, not instance — ask "what kind of check would have caught each?"
+3. For each class, generalize it into a reusable check and add it to the right mode file: [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for state-contradiction and timing, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
+4. Re-run the sweep with the enriched catalog to find the **still-present** siblings of each human-found bug — the same class almost always has other live instances.
+
+A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see the browser-only callout in [driving.md](driving.md).)
+
 ## After the pass
 
 Summarize for the user:

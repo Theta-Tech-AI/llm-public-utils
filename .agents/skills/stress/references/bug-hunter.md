@@ -48,6 +48,20 @@ Unearth both. Don't only chase clever edge cases while ignoring the broken prima
 4. When a code smell suggests a runtime failure, confirm via the cheapest honest surface — often an **API probe** or focused test; use the browser when the defect is UI-shaped. See [driving.md](driving.md).
 5. Pair with [comb.md](comb.md) / [mischief.md](mischief.md) when a static finding needs a full live pass.
 
+## Field-proven code-first classes
+
+These classes have each burned a real user, and each is catchable statically or with a focused probe — hunt them explicitly:
+
+1. **Two derived views of one entity, from two sources, that can disagree.** A summary and its detail are computed independently: a red "N problems" badge whose click opens an empty panel; a "Locked / Complete" banner beside a list that still shows unconfirmed items; an expand affordance shown for one item but not its identically-shaped sibling. Grep for a count/badge/status derived from a *different* source than the list/detail it summarizes. The summary and the detail must flow from one source of truth.
+
+2. **Generated content falsely reports a missing input that exists elsewhere.** A generator/agent/pipeline that composes output from a primary source store falsely reports "insufficient input" / "no data" for a field whose value actually lives in a *different* part of the system — a form the user already filled, frozen configuration, or an upstream stage's output — that the generator has no tool or code path to reach. For every input a generator can flag as missing, verify it has a retrieval path to *every* place that input can legitimately live, not just the primary store. Related: cross-stage ordering where a later step needs an earlier step's output must be enforced so the later step isn't starved of data that already exists.
+
+3. **Humanization gaps (static grep).** Search the view layer for rendering a raw identifier, enum, timestamp, or internal code directly into user-facing text without a formatter / label-map / name-lookup. This is the code-first counterpart to the comb "leaked internal representation" knot ([comb.md](comb.md)) and catches most instances without a browser.
+
+4. **Counter / ratio invariants.** A progress counter rendered as `X/Y` must guarantee `X ≤ Y` and a sane, same-source denominator — a nonsensical value like `2/1` means "completed" and "total" are computed from different (or stale) sources. Check every `done/total` render for a shared source and a bound.
+
+5. **Telemetry wired but not surfaced.** If the system already tracks a quantity (tokens, cost, timing, counts), verify it's actually surfaced where the user expects it — per-item *and* cumulative, live. "Cost: Pending" while the underlying tokens are already known is a wiring gap, not a missing feature. And attach a metric to the step it describes, not as its own confusing pseudo-step.
+
 ## Bugs
 
 Handle per [findings.md](findings.md). Default: one GitHub issue per distinct bug with repro or reasoning; summarize with links and ask what to fix now.

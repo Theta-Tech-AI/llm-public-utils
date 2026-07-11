@@ -36,6 +36,24 @@ Read [driving.md](driving.md). Short version for comb:
 - **API-heavy** when the happy path is a sequence of calls (integrations, backend workflows) or you need many gentle repetitions with varied valid payloads.
 - **Hybrid (preferred for webapps):** API to seed/reset state and assert backend truth; browser to confirm the human path still feels silky. After a UI pass, optionally replay the same happy path as a script so regressions are cheap to re-check.
 
+## Field-proven knots (read the rendered output, not just the flow)
+
+The calmest, highest-value comb pass is to *read every user-facing string and the generated output itself*, as a real user would. These knots reach users first because a flow-only pass (does the button work?) never stops to read what's on screen:
+
+1. **Leaked internal representation.** A surface shows an internal value instead of a human one: a raw UUID/id instead of a name, a raw enum/status constant, an internal project code or jargon (ticket/spec/phase identifiers meant for the team, not the user), an ISO/UTC timestamp instead of localized time, or a raw ratio/counter. Walk every badge, toast, header, status line, and label — each raw internal value is a knot. **Special case — flash of raw value:** a field shows the raw id for a fraction of a second, then swaps to the resolved name once a lookup returns. Resolve first, render once; never paint the placeholder id. (Also grep-able — see [bug-hunter.md](bug-hunter.md).)
+
+2. **Copy that isn't written for the reader.** Trigger each error, warning, and empty state and read it cold. Flag: jargon the user can't act on; a warning that doesn't say *which* entity, *why*, or *what to do*; the wrong term for a concept (e.g. an "admin" vs "superuser" mismatch); and the same condition worded differently in different places. Good status/error copy states what happened, why, and the next action — in plain language, naming the specific entities involved.
+
+3. **Non-cumulative aggregate metric.** A number meant to summarize across many contributors instead flips to whatever sub-source reported last (a running error/progress count that jumps 13 → 157 → 6 as different workers report in). A user-facing aggregate must be cumulative across all contributors, not last-writer-wins.
+
+4. **Loading-state polish.** Watch every async surface through its loading→loaded transition. Flag: a blocking wait with a too-subtle or missing progress indicator (make long blocking loads loud and obvious); leftover or overly technical loading text ("releasing stale locks and refreshing…"); and unclear hierarchy when several progress indicators run at once (which card is the overall vs a sub-task?).
+
+5. **Hide vs disable, and dead-end panels.** If a control is unusable for the entire duration of a state, prefer hiding it over showing it disabled (rows/tabs/buttons that can't be used until a batch job finishes are noise). And every panel/drawer/modal you can open needs a visible way to close it.
+
+6. **Sibling-control inconsistency.** Two controls that do the same kind of thing should look and behave the same (same style, same hover/affordance). Inconsistent siblings read as unfinished.
+
+7. **Read the generated artifact itself.** When the product produces an output document/report/export, open it and read it — structure, ordering, and every value — not just the flow that made it. Thin, duplicated, mis-ordered, or scaffold-leaking output is invisible to a flow-only pass. (Deeper failure modes and the code-first version live in [bug-hunter.md](bug-hunter.md).)
+
 ## Knots
 
 Handle per [findings.md](findings.md). Default: file GitHub issues with links; auto-fix only small tested knots if the user asked.

@@ -171,6 +171,19 @@ Record repros as **method + path + headers (secrets redacted) + body + expected 
 
 ---
 
+## A large class of real bugs is browser-only — budget live passes
+
+Code review and API probes systematically miss an entire population of bugs that real users report first, because these exist only in the rendered UI and its async timing:
+
+- gate/nav state that disagrees with the backend's authoritative prerequisite state (a reachable stage with an unmet predecessor);
+- first-visit / transient render races (stale "not ready" until a manual refresh; a control that flashes then auto-hides);
+- flash of a raw internal value before a lookup resolves;
+- loading-state and progress-indicator polish;
+- error/status copy clarity;
+- hide-vs-disable and dead-end panels.
+
+**Diagnostic:** if your findings are dominated by backend/code defects and you have few or no UI knots, you are *under-driving the browser* — not out of bugs. Budget explicit live-browser passes that: load each page on **first visit** and watch the async settle without interacting; read **every** rendered string (badges, toasts, headers, timestamps); and reach each stage **both** via its nav control and by pasting its deep-link URL. The state-contradiction catalog is in [mischief.md](mischief.md); the rendered-output knots are in [comb.md](comb.md).
+
 ## Hybrid patterns (high leverage)
 
 1. **API setup → browser verify.** Seed entities via API; comb/mischief only the UI that matters.

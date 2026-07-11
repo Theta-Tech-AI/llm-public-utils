@@ -77,6 +77,24 @@ seq 1 10 | xargs -P 10 -I{} curl -sS -o /dev/null -w "%{http_code}\n" -X POST \
   "$BASE/api/projects/$SCRATCH/submit" -H "authorization: Bearer $USER_TOKEN"
 ```
 
+## Field-proven state-contradiction classes (bugs users hit first)
+
+These classes repeatedly reach a human before a sweep catches them, because they only surface when you drive the *live UI* into a specific real state — code review and API probes miss them. Each is a mischief target with a concrete check. Drive every staged/wizard/multi-step flow against all of them.
+
+1. **Downstream stage reachable with an unmet upstream prerequisite.** A later step must be unreachable — by its nav control **and** by pasting its deep-link URL directly — until its upstream gate is genuinely satisfied. The classic root cause: the frontend derives "is this step available" from a source that can disagree with the backend's authoritative prerequisite state (e.g. "downstream data already exists in the store" gets treated as "the upstream gate passed"). Check every stage *both* ways (click the nav item, and paste the URL). A stage that renders — or half-renders, then throws an unclear "prerequisite not met" error — with an incomplete predecessor is a bug even if data appears. Verify the guard's *error copy* too: it must name what's missing and the next action, not emit a bare internal code.
+
+2. **The inverse — a completed stage that hides its forward affordance.** Over-restriction is also a bug. When a step is already complete/locked, the "continue to next step" control must still be present (even if it no longer needs a re-run confirmation). A locked step with no way forward strands the user.
+
+3. **Action enabled while its target is disabled (control-state contradiction).** A "Lock / Submit / Save selection" button is active while the very thing it acts on (the table, form, or selection it would lock) is greyed out and uneditable. The enable-state of an action and the enable-state of the data it operates on are derived independently and disagree. For every action control, confirm the thing it mutates is in a consistent, matching state.
+
+4. **First-visit / transient wrong state that only self-corrects on manual refresh.** Arrive at a page *immediately* from the upstream action, before any poller settles, and watch the first render without touching anything. A page that shows "not ready" / stale / empty until you hit refresh — while the backend is actually ready — is a real bug. Common shape: arriving on a page should auto-start a job (the precondition is met), but the job only kicks off after a manual refresh or re-trigger. It must converge to the true state on its own.
+
+5. **Flash of a control that then disappears.** On first load a page briefly shows a "trigger / generate" control, then auto-starts and hides it. Pick one behavior and commit — either auto-start (and never show the manual trigger) or require the click. A control that appears then vanishes reads as a missed click and a flicker.
+
+6. **Return-to-in-flight-job orphaning.** Start a long-running job on a page, navigate away, then return (or refresh) while it's still running. The page must re-attach to the in-flight run and keep reporting progress (or offer cancel) — not silently orphan the run, prompt a conflicting "re-run" that could double-fire, or leave the user unsure whether work is happening in the background. Test every page that launches an async job this way.
+
+These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
+
 ## Report
 
 Per [findings.md](findings.md): search before filing, file early, over-document repro + evidence + labels. Filing *is* the point unless asked to auto-fix. Then keep hunting.
