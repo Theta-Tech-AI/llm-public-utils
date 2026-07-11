@@ -14,6 +14,8 @@ Stress testing needs hands on the system. Two primary surfaces, different bugs:
 
 Neither replaces the other. Prefer **hybrid**: use the API to set up state and probe contracts fast; use the browser to confirm what a human would actually experience.
 
+**But for a webapp, the browser is not the "confirm" step — it is the product.** The user never sees your `curl`; their entire experience is what renders, when it renders, what it says, and whether the controls behave. It is easy to slide into API/code hunting because it's fast and systematic — and then report a pile of backend defects while the bugs users actually hit (a stage you can reach too early, a value that flashes raw, a save that didn't save, a control a banner covers) sit untouched. **Default your hands to the browser for any webapp** and drive it deliberately with the playbook below. Treat "my findings are all backend/contract" as a symptom that you skipped the front door, not that the UI is clean.
+
 ---
 
 ## Agent browser
@@ -102,9 +104,42 @@ For deeper command reference, prefer `agent-browser skills get core` over copyin
 - **Read rendered document/content via snapshot** (or dedicated get-text on a scoped ref). Some layouts do not expose body text to a naive page `eval`; don't conclude "empty/missing" from a bad eval.
 - **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
 
+## Frontend driving playbook — be the user at the front door
+
+Driving the UI well is a skill, not a screenshot. A whole class of real bugs exists *only* here — what renders, when, what it says, and how controls behave — and none of it shows up in an API response or a code read. Run these deliberately on **every** page you touch, not just the one you came to test. The list is roughly ordered from "do nothing" to "abuse it":
+
+1. **Watch the first paint.** Land cold and *do nothing* for a few seconds. Note anything that flashes, a raw value (id/UUID) that appears then resolves to a name, a control that shows then hides, a "not ready"/empty state that self-corrects, or blank skeletons that read as "no data." First-visit races are invisible if you interact immediately — most of them only exist in the first second.
+
+2. **Read every rendered string** as a real, non-expert user: headings, badges, toasts, status lines, timestamps, empty states, error and warning copy. Flag raw internal values (ids, enums, UTC, internal codes/jargon), wrong terms, and generic templated messages that should name the *actual* affected entity and current state. The words on screen are the product; read them, don't skim past them.
+
+3. **Drive the async settle.** Trigger loads and long-running jobs and watch the loading→loaded transition end to end. Is progress loud enough for a blocking wait? Leftover or technical loading text? When several progress indicators run at once, is it clear which is the overall vs a sub-task? Then leave the page idle for a couple of poll intervals and watch for stale toasts or leaked pollers still firing.
+
+4. **Exercise every affordance, not just the forward CTA.** Click every clickable thing and confirm it goes somewhere *real* — a badge, count, or link that references an entity must navigate or scroll to it, never open an empty panel or do nothing. Open every drawer/panel/modal and confirm it has a visible close. Check hover and focus states, not just the resting look — missing or inconsistent hover/focus affordances on sibling controls are real bugs.
+
+5. **Reload to verify persistence — the single highest-yield frontend check.** After *any* change (select a row, toggle, inline-edit, autosave), hard-reload and confirm it actually stuck. This catches optimistic-UI lies, silent non-persistence (the click looked saved but no write happened), and 500s hidden behind a cheerful success toast. If a change the user expects to auto-save requires a non-obvious explicit "save," that's also a bug.
+
+6. **Resize.** Drive the same flow at mobile, tablet, and desktop widths. Watch for overflow, overlapping elements, controls pushed off-screen or under other elements, and layouts that become unusable. "Works on my 1440px window" is not "works."
+
+7. **Check occlusion.** Sticky headers, banners, toasts, and modals can *cover* interactive controls — a button present in the DOM but visually covered is unusable. If a click fails because something overlays the target, that is often a real user-facing bug, not merely a test annoyance to route around.
+
+8. **Stress navigation.** Back/forward/reload at each step; paste every route's deep-link URL directly (not only via the nav); move between stages in illegal orders. Confirm the page rebuilds correct state from a cold URL and that gates hold on direct entry as well as via the nav control.
+
+9. **Keyboard.** Tab order, Enter-to-submit, Escape-to-close. A form you can't complete or a modal you can't dismiss from the keyboard is broken for many users.
+
+10. **Feel the latency.** Time frequent, simple actions (lock, toggle, save). A multi-second wait on something that should feel instant, with no immediate feedback, reads as broken even when it eventually succeeds — file it as a perceived-performance bug, and consider optimistic feedback.
+
+**Cross-check stays mandatory** (a clean render is not proof — see [findings.md](findings.md)): the browser is the source of truth for *what the user sees*; `console` + `network` + API/logs are the truth for *what actually happened*. Pair them — when they disagree (UI says success, network shows a 500; UI blocks, API allows), you've found something.
+
+### Agent-browser mechanics for this playbook
+
+- Resize via the CLI's viewport/window sizing before a mobile pass; re-`snapshot -i` after — layout refs move.
+- **Reload-to-verify** is just `open <same url>` (or a reload) then re-`snapshot`/get-text and compare to the pre-reload state.
+- To catch occlusion, don't only trust a ref click "succeeding" — screenshot and look, and check whether a banner/toast/modal is on top.
+- Read rendered text via snapshot/get-text on a scoped ref, not a naive page `eval` (some layouts don't expose body text to eval).
+
 ## API driving
 
-Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different class** of bugs, often faster.
+Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different class** of bugs, often faster. On a webapp it is best used to *set up state, probe contracts, and amplify a UI-discovered suspicion* — not as the place you spend most of your time.
 
 ### Setup
 

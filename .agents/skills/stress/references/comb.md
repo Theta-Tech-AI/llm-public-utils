@@ -54,6 +54,16 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 7. **Read the generated artifact itself.** When the product produces an output document/report/export, open it and read it — structure, ordering, and every value — not just the flow that made it. Thin, duplicated, mis-ordered, or scaffold-leaking output is invisible to a flow-only pass. (Deeper failure modes and the code-first version live in [bug-hunter.md](bug-hunter.md).)
 
+8. **Blank vs loading.** A surface that renders empty/blank while data is still loading reads as "there is no data." Distinguish the two: show a real (loud, unmistakable, even blocking) loading indicator with granular status where possible, and an explicit empty state *only* once loading has truly finished with nothing to show. A blank card mid-load is a knot.
+
+9. **Generic where it should be contextual.** A warning, error, or status that shows a templated message without interpolating the *actual* affected entities and current situation forces the user to guess. Name which items are affected, what state they're in, and what to do next — written for a non-expert who just wants to know what happened and what to do.
+
+10. **Generated content too thin for its slot.** When the product generates prose/content into a structured slot, check depth and shape against what that slot expects — a one-sentence stub where a full paragraph belongs is a quality bug even though "content appeared." (Pairs with item 7 — read the artifact.)
+
+11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran.
+
+The interaction-level checks — persistence-by-reload, responsive resize, occlusion, hover/keyboard, and every-clickable-goes-somewhere — live in the frontend driving playbook in [driving.md](driving.md); run them alongside these reading-level knots. Comb reads the front door; the playbook drives it.
+
 ## Knots
 
 Handle per [findings.md](findings.md). Default: file GitHub issues with links; auto-fix only small tested knots if the user asked.

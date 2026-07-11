@@ -15,6 +15,8 @@ Three complementary modes for hardening an app's *functionality* (not load/scale
 
 You may run one mode, or all three. Decide from the user's intent; if unclear, start with **comb**, then escalate to **mischief** and/or **bug hunter**.
 
+> **If the product is a webapp, start at the front door.** The user only ever touches the UI — every backend route, worker, and DB invariant exists to serve what renders in the browser. A pass that only probes the API or reads code is testing a surface no user sees; it will over-report backend defects and miss the UX, state, timing, and copy bugs that are what actually reach people. Default your *hands* to the agent browser for any webapp (supplement with API/code — don't substitute for it), and drive it like a real user, not a quick screenshot check. The frontend driving playbook in [driving.md](references/driving.md) is the core of doing this well.
+
 ## Shared references (read these)
 
 | File | When |

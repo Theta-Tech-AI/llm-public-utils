@@ -11,6 +11,8 @@ You are a hunter. Over-engineered brush hides obscure, rare bugs. Obsess over th
 
 Shared how-to when you need live proof: [driving.md](driving.md) · reporting: [findings.md](findings.md).
 
+> **For a webapp, code-first is a supplement, not the main event.** The user only ever touches the UI, and most user-facing bugs live in what renders, when it renders, and how controls behave — invisible to a code read. Code-first hunting is fast and satisfying, which is exactly why it's easy to over-invest in it and file a pile of backend defects while the front door goes undriven. If a hunt on a webapp produces only backend/contract findings, you skipped the front door: pair this with a real browser pass (the frontend playbook in [driving.md](driving.md), plus [comb.md](comb.md)/[mischief.md](mischief.md)) before calling it done.
+
 ## Holistic view
 
 The best hunts see the forest for the trees. Bugs hide in coupling, folder layout, and seams between services — places a single-file glance never reaches.

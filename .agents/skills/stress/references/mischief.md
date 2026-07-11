@@ -95,6 +95,16 @@ These classes repeatedly reach a human before a sweep catches them, because they
 
 These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
 
+### Front-door chaos (the user's real environment, not yours)
+
+The user isn't on your wide window with a fast connection taking the happy path. Recreate their hostile reality — full technique list in the frontend playbook in [driving.md](driving.md):
+
+- **Resize mid-flow.** Shrink to mobile/tablet width during a wizard and keep going; watch controls overflow, overlap, slide under a sticky header, or fall off-screen.
+- **Cover the control.** When a banner/toast/sticky header/modal overlays an interactive element, it is unusable even though it's in the DOM — screenshot and look, don't just trust that a ref click "succeeded."
+- **Reload mid-change.** Make a change (select, toggle, inline-edit) and hard-reload *before* it visually settles; it must have persisted or clearly not. Silent loss and optimistic-UI lies fall straight out.
+- **Back-button and cold deep-link.** Bounce Back mid-wizard then forward; paste each stage's URL cold in a fresh tab. State must rebuild and gates must hold on direct entry, not just via nav.
+- **Deploy / degraded window.** Hit the app while the backend is rolling or down. The front door should show a maintenance/updating state, not a raw 502 or a white screen. (Also rule this out as a false alarm before filing — see [findings.md](findings.md).)
+
 ## Report
 
 Per [findings.md](findings.md): search before filing, file early, over-document repro + evidence + labels. Filing *is* the point unless asked to auto-fix. Then keep hunting.
