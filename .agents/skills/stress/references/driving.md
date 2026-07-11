@@ -139,7 +139,7 @@ Driving the UI well is a skill, not a screenshot. A whole class of real bugs exi
 
 ## API driving
 
-Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different class** of bugs, often faster. On a webapp it is best used to *set up state, probe contracts, and amplify a UI-discovered suspicion* — not as the place you spend most of your time.
+Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different and equally real class** of bugs, often faster: authz/IDOR, concurrency and lost updates, idempotency, validation gaps, state-machine holes, data-integrity and audit/compliance failures — landmines that never surface in the UI until they've already corrupted something. On a webapp, **lead with the browser but do not skip this** — spend real time here too; the correction is only that API/code hunting should no longer *crowd out* the front door, not that it's optional. Use it to set up state, probe contracts, amplify a UI-discovered suspicion, and hunt the invisible class the browser can't reach.
 
 ### Setup
 

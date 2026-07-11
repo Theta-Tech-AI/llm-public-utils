@@ -15,7 +15,9 @@ Three complementary modes for hardening an app's *functionality* (not load/scale
 
 You may run one mode, or all three. Decide from the user's intent; if unclear, start with **comb**, then escalate to **mischief** and/or **bug hunter**.
 
-> **If the product is a webapp, start at the front door.** The user only ever touches the UI — every backend route, worker, and DB invariant exists to serve what renders in the browser. A pass that only probes the API or reads code is testing a surface no user sees; it will over-report backend defects and miss the UX, state, timing, and copy bugs that are what actually reach people. Default your *hands* to the agent browser for any webapp (supplement with API/code — don't substitute for it), and drive it like a real user, not a quick screenshot check. The frontend driving playbook in [driving.md](references/driving.md) is the core of doing this well.
+> **If the product is a webapp, start at the front door.** The user only ever touches the UI — every backend route, worker, and DB invariant exists to serve what renders in the browser. A pass that only probes the API or reads code is testing a surface no user sees; it will over-report backend defects and miss the UX, state, timing, and copy bugs that are what actually reach people. Default your *hands* to the agent browser for any webapp, and drive it like a real user, not a quick screenshot check. The frontend driving playbook in [driving.md](references/driving.md) is the core of doing this well.
+>
+> This is a **rebalancing, not a replacement.** The code-first ([bug-hunter.md](references/bug-hunter.md)) and API hunts find a different and equally real class — data loss, authz holes, races, audit/compliance gaps, silent corruption — that never shows up on screen until it bites a user. Keep doing that hunt; it's essential. The correction is only that it had been *crowding out* the front door: lead with the browser, then go deep on the backend too. Do both.
 
 ## Shared references (read these)
 

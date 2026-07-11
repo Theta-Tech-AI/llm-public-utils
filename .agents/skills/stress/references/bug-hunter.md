@@ -11,7 +11,7 @@ You are a hunter. Over-engineered brush hides obscure, rare bugs. Obsess over th
 
 Shared how-to when you need live proof: [driving.md](driving.md) · reporting: [findings.md](findings.md).
 
-> **For a webapp, code-first is a supplement, not the main event.** The user only ever touches the UI, and most user-facing bugs live in what renders, when it renders, and how controls behave — invisible to a code read. Code-first hunting is fast and satisfying, which is exactly why it's easy to over-invest in it and file a pile of backend defects while the front door goes undriven. If a hunt on a webapp produces only backend/contract findings, you skipped the front door: pair this with a real browser pass (the frontend playbook in [driving.md](driving.md), plus [comb.md](comb.md)/[mischief.md](mischief.md)) before calling it done.
+> **This mode is essential — but on a webapp, pair it with a live front-door pass; don't let it crowd out the browser.** Code-first hunting finds a real, high-value class the UI never shows: data loss, authz/IDOR holes, races and lost updates, audit/compliance gaps, silent corruption. Keep doing it hard — those are the landmines. The caution is only about *balance*: code-first is fast and satisfying, so it's easy to over-invest and file a pile of backend defects while the front door goes undriven, and a whole population of real user-facing bugs (what renders, when, and how controls behave) is invisible to a code read. So on a webapp, **lead with the browser** (the frontend playbook in [driving.md](driving.md), plus [comb.md](comb.md)/[mischief.md](mischief.md)) **and** go deep here — treat "my findings are all backend" as a sign you skipped the front door, not as proof the UI is clean.
 
 ## Holistic view
 
