@@ -4,7 +4,28 @@ A collection of agent skills, utility scripts, and experiments for LLM-assisted 
 
 ## Skills
 
-Install skills by copying or symlinking directories from `.agents/skills/` into your agent harness skills path (e.g. `~/.agents/skills/` or `.cursor/skills/`).
+Install skills by using the skills package:
+
+```bash
+# go into a project
+cd my_code_dir/my_project_repo/
+
+# install the /stress skill
+npx skills add Theta-Tech-AI/llm-public-utils --skill stress -y -a cursor -a claude-code -a codex
+```
+
+Then you can update the skill later:
+
+```bash
+# go into a project
+cd my_code_dir/my_project_repo/
+
+# install the /stress skill
+npx skills update -y
+```
+
+
+Alternatively, you can copy or symlinking directories from `.agents/skills/` into your agent harness skills path (e.g. `~/.agents/skills/` or `.cursor/skills/`).
 
 | Skill | Description |
 |-------|-------------|
