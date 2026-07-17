@@ -361,6 +361,8 @@ Write clear, simple, readable code. Do less, but better. Reduce complexity, and 
 
 [↑ top](#table-of-contents)
 
+> Worked example: [references/case-study-simplification-agent-fleet.md](references/case-study-simplification-agent-fleet.md) — a production deslop pass that collapsed a per-section LLM agent fleet, a duplicated prompt fragment, and a prose-policing regex into one agent, one preamble, and zero regexes.
+
 
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
