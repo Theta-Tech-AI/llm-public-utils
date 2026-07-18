@@ -24,8 +24,8 @@ explain why the resemblance is incidental.
 of the SAME knowledge — not two similar-looking blocks, the actual same business
 rule doing the same job on the same inputs — is duplication now. The question
 is always "is this the same knowledge," never "how many times does it appear."
-Apply the True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY section
-of [architecture.md](architecture.md) starting at the second occurrence.
+Apply the True-Knowledge-Duplication-vs-Incidental-Similarity test from the DRY principle
+([architecture/dry.md](architecture/dry.md)) starting at the second occurrence.
 
 **A taxonomy of duplication — hunt on three axes.** "Duplication" is not one
 thing; a sweep that only imagines copy-pasted blocks misses most of it. Slice

@@ -17,9 +17,9 @@ If an argument is provided, that's the coding principles to add to deslop.
 
 ## Deslop
 
-There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`. Its coding principles live in the skill's `references/` subfolder (one markdown file per part).
+There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`. Its coding principles live in the skill's `references/` subfolder — one markdown file per principle, grouped in part subfolders (`references/clean-code/`, `references/architecture/`, `references/reliability/`, `references/data-layer/`) with an index file per part.
 
-This contains a set of coding principles to use to analyze the code, and the goal of this skill is to extend that references library.
+This contains a set of coding principles to use to analyze the code, and the goal of this skill is to extend that references library with a new principle file.
 
 At the end of running this skill, deslop will have a new coding principle added to it.
 
@@ -27,7 +27,7 @@ At the end of running this skill, deslop will have a new coding principle added 
 
 ### Phase 1: Discovery
 
-1. **Read the existing deslop skill** - Find and then use the Read tool to examine `.agents/skills/deslop/SKILL.md` (or `~/.agents/skills/deslop/SKILL.md`) **and every file under its `references/` subfolder**. Build a complete list of principles that are already documented. This is critical to avoid duplicating existing content.
+1. **Read the existing deslop skill** - Find and then use the Read tool to examine `.agents/skills/deslop/SKILL.md` (or `~/.agents/skills/deslop/SKILL.md`) **and every principle file under its `references/` subfolder, recursively**. Build a complete list of principles that are already documented. This is critical to avoid duplicating existing content.
 
 2. **Identify the gap** - If no principle was specified, perform a web search for "most important software engineering coding principles" to discover well-established principles. Compare the search results against your list of already-documented principles to find gaps.
 
@@ -51,27 +51,32 @@ At the end of running this skill, deslop will have a new coding principle added 
 
 ### Phase 3: Initial Draft
 
-6. **Create a temp file** - Write to `/tmp/new_principle.md` following this structure (matching the style of existing sections in the deslop references):
+6. **Create a temp file** - Write to `/tmp/new_principle.md` following this structure (matching the style of existing principle files in the deslop references):
 
 ```markdown
-## [Principle Name]
+---
+name: deslop-<part>-<slug>
+description: Deslop principle — [Principle Name]: [one-line essence].
+---
+
+# [Principle Name]
 
 > [A memorable one-liner definition or quote]
 > — [Attribution]
 
-### Core Concept
+## Core Concept
 
 [1-2 paragraphs explaining what the principle is, why it matters, and when it applies]
 
-### [Key Concept 1] (if needed)
+## [Key Concept 1] (if needed)
 
 [Explanation with examples]
 
-### [Key Concept 2] (if needed)
+## [Key Concept 2] (if needed)
 
 [Explanation with examples]
 
-### Common Violations
+## Common Violations
 
 [Brief description of anti-patterns]
 
@@ -83,7 +88,7 @@ At the end of running this skill, deslop will have a new coding principle added 
 [code example]
 ```
 
-### Summary
+## Summary
 
 1. **[Point 1]** — [brief explanation]
 2. **[Point 2]** — [brief explanation]
@@ -91,11 +96,11 @@ At the end of running this skill, deslop will have a new coding principle added 
 4. **[Point 4]** — [brief explanation]
 
 **Important style notes:**
-- Keep sections concise like existing deslop reference entries (not full standalone docs)
-- Use the same formatting: `### ` for subsections, code blocks with `# ❌ Wrong` / `# ✅ Correct`
+- Keep sections concise like existing deslop principle files
+- Use the same formatting: `# ` title, `## ` for subsections, code blocks with `# ❌ Wrong` / `# ✅ Correct`
 - Include a defining quote with attribution
 - End with a numbered summary list
-- Aim for similar length to existing principle sections (~50-150 lines)
+- Aim for similar length to existing principle files (~50-150 lines)
 
 ### Phase 4: Iterative Refinement (3 Cycles)
 
@@ -118,23 +123,23 @@ This is where the real magic happens.
 
 ### Phase 5: Merge into Deslop
 
-11. **Determine placement** - Read the deslop reference files and identify which one the new principle belongs to:
-   - `references/clean-code.md` — Part I: Clean Code
-   - `references/architecture.md` — Part II: Architecture (has subsections; pick the right one)
-   - `references/reliability.md` — Part III: Reliability
-   - `references/data-layer.md` — Part IV: The Data Layer
+11. **Determine placement** - Read the deslop part index files and identify which part subfolder the new principle belongs to:
+   - `references/clean-code/` — Part I: Clean Code
+   - `references/architecture/` — Part II: Architecture (has subsections; pick the right one)
+   - `references/reliability/` — Part III: Reliability
+   - `references/data-layer/` — Part IV: The Data Layer
 
-   Or propose a new reference file (and a matching entry in `SKILL.md`'s reference tables) if none fit.
+   Or propose a new part subfolder (plus a new index file and a matching entry in `SKILL.md`'s reference tables) if none fit.
 
-12. **Update the Contents list** - Add the new principle to the `**Contents:**` list at the top of the target reference file with an anchor link.
+12. **Create the principle file** - Write the content from `/tmp/new_principle.md` to `references/<part>/<slug>.md`, following an existing principle file in that folder as the template (frontmatter, `# ` title, quote, body). Fix any cross-links to be relative to the subfolder.
 
-13. **Insert the principle** - Add the content from `/tmp/new_principle.md` into the appropriate location in the target reference file, maintaining the existing structure and formatting.
+13. **Update the part index** - Add a row for the new principle to the appropriate table in the part's index file (`references/<part>.md`), with a one-line "What it says" essence matching the style of the other rows.
 
-14. **Verify the merge** - Read the updated reference file to ensure:
-    - Contents entry links correctly
-    - Formatting is consistent
+14. **Verify the merge** - Read the updated index and the new principle file to ensure:
+    - The index row link resolves to the new file
+    - Formatting is consistent with sibling principle files
     - No duplicate principles
-    - Section flows naturally with neighbors
+    - The principle sits naturally alongside its neighbors
 
 ### Phase 6: Cleanup and Report
 
@@ -142,8 +147,8 @@ This is where the real magic happens.
 
 16. **Report completion** - Tell the user:
     - The principle that was added
-    - Which reference file (and subsection) it was placed in
-    - A brief summary of what the new section covers
+    - Which part subfolder (and subsection) it was placed in
+    - A brief summary of what the new file covers
     - The principles it relates to in the existing collection
 
 ## Quality Standards

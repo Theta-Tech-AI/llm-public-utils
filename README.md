@@ -10,7 +10,10 @@ Install skills by using the skills package:
 # go into a project
 cd my_code_dir/my_project_repo/
 
-# install the /stress skill
+# install a skill, e.g. /deslop
+npx skills add Theta-Tech-AI/llm-public-utils --skill deslop -y -a cursor -a claude-code -a codex
+
+# or install the /stress skill
 npx skills add Theta-Tech-AI/llm-public-utils --skill stress -y -a cursor -a claude-code -a codex
 ```
 
@@ -20,7 +23,7 @@ Then you can update the skill later:
 # go into a project
 cd my_code_dir/my_project_repo/
 
-# install the /stress skill
+# update installed skills
 npx skills update -y
 ```
 
@@ -29,7 +32,8 @@ Alternatively, you can copy or symlinking directories from `.agents/skills/` int
 
 | Skill | Description |
 |-------|-------------|
-| [deslop](.agents/skills/deslop/) | Code quality analysis against coding principles |
+| [deslop](.agents/skills/deslop/) | Code quality analysis and refactoring against a library of coding principles |
+| [stress](.agents/skills/stress/) | Stress-test apps via browser/API — comb happy paths, cause mischief, hunt bugs |
 | [shatter](.agents/skills/shatter/) | Split large files into focused, single-responsibility pieces |
 | [addtodeslop](.agents/skills/addtodeslop/) | Research and merge new principles into deslop |
 | [smelt](.agents/skills/smelt/) | Separate upstream metal from project-specific overlay slag |

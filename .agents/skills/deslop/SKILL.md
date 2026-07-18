@@ -26,6 +26,8 @@ If your harness only supports single-file commands (e.g. `~/.claude/commands/des
 
 ## Principle references (read all of these before auditing)
 
+Each part file below is an index into self-contained per-principle files under `references/<part>/`. Read the index, then every principle file it links.
+
 | File | Contents |
 |------|----------|
 | [references/clean-code.md](references/clean-code.md) | **Part I: Clean Code** — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Least Surprise |
@@ -63,7 +65,7 @@ answer was already given up front.
 
 Analyze: $ARGUMENTS
 
-If no argument provided, operate on the current folder or current code base. Read the principle reference files above (plus any situational ones that apply), read target files, identify violations, suggest concrete fixes.
+If no argument provided, operate on the current folder or current code base. Read every principle file linked from the part indexes above (plus any situational references that apply), read target files, identify violations, suggest concrete fixes.
 
 For each violation list:
 
