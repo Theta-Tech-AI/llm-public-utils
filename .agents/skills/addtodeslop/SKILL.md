@@ -5,7 +5,7 @@ description: Research a new coding principle and merge it into the deslop skill 
 
 # Add to Deslop
 
-You are a coding principles researcher and technical writer. Your task is to identify an important coding principle that is missing from the deslop command and create a comprehensive, well-researched section for it, then merge it into the existing deslop.md file.
+You are a coding principles researcher and technical writer. Your task is to identify an important coding principle that is missing from the deslop command and create a comprehensive, well-researched section for it, then merge it into the appropriate reference file of the existing deslop skill.
 
 ## Target Principle
 
@@ -17,9 +17,9 @@ If an argument is provided, that's the coding principles to add to deslop.
 
 ## Deslop
 
-There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`.
+There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`. Its coding principles live in the skill's `references/` subfolder (one markdown file per part).
 
-This contains a set of coding principles to use to analyze the code, and the goal of this skill is to extend that file.
+This contains a set of coding principles to use to analyze the code, and the goal of this skill is to extend that references library.
 
 At the end of running this skill, deslop will have a new coding principle added to it.
 
@@ -27,7 +27,7 @@ At the end of running this skill, deslop will have a new coding principle added 
 
 ### Phase 1: Discovery
 
-1. **Read the existing deslop skill** - Find and then use the Read tool to examine `.agents/skills/deslop/SKILL.md` (or `~/.agents/skills/deslop/SKILL.md`). Build a complete list of principles that are already documented. This is critical to avoid duplicating existing content.
+1. **Read the existing deslop skill** - Find and then use the Read tool to examine `.agents/skills/deslop/SKILL.md` (or `~/.agents/skills/deslop/SKILL.md`) **and every file under its `references/` subfolder**. Build a complete list of principles that are already documented. This is critical to avoid duplicating existing content.
 
 2. **Identify the gap** - If no principle was specified, perform a web search for "most important software engineering coding principles" to discover well-established principles. Compare the search results against your list of already-documented principles to find gaps.
 
@@ -51,7 +51,7 @@ At the end of running this skill, deslop will have a new coding principle added 
 
 ### Phase 3: Initial Draft
 
-6. **Create a temp file** - Write to `/tmp/new_principle.md` following this structure (matching the style of existing sections in deslop.md):
+6. **Create a temp file** - Write to `/tmp/new_principle.md` following this structure (matching the style of existing sections in the deslop references):
 
 ```markdown
 ## [Principle Name]
@@ -91,7 +91,7 @@ At the end of running this skill, deslop will have a new coding principle added 
 4. **[Point 4]** — [brief explanation]
 
 **Important style notes:**
-- Keep sections concise like existing deslop.md entries (not full standalone docs)
+- Keep sections concise like existing deslop reference entries (not full standalone docs)
 - Use the same formatting: `### ` for subsections, code blocks with `# ❌ Wrong` / `# ✅ Correct`
 - Include a defining quote with attribution
 - End with a numbered summary list
@@ -110,7 +110,7 @@ For each of the 3 refinement cycles:
 
 9. **Expand** - Add new subsections, examples, depth, and nuance based on research.
 
-10. **Compact** - Remove redundancy, tighten prose, ensure every sentence adds value. Match the concise style of existing deslop.md sections.
+10. **Compact** - Remove redundancy, tighten prose, ensure every sentence adds value. Match the concise style of existing deslop reference sections.
 
 Steps 9 and 10 are important: actually expand then compact. Repeated cycles increase information density.
 
@@ -118,25 +118,23 @@ This is where the real magic happens.
 
 ### Phase 5: Merge into Deslop
 
-11. **Determine placement** - Read deslop.md and identify which category the new principle belongs to:
-   - Core Principles
-   - Object-Oriented Design
-   - Data & State Management
-   - Architecture & Design
-   - Reliability & Operations
-   - User Experience
+11. **Determine placement** - Read the deslop reference files and identify which one the new principle belongs to:
+   - `references/clean-code.md` — Part I: Clean Code
+   - `references/architecture.md` — Part II: Architecture (has subsections; pick the right one)
+   - `references/reliability.md` — Part III: Reliability
+   - `references/data-layer.md` — Part IV: The Data Layer
 
-   Or create a new category if none fit.
+   Or propose a new reference file (and a matching entry in `SKILL.md`'s reference tables) if none fit.
 
-12. **Update the Table of Contents** - Add the new principle to the appropriate section in the ToC with an anchor link.
+12. **Update the Contents list** - Add the new principle to the `**Contents:**` list at the top of the target reference file with an anchor link.
 
-13. **Insert the principle** - Add the content from `/tmp/new_principle.md` into the appropriate location in deslop.md, maintaining the existing structure and formatting.
+13. **Insert the principle** - Add the content from `/tmp/new_principle.md` into the appropriate location in the target reference file, maintaining the existing structure and formatting.
 
-14. **Verify the merge** - Read the updated deslop.md to ensure:
-   - ToC entry links correctly
-   - Formatting is consistent
-   - No duplicate principles
-   - Section flows naturally with neighbors
+14. **Verify the merge** - Read the updated reference file to ensure:
+    - Contents entry links correctly
+    - Formatting is consistent
+    - No duplicate principles
+    - Section flows naturally with neighbors
 
 ### Phase 6: Cleanup and Report
 
@@ -144,7 +142,7 @@ This is where the real magic happens.
 
 16. **Report completion** - Tell the user:
     - The principle that was added
-    - Which category it was placed in
+    - Which reference file (and subsection) it was placed in
     - A brief summary of what the new section covers
     - The principles it relates to in the existing collection
 
@@ -155,4 +153,4 @@ This is where the real magic happens.
 - **Practical over theoretical** - Include real code examples in Python
 - **Balanced** - Cover both when to apply AND when not to apply
 - **Actionable** - Provide clear guidance
-- **Connected** - Reference related principles already in deslop.md
+- **Connected** - Reference related principles already in the deslop references
