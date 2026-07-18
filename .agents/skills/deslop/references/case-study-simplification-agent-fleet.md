@@ -3,7 +3,7 @@
 A real deslop pass (2026-07, anonymized) on a production RAG document-authoring
 product. The subsystem drafted a multi-section regulatory document with LLM
 agents. It worked — and it was slop. Every finding below is an instance of a
-Part I principle; the "after" column is the shipped simplification.
+clean-code principle; the "after" column is the shipped simplification.
 
 ## The before/after table
 

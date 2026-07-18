@@ -17,7 +17,7 @@ If an argument is provided, that's the coding principles to add to deslop.
 
 ## Deslop
 
-There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`. Its coding principles live in the skill's `references/` subfolder — one markdown file per principle, grouped in part subfolders (`references/clean-code/`, `references/architecture/`, `references/reliability/`, `references/data-layer/`) with an index file per part.
+There should be a deslop skill at either `~/.agents/skills/deslop/SKILL.md` or in this repository at `.agents/skills/deslop/SKILL.md`. Its coding principles live in the skill's `references/` subfolder — one markdown file per principle, grouped in category subfolders (`references/clean-code/`, `references/architecture/`, `references/reliability/`, `references/data-layer/`) with an index file per category.
 
 This contains a set of coding principles to use to analyze the code, and the goal of this skill is to extend that references library with a new principle file.
 
@@ -55,7 +55,7 @@ At the end of running this skill, deslop will have a new coding principle added 
 
 ```markdown
 ---
-name: deslop-<part>-<slug>
+name: deslop-<category>-<slug>
 description: Deslop principle — [Principle Name]: [one-line essence].
 ---
 
@@ -123,17 +123,17 @@ This is where the real magic happens.
 
 ### Phase 5: Merge into Deslop
 
-11. **Determine placement** - Read the deslop part index files and identify which part subfolder the new principle belongs to:
-   - `references/clean-code/` — Part I: Clean Code
-   - `references/architecture/` — Part II: Architecture (has subsections; pick the right one)
-   - `references/reliability/` — Part III: Reliability
-   - `references/data-layer/` — Part IV: The Data Layer
+11. **Determine placement** - Read the deslop index files and identify which category subfolder the new principle belongs to:
+   - `references/clean-code/` — Clean Code
+   - `references/architecture/` — Architecture (has subsections; pick the right one)
+   - `references/reliability/` — Reliability
+   - `references/data-layer/` — The Data Layer
 
-   Or propose a new part subfolder (plus a new index file and a matching entry in `SKILL.md`'s reference tables) if none fit.
+   Or propose a new category subfolder (plus a new index file and a matching entry in `SKILL.md`'s reference tables) if none fit.
 
-12. **Create the principle file** - Write the content from `/tmp/new_principle.md` to `references/<part>/<slug>.md`, following an existing principle file in that folder as the template (frontmatter, `# ` title, quote, body). Fix any cross-links to be relative to the subfolder.
+12. **Create the principle file** - Write the content from `/tmp/new_principle.md` to `references/<category>/<slug>.md`, following an existing principle file in that folder as the template (frontmatter, `# ` title, quote, body). Fix any cross-links to be relative to the subfolder.
 
-13. **Update the part index** - Add a row for the new principle to the appropriate table in the part's index file (`references/<part>.md`), with a one-line "What it says" essence matching the style of the other rows.
+13. **Update the index** - Add a row for the new principle to the appropriate table in the category's index file (`references/<category>.md`), with a one-line "What it says" essence matching the style of the other rows.
 
 14. **Verify the merge** - Read the updated index and the new principle file to ensure:
     - The index row link resolves to the new file
@@ -147,7 +147,7 @@ This is where the real magic happens.
 
 16. **Report completion** - Tell the user:
     - The principle that was added
-    - Which part subfolder (and subsection) it was placed in
+    - Which category subfolder (and subsection) it was placed in
     - A brief summary of what the new file covers
     - The principles it relates to in the existing collection
 

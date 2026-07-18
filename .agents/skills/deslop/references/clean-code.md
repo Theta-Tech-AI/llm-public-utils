@@ -1,13 +1,13 @@
 ---
 name: deslop-clean-code
-description: Deslop principles, Part I: Clean Code — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Least Surprise.
+description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Least Surprise.
 ---
 
-# Part I: Clean Code
+# Clean Code
 
 Write clear, simple, readable code. Do less, but better. Reduce complexity, and make the code easily readable.
 
-Each principle is a self-contained file; read every file when auditing this layer.
+Each principle is a self-contained file — open it when a finding implicates that principle.
 
 | Principle | What it says |
 |-------------|----------------|

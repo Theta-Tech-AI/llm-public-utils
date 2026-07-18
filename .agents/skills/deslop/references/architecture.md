@@ -1,13 +1,13 @@
 ---
 name: deslop-architecture
-description: Deslop principles, Part II: Architecture — DRY, Single Source of Truth, Separation of Concerns, Modularity, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency.
+description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency.
 ---
 
-# Part II: Architecture
+# Architecture
 
 > *Structuring and designing systems. These principles govern how code is organized, how components relate, and how systems are designed for change.*
 
-Each principle is a self-contained file; read every file when auditing this layer.
+Each principle is a self-contained file — open it when a finding implicates that principle.
 
 ## Organization & Structure
 

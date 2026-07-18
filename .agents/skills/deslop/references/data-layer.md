@@ -1,13 +1,13 @@
 ---
 name: deslop-data-layer
-description: Deslop principles, Part IV: The Data Layer — schema integrity (FKs, normalization, domain constraints), pushing logic into the database, indexing/access paths, and the common slop tells.
+description: Deslop principles — The Data Layer: schema integrity (FKs, normalization, domain constraints), pushing logic into the database, indexing/access paths, and the common slop tells.
 ---
 
-# Part IV: The Data Layer
+# The Data Layer
 
 > *Slop in the schema is the most expensive kind. Application code is rewritten, ported between languages, and bypassed by migrations, scripts, and the next service — but the database outlives all of them and is the one place an invariant can be made true for every writer at once. These principles govern integrity, where logic lives, and how rows are reached.*
 
-Each principle is a self-contained file; read every file when auditing this layer.
+Each principle is a self-contained file — open it when a finding implicates that principle.
 
 ## Schema Integrity
 

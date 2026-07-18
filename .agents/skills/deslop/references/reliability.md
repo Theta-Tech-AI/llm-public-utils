@@ -1,13 +1,13 @@
 ---
 name: deslop-reliability
-description: Deslop principles, Part III: Reliability — Fail-Fast, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
+description: Deslop principles — Reliability: Fail-Fast, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
 ---
 
-# Part III: Reliability
+# Reliability
 
 > *Building robust, maintainable systems. These principles govern how code handles errors, maintains itself over time, and operates in production.*
 
-Each principle is a self-contained file; read every file when auditing this layer.
+Each principle is a self-contained file — open it when a finding implicates that principle.
 
 ## Robustness & Safety
 
