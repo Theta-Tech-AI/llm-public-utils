@@ -47,8 +47,8 @@ The "small function" principle is related to several other principles:
 
 | Principle | Connection |
 |-----------|------------|
-| **Single Responsibility** | Small Functions is the *how*, SRP is the *what* |
-| **Separation of Concerns** | Decompose by concern, then make each piece small |
-| **DRY** | Extract duplicated code into small reusable functions |
-| **Self-Documenting Code** | Function names replace comments when functions are small |
-| **KISS** | Small functions are simpler to understand |
+| [**Single Responsibility**](../architecture/solid.md) | Small Functions is the *how*, SRP is the *what* |
+| [**Separation of Concerns**](../architecture/separation-of-concerns.md) | Decompose by concern, then make each piece small |
+| [**DRY**](../architecture/dry.md) | Extract duplicated code into small reusable functions |
+| [**Self-Documenting Code**](self-documenting-code.md) | Function names replace comments when functions are small |
+| [**KISS**](kiss.md) | Small functions are simpler to understand |

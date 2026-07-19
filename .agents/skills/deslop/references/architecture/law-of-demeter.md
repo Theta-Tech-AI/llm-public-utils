@@ -19,3 +19,13 @@ customer.charge(amount)  # Customer knows how to charge itself
 ```
 
 Chaining is fine where there's no structure being traversed: builders and fluent interfaces that return `self`, DTOs with no behavior to encapsulate, and standard-library value operations like `"hello".strip().upper()`. And as Fowler warns, don't become a "getter eradicator" — objects sometimes collaborate by *providing* information, and the point is co-locating behavior with data, not banning every accessor.
+
+---
+
+In relation to other principles, the law of Demeter:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Encapsulation**](encapsulation.md) | A train wreck signals behavior lives away from its data |
+| [**Cognitive Load**](../clean-code/cognitive-load.md) | Long chains force readers to know distant structure |
+| [**Principle of Least Surprise**](../clean-code/least-surprise.md) | Reaching through objects is spooky action at a distance |

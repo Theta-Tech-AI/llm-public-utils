@@ -13,3 +13,12 @@ Most "why is this slow" is a predicate written so the index *can't* be used. The
 - **Low selectivity** — indexing a boolean, or a status that's 90% one value, rarely helps; a partial index on the rare value does.
 
 The arbiter is `EXPLAIN (ANALYZE, BUFFERS)` on the real query at real data volume: a `Seq Scan` where you expected an `Index Scan` is the bug. "Fast on my 100-row dev table" proves nothing — a sequential scan of 100 rows is instant and of 100 million is an outage.
+
+---
+
+In relation to other principles, index defeaters:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Match the Index to the Query Shape**](index-query-shape.md) | Defeaters are predicates written so the index can't be used |
+| [**Every Index Is Used or It's Dropped**](unused-indexes.md) | `EXPLAIN` is the arbiter for both |

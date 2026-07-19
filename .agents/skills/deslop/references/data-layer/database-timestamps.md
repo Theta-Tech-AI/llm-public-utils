@@ -20,3 +20,13 @@ CREATE TRIGGER trg_document_updated_at
     BEFORE UPDATE ON document
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 ```
+
+---
+
+In relation to other principles, database-owned timestamps:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Enforce Invariants with Constraints**](invariant-constraints.md) | `updated_at` is an invariant the DB must own |
+| [**Normalize to a Single Source of Truth**](normalization.md) | Derived values belong to the database |
+| [**Separation of Concerns**](../architecture/separation-of-concerns.md) | The data layer owns "well-formed"; the app owns decisions |

@@ -91,3 +91,14 @@ class AdminConsole:
 ```
 
 The 3-line chain appeared in two classes; it now lives once in `get_is_superuser`. If the group lookup ever changes (e.g. switched to a Graph API call, or `"superuser"` renamed to `"system-administrator"`), there is one place to edit — not N. Feed this to your coding agents, have them make a skill for this, and have them scan your codebase for this slop violation — you'll be surprised how much this shows up.
+
+---
+
+In relation to other principles, DRY:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Single Source of Truth**](single-source-of-truth.md) | SSoT is DRY applied to data storage |
+| [**Code Reusability**](code-reusability.md) | DRY removes existing duplication; reusability speculates on future use |
+| [**Modularity**](modularity.md) | A shared helper needs one clear owner and home |
+| [**KISS**](../clean-code/kiss.md) | The wrong abstraction is worse than duplication — merge only the same knowledge |

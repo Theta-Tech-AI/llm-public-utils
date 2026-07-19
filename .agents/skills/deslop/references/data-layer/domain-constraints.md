@@ -15,3 +15,13 @@ status text NOT NULL
 status text NOT NULL CHECK (status IN ('pending', 'running', 'done', 'failed')),
 CHECK (ends_at >= starts_at)
 ```
+
+---
+
+In relation to other principles, domain constraints:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Parse, Don't Validate**](../architecture/parse-dont-validate.md) | The column's type, not a comment, is the spec |
+| [**Fail-Fast**](../reliability/fail-fast.md) | The illegal write fails where it happens |
+| [**Foreign Keys Are Not Optional**](foreign-keys.md) | A lookup-table FK is a domain constraint by reference |

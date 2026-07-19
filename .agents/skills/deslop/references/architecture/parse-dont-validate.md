@@ -51,3 +51,14 @@ Order = PendingOrder | ShippedOrder | DeliveredOrder
 ```
 
 Choose the parsing depth to fit: `NewType` for a zero-overhead marker, a frozen dataclass for richer invariants, Pydantic when you want full coercion and validation at the edge. For quick scripts, prototypes, and simple CRUD, not every field needs its own type.
+
+---
+
+In relation to other principles, parse, don't validate:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Decide, Don't Cope**](../clean-code/decide-dont-cope.md) | Parsing is the boundary decision that ends coping |
+| [**Fail-Fast**](../reliability/fail-fast.md) | Illegal states fail at the boundary, not three layers in |
+| [**Constrain the Domain in the Schema**](../data-layer/domain-constraints.md) | Parse-don't-validate for data at rest |
+| [**Immutability**](immutability.md) | Parsed domain types are best made immutable |

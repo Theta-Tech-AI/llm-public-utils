@@ -17,3 +17,13 @@ if not row:
 db.execute("""INSERT INTO membership (team_id, user_id) VALUES (%s, %s)
               ON CONFLICT (team_id, user_id) DO NOTHING""", ...)
 ```
+
+---
+
+In relation to other principles, database-generated identity:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Idempotency**](../architecture/idempotency.md) | The unique constraint IS the idempotency key |
+| [**Enforce Invariants with Constraints**](invariant-constraints.md) | Uniqueness by constraint, never SELECT-then-INSERT |
+| [**Fail-Fast**](../reliability/fail-fast.md) | Conflicts surface as constraint violations, not double-writes |

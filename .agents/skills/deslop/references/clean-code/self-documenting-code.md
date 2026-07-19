@@ -36,3 +36,14 @@ Watch for abbreviations, single-letter variables outside tiny scopes, unnamed bo
 for attempt in range(MAX_RETRIES):
     time.sleep(2 ** attempt)
 ```
+
+---
+
+In relation to other principles, self-documenting code:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Documentation Discipline**](documentation-discipline.md) | Where comments earn their place when names can't carry the why |
+| [**Cognitive Load**](cognitive-load.md) | Good names eliminate mental translation |
+| [**Small Functions**](small-functions.md) | Small functions let names replace comments |
+| [**Principle of Least Surprise**](least-surprise.md) | Accurate names are the first defense against surprise |

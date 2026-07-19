@@ -21,3 +21,14 @@ def get_recommendations(user_id: str) -> list[Product]:
             return cached
         return get_popular_items()  # Final fallback
 ```
+
+---
+
+In relation to other principles, resilience:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Idempotency**](../architecture/idempotency.md) | Only idempotent operations are safe to retry |
+| [**Fail-Fast**](fail-fast.md) | Auth failures should fail fast, not loop |
+| [**Observability & Transparency**](observability.md) | Fallbacks must be logged to be debugged |
+| [**Postel's Law**](postels-law.md) | Both assume the outside world is unreliable |

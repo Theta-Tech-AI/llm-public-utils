@@ -36,3 +36,14 @@ def process_order(order_data: dict) -> None:
 ```
 
 The usual tells are loops with inline body logic (extract the body) and a comment introducing a code block (the comment is naming a function that should exist). Don't over-extract, though: a 3-line function is already at one level, an initial guard clause at a higher-level function is fine, and test code, single-use transformations, and hot paths often read better inlined.
+
+---
+
+In relation to other principles, SLAP:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Small Functions**](small-functions.md) | The stepdown rule is how small functions stay readable |
+| [**Cognitive Load**](cognitive-load.md) | Mixing levels forces readers to reconstruct the missing abstractions |
+| [**Self-Documenting Code**](self-documenting-code.md) | Extraction is how low-level details get named |
+| [**Separation of Concerns**](../architecture/separation-of-concerns.md) | SLAP is separation applied within a single function |

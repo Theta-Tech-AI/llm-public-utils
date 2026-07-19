@@ -21,3 +21,14 @@ class MovieLister:
     def __init__(self, finder: MovieFinder):
         self._finder = finder
 ```
+
+---
+
+In relation to other principles, dependency injection:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**SOLID**](solid.md) | DI is Dependency Inversion in practice |
+| [**Orthogonality**](orthogonality.md) | Injected dependencies change independently of their consumers |
+| [**Encapsulation**](encapsulation.md) | Constructors declare needs instead of hiding them |
+| [**Convention Over Configuration**](convention-over-configuration.md) | Constructor defaults are DI's zero-config escape hatch |

@@ -43,3 +43,14 @@ def calculate_shipping(order: Order) -> Decimal:
         InvalidAddressError: If shipping address is incomplete
     """
 ```
+
+---
+
+In relation to other principles, documentation discipline:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Self-Documenting Code**](self-documenting-code.md) | Name it well first; comment only the why |
+| [**Boy Scout Rule**](../reliability/boy-scout-rule.md) | Delete rotting comments as you pass them |
+| [**DRY**](../architecture/dry.md) | A comment restating code is duplicated knowledge that drifts |
+| [**Cognitive Load**](cognitive-load.md) | Parrot comments cost reading effort and add no information |

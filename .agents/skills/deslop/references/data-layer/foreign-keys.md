@@ -26,3 +26,13 @@ CREATE TABLE document (
 ```
 
 - `CASCADE` for owned children, `SET NULL` for optional links, `RESTRICT`/`NO ACTION` for rows that must not be orphaned (audit subjects, referenced catalogues).
+
+---
+
+In relation to other principles, foreign keys:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Normalize to a Single Source of Truth**](normalization.md) | FKs keep the graph's single truth connected |
+| [**Enforce Invariants with Constraints**](invariant-constraints.md) | Referential integrity is the canonical DB-owned invariant |
+| [**Index Every Foreign Key**](index-foreign-keys.md) | The FK and its index are declared in different places — both are required |

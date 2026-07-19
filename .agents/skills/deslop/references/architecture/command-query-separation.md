@@ -28,3 +28,14 @@ def create_user(self, email: str) -> None:
     """Command: Creates user, returns nothing."""
     self.db.save(User(email=email))
 ```
+
+---
+
+In relation to other principles, command-query separation:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Principle of Least Surprise**](../clean-code/least-surprise.md) | CQS eliminates the mutating-query surprise |
+| [**Immutability**](immutability.md) | Queries on immutable data are always safe |
+| [**Design by Contract**](../reliability/design-by-contract.md) | Both are Meyer's — contracts state what queries guarantee and commands effect |
+| [**Idempotency**](idempotency.md) | Queries are idempotent for free; commands must be designed for it |

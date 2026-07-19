@@ -13,3 +13,14 @@ YAGNI is the discipline of **not building functionality until it's required**. E
 **The trap**: *"While I'm here, just in case I need it later, I'll just add..."*
 
 **The reality**: Most speculative features fail to improve their target metrics.
+
+---
+
+In relation to other principles, YAGNI:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**KISS**](kiss.md) | The simplest sufficient code excludes speculative features |
+| [**Code Reusability**](../architecture/code-reusability.md) | Designing for reuse before real callers exist is a YAGNI violation |
+| [**Decide, Don't Cope**](decide-dont-cope.md) | Every guessed input shape is a requirement nobody stated |
+| [**SOLID**](../architecture/solid.md) | An interface with a single implementation is speculative generality |

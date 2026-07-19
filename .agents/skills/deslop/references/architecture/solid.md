@@ -17,3 +17,13 @@ description: Deslop principle — SOLID Principles: SRP, OCP, LSP, ISP, DIP — 
 | **D** | Dependency Inversion | Depend on abstractions, not concretions | Direct instantiation in constructors, concrete imports in business logic, can't mock |
 
 SOLID earns its keep in code that must evolve, but it's overhead in simple scripts, prototypes, and performance-critical paths. Don't create an interface for a class that will only ever have one implementation — wait for real, concrete callers to reveal the actual shape before designing a flexible abstraction around a hypothetical one. (This is distinct from DRY's duplication question above: designing a speculative interface before it's needed is premature abstraction, not a duplication-count threshold — see [Hunting Duplication](../duplication.md) for when *duplication itself* should be fixed.)
+
+---
+
+In relation to other principles, SOLID:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Separation of Concerns**](separation-of-concerns.md) | SRP is SoC at class granularity |
+| [**Dependency Injection**](dependency-injection.md) | DI is Dependency Inversion in practice |
+| [**YAGNI**](../clean-code/yagni.md) | A speculative interface for one implementation violates YAGNI |

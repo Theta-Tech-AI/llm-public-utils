@@ -25,3 +25,14 @@ class Logger:
 
 logger = Logger(FileWriter(), [EncryptionFilter(), CompressionFilter()])
 ```
+
+---
+
+In relation to other principles, composition over inheritance:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Modularity**](modularity.md) | Composed parts stay black-box and swappable |
+| [**SOLID**](solid.md) | Composition honors Open/Closed where inheritance strains it |
+| [**Cognitive Load**](../clean-code/cognitive-load.md) | Explicit assembly beats hidden parent behavior |
+| [**KISS**](../clean-code/kiss.md) | Avoids the class-explosion flavor of complexity |

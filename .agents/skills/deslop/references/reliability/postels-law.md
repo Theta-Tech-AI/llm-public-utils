@@ -23,3 +23,14 @@ def parse_user(data: dict) -> User:
 ```
 
 But it has a dark side: liberal receivers mask sender bugs, "incorrect" behavior calcifies into a de facto standard (specification rot), and "reasonable" input can be crafted to exploit edge cases. The modern balance is to validate *required* fields strictly (fail-fast) while tolerantly ignoring unknown ones — and to be paranoid, not liberal, at security boundaries.
+
+---
+
+In relation to other principles, Postel's law:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Fail-Fast**](fail-fast.md) | Validate required fields strictly, tolerate unknown ones |
+| [**Parse, Don't Validate**](../architecture/parse-dont-validate.md) | Tolerant reading is parsing that ignores what it doesn't need |
+| [**Resilience & Graceful Degradation**](resilience.md) | Both keep systems working through an unreliable world |
+| [**Principle of Least Privilege**](least-privilege.md) | At security boundaries, be paranoid, not liberal |

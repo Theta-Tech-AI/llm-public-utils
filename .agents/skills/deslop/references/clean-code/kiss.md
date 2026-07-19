@@ -23,3 +23,15 @@ To avoid unnecessary complexity, look for:
 - **Rationalizations:** Look for violations where it seems coder said to themself: *"This pattern will be useful when..."*, or *"Let me make this more flexible..."*, or *"This is the proper enterprise way..."*
 - **Overengineering:** Nested ternaries, cleverness over clarity, premature optimization, caching before profiling, interfaces for single implementations, or speculative generality.
 -  **Ego:** Spots where the coder was trying to impress instead of communicate plainly.
+
+---
+
+In relation to other principles, KISS:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**YAGNI**](yagni.md) | YAGNI is KISS applied to scope — don't build what's not needed |
+| [**Cognitive Load**](cognitive-load.md) | Simplicity is the main lever for lowering reader load |
+| [**Elegance**](elegance.md) | Shares the Saint-Exupéry test — nothing left to take away |
+| [**Small Functions**](small-functions.md) | Simple systems are built from small, single-purpose units |
+| [**Decide, Don't Cope**](decide-dont-cope.md) | One required type beats four hypothetical ones |

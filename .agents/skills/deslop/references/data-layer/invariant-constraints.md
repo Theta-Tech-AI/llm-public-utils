@@ -19,3 +19,13 @@ CREATE TRIGGER trg_audit_block
 ```
 
 - Verify the trigger truly fires — a guard like `IF pg_trigger_depth() = 0` is never true inside a trigger body, a classic silent no-op.
+
+---
+
+In relation to other principles, constraints-not-application-code:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Fail-Fast**](../reliability/fail-fast.md) | Forbidden writes are rejected where they're attempted |
+| [**Design by Contract**](../reliability/design-by-contract.md) | Constraints are contracts enforced on every writer |
+| [**Foreign Keys Are Not Optional**](foreign-keys.md) | FKs are the most common DB-enforced invariant |

@@ -24,3 +24,14 @@ def parse_user_csv(csv_data: str) -> list[dict]:
 ```
 
 When reuse *is* warranted, minimize dependencies (a little copying beats a little dependency), accept abstract inputs (a `Protocol`, not a concrete class), provide sensible defaults, and keep the public interface stable. But remember reuse cuts both ways: isolated, duplicated code keeps bugs and changes contained, where a "reusable" component becomes a coupling point across every system that depends on it. Rewriting 50 obvious lines often beats understanding 500 lines of someone's framework.
+
+---
+
+In relation to other principles, code reusability:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**YAGNI**](../clean-code/yagni.md) | Unproven reuse is the classic YAGNI violation |
+| [**DRY**](dry.md) | DRY fixes duplication that exists; reuse speculates on contexts that don't |
+| [**KISS**](../clean-code/kiss.md) | 50 obvious lines beat 500 lines of someone's framework |
+| [**Dependency Injection**](dependency-injection.md) | Depending on abstractions is what makes reuse possible |

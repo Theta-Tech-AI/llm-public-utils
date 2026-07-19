@@ -27,3 +27,14 @@ def add_discount(order: Order) -> Order:
 ```
 
 The excuses to distrust: "I'll clean it up later" (you won't), "that's not my code," "it works, don't touch it." The exceptions to respect: don't "improve" code you don't understand or that has no test coverage, and don't fold cleanup into a time-critical production fix. This is the antidote to broken windows — neglect invites more neglect, and a tidy file signals the code is cared for.
+
+---
+
+In relation to other principles, the boy scout rule:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Documentation Discipline**](../clean-code/documentation-discipline.md) | Delete rotting comments and dead code as you pass |
+| [**DRY**](../architecture/dry.md) | Dedup the copies you touch, not the whole forest |
+| [**Small Functions**](../clean-code/small-functions.md) | Extract-and-name is the commonest cleanup |
+| [**KISS**](../clean-code/kiss.md) | Every cleanup is a small simplification |

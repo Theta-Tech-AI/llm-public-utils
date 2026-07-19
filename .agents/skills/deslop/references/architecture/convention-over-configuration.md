@@ -30,3 +30,14 @@ legacy = UserService(table_name="legacy_accounts")  # Override only what differs
 ```
 
 The cost is hidden magic: implicit behavior is harder to debug, you must learn the convention before you can deviate, and convention-optimized common cases can fight you at the edges (a legacy DB named `tbl_usr_accounts` means fighting the framework). This is why Python prizes "explicit over implicit" — the resolution is that conventions must be *discoverable* and well documented. Convention serves you until it doesn't; then configure explicitly.
+
+---
+
+In relation to other principles, convention over configuration:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**YAGNI**](../clean-code/yagni.md) | Config nobody changes is speculative flexibility |
+| [**Principle of Least Surprise**](../clean-code/least-surprise.md) | Conventions are the least-surprising defaults |
+| [**KISS**](../clean-code/kiss.md) | The zero-config common case is the simplest one |
+| [**Self-Documenting Code**](../clean-code/self-documenting-code.md) | Discoverable conventions document themselves |

@@ -24,3 +24,14 @@ def normalize_scores(scores: list[float]) -> list[float]:
 ```
 
 In Python, reach for `@dataclass(frozen=True)`, `tuple` instead of `list` for fixed data, and `frozenset` instead of `set`.
+
+---
+
+In relation to other principles, immutability:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Command-Query Separation**](command-query-separation.md) | Immutable objects make every query side-effect-free |
+| [**Parse, Don't Validate**](parse-dont-validate.md) | Parsed types should be frozen values |
+| [**Orthogonality**](orthogonality.md) | No shared mutable state, no hidden coupling |
+| [**Idempotency**](idempotency.md) | Assignment to fresh values is naturally idempotent |

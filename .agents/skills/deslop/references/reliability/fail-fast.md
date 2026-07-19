@@ -24,3 +24,14 @@ def __init__(self):
     if not self.key:
         raise ConfigError("API_KEY required")
 ```
+
+---
+
+In relation to other principles, fail-fast:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Guard Clauses**](../clean-code/guard-clauses.md) | Guard clauses are fail-fast at function entry |
+| [**Design by Contract**](design-by-contract.md) | Contracts define what to check; fail-fast defines when |
+| [**Decide, Don't Cope**](../clean-code/decide-dont-cope.md) | Rejecting at the boundary beats coping in the interior |
+| [**Postel's Law**](postels-law.md) | Strict on required fields, tolerant of unknown ones |

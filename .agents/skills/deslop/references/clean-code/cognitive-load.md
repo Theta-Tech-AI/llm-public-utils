@@ -28,8 +28,8 @@ In relation to other principles, cognitive load...
 
 | Principle | Connection |
 |-----------|------------|
-| **KISS** | Cognitive load is *why* simplicity matters |
-| **Self-Documenting Code** | Good names reduce mental translation |
-| **Small Functions** | Must balance: too many shallow functions *increase* load |
-| **Composition Over Inheritance** | Explicit dependencies reduce hidden context |
-| **Modularity** | Deep modules hide complexity behind simple interfaces |
+| [**KISS**](kiss.md) | Cognitive load is *why* simplicity matters |
+| [**Self-Documenting Code**](self-documenting-code.md) | Good names reduce mental translation |
+| [**Small Functions**](small-functions.md) | Must balance: too many shallow functions *increase* load |
+| [**Composition Over Inheritance**](../architecture/composition-over-inheritance.md) | Explicit dependencies reduce hidden context |
+| [**Modularity**](../architecture/modularity.md) | Deep modules hide complexity behind simple interfaces |

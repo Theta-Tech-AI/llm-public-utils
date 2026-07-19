@@ -9,3 +9,14 @@ description: Deslop principle — Principle of Least Surprise: Components behave
 > — Eric S. Raymond
 
 Components should behave the way users expect. Separate state-changing commands from queries, make names match behavior, return consistent types from similar methods, choose sensible defaults, and never hide side effects the signature doesn't imply. The usual surprises: methods whose names imply a query but secretly mutate, non-standard parameter order, inconsistent error handling across sibling methods, and "spooky action at a distance" where one call perturbs something unrelated. If you can't name a thing accurately, the design — not the name — is probably wrong.
+
+---
+
+In relation to other principles, least surprise:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Command-Query Separation**](../architecture/command-query-separation.md) | The canonical surprise — a query that mutates |
+| [**Self-Documenting Code**](self-documenting-code.md) | Names must match behavior |
+| [**Design by Contract**](../reliability/design-by-contract.md) | Contracts make expected behavior explicit |
+| [**Convention Over Configuration**](../architecture/convention-over-configuration.md) | Conventions are the least-surprising defaults |

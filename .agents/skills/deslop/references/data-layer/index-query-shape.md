@@ -18,3 +18,12 @@ An index helps only if its shape matches how the query reads. The rules that pay
 CREATE INDEX idx_doc_project_recent ON document (project_id, created_at DESC)
     WHERE deleted_at IS NULL;
 ```
+
+---
+
+In relation to other principles, matching index to query shape:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Index What You Filter, Join, and Sort On**](index-access-columns.md) | The query set dictates which shapes are needed |
+| [**Know What Defeats an Index**](index-defeaters.md) | The right shape only helps if the predicate can use it |

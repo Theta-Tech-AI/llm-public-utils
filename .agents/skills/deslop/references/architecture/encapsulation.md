@@ -24,3 +24,14 @@ def process_order(order):
 ```
 
 The tells of broken encapsulation: anemic data classes that are just fields plus getters/setters, accessor pairs that add no validation or computation, methods that return mutable internal state for callers to corrupt, and feature envy (a method that uses another class's data more than its own).
+
+---
+
+In relation to other principles, encapsulation:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Law of Demeter**](law-of-demeter.md) | Demeter is encapsulation measured across object boundaries |
+| [**Modularity**](modularity.md) | Encapsulation is what makes a module deep |
+| [**Command-Query Separation**](command-query-separation.md) | Tell-don't-ask needs clean command/query lines |
+| [**Principle of Least Privilege**](../reliability/least-privilege.md) | Expose the minimum surface callers need |

@@ -34,3 +34,14 @@ class OrderPresenter:
     def to_html(self, order: Order) -> str:
         return f"<div class='order'>Order #{order.id}: ${order.total}</div>"
 ```
+
+---
+
+In relation to other principles, separation of concerns:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Modularity**](modularity.md) | Modules are where separated concerns get packaged |
+| [**Single Level of Abstraction**](../clean-code/slap.md) | SLAP is separation within one function |
+| [**SOLID**](solid.md) | SRP is separation of concerns at class granularity |
+| [**Enforce Invariants with Constraints**](../data-layer/invariant-constraints.md) | The data layer owns "the data is well-formed" |

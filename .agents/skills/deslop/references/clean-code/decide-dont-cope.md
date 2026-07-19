@@ -98,9 +98,9 @@ In relation to other principles, decide-don't-cope draws on...
 
 | Principle | Relationship |
 |-----------|--------------|
-| **Parse, Don't Validate** | The mechanism: convert once at the boundary; downstream never re-interrogates |
-| **YAGNI** | Every guessed shape is a requirement nobody stated |
-| **KISS** | One required type beats four hypothetical ones |
-| **Fail-Fast** | Rejecting at the boundary beats coping in the interior |
-| **Design by Contract** | The boundary's decision IS the contract; consumers assume it holds |
-| **Single Level of Abstraction** | Coping code mixes policy, dispatch, and formatting at one level |
+| [**Parse, Don't Validate**](../architecture/parse-dont-validate.md) | The mechanism: convert once at the boundary; downstream never re-interrogates |
+| [**YAGNI**](yagni.md) | Every guessed shape is a requirement nobody stated |
+| [**KISS**](kiss.md) | One required type beats four hypothetical ones |
+| [**Fail-Fast**](../reliability/fail-fast.md) | Rejecting at the boundary beats coping in the interior |
+| [**Design by Contract**](../reliability/design-by-contract.md) | The boundary's decision IS the contract; consumers assume it holds |
+| [**Single Level of Abstraction**](slap.md) | Coping code mixes policy, dispatch, and formatting at one level |

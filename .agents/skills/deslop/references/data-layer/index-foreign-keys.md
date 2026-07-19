@@ -11,3 +11,12 @@ Postgres automatically indexes primary keys and unique constraints — but **not
 project_id uuid NOT NULL REFERENCES project(id) ON DELETE CASCADE;
 CREATE INDEX idx_document_project ON document (project_id);   -- NOT automatic — add it
 ```
+
+---
+
+In relation to other principles, indexing foreign keys:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Foreign Keys Are Not Optional**](foreign-keys.md) | The FK and its index live in different declarations — both required |
+| [**Index What You Filter, Join, and Sort On**](index-access-columns.md) | FK columns are the most-joined columns you have |

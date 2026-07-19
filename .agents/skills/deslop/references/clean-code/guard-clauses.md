@@ -86,7 +86,7 @@ In relation to other principles, guard clauses...
 
 | Principle | Relationship |
 |-----------|--------------|
-| **Fail-Fast** | Guard clauses are fail-fast's implementation: detect problems immediately and exit |
-| **Cognitive Load** | Flattening nested conditionals reduces mental overhead |
-| **Small Functions** | Guards work best in small, focused functions |
-| **Design by Contract** | Guards enforce preconditions at runtime |
+| [**Fail-Fast**](../reliability/fail-fast.md) | Guard clauses are fail-fast's implementation: detect problems immediately and exit |
+| [**Cognitive Load**](cognitive-load.md) | Flattening nested conditionals reduces mental overhead |
+| [**Small Functions**](small-functions.md) | Guards work best in small, focused functions |
+| [**Design by Contract**](../reliability/design-by-contract.md) | Guards enforce preconditions at runtime |

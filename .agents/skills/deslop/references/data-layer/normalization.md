@@ -14,3 +14,13 @@ total_tokens integer  -- written by the app as input + output
 -- ✅ Correct - the database computes it; it can never drift
 total_tokens integer GENERATED ALWAYS AS (input_tokens + output_tokens) STORED
 ```
+
+---
+
+In relation to other principles, normalization:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Single Source of Truth**](../architecture/single-source-of-truth.md) | This is SSoT applied to schema |
+| [**Let the Database Own Timestamps and Derived Values**](database-timestamps.md) | Generated columns are DB-owned derivation |
+| [**DRY**](../architecture/dry.md) | Two columns for one fact is knowledge duplication at rest |

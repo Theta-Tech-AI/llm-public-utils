@@ -22,3 +22,14 @@ def send_notification(email: str):
 ```
 
 Default to deny and grant explicitly, separate credentials by function (read vs. write), time-bound elevated access, and audit regularly — permissions accumulate as roles change and "temporary" access becomes permanent. Watch for the verbal tells: "just give it admin, it's easier," "we'll lock it down later," "it needs that for debugging." Least privilege partners with Zero Trust: Zero Trust authenticates *who* is making a request, PoLP limits what that authenticated identity can *do*.
+
+---
+
+In relation to other principles, least privilege:
+
+| Principle | Relationship |
+|-----------|--------------|
+| [**Encapsulation**](../architecture/encapsulation.md) | Minimal exposed surface, minimal granted power |
+| [**Fail-Fast**](fail-fast.md) | Default-deny fails fast on overreach |
+| [**Postel's Law**](postels-law.md) | Security boundaries are where liberal acceptance ends |
+| [**Modularity**](../architecture/modularity.md) | Small modules bound the blast radius |
