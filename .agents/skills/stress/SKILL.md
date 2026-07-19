@@ -5,16 +5,18 @@ description: Stress-test apps (especially webapps) — confirm reliability, comb
 
 # Stress: Unearth Bugs Before Users Do
 
-Four complementary modes for hardening an app's *functionality* (not load/scale — that can be a future `load.md`):
+A stress run is **sequential**, not a pick-list: prove the happy path works, groom it, attack it, then hunt the code. All of it hardens an app's *functionality* (not load/scale — that can be a future `load.md`):
 
-| Mode | Temper | Read when |
-|------|--------|-----------|
-| **Reliability** | Patient happy-path repetition until it earns trust | Starting any stress run, pre-release sanity, or "does it just work?" |
-| **Comb** | Gentle, repeated happy-path grooming | User wants polish, subtle UX knots, or "make it silky" |
-| **Mischief** | Hostile, out-of-order chaos | User wants to break it, abuse flows, or harden against weird users |
-| **Bug hunter** | Code-first, multi-angle review | User wants static/code bugs, smell hunts, or architecture-level defects |
+| # | Phase | Temper | Question it answers |
+|---|-------|--------|---------------------|
+| 1 | **Reliability** (gate) | Patient happy-path repetition until it earns trust | Does the happy path *consistently* complete? |
+| 2 | **Comb** | Gentle, repeated happy-path grooming | Where are the knots on and around the path? |
+| 3 | **Mischief** | Hostile, out-of-order chaos | What breaks under abuse the system doesn't expect? |
+| 4 | **Bug hunt** | Code-first, multi-angle review | What do layers, workflows, and data models hide? |
 
-You may run one mode, or several. Decide from the user's intent; for a full run, follow the standard order in [process.md](references/process.md): **reliability gate → comb → mischief**, with bug hunter riding along. If intent is unclear, start with **reliability**, then escalate.
+Run the phases **in order, 1-3 passes each** for the app-driving phases — the full shape lives in [process.md](references/process.md). A failed reliability gate *ends the run early*: there is no point combing or attacking a system that can't reliably do its one job.
+
+Phase 4 is **code review, not app driving** — it never touches the running app, so it may run **in parallel** (a subagent reading code while you drive phases 1-3) instead of strictly last. Run any single phase standalone only when the user asks for exactly that (e.g. "just cause mischief"); otherwise the sequence is the default, and reliability is the entrance fee for everything downstream.
 
 > **If the product is a webapp, start at the front door.** The user only ever touches the UI — every backend route, worker, and DB invariant exists to serve what renders in the browser. A pass that only probes the API or reads code is testing a surface no user sees; it will over-report backend defects and miss the UX, state, timing, and copy bugs that are what actually reach people. Default your *hands* to the agent browser for any webapp, and drive it like a real user, not a quick screenshot check. The frontend driving playbook in [driving.md](references/driving.md) is the core of doing this well.
 >
