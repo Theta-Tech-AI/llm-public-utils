@@ -33,7 +33,7 @@ Alternatively, you can copy or symlinking directories from `.agents/skills/` int
 | Skill | Description |
 |-------|-------------|
 | [deslop](.agents/skills/deslop/) | Code quality analysis and refactoring against a library of coding principles |
-| [stress](.agents/skills/stress/) | Stress-test apps via browser/API — comb happy paths, cause mischief, hunt bugs |
+| [stress](.agents/skills/stress/) | Stress-test apps via browser/API — confirm reliability, comb happy paths, cause mischief, hunt bugs |
 | [shatter](.agents/skills/shatter/) | Split large files into focused, single-responsibility pieces |
 | [addtodeslop](.agents/skills/addtodeslop/) | Research and merge new principles into deslop |
 | [smelt](.agents/skills/smelt/) | Separate upstream metal from project-specific overlay slag |
