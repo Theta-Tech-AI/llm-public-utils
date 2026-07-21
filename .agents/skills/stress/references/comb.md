@@ -62,6 +62,38 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran.
 
+## Sweep surface-by-surface, not path-by-path
+
+The passes above describe walking the happy path repeatedly. That is the right
+shape for *reliability*, but as a comb structure it skims: each surface is
+touched briefly on the way to the next, so only knots big enough to interrupt
+the path get noticed.
+
+The higher-yield structure is the opposite — **depth-first per surface, breadth
+across surfaces**:
+
+1. **Park on ONE surface** and interrogate everything about it: every control,
+   label, empty state, number, transition, and the second instance of anything
+   repeatable. Do not advance because the path allows you to advance; advance
+   when that surface has stopped yielding.
+2. **File everything, fix nothing.** Each finding becomes an issue with enough
+   detail that someone else can work it. Stopping to fix collapses the sweep —
+   you lose the state you built up, and the surface you were on goes cold.
+3. **Advance while fixes proceed behind you.** The backlog for surface N is
+   being worked while you are combing surface N+1. Combing and fixing are
+   different activities that contend for the same attention; run them as
+   separate pipelines.
+4. **Return later to confirm**, once fixes land, rather than blocking on them.
+
+The per-surface backlog IS the deliverable, not a pass/fail verdict for the run.
+
+**Expect this to be slow, and do not treat that as failure.** A single surface
+can yield a dozen genuine issues, and a real sweep of a multi-surface product
+does not finish in one sitting. A pass that "covered every page" in an hour
+almost certainly skimmed. If you find yourself moving on because a surface
+*worked*, you are path-combing again — working is the precondition for combing
+it, not the conclusion.
+
 ## Time-dependent knots (the ones a settled snapshot cannot see)
 
 The reading-level knots above assume you can look at the screen. Several whole
