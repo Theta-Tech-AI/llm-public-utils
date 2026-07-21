@@ -62,6 +62,92 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran.
 
+## Time-dependent knots (the ones a settled snapshot cannot see)
+
+The reading-level knots above assume you can look at the screen. Several whole
+classes are invisible to the way an agent normally drives: `open` → wait for the
+page to settle → `snapshot`. That rhythm observes the **settled** state by
+construction, so anything that exists only *during* a transition, *after*
+idling, or *across* two views is structurally unreachable — the checklist above
+can ask for it and you will still never see it.
+
+Typical misses, all of which reach real users:
+
+- a control that appears for a second or two while the page loads and then
+  vanishes as the work it offered starts by itself — gone before the first
+  snapshot exists, yet long enough for a user to click it
+- a session/token expiry warning that only fires when you come back to a tab
+  left open — needs idling
+- a summary figure that changes when you switch tabs, with nothing spent or
+  saved in between — needs comparing one widget across two views
+- an error toast produced by navigating *during* a long-running job — needs
+  acting while async work is in flight
+
+### Drive for time, not just for path
+
+1. **Sample during load, not after it.** Snapshot immediately on navigation and
+   again a beat later, before the settle, and diff them. Anything present early
+   and absent later is a flash — and a control that flashes is a control a user
+   can click by mistake, which matters far more than cosmetics when the action
+   is destructive or costs money.
+2. **Idle deliberately.** Leave a page open past a session, lease, or token
+   lifetime and return to it. Anything that fires on return is invisible to a
+   pass that never stops moving.
+3. **Diff one widget across navigations.** Note a count, cost, or status; go
+   elsewhere; come back or switch tabs; compare. A figure that changes without a
+   corresponding action is wrong even when each view looks right on its own.
+4. **Act during async work, not after it.** Long-running work is exactly when
+   real users click elsewhere. Switch tabs, navigate away and back, and open
+   sibling views *while* a job is live, rather than waiting for it to finish.
+5. **Watch the console for the whole pass.** Repeated 4xx/5xx from background
+   polls and auto-started work never appear in the DOM, and are often the first
+   evidence of a doomed request the UI is quietly retrying.
+
+This is a second axis over the reading-level pass, not a replacement. A knot
+that exists for two seconds still reached a user.
+
+## Comparison knots (one path, walked once, can never find these)
+
+A comb pass traverses. These knots exist only in the *difference* between two
+things, so no single traversal — however careful the reading — surfaces them.
+You have to create a second instance, or hold two surfaces side by side.
+
+### Plurality: exercise the SECOND one
+
+Paths for "the first / primary / default" are exercised constantly. The second
+instance often runs different code — another data source, a fallback, an
+aggregate written when only one existed. A pass that creates one account, one
+workspace, one document, one member never touches it. Typical shapes:
+
+- a secondary record renders a raw internal id where the primary renders a
+  human name, because the secondary lacks the enrichment the primary happened
+  to have and an untested fallback fires
+- a list labelled "selected items" shows only the currently-active group rather
+  than all of them
+- a header total summarises only the active tab, so it moves when you switch
+- a second concurrent job hits a lock the first never contended for, failing in
+  a way the single-job path never exposes
+
+Rules:
+- Seed at least **two** of every repeatable entity, and drive the second.
+- Prefer a second instance that is deliberately **sparser** — missing optional
+  fields, no upstream enrichment. Fallbacks live there, and fallbacks are where
+  leaked internals appear.
+- For any figure claiming to summarise, verify it **aggregates** rather than
+  reporting whichever context is selected.
+
+### Cross-surface: the same concept, rendered twice
+
+A value shown in two places must agree and look the same. Divergence is
+invisible while you look at either alone: a quantity formatted with the shared
+component in one surface and raw in another; the same information presented two
+different ways on two screens that could share a component.
+
+Rule: when you meet a value that appears elsewhere — a count, a cost, a status,
+an entity name — go find its other rendering and compare formatting, units,
+rounding and wording. Decide which is canonical; a mismatch is a knot even when
+both are individually readable.
+
 The interaction-level checks — persistence-by-reload, responsive resize, occlusion, hover/keyboard, and every-clickable-goes-somewhere — live in the frontend driving playbook in [driving.md](driving.md); run them alongside these reading-level knots. Comb reads the front door; the playbook drives it.
 
 ## Knots
