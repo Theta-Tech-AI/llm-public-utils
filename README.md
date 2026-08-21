@@ -2,36 +2,95 @@
 
 A collection of agent skills, utility scripts, and experiments for LLM-assisted development workflows.
 
-## Skills
+## Installation
 
-Install skills by using the skills package:
+Clone the skills repository (only once):
 
 ```bash
-# go into a project
-cd my_code_dir/my_project_repo/
-
-# install a skill, e.g. /deslop
-npx skills add Theta-Tech-AI/llm-public-utils --skill deslop -y -a cursor -a claude-code -a codex
-
-# or install the /stress skill
-npx skills add Theta-Tech-AI/llm-public-utils --skill stress -y -a cursor -a claude-code -a codex
+cd my_code_dir/
+git clone https://github.com/Theta-Tech-AI/llm-public-utils.git
 ```
 
-Then you can update the skill later:
+## Install a skill into a project
+
+From your project directory, add one skill at a time. For example, to install the `linear-issues` skill:
 
 ```bash
-# go into a project
+# Go to your project
 cd my_code_dir/my_project_repo/
 
-# update installed skills
+# Add a skill from your local clone
+npx skills add ../llm-public-utils --skill linear-issues \
+    -y \
+    -a cursor \
+    -a claude-code \
+    -a codex
+```
+
+Substitute `linear-issues` for any skill in the table below (e.g. `--skill deslop`, `--skill stress`).
+
+Alternatively, you can copy or symlink directories from `.agents/skills/` into your agent harness skills path (e.g. `~/.agents/skills/` or `.cursor/skills/`).
+
+## Update skills later
+
+```bash
+cd my_code_dir/my_project_repo/
+
+# Pull the latest skills
+git -C ../llm-public-utils pull
+
+# Reinstall/update them in this project
 npx skills update -y
 ```
 
+## Running
 
-Alternatively, you can copy or symlinking directories from `.agents/skills/` into your agent harness skills path (e.g. `~/.agents/skills/` or `.cursor/skills/`).
+In Claude Code:
+
+```bash
+cd my_code_dir/my_project_repo/
+claude
+```
+
+Then from within Claude Code:
+
+```
+> /linear-issues
+```
+
+In Codex:
+
+```bash
+cd my_code_dir/my_project_repo/
+codex
+```
+
+Then from within Codex:
+
+```
+> $linear-issues
+```
+
+Or from OpenCode:
+
+```bash
+cd my_code_dir/my_project_repo/
+opencode
+```
+
+Then from within OpenCode:
+
+```
+> Run the linear-issues skill from the .agents/skills folder.
+```
+
+Each skill directory contains a `SKILL.md` with instructions. Some include bundled assets (scripts, prompt templates).
+
+## Skills
 
 | Skill | Description |
 |-------|-------------|
+| [linear-issues](.agents/skills/linear-issues/) | Linear issue lifecycle: create, start, continue, stop, close — with honest statuses and heavy commenting |
 | [deslop](.agents/skills/deslop/) | Code quality analysis and refactoring against a library of coding principles |
 | [stress](.agents/skills/stress/) | Stress-test apps via browser/API — confirm reliability, comb happy paths, cause mischief, hunt bugs |
 | [shatter](.agents/skills/shatter/) | Split large files into focused, single-responsibility pieces |
@@ -45,8 +104,6 @@ Alternatively, you can copy or symlinking directories from `.agents/skills/` int
 | [critique-writing](.agents/skills/critique-writing/) | Harsh, multi-perspective writing critique |
 | [text-compression](.agents/skills/text-compression/) | Iteratively compress text while preserving meaning |
 | [gpt4-coding-style](.agents/skills/gpt4-coding-style/) | Concise, DRY, modular Python coding preferences |
-
-Each skill directory contains a `SKILL.md` with instructions. Some include bundled assets (scripts, prompt templates).
 
 ## Scripts
 
