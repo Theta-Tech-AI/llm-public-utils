@@ -18,5 +18,6 @@ In relation to other principles, elegance:
 |-----------|--------------|
 | [**KISS**](kiss.md) | Shares the Saint-Exupéry minimality test |
 | [**Cognitive Load**](cognitive-load.md) | Elegant code gets an "of course" — near-zero load |
+| [**Legibility**](legibility.md) | Elegance in the small; legibility across the whole — one function reads well, a codebase is navigable |
 | [**YAGNI**](yagni.md) | Nothing superfluous can be elegant |
 | [**Self-Documenting Code**](self-documenting-code.md) | Elegance reveals intent without explanation |

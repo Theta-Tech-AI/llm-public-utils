@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code
-description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Least Surprise.
+description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise.
 ---
 
 # Clean Code
@@ -21,4 +21,5 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Self-Documenting Code](clean-code/self-documenting-code.md) | Names and structure over comments; comments for why only |
 | [Documentation Discipline](clean-code/documentation-discipline.md) | Where docs live; which comments earn their place |
 | [Elegance](clean-code/elegance.md) | Minimality, accomplishment, modesty, revelation |
+| [Legibility](clean-code/legibility.md) | Navigable codebase: followable call paths, discoverable entry points, honest names |
 | [Principle of Least Surprise](clean-code/least-surprise.md) | Components behave the way users expect |
