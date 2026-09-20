@@ -519,6 +519,34 @@ Produce the named artifact. Classify every hit through the ownership gate:
 consumer-owned by definition (brand/contract strings), domain-shaped
 (apply the gate per package), or a stale comment (fix in place).
 
+### Invariant scan: upstream must import only upstream
+
+The architectural invariant ("overlay imports from upstream; upstream never
+imports from overlay") is stated but invisible to file-diff audits — and a
+consumer's CI collection guard can *hide* violations (a bare-upstream
+`collect_ignore` list made a suite report green while runtime imports of
+overlay-only modules failed). Add this to every reverse audit:
+
+```bash
+# Any upstream import of a module that does not exist upstream is a
+# violation — and, worse, one a collection guard may be hiding.
+for mod in $(grep -rhoE 'from src\.services\.[a-z_]+' "$UPSTREAM/backend/src" \
+               --include='*.py' | sed 's/from //' | sort -u); do
+  path="backend/src/services/$(printf '%s' "$mod" | sed 's/src\.services\.//; s/\./\//g').py"
+  pkg="backend/src/services/$(printf '%s' "$mod" | sed 's/src\.services\.//; s/\./\//g')"
+  [ -f "$path" ] || [ -f "$pkg/__init__.py" ] || \
+    { printf 'INVERTED-IMPORT %s (imported but absent upstream — resolves only through an overlay)\n' "$mod"; }
+done
+
+# Runtime probe (the guard-proof version): actually import the suspect
+# modules in the upstream checkout, then in the shipped container.
+python3 -c "import sys; sys.path.insert(0, 'backend'); import src.services.<suspect>"
+```
+
+An `INVERTED-IMPORT` hit means upstream is un-runnable (or latently broken)
+without the overlay — the leak is not just ownership debt but a live import
+failure that CI cannot see.
+
 ## The reverse workflow (upstream → overlay pull-back)
 
 For files the reverse audit proves are consumer-owned:
@@ -668,6 +696,8 @@ Shortened case records. Classify each new situation against them.
 | Local tests pass but container `import` fails | Service-specific `requirements.txt` missing a transitive dep through a shared `lib/` | Add the transitive dep to the relevant service's `requirements.txt`; rebuild image |
 | `git rm overlay/.../foo` then frontend build fails | Frontend dist still references the deleted overlay file | Hard rebuild: `rm -rf dist node_modules/.vite && npm ci && npm run build` |
 | Reverse pull-back breaks downstream at bump | Owned files removed upstream before the overlay could stand alone | Rescue upstream-only bits into the overlay first; prove the scratch tree builds against the current pin; only then remove upstream |
+| Orphan scan returns nothing but the overlay feels heavy | Domain-term regex is stale (consumer terms renamed) | Refresh `DOMAIN_RE`; the ownership gate, not the regex, is the ground truth |
+| Upstream imports resolve in CI but fail at runtime | A collection guard `collect_ignore`s the affected modules so the suite never imports them | Run the invariant scan + a real import probe; a collection guard that hides broken imports is itself a defect — the suite must fail loudly on unresolvable imports |
 | Orphan scan returns nothing but the overlay feels heavy | Domain-term regex is stale (consumer terms renamed) | Refresh `DOMAIN_RE`; the ownership gate, not the regex, is the ground truth |
 
 ## Measure success
