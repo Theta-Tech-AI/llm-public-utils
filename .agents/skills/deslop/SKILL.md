@@ -1,6 +1,6 @@
 ---
 name: deslop
-description: Analyze code quality and perform targeted refactoring against established coding principles. Use when identifying and fixing "slop" in a codebase, running dedup sweeps, or reviewing code for maintainability violations.
+description: "Analyze and refactor code against a library of 50+ coding principles — clean code, architecture, reliability, and data layer — finding and fixing slop, duplication, dead code, over-abstraction, god files and needless complexity, measuring it honestly, and running whole-codebase simplification campaigns. It also extends the library, by researching a missing principle and merging it in. Use for deslop passes, code-quality and PR review, dedup and cleanup sweeps, tech-debt triage, refactor planning, complexity analysis, or when code is called messy, bloated, overcomplicated, copy-pasted, hard to read, or in need of a cleanup."
 ---
 
 # Deslop: Code Quality Analysis Command
@@ -24,6 +24,7 @@ Whether or not you use this deslop command on your code base, you should read al
 | [references/loop-until-dry.md](references/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
 | [references/campaign-mode.md](references/campaign-mode.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
 | [references/measuring.md](references/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
+| [references/extending-the-library.md](references/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
 
 ## Principle references (indexes)
 

@@ -131,10 +131,9 @@ Each skill directory contains a `SKILL.md` with instructions. Some include bundl
 | Skill | Description |
 |-------|-------------|
 | [linear-issues](.agents/skills/linear-issues/) | Linear issue lifecycle: create, start, continue, stop, close — with honest statuses and heavy commenting |
-| [deslop](.agents/skills/deslop/) | Code quality analysis and refactoring against a library of coding principles — scoped passes and whole-codebase simplification campaigns, with measurement |
+| [deslop](.agents/skills/deslop/) | Code quality analysis and refactoring against a library of 50+ coding principles — scoped passes and whole-codebase simplification campaigns, with measurement — and the procedure for extending that library |
 | [stress](.agents/skills/stress/) | Stress-test apps via browser/API — confirm reliability, comb happy paths, cause mischief, hunt bugs |
 | [shatter](.agents/skills/shatter/) | Split large files into focused, single-responsibility pieces |
-| [addtodeslop](.agents/skills/addtodeslop/) | Research and merge new principles into deslop |
 | [smelt](.agents/skills/smelt/) | Separate upstream metal from project-specific overlay slag |
 | [cleanup](.agents/skills/cleanup/) | Repo housekeeping — branch sync, deploy health, doc triage |
 | [local-dev](.agents/skills/local-dev/) | Bring up a local/hybrid dev stack for fast iteration |
