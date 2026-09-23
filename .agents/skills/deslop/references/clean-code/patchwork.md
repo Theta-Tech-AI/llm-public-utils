@@ -65,6 +65,34 @@ simplifying it now will only produce a better-organised patchwork.
 change to the shape means this guard has nothing to guard?". A guard whose condition cannot arise in the
 new representation is deleted, not ported.
 
+## The shape, before and after
+
+Three guards around one write, each added after a real incident, each individually justified:
+
+```python
+# ❌ Patchwork — every branch answers an incident, and the whole is nobody's design.
+def write_paragraph(section, heading, body):
+    heading = strip_leading_heading(body) or heading      # incident: heading repeated inside the body
+    if collides_with_sibling(section, heading):           # incident: two paragraphs, one heading
+        heading = next_free_heading(section, heading)
+    if fingerprint(body) in seen_bodies(section):         # incident: the same paragraph twice
+        return {"ok": False, "reason": "duplicate"}
+    if not body.strip():                                  # incident: an empty paragraph persisted
+        return {"ok": False, "reason": "empty"}
+    return append(section, coerce_depth(heading), body)
+```
+
+Nothing here can be removed safely — delete any branch and the incident returns. The repair is at the
+interface, and it deletes all four by making their conditions unreachable:
+
+```python
+# ✅ Decided — a paragraph is identified by the node it belongs to, not by a heading string.
+# No heading text to align, no sibling to collide with, no repeat to fingerprint:
+# a re-write replaces the node's paragraph, so "duplicate" is no longer a state.
+def write_paragraph(node_id: str, body: str, citations: list[Citation]) -> WriteResult:
+    return upsert(node_id, body, citations)               # citations are required by the type
+```
+
 ## Why subtraction fails — and what to do instead
 
 **You cannot simplify patchwork incrementally.** Delete one guard of thirteen and you have moved the
@@ -112,7 +140,7 @@ padding breaker, three race checks, two completion helpers — and **retires an 
 module**, because the state it repaired (a persisted paragraph with no citation) becomes unrepresentable
 at the write boundary.
 
-## Relationship to the neighbouring principles
+In relation to other principles, patchwork sits closest to the diagnosis it descends from — and it is the one principle whose repair is deliberately *not* incremental.
 
 | Principle | Relationship |
 |---|---|
