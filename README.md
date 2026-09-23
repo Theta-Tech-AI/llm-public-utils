@@ -13,24 +13,24 @@ installer fetches from `Theta-Tech-AI/llm-public-utils` directly and records wha
 
 ## Install a skill into a project
 
-From your project directory, add one skill at a time. For example, to install the `linear-issues` skill:
+From your project directory:
 
 ```bash
-cd my_project_repo/
-
-npx skills add Theta-Tech-AI/llm-public-utils --skill linear-issues \
-    -y \
-    -a cursor \
-    -a claude-code \
-    -a codex
+npx skills add Theta-Tech-AI/llm-public-utils --skill linear-issues -y
 ```
 
-Substitute `linear-issues` for any skill in the table below (e.g. `--skill deslop`, `--skill stress`).
-Repeat the flag to install several at once (`--skill deslop --skill stress`), or use `--skill '*'` for
-every skill in the repo. Add `-g` to install at user level instead of into the current project, and
-`--copy` if you want real files rather than symlinks into the agent directories.
+That is the whole command — **no clone, and no agent flags**. The CLI detects the harnesses you have
+installed and installs for all of them at once: one shared `.agents/skills/` copy for the harnesses that
+read that location (Amp, Codex, Cursor, OpenCode, Gemini CLI, Cline, Zed, …) and a link into it for the rest
+(Claude Code). Sixty-odd harnesses are supported; `--agent '*'` targets them all explicitly, and naming them
+— `-a claude-code -a opencode` — restricts the install when you want that.
 
-To see what the repo offers without installing anything:
+Substitute `linear-issues` for any skill in the table below (e.g. `--skill deslop`, `--skill stress`).
+Repeat the flag to install several at once (`--skill deslop --skill stress`), use `--skill '*'` for every
+skill in the repo, `-g` for user level instead of the current project, and `--copy` for real files rather
+than links.
+
+To see what this repo offers without installing anything:
 
 ```bash
 npx skills add Theta-Tech-AI/llm-public-utils --list
@@ -38,18 +38,18 @@ npx skills add Theta-Tech-AI/llm-public-utils --list
 
 ### What lands in your project
 
-When one of the agents you name reads the shared `.agents/skills/` location — Cursor and Codex do, and
-Claude Code is given a link into it — the install looks like this:
+When one of the detected harnesses reads the shared `.agents/skills/` location — Amp, Codex, Cursor and
+OpenCode do, and Claude Code is given a link into it — the install looks like this:
 
 ```
 <project>/.agents/skills/<skill>/      # the skill itself: SKILL.md + references/
 <project>/skills-lock.json             # one entry per skill: source + computedHash
-<project>/.claude/skills/<skill>       # a symlink into the shared store, per agent you named
+<project>/.claude/skills/<skill>       # a symlink into the shared store, for each harness that needs one
 ```
 
-Name only a single agent that keeps its own private directory — Claude Code on its own — and there is no
-shared store to link into, so the skill is **copied** into that agent's directory instead. `--copy` forces
-that behaviour for any agent, and `-g` moves the whole thing to user level rather than the project.
+Name only a single harness that keeps its own private directory — Claude Code on its own — and there is no
+shared store to link into, so the skill is **copied** into that harness's directory instead. `--copy`
+forces that behaviour for any harness, and `-g` moves the whole thing to user level rather than the project.
 
 `skills-lock.json` is what pins the install — `"source": "Theta-Tech-AI/llm-public-utils"` plus the
 `computedHash` of the skill as it was fetched. Commit it alongside your code, and
@@ -62,6 +62,9 @@ cd my_project_repo/
 
 # Re-fetch every installed skill from the repo it came from
 npx skills update -y
+
+# …or just one of them
+npx skills update deslop -y
 
 # Show what is currently installed
 npx skills list
