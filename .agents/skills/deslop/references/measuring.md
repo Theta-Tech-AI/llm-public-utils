@@ -20,7 +20,7 @@ Run all four. Each answers a question the others cannot.
 
 | Harness | Answers | Produces |
 |---|---|---|
-| **`static_metrics.py`** | What shape is the code? | LOC split, size/function distributions, `elif`/nesting depth, radon cyclomatic complexity + maintainability index, import graph + SCC cycles |
+| **`static_metrics.py`** | What shape is the code? | LOC split, size/function distributions, `elif`/nesting depth, radon cyclomatic complexity + maintainability index (see [Cyclomatic Complexity](clean-code/cyclomatic-complexity.md)), import graph + SCC cycles |
 | **`runtime_bench.py`** | Did we make it slower? | Fresh-interpreter import time, module count, RSS; CLI end-to-end; hot paths; `pytest --collect-only`; bytecode |
 | **`bench.py`** | What does it cost to find a symbol? | Per-"show me X" token cost over ~19k tasks derived from the test suite |
 | **`lookup_sim.py`** | What does *our tooling* pay per lookup? | Paired grep+read simulation over a few thousand common symbols |
