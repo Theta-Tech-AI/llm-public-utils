@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability
-description: Deslop principles — Reliability: Fail-Fast, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
+description: Deslop principles — Reliability: Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
 ---
 
 # Reliability
@@ -11,11 +11,12 @@ Each principle is a self-contained file — open it when a finding implicates th
 
 ## Robustness & Safety
 
-*How does code handle the unexpected? Fail-Fast detects errors early, Design by Contract makes expectations explicit, Postel's Law enables interoperability, Resilience keeps systems running despite failures, and Principle of Least Privilege limits damage from breaches.*
+*How does code handle the unexpected? Fail-Fast detects errors early, No Silent Defaults stops absence from masquerading as a value, Design by Contract makes expectations explicit, Postel's Law enables interoperability, Resilience keeps systems running despite failures, and Principle of Least Privilege limits damage from breaches.*
 
 | Principle | What it says |
 |-------------|----------------|
 | [Fail-Fast & Defensive Programming](reliability/fail-fast.md) | Detect and report errors at the earliest possible moment |
+| [No Silent Defaults](reliability/no-silent-defaults.md) | Model absence explicitly; never synthesize a plausible value for it |
 | [Design by Contract](reliability/design-by-contract.md) | Explicit preconditions, postconditions, invariants |
 | [Postel's Law (Robustness Principle)](reliability/postels-law.md) | Strict output, tolerant input; paranoid at security boundaries |
 | [Resilience & Graceful Degradation](reliability/resilience.md) | Retry, fall back, circuit-break; design for partial failure |
