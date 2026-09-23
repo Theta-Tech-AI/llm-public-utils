@@ -22,4 +22,5 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Documentation Discipline](clean-code/documentation-discipline.md) | Where docs live; which comments earn their place |
 | [Elegance](clean-code/elegance.md) | Minimality, accomplishment, modesty, revelation |
 | [Legibility](clean-code/legibility.md) | Navigable codebase: followable call paths, discoverable entry points, honest names |
+| [Patchwork](clean-code/patchwork.md) | Compensating code you cannot simplify by deleting — re-decide the interface, don't trim the guards |
 | [Principle of Least Surprise](clean-code/least-surprise.md) | Components behave the way users expect |
