@@ -38,11 +38,18 @@ npx skills add Theta-Tech-AI/llm-public-utils --list
 
 ### What lands in your project
 
+When one of the agents you name reads the shared `.agents/skills/` location — Cursor and Codex do, and
+Claude Code is given a link into it — the install looks like this:
+
 ```
 <project>/.agents/skills/<skill>/      # the skill itself: SKILL.md + references/
 <project>/skills-lock.json             # one entry per skill: source + computedHash
-<project>/.claude/skills/<skill>       # symlink (or a copy with --copy) for each agent you named
+<project>/.claude/skills/<skill>       # a symlink into the shared store, per agent you named
 ```
+
+Name only a single agent that keeps its own private directory — Claude Code on its own — and there is no
+shared store to link into, so the skill is **copied** into that agent's directory instead. `--copy` forces
+that behaviour for any agent, and `-g` moves the whole thing to user level rather than the project.
 
 `skills-lock.json` is what pins the install — `"source": "Theta-Tech-AI/llm-public-utils"` plus the
 `computedHash` of the skill as it was fetched. Commit it alongside your code, and
