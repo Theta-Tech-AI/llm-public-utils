@@ -21,7 +21,8 @@ npx skills add Theta-Tech-AI/llm-public-utils --skill linear-issues -y
 
 That is the whole command — **no clone, and no agent flags**. The CLI detects the harnesses you have
 installed and installs for all of them at once: one shared `.agents/skills/` copy for the harnesses that
-read that location (Amp, Codex, Cursor, OpenCode, Gemini CLI, Cline, Zed, …) and a link into it for the rest
+read that location (Amp, Codex, Cursor, OpenCode, **oh-my-pi (OMP)**, Gemini CLI, Cline, Zed, …) and a link
+into it for the rest
 (Claude Code). Sixty-odd harnesses are supported; `--agent '*'` targets them all explicitly, and naming them
 — `-a claude-code -a opencode` — restricts the install when you want that.
 
@@ -38,8 +39,8 @@ npx skills add Theta-Tech-AI/llm-public-utils --list
 
 ### What lands in your project
 
-When one of the detected harnesses reads the shared `.agents/skills/` location — Amp, Codex, Cursor and
-OpenCode do, and Claude Code is given a link into it — the install looks like this:
+When one of the detected harnesses reads the shared `.agents/skills/` location — Amp, Codex, Cursor,
+OpenCode and oh-my-pi (OMP) do, and Claude Code is given a link into it — the install looks like this:
 
 ```
 <project>/.agents/skills/<skill>/      # the skill itself: SKILL.md + references/
