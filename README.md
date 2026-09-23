@@ -2,25 +2,23 @@
 
 A collection of agent skills, utility scripts, and experiments for LLM-assisted development workflows.
 
-## Installation
+Skills are installed with [`npx skills`](https://github.com/vercel-labs/skills) — GitHub is the registry,
+so a **public repo needs no clone**: there is nothing to clone, pull, or keep beside your project. The
+installer fetches from `Theta-Tech-AI/llm-public-utils` directly and records what it took.
 
-Clone the skills repository (only once):
+## Prerequisites
 
-```bash
-cd my_code_dir/
-git clone https://github.com/Theta-Tech-AI/llm-public-utils.git
-```
+- **Node.js 22.20+** (for `npx`)
+- At least one supported agent harness — Claude Code, Codex, Cursor, OpenCode, and others
 
 ## Install a skill into a project
 
 From your project directory, add one skill at a time. For example, to install the `linear-issues` skill:
 
 ```bash
-# Go to your project
-cd my_code_dir/my_project_repo/
+cd my_project_repo/
 
-# Add a skill from your local clone
-npx skills add ../llm-public-utils --skill linear-issues \
+npx skills add Theta-Tech-AI/llm-public-utils --skill linear-issues \
     -y \
     -a cursor \
     -a claude-code \
@@ -28,27 +26,69 @@ npx skills add ../llm-public-utils --skill linear-issues \
 ```
 
 Substitute `linear-issues` for any skill in the table below (e.g. `--skill deslop`, `--skill stress`).
+Repeat the flag to install several at once (`--skill deslop --skill stress`), or use `--skill '*'` for
+every skill in the repo. Add `-g` to install at user level instead of into the current project, and
+`--copy` if you want real files rather than symlinks into the agent directories.
 
-Alternatively, you can copy or symlink directories from `.agents/skills/` into your agent harness skills path (e.g. `~/.agents/skills/` or `.cursor/skills/`).
+To see what the repo offers without installing anything:
+
+```bash
+npx skills add Theta-Tech-AI/llm-public-utils --list
+```
+
+### What lands in your project
+
+```
+<project>/.agents/skills/<skill>/      # the skill itself: SKILL.md + references/
+<project>/skills-lock.json             # one entry per skill: source + computedHash
+<project>/.claude/skills/<skill>       # symlink (or a copy with --copy) for each agent you named
+```
+
+`skills-lock.json` is what pins the install — `"source": "Theta-Tech-AI/llm-public-utils"` plus the
+`computedHash` of the skill as it was fetched. Commit it alongside your code, and
+`npx skills experimental_install` restores the same set on another machine.
 
 ## Update skills later
 
 ```bash
-cd my_code_dir/my_project_repo/
+cd my_project_repo/
 
-# Pull the latest skills
-git -C ../llm-public-utils pull
-
-# Reinstall/update them in this project
+# Re-fetch every installed skill from the repo it came from
 npx skills update -y
+
+# Show what is currently installed
+npx skills list
 ```
+
+No clone and no `git pull` — the installer reads `skills-lock.json` and refreshes each skill from its
+recorded source, so this picks up whatever has landed upstream.
+
+## Working on a skill in this repo
+
+Contributing is the one case that needs a clone:
+
+```bash
+git clone https://github.com/Theta-Tech-AI/llm-public-utils.git
+cd my_project_repo/
+
+# Install from your local checkout instead of GitHub
+npx skills add ../llm-public-utils --skill deslop -y -a cursor -a claude-code -a codex
+```
+
+Two differences are worth knowing when installing from a path rather than from GitHub:
+
+- the CLI **copies** the skill into your agent's directory instead of keeping `.agents/skills/` and
+  symlinking — so **re-run the command after each edit** to pick the change up;
+- the `skills-lock.json` entry records the path you passed (`"sourceType": "local"`), which is fine
+  locally but is not something to commit. Once your change is merged upstream, re-run the same command
+  against `Theta-Tech-AI/llm-public-utils` to pin the project back to the published copy.
 
 ## Running
 
 In Claude Code:
 
 ```bash
-cd my_code_dir/my_project_repo/
+cd my_project_repo/
 claude
 ```
 
@@ -61,7 +101,7 @@ Then from within Claude Code:
 In Codex:
 
 ```bash
-cd my_code_dir/my_project_repo/
+cd my_project_repo/
 codex
 ```
 
@@ -74,7 +114,7 @@ Then from within Codex:
 Or from OpenCode:
 
 ```bash
-cd my_code_dir/my_project_repo/
+cd my_project_repo/
 opencode
 ```
 
