@@ -56,3 +56,17 @@ For each violation list:
 - **Improvement:** Suggest a less sloppy way.
 
 For a thorough pass, iterate per [loop-until-dry.md](loop-until-dry.md).
+
+### What the audit owes when it notices something
+
+Two obligations decide whether a pass was worth running:
+
+- **A spread is a finding, not a note.** The moment you notice one logical unit split across packages, or
+  one shape re-implemented per feature, the pass has found something. Name the unit, name the module that
+  should own it, and propose the consolidation as an actionable item — never report it as an observation and
+  move on. See [architecture/one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).
+- **Detection is prose you apply.** The tools' blind spots, and the control a detector script must pass
+  before it earns its lines, are in [detecting-slop.md](detecting-slop.md).
+
+And the library applies **before** the code exists, not only to what already does: re-reading the applicable
+principles while designing is cheaper than consolidating a fork that has callers.

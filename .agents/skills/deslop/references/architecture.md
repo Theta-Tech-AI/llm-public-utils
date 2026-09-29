@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture
-description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency.
+description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency.
 ---
 
 # Architecture
@@ -11,7 +11,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 
 ## Organization & Structure
 
-*Where does this code belong? DRY and Single Source of Truth ensure knowledge lives in one place, Separation of Concerns defines boundaries between responsibilities, and Modularity packages those boundaries into self-contained units.*
+*Where does this code belong? DRY and Single Source of Truth ensure knowledge lives in one place, Separation of Concerns defines boundaries between responsibilities, Modularity packages those boundaries into self-contained units, and One Logical Unit, One Home gives a unit that has drifted across packages back to a single owner.*
 
 | Principle | What it says |
 |-------------|----------------|
@@ -19,6 +19,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Single Source of Truth](architecture/single-source-of-truth.md) | One authoritative location per datum; other copies derive from it |
 | [Separation of Concerns](architecture/separation-of-concerns.md) | High cohesion, low coupling; one concern per part |
 | [Modularity](architecture/modularity.md) | Deep modules, each hiding one design decision |
+| [One Logical Unit, One Home](architecture/one-logical-unit-one-home.md) | A unit spread across packages, or a shape copied per feature, is a finding — consolidate to one module per responsibility |
 
 ## Coupling & Dependencies
 
