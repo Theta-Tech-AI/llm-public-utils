@@ -64,9 +64,7 @@ Three properties, all required:
 
 Token and AST clone matching qualifies: `jscpd`, `pmd-cpd`, and `scripts/astdup.py` / `scripts/tsdup.cjs`, which
 hash function bodies with every name and constant erased and print a redundant-line total that works as a CI
-ratchet. The name-blind scans in `scripts/effects.py` and `scripts/representations.py` are **lead generators**,
-not verdicts: they rank candidate pairs and record clusters in seconds so the agent knows where to read first.
-Finding *which primitive a mechanism uses* is one grep, and shell is the right ceiling for cheap views.
+ratchet. Finding *which primitive a mechanism uses* is one grep, and shell is the right ceiling for cheap views.
 
 ```bash
 # every file that hand-rolls a heartbeat thread — then read the hits
