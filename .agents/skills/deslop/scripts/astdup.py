@@ -43,7 +43,7 @@ for dp, _, fs in os.walk(root):
                 if len(body.body) == 1 and isinstance(body.body[0], ast.Return): continue
                 h = hashlib.md5(ast.dump(Norm().visit(body)).encode()).hexdigest()
                 groups[h].append((p.replace(root+"/",""), node.lineno, node.name, n))
-dups = [g for g in groups.values() if len(g) > 1 and len({x[0] for x in g}) > 1 or (len(g)>1 and len({(x[0],x[1]) for x in g})>1)]
+dups = [g for g in groups.values() if len(g) > 1 and len({(x[0], x[1]) for x in g}) > 1]
 dups.sort(key=lambda g: -sum(x[3] for x in g[1:]))
 tot = 0
 for g in dups:

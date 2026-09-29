@@ -48,11 +48,21 @@ library no longer supports.
 3. Compare findings, tool calls and wall time.
 4. If the markdown-only agent finds the same things in comparable effort, **delete the script**.
 
-**Verify a finding on the current tip before you file it**, and file it as an issue with the evidence, not as
-a note: a copy may already be consolidated, and an unverified report costs the reader the check you skipped.
+**Verify a finding on the current tip before you file it** — a copy may already be consolidated, and an
+unverified report costs the reader the check you skipped. File it with the evidence, never as a note.
 
-A detector fitted to the one case its author had in hand is a description of that case; an agent working from a
-*method* (grep for the primitive, group by content, read the hits) generalises past it.
+Reference results, for calibration. Each fresh agent had only the markdown, on a ~100k-line backend:
+
+| Detector tried | Fresh markdown-only agent | Verdict |
+|----------------|---------------------------|---------|
+| File-name and role-word scanner, ~130 lines; its first version missed the main finding, and its later sections were fitted to one example | Found the main sibling set plus lock and activity copies in 12 calls, about a minute | **Deleted** |
+| Name-blind fingerprint scanner, ~90 lines (library calls, SQL tables, status values, exceptions per file, ranked by overlap) | Nine verified sets in 39 calls and under three minutes, by grepping for a primitive and reading the hits: lease-heartbeat threads (6), content hashing (6), TTL caches (4), schema bootstrap (6), run-worker skeletons (4), retrying HTTP clients, project-lock context managers, object-store wrappers (8), CSV exports — the scanner ranked the heartbeats and the object-store wrappers first and missed most of the rest | **Deleted**; the method is in [duplication.md](duplication.md) |
+| Field-overlap clustering of record shapes, ~160 lines | Ten calls and under a minute, by writing a throwaway field-overlap script: the activity event described 6 times, user identity 5 times | **Deleted**; the recipe is in [duplication.md](duplication.md) |
+
+The pattern repeats: a detector fitted to the finding in hand describes that finding, while an agent working
+from a *method* (grep for the primitive, group by content, read the hits) generalises past it. Each scanner
+cost more lines than the method and missed sets the method reached — which is why none of the three ships
+with this library.
 
 ## Where a script does earn its keep
 
@@ -62,9 +72,12 @@ Three properties, all required:
 - **Exhaustive** — it must sweep the whole tree; a sample is not a sweep.
 - **Stable** — the rule it encodes will not move as the principles are refined.
 
-Token and AST clone matching qualifies: `jscpd`, `pmd-cpd`, and `scripts/astdup.py` / `scripts/tsdup.cjs`, which
-hash function bodies with every name and constant erased and print a redundant-line total that works as a CI
-ratchet. Finding *which primitive a mechanism uses* is one grep, and shell is the right ceiling for cheap views.
+Token and AST clone matching qualifies — `jscpd`, `pmd-cpd`, and `scripts/astdup.py` / `scripts/tsdup.cjs`,
+which hash function bodies with every name and constant erased so renamed copies collapse, and print a
+redundant-line total usable as a CI ratchet. This class is admitted on its **properties**, not on a control:
+the decision is mechanical, the sweep is exhaustive, and the rule does not move when a principle is reworded.
+Finding *which primitive a mechanism uses* does not qualify — that is one grep, and shell is the ceiling for
+cheap views.
 
 ```bash
 # every file that hand-rolls a heartbeat thread — then read the hits

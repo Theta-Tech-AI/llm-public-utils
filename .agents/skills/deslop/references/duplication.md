@@ -139,7 +139,9 @@ Three or more hand-written copies of one primitive in different packages, where 
 should, is a finding. Confirm each with one question: *described in one sentence, is it the same sentence?*
 The rows are examples of a method, not a catalogue. To hunt a mechanism the table lacks, ask what any
 implementation of it *must* touch (a library call, a table, a status value, an exception, a thread or lock
-primitive, a wire format), grep for that, and group the hits by what they do.
+primitive, a wire format), grep for that, and group the hits by what they do: the same three files calling the
+same SDK with the same not-found handling are one wrapper. A kept script cannot do this step — the group is a
+judgement about what the code means.
 
 **One lifecycle described several times.** Records that move through the same states (pending, claimed, done,
 failed) under different table and function names are one mechanism with the record kind as its parameter.
@@ -149,7 +151,9 @@ Grep the status literals and the transition statements (`UPDATE ... SET status`)
 annotated fields and every `CREATE TABLE`, normalise field names (snake and camel to one form), and group
 records whose field sets overlap (Jaccard 0.5 to 0.7). Class names play no part: three user-identity types
 with different names and the same four fields group at once. A service model, its API response and its table
-are partly deliberate layering; the clear waste is the same record declared again in unrelated packages.
+are partly deliberate layering; the clear waste is the same record declared again in unrelated packages. This
+is a throwaway script's worth of work, not a kept one — group on the shared field names, ignore the names, and
+read the clusters.
 
 **Two complementary approaches — use both, they catch different things:**
 
