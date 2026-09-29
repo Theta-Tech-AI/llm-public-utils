@@ -19,9 +19,10 @@ exotic; they are precisely where the expensive slop lives.
   second file. A codebase can carry thousands of lines of silent duplication at a mean cyclomatic
   complexity of 4.
 - **Clone scanners compare text, or AST shape.** The expensive copies rename everything, reorder branches
-  and re-express one design in another idiom. Two sibling modules built from one design share their *def and
-  class names*, not their lines. (The one shell view that does catch this is in
-  [one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).)
+  and re-express one design in another idiom. A copy renames its files, functions and variables and shares
+  no lines, so name-matching finds only the copies nobody bothered to rename. What survives a rename is what the
+  code *does*: the primitives it calls. (The behaviour-first hunt is in
+  [duplication.md](duplication.md) and [one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).)
 - **Linters and type checkers see contracts, never cohesion.** A unit split across four packages is
   perfectly typed and perfectly linted.
 - **Coverage sees what tests touch**, and a fork is usually well covered — that is why it was written.
@@ -47,12 +48,17 @@ library no longer supports.
 3. Compare findings, tool calls and wall time.
 4. If the markdown-only agent finds the same things in comparable effort, **delete the script**.
 
-Reference result from the case that motivated this file, for calibration: the scanner was ~130 lines, its
-first version **missed** the main finding, and the sections added to catch that case were fitted to a single
-example. The fresh markdown-only agent found the main sibling set — the copies the scanner had missed — in
-**12 tool calls and under a minute**, with no code at all. The scanner was deleted; the markdown stayed.
+Reference results, for calibration. Each fresh agent had only the markdown, on a ~100k-line backend:
 
-A detector tuned to the one case its author had in hand is a description of that case.
+| Detector tried | Fresh markdown-only agent | Verdict |
+|----------------|---------------------------|---------|
+| File-name and role-word scanner, ~130 lines; its first version missed the main finding, and its later sections were fitted to one example | Found the main sibling set plus lock and activity copies in 12 calls, about a minute | Deleted |
+| Name-blind fingerprint scanner, ~90 lines (library calls, SQL tables, status values, exceptions per file, ranked by overlap) | Nine verified sets in 39 calls and under three minutes, by grepping for a primitive and reading the hits: lease-heartbeat threads (6), content hashing (6), TTL caches (4), schema bootstrap (6), run-worker skeletons (4), retrying HTTP clients, project-lock context managers, object-store wrappers (8), CSV exports. The scanner ranked the heartbeats and the object-store wrappers first and did not surface most of the rest | Deleted |
+| Field-overlap clustering of record shapes, ~160 lines | Ten calls and under a minute, by writing a throwaway field-overlap script: the activity event described 6 times, user identity 5 times | Deleted; the recipe is in [duplication.md](duplication.md) |
+
+The pattern repeats: a detector fitted to the finding in hand describes that finding, while the agent working
+from a *method* (grep for the primitive, group by content, read the hits) generalises. The scanners cost more
+lines than the method, and they missed sets the method reached.
 
 ## Where a script does earn its keep
 
@@ -62,18 +68,18 @@ Three properties, all required:
 - **Exhaustive** — it must sweep the whole tree; a sample is not a sweep.
 - **Stable** — the rule it encodes will not move as the principles are refined.
 
-Token clone matching (`jscpd`, `pmd-cpd`) qualifies. "Files named the same in three packages" does not
-justify a program: it is one line of shell, and shell is the right ceiling for cheap views.
+Token and AST clone matching qualifies: `jscpd`, `pmd-cpd`, and `scripts/astdup.py` / `scripts/tsdup.cjs`, which
+hash function bodies with every name and constant erased and print a redundant-line total that works as a CI
+ratchet. Finding *which primitive a mechanism uses* does not justify a program: it is one grep, and shell is
+the right ceiling for cheap views.
 
 ```bash
-# one design copied per package
-find <src> -name '*.py' -not -path '*/tests/*' | sed 's#.*/##' | sort | uniq -c | sort -rn | awk '$1>=3'
-# two files, same design or not — compare their def and class lists
-grep -hE '^(async )?def |^class ' a.py b.py | sort | uniq -c | sort -rn | head -30
+# every file that hand-rolls a heartbeat thread — then read the hits
+grep -rlE 'Event\(\)' <src> --include='*.py' | xargs grep -lE '\.wait\(' | xargs grep -lE 'Thread\('
 ```
 
 If a view fits in one command, it belongs in the instructions, not in a file. See
-[duplication.md](duplication.md) for the token scanner's proper role in a dedup sweep.
+[duplication.md](duplication.md) for the primitives to grep for and the token scanner's proper role.
 
 ## Detection runs twice: at design, and at audit
 
@@ -106,7 +112,8 @@ In relation to other references, detecting slop governs the detector rather than
 
 1. **State what your tools cannot see.** Complexity counts decisions inside a function; clone scanners
    compare text; neither sees a design forked into a second file.
-2. **"I opened three files to answer one question" is a finding**, not a feeling.
+2. **A copy renames everything except what it does**, so search by primitive and by field content, never by
+   file or function name. "I opened three files to answer one question" is a finding, not a feeling.
 3. **Detection is prose an agent applies** — a script is a second source of truth and drifts from the
    principles it encodes.
 4. **Make a script pass a control**: a fresh, markdown-only agent on the same checkout. Match its findings

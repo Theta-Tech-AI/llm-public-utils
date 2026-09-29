@@ -39,25 +39,28 @@ No bad commit is made at any step. Every step is a local optimum.
 
 ## The tells
 
-Cheap views first — these are the checks that automated analysis cannot perform for you:
+Behaviour first — a copy renames every file, function and variable, and cannot rename what it does:
 
-1. **The same file name in three or more packages** (`jobs.py`, `activity.py`, `runtime.py`, `config.py`):
-   one design copied per package.
-   ```bash
-   find <src> -name '*.py' -not -path '*/tests/*' | sed 's#.*/##' | sort | uniq -c | sort -rn | awk '$1>=3'
-   ```
-2. **Two files whose def and class lists line up.** The strongest single signal — different folders, same
-   design. Names that align across two files that are not each other's twin mean one of them is a fork.
-   ```bash
-   grep -hE '^(async )?def |^class ' a.py b.py | sort | uniq -c | sort -rn | head -30
-   ```
-3. **A facade with no boundary** — the module whose job is to re-export its own siblings, so a reader opens
+1. **The same primitive hand-written in three or more packages**: a heartbeat thread, a TTL cache, a content
+   hash, a retry loop, a lock guard, an object-store wrapper. Grep for the primitive, then read the hits
+   (the table in [hunting duplication](../duplication.md)). This finds copies that share no name at all.
+2. **One record described several times**: group classes and tables by the overlap of their field sets, not
+   their names.
+3. **A comment that admits it**: "same numbers as the other worker lease", "mirrors X".
+
+Name-based views find only what was named alike, so treat them as a second look, never the search:
+
+- The same file name in three or more packages (`jobs.py`, `activity.py`, `runtime.py`).
+- Two files whose def and class lists line up
+  (`grep -hE '^(async )?def |^class ' a.py b.py | sort | uniq -c | sort -rn`).
+
+4. **A facade with no boundary** — the module whose job is to re-export its own siblings, so a reader opens
    three files to see one unit. A third layer where two would do.
-4. **The specialist beside the general** — two modules doing one job, where the specialist carries capability
+5. **The specialist beside the general** — two modules doing one job, where the specialist carries capability
    its own goal never names (a citation pipeline inside a runtime, voting rounds inside a job runner).
-5. **N partial implementations of one mechanism.** Count them: locking, activity, streams, configuration,
+6. **N partial implementations of one mechanism.** Count them: locking, activity, streams, configuration,
    telemetry. One is a question; more than two is a finding.
-6. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
+7. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
    one behaviour.
 
 ## Diagnostics
@@ -137,8 +140,8 @@ state as a design aim:
    observation.** Name it in the pass, with the owning module proposed.
 2. **No tool reports it.** Cyclomatic complexity counts decisions inside a function; clone scanners compare
    text. A design copied with different names and control flow is invisible to both.
-3. **The tells are cheap**: the same file name in three or more packages, two files whose def lists line up,
-   a facade with no boundary, N copies of one mechanism.
+3. **The tells are cheap and behavioural**: the same primitive hand-written in several packages, one record
+   declared several times, a facade with no boundary. File names are the weakest evidence — a copy renames them.
 4. **The repair is one module per responsibility**, with each feature reduced to its genuine hooks — in the
    same change that deletes the specialist capability nobody needs.
 5. **Sequence the consolidation by concern** so every PR stands alone, and prove parity on behaviour rather
