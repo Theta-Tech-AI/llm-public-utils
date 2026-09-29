@@ -42,7 +42,7 @@ Each index below is a short table of principles and their one-line essences, lin
 | File | Read when |
 |------|-----------|
 | [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, indexes (**The Data Layer**) |
-| [references/duplication.md](references/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners |
+| [references/duplication.md](references/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/detecting-slop.md](references/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
 | [references/case-study-simplification-agent-fleet.md](references/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
 | [references/further-reading.md](references/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |

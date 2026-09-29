@@ -119,6 +119,42 @@ generations over one production codebase):
   proof the duplication matters. Where they still agree, pin them with a sync
   contract test so the drift fails loudly next time.
 
+**Hunt by behaviour, never by name.** A copied design renames its files, functions and variables; it cannot
+rename what it does to the outside world. File-name and def-list matches find only what someone named alike
+and are the weakest view; start from the *primitive* the mechanism cannot avoid using, grep for it across the
+whole tree, then read the files it returns.
+
+| Mechanism | Primitive to grep for |
+|-----------|-----------------------|
+| Lease or heartbeat thread | `threading.Event` + `.wait(`, `Thread(`, `os._exit` |
+| In-process TTL cache | `time.monotonic` beside a dict and a lock |
+| Content hash | `json.dumps(..., sort_keys=True)` beside `hashlib.sha256` |
+| Retrying HTTP client | `Retry-After`, a `{429, 5xx}` status set, `for attempt in range(` |
+| Lock or once-only guard | advisory-lock calls, `FOR UPDATE`, `ON CONFLICT`, a module flag beside a `Lock` |
+| Object-store wrapper | the SDK's get / put / exists calls plus its not-found and already-exists exceptions |
+| Run-worker skeleton | `try` / cancel handler / broad `except` that each finalize a status |
+| Schema bootstrap | `CREATE TABLE IF NOT EXISTS` beside a process-level "done" flag |
+
+Three or more hand-written copies of one primitive in different packages, where a shared owner exists or
+should, is a finding. Confirm each with one question: *described in one sentence, is it the same sentence?*
+The rows are examples of a method, not a catalogue. To hunt a mechanism the table lacks, ask what any
+implementation of it *must* touch (a library call, a table, a status value, an exception, a thread or lock
+primitive, a wire format), grep for that, and group the hits by what they do: the same three files calling the
+same SDK with the same not-found handling are one wrapper. A kept script cannot do this step — the group is a
+judgement about what the code means.
+
+**One lifecycle described several times.** Records that move through the same states (pending, claimed, done,
+failed) under different table and function names are one mechanism with the record kind as its parameter.
+Grep the status literals and the transition statements (`UPDATE ... SET status`), then compare the sequences.
+
+**One entity described several times** is found the same way, by content: parse every class with three or more
+annotated fields and every `CREATE TABLE`, normalise field names (snake and camel to one form), and group
+records whose field sets overlap (Jaccard 0.5 to 0.7). Class names play no part: three user-identity types
+with different names and the same four fields group at once. A service model, its API response and its table
+are partly deliberate layering; the clear waste is the same record declared again in unrelated packages. This
+is a throwaway script's worth of work, not a kept one — group on the shared field names, ignore the names, and
+read the clusters.
+
 **Two complementary approaches — use both, they catch different things:**
 
 - **Token/AST matching (mechanical).** Tools like `jscpd`, `pmd-cpd`, or a
@@ -142,7 +178,7 @@ generations over one production codebase):
   it doesn't have a single command to run. The action items below are how
   to do this systematically instead of an unstructured skim.
 
-Run the token scanner first (cheap, fast, catches the obvious copy-paste),
+Run the token scanner first (cheap, fast, catches the obvious copy-paste; `scripts/astdup.py` and `scripts/tsdup.cjs` hash function bodies with every name and constant erased, so renamed copies collapse),
 then do the semantic read for what it structurally cannot see. A dedup pass
 that only runs the scanner is a sample, not a sweep — the token-match tool
 finds *duplicated text*, not *duplicated knowledge*, and most of the
