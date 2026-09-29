@@ -54,13 +54,15 @@ Name-based views find only what was named alike, so treat them as a second look,
 - Two files whose def and class lists line up
   (`grep -hE '^(async )?def |^class ' a.py b.py | sort | uniq -c | sort -rn`).
 
-4. **A facade with no boundary** — the module whose job is to re-export its own siblings, so a reader opens
+4. **A guard, flag or baseline that only exists for a design you are replacing.** It outlives the design and
+   blocks the consolidation. Delete it in the same change.
+5. **A facade with no boundary** — the module whose job is to re-export its own siblings, so a reader opens
    three files to see one unit. A third layer where two would do.
-5. **The specialist beside the general** — two modules doing one job, where the specialist carries capability
+6. **The specialist beside the general** — two modules doing one job, where the specialist carries capability
    its own goal never names (a citation pipeline inside a runtime, voting rounds inside a job runner).
-6. **N partial implementations of one mechanism.** Count them: locking, activity, streams, configuration,
+7. **N partial implementations of one mechanism.** Count them: locking, activity, streams, configuration,
    telemetry. One is a question; more than two is a finding.
-7. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
+8. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
    one behaviour.
 
 ## Diagnostics

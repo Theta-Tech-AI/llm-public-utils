@@ -137,13 +137,25 @@ whole tree, then read the files it returns.
 
 Three or more hand-written copies of one primitive in different packages, where a shared owner exists or
 should, is a finding. Confirm each with one question: *described in one sentence, is it the same sentence?*
-The list is a starting set; extend it with whatever the codebase's own mechanisms turn out to be.
+The rows are examples of a method, not a catalogue. To hunt a mechanism the table lacks, ask what any
+implementation of it *must* touch (a library call, a table, a status value, an exception, a thread or lock
+primitive, a wire format), grep for that, and group the hits by what they do.
+`scripts/effects.py <src> 60 30 [skip_dir]` does the first step for every file at once: it fingerprints each
+file by the library calls, SQL tables and clauses, status values, exceptions and thread primitives it uses,
+ranks pairs in different folders and prints the shared features as the reason. Read the top pairs; it is a lead
+list, and a mechanism whose primitive it does not weigh still needs the grep above.
+
+**One lifecycle described several times.** Records that move through the same states (pending, claimed, done,
+failed) under different table and function names are one mechanism with the record kind as its parameter.
+Grep the status literals and the transition statements (`UPDATE ... SET status`), then compare the sequences.
 
 **One entity described several times** is found the same way, by content: parse every class with three or more
 annotated fields and every `CREATE TABLE`, normalise field names (snake and camel to one form), and group
 records whose field sets overlap (Jaccard 0.5 to 0.7). Class names play no part: three user-identity types
 with different names and the same four fields group at once. A service model, its API response and its table
 are partly deliberate layering; the clear waste is the same record declared again in unrelated packages.
+`scripts/representations.py --py <src> [--ts <frontend src>] [--skip <folder>]` does this grouping for Python
+classes, TypeScript types and `CREATE TABLE` columns together.
 
 **Two complementary approaches — use both, they catch different things:**
 

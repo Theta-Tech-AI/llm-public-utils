@@ -48,17 +48,11 @@ library no longer supports.
 3. Compare findings, tool calls and wall time.
 4. If the markdown-only agent finds the same things in comparable effort, **delete the script**.
 
-Reference results, for calibration. Each fresh agent had only the markdown, on a ~100k-line backend:
+**Verify a finding on the current tip before you file it**, and file it as an issue with the evidence, not as
+a note: a copy may already be consolidated, and an unverified report costs the reader the check you skipped.
 
-| Detector tried | Fresh markdown-only agent | Verdict |
-|----------------|---------------------------|---------|
-| File-name and role-word scanner, ~130 lines; its first version missed the main finding, and its later sections were fitted to one example | Found the main sibling set plus lock and activity copies in 12 calls, about a minute | Deleted |
-| Name-blind fingerprint scanner, ~90 lines (library calls, SQL tables, status values, exceptions per file, ranked by overlap) | Nine verified sets in 39 calls and under three minutes, by grepping for a primitive and reading the hits: lease-heartbeat threads (6), content hashing (6), TTL caches (4), schema bootstrap (6), run-worker skeletons (4), retrying HTTP clients, project-lock context managers, object-store wrappers (8), CSV exports. The scanner ranked the heartbeats and the object-store wrappers first and did not surface most of the rest | Deleted |
-| Field-overlap clustering of record shapes, ~160 lines | Ten calls and under a minute, by writing a throwaway field-overlap script: the activity event described 6 times, user identity 5 times | Deleted; the recipe is in [duplication.md](duplication.md) |
-
-The pattern repeats: a detector fitted to the finding in hand describes that finding, while the agent working
-from a *method* (grep for the primitive, group by content, read the hits) generalises. The scanners cost more
-lines than the method, and they missed sets the method reached.
+A detector fitted to the one case its author had in hand is a description of that case; an agent working from a
+*method* (grep for the primitive, group by content, read the hits) generalises past it.
 
 ## Where a script does earn its keep
 
@@ -70,8 +64,9 @@ Three properties, all required:
 
 Token and AST clone matching qualifies: `jscpd`, `pmd-cpd`, and `scripts/astdup.py` / `scripts/tsdup.cjs`, which
 hash function bodies with every name and constant erased and print a redundant-line total that works as a CI
-ratchet. Finding *which primitive a mechanism uses* does not justify a program: it is one grep, and shell is
-the right ceiling for cheap views.
+ratchet. The name-blind scans in `scripts/effects.py` and `scripts/representations.py` are **lead generators**,
+not verdicts: they rank candidate pairs and record clusters in seconds so the agent knows where to read first.
+Finding *which primitive a mechanism uses* is one grep, and shell is the right ceiling for cheap views.
 
 ```bash
 # every file that hand-rolls a heartbeat thread — then read the hits
