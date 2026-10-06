@@ -21,26 +21,18 @@ Start wide every time you hit a fresh surface or a new deploy. Breadth-first on 
 
 ## Specifics
 
+- **Work the run list, not memory.** Each pass takes the next items from `run-list.md` ([process.md](process.md)) with their variations: order, timing, value shape, role, device width, repeat, interrupt. Run the step loop at each step; a calm user's expectation is the prediction, and a variation you invent mid-pass goes into the run list first.
 - Stay close to the last path; move outward slowly so each knot is reproducible.
-- On each screen (or each step in an API sequence), inventory available actions *before* choosing the next move.
 - Do not cause mischief. Use the system as expected; deviate only gradually.
 - Cross-check layers before you believe a knot — see [findings.md](findings.md).
 - Watch your footprint. Prefer throwaway data; note when a verify left side effects.
 - Eventually the remaining knots look almost like mischief — that's fine; by then the hair is mostly smooth.
 
-## Driving while combing
-
-Read [driving.md](driving.md). Short version for comb:
-
-- **Browser-heavy** when grooming a webapp's UX (labels, CTAs, spinners, client state).
-- **API-heavy** when the happy path is a sequence of calls (integrations, backend workflows) or you need many gentle repetitions with varied valid payloads.
-- **Hybrid (preferred for webapps):** API to seed/reset state and assert backend truth; browser to confirm the human path still feels silky. After a UI pass, optionally replay the same happy path as a script so regressions are cheap to re-check.
-
 ## Field-proven knots (read the rendered output, not just the flow)
 
 The calmest, highest-value comb pass is to *read every user-facing string and the generated output itself*, as a real user would. These knots reach users first because a flow-only pass (does the button work?) never stops to read what's on screen:
 
-1. **Leaked internal representation.** A surface shows an internal value instead of a human one: a raw UUID/id instead of a name, a raw enum/status constant, an internal project code or jargon (ticket/spec/phase identifiers meant for the team, not the user), an ISO/UTC timestamp instead of localized time, or a raw ratio/counter. Walk every badge, toast, header, status line, and label — each raw internal value is a knot. **Special case — flash of raw value:** a field shows the raw id for a fraction of a second, then swaps to the resolved name once a lookup returns. Resolve first, render once; never paint the placeholder id. (Also grep-able — see [bug-hunter.md](bug-hunter.md).)
+1. **Leaked internal representation.** A surface shows a raw UUID, enum constant, internal project code or jargon, ISO/UTC timestamp or raw ratio. Walk every badge, toast, header, status line and label. **Flash of raw value:** the raw id shows for a moment, then swaps to the name; resolve first, render once. (Also grep-able: [bug-hunter.md](bug-hunter.md).)
 
 2. **Copy that isn't written for the reader.** Trigger each error, warning, and empty state and read it cold. Flag: jargon the user can't act on; a warning that doesn't say *which* entity, *why*, or *what to do*; the wrong term for a concept (e.g. an "admin" vs "superuser" mismatch); and the same condition worded differently in different places. Good status/error copy states what happened, why, and the next action — in plain language, naming the specific entities involved.
 
@@ -62,81 +54,24 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran.
 
-## Sweep surface-by-surface, not path-by-path
+## Sweep surface by surface, not path by path
 
-The passes above describe walking the happy path repeatedly. That is the right
-shape for *reliability*, but as a comb structure it skims: each surface is
-touched briefly on the way to the next, so only knots big enough to interrupt
-the path get noticed.
+Walking the path again and again is the right shape for reliability, but as a comb it skims: each surface gets a glance on the way to the next. Go **depth-first per surface, breadth across surfaces**:
 
-The higher-yield structure is the opposite — **depth-first per surface, breadth
-across surfaces**:
+1. **Park on one surface** and work every inventory row on it, every label, empty state, number, transition, and the second instance of anything repeatable. Move on when the surface stops yielding, not when the path lets you.
+2. **File everything, fix nothing.** Stopping to fix loses the state you built and lets the surface go cold. Fixes run behind you as a separate pipeline; come back to confirm them later.
 
-1. **Park on ONE surface** and interrogate everything about it: every control,
-   label, empty state, number, transition, and the second instance of anything
-   repeatable. Do not advance because the path allows you to advance; advance
-   when that surface has stopped yielding.
-2. **File everything, fix nothing.** Each finding becomes an issue with enough
-   detail that someone else can work it. Stopping to fix collapses the sweep —
-   you lose the state you built up, and the surface you were on goes cold.
-3. **Advance while fixes proceed behind you.** The backlog for surface N is
-   being worked while you are combing surface N+1. Combing and fixing are
-   different activities that contend for the same attention; run them as
-   separate pipelines.
-4. **Return later to confirm**, once fixes land, rather than blocking on them.
+The per-surface backlog is the deliverable, not a pass/fail verdict. Expect it to be slow: one surface can yield a dozen real issues, and a pass that "covered every page" in an hour skimmed. If you move on because a surface *worked*, you are path-combing again.
 
-The per-surface backlog IS the deliverable, not a pass/fail verdict for the run.
+## Time-dependent knots (a settled snapshot cannot see them)
 
-**Expect this to be slow, and do not treat that as failure.** A single surface
-can yield a dozen genuine issues, and a real sweep of a multi-surface product
-does not finish in one sitting. A pass that "covered every page" in an hour
-almost certainly skimmed. If you find yourself moving on because a surface
-*worked*, you are path-combing again — working is the precondition for combing
-it, not the conclusion.
+`open` → wait → `snapshot` observes the settled state by construction. Anything that exists only during a transition, after idling or across two views is unreachable that way: a control that shows for a second while the page loads and then vanishes (clickable by mistake, which matters when the action is destructive or costs money); a session-expiry warning that fires only when you return to an idle tab; a summary figure that changes when you switch tabs with nothing spent between; an error toast from navigating during a long job. Drive for time:
 
-## Time-dependent knots (the ones a settled snapshot cannot see)
-
-The reading-level knots above assume you can look at the screen. Several whole
-classes are invisible to the way an agent normally drives: `open` → wait for the
-page to settle → `snapshot`. That rhythm observes the **settled** state by
-construction, so anything that exists only *during* a transition, *after*
-idling, or *across* two views is structurally unreachable — the checklist above
-can ask for it and you will still never see it.
-
-Typical misses, all of which reach real users:
-
-- a control that appears for a second or two while the page loads and then
-  vanishes as the work it offered starts by itself — gone before the first
-  snapshot exists, yet long enough for a user to click it
-- a session/token expiry warning that only fires when you come back to a tab
-  left open — needs idling
-- a summary figure that changes when you switch tabs, with nothing spent or
-  saved in between — needs comparing one widget across two views
-- an error toast produced by navigating *during* a long-running job — needs
-  acting while async work is in flight
-
-### Drive for time, not just for path
-
-1. **Sample during load, not after it.** Snapshot immediately on navigation and
-   again a beat later, before the settle, and diff them. Anything present early
-   and absent later is a flash — and a control that flashes is a control a user
-   can click by mistake, which matters far more than cosmetics when the action
-   is destructive or costs money.
-2. **Idle deliberately.** Leave a page open past a session, lease, or token
-   lifetime and return to it. Anything that fires on return is invisible to a
-   pass that never stops moving.
-3. **Diff one widget across navigations.** Note a count, cost, or status; go
-   elsewhere; come back or switch tabs; compare. A figure that changes without a
-   corresponding action is wrong even when each view looks right on its own.
-4. **Act during async work, not after it.** Long-running work is exactly when
-   real users click elsewhere. Switch tabs, navigate away and back, and open
-   sibling views *while* a job is live, rather than waiting for it to finish.
-5. **Watch the console for the whole pass.** Repeated 4xx/5xx from background
-   polls and auto-started work never appear in the DOM, and are often the first
-   evidence of a doomed request the UI is quietly retrying.
-
-This is a second axis over the reading-level pass, not a replacement. A knot
-that exists for two seconds still reached a user.
+1. **Sample during load.** Snapshot immediately on navigation and a beat later, then diff. Present early and absent later is a flash. A trigger control that flashes and then hides because the job auto-started must pick one behaviour: auto-start and never show it, or require the click.
+2. **Idle deliberately** past a session, lease or token lifetime, then return.
+3. **Diff one widget across navigations.** A count, cost or status that changes without an action is wrong.
+4. **Act during async work:** switch tabs, navigate away and back, open sibling views while a job is live.
+5. **Watch the console for the whole pass.** Repeated 4xx/5xx from background polls never show in the DOM and are often the first sign of a doomed request.
 
 ## Comparison knots (one path, walked once, can never find these)
 
@@ -146,48 +81,19 @@ You have to create a second instance, or hold two surfaces side by side.
 
 ### Plurality: exercise the SECOND one
 
-Paths for "the first / primary / default" are exercised constantly. The second
-instance often runs different code — another data source, a fallback, an
-aggregate written when only one existed. A pass that creates one account, one
-workspace, one document, one member never touches it. Typical shapes:
+The primary instance is exercised constantly; the second often runs different code (another data source, a fallback, an aggregate written when only one existed). Typical shapes: a secondary record shows a raw id where the primary shows a name because an untested fallback fired; a "selected items" list shows only the active group; a header total summarises only the active tab; a second concurrent job hits a lock the first never contended for.
 
-- a secondary record renders a raw internal id where the primary renders a
-  human name, because the secondary lacks the enrichment the primary happened
-  to have and an untested fallback fires
-- a list labelled "selected items" shows only the currently-active group rather
-  than all of them
-- a header total summarises only the active tab, so it moves when you switch
-- a second concurrent job hits a lock the first never contended for, failing in
-  a way the single-job path never exposes
-
-Rules:
-- Seed at least **two** of every repeatable entity, and drive the second.
-- Prefer a second instance that is deliberately **sparser** — missing optional
-  fields, no upstream enrichment. Fallbacks live there, and fallbacks are where
-  leaked internals appear.
-- For any figure claiming to summarise, verify it **aggregates** rather than
-  reporting whichever context is selected.
+- Seed at least **two** of every repeatable entity and drive the second, ideally a deliberately **sparser** one (no optional fields, no enrichment): fallbacks live there, and leaked internals with them.
+- Verify any summarising figure **aggregates** rather than reporting the selected context.
 
 ### Cross-surface: the same concept, rendered twice
 
-A value shown in two places must agree and look the same. Divergence is
-invisible while you look at either alone: a quantity formatted with the shared
-component in one surface and raw in another; the same information presented two
-different ways on two screens that could share a component.
-
-Rule: when you meet a value that appears elsewhere — a count, a cost, a status,
-an entity name — go find its other rendering and compare formatting, units,
-rounding and wording. Decide which is canonical; a mismatch is a knot even when
-both are individually readable.
+A value shown in two places must agree and look the same (shared component in one surface, raw in another). When you meet a count, cost, status or entity name, find its other rendering and compare formatting, units, rounding and wording; a mismatch is a knot even when both read fine alone.
 
 The interaction-level checks — persistence-by-reload, responsive resize, occlusion, hover/keyboard, and every-clickable-goes-somewhere — live in the frontend driving playbook in [driving.md](driving.md); run them alongside these reading-level knots. Comb reads the front door; the playbook drives it.
-
-## Knots
-
-Handle per [findings.md](findings.md). Default: file GitHub issues with links; auto-fix only small tested knots if the user asked.
 
 ## See also
 
 - [mischief.md](mischief.md) — opposite temper: break expected flow on purpose
 - [bug-hunter.md](bug-hunter.md) — code-first hunt across many dimensions
-- [driving.md](driving.md) · [findings.md](findings.md)
+- [driving.md](driving.md) · [findings.md](findings.md) — knots are filed per findings; auto-fix only small tested knots when asked
