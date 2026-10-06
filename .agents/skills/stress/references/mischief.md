@@ -9,11 +9,11 @@ Act in ways the system *does not expect*. Wrong order. Wrong time. Twice. Under 
 
 ## Philosophy
 
-Mischief has a purpose. The better you get at breaking it — the more creative, more devious, more relentless the attack — the more hardened the system becomes. Every crack you find gets a fix and a regression anchor; the surface that survives your worst is the surface the user can trust. Embrace your mischief. Don't hold back the weird idea, the absurd ordering, the hostile input — that is exactly the one a real user will stumble into. **Creativity in breaking is the engine of hardening**; the meaner you are to staging today, the smoother it is for the real user tomorrow. You are not "testing to confirm it works." You are **hunting for delicious bugs**, and mischief is the bait that draws them out of hiding. Bugs sit buried under "works fine in the demo." Shake the system until they scatter into the open: the race that only fires on double-click, the gate that only dead-ends after a refreeze, the 500 that only appears when a dependency is down.
+Mischief has a purpose: every crack you find gets a fix and a regression anchor, and the surface that survives your worst is the one users can trust. Do not hold back the weird idea, the absurd ordering or the hostile input; a real user will find it. You are hunting bugs, not confirming it works. They hide under "works in the demo": the race that fires only on double-click, the gate that dead-ends after a refreeze, the 500 that appears when a dependency is down.
 
 ## Mission
 
-Break staging early, on purpose, in private, so real users get something that "just works." You are not here to bless the happy path — you are here to find where it cracks. **A found bug is the goal, never a setback.**
+Break staging early, on purpose, in private. **A found bug is the goal, never a setback.**
 
 | Rule | Meaning |
 |------|---------|
@@ -28,7 +28,7 @@ One loop — stay in it: `recon → pick tier → pick hands (browser / API / bo
 
 ### 1. Recon — re-map before you re-break
 
-Other agents ship new routes, tabs, buttons, and relabels constantly. **New UI/API area = new place bugs hide** — and the freshest, least-hardened code is exactly where state-machine bugs live. The bug that reaches a human first is usually in the place you didn't know existed yet. Every few runs — and **always after a deploy** — recon from scratch: (1) cold-open and walk primary nav plus every reachable tab/sub-page; (2) `snapshot -i` / inventory controls anew; (3) diff against your last map; (4) prefer **new and changed** areas first at your current tier; (5) re-check gates and order-of-operations on paths you thought were done. **Re-map before you re-break.** A catalog from yesterday is not a map of today's app.
+Your targets are the rows of the inventory ([process.md](process.md)): **every input and control in it gets attacked**, not only the ones the happy path uses. Other agents ship new routes, tabs and relabels constantly, and the freshest code is where state-machine bugs live. After every deploy, refresh the inventory, diff it against the last one, and hit **new and changed** rows first.
 
 ### 2. Prioritize — finish a tier before you descend
 
@@ -43,17 +43,11 @@ Gross first, all of it, across the whole app. Sweep **breadth until dry**, then 
 
 ### 3. Pick your hands — browser, API, or both
 
-These are **how you touch the app**, not "attack surfaces" (that's the page/route/API you're targeting after recon). Full install/usage and API technique tables: [driving.md](driving.md). Ask consent before installing agent-browser.
-
-| Hands | Best for |
-|-------|----------|
-| **Browser** | Chaotic user: wrong-order clicks, Back, multi-tab, abandon mid-wizard, every workbench control |
-| **API** | Contracts, concurrency, illegal sequences, payload matrices — fast and systematic |
-| **Both (hybrid)** | Discover in UI → amplify with scripts; or break API → see if UI recovers or lies |
+Browser for the chaotic user (wrong-order clicks, Back, multi-tab, abandon mid-wizard); API for contracts, concurrency, illegal sequences and payload matrices; hybrid to discover in the UI and amplify by script, or to break the API and see whether the UI recovers or lies. Detail: [driving.md](driving.md).
 
 ### 4. Invent the attack *this* page invites (radio test in practice)
 
-You don't prove a radio by reading the button list — you mash every button in every order, plug it in wrong, drop it, and see what rattles. **The catalog names the buttons; your job is the order of presses nobody tried.** Absorb this screen, entity state, data model, workflow stage, domain constraint, last deploy, and the code behind it — what is it *assuming*? Inventory every control, then treat that list as raw material for illegal sequences, not a checklist. Ask: What impatient/confused/hostile thing could a user do *right here*? What assumption can I violate? What two features interact untested? What seam with the next step? What press-order has nobody tried? Execute that context-derived attack; if quiet, escalate until it rattles — or you've earned "held under fire" for *this* page at *this* tier. Blind generic payloads are weak; specific mischief is lethal.
+The catalog names the buttons; your job is the order of presses nobody tried. Absorb the screen, entity state, workflow stage, domain constraint and the code behind it, and ask what it is *assuming*. What impatient, confused or hostile thing could a user do right here? What assumption can I violate? What two features interact untested? Treat this page's inventory rows as raw material for illegal sequences, not a checklist. If quiet, escalate until it rattles or you have earned "held under fire" for this page at this tier. Blind generic payloads are weak; specific mischief is lethal.
 
 ### 5. Cross-check always — the UI lies by omission
 
@@ -61,25 +55,15 @@ A clean snapshot is **not** proof. Mischief triggers 4xx/5xx constantly; SPAs sw
 
 ### 6. Patterns that flush bugs
 
-**Poke every tool, not only the forward CTA.** Each route is a workbench — demo-untouched tools hide unguarded mutations (secondary checkers, attach/verify, version rails, per-row links, regenerate, review handshakes, advanced panels). Hostile-drive each: wrong time, twice, while a job is live, after delete, second token. Once tier-1 on the page is dry, prefer obscure tools. **Agent-browser:** refs go stale after re-renders — re-`snapshot -i` before each repeated click; read content via snapshot/get-text; wrap `eval` in an IIFE ([driving.md](driving.md)). **Human factor:** start mid-flight → navigate away → other entity → return; interrupt with Back, tab close, second session, competing API; watch for leaked pollers, orphaned leases/locks, stranded modals, lost/zombie drafts, cross-entity data bleed (tier 1–2). **Moves that hurt:** wrong order/time; create→delete→mutate; double-submit; stale token; two writers on one lock; multi-actor; force the "disabled" action via API (or reverse); use ugly code as a map of where to strike; escalate on quiet.
+**Poke every inventory row, not only the forward CTA.** Demo-untouched tools hide unguarded mutations (secondary checkers, attach/verify, version rails, per-row links, regenerate, review handshakes, advanced panels). Hostile-drive each: wrong time, twice, while a job is live, after delete, second token. **Human factor:** start mid-flight, navigate away, switch entity, return; interrupt with Back, tab close, a second session or a competing API call; watch for leaked pollers, orphaned leases, stranded modals, zombie drafts and cross-entity bleed. **Moves that hurt:** wrong order or time; create→delete→mutate; double-submit; stale token; two writers on one lock; force the "disabled" action via API (or the reverse); escalate on quiet.
 
 ### 7. API frontend-simulator (high-yield hands)
 
 No browser required: reverse-engineer what the frontend would send, then break that conversation. Map mutations from SPA client / OpenAPI / HAR; create disposable scratch (superuser OK for *create* only); attack with normal user tokens; prefix `MISCHIEF-…` / `SCRATCH-…`; clean up. Blast each mutation: malformed, contradictory, **cross-resource IDs**, wrong order/time, unexpected concurrency. Often finds validation gaps, cross-tenant/project refs accepted, and audit/atomicity failures.
 
-```bash
-SCRATCH=$(curl -sS -X POST "$BASE/api/projects" -H "authorization: Bearer $SUPERUSER_TOKEN" \
-  -H 'content-type: application/json' -d '{"name":"MISCHIEF-scratch-1"}' | jq -r .id)
-curl -sS -X PATCH "$BASE/api/projects/$SCRATCH/items/$OTHER_PROJECT_ITEM_ID" \
-  -H "authorization: Bearer $USER_TOKEN" -H 'content-type: application/json' \
-  -d '{"project_id":"'"$SCRATCH"'"}'
-seq 1 10 | xargs -P 10 -I{} curl -sS -o /dev/null -w "%{http_code}\n" -X POST \
-  "$BASE/api/projects/$SCRATCH/submit" -H "authorization: Bearer $USER_TOKEN"
-```
-
 ## Field-proven state-contradiction classes (bugs users hit first)
 
-These classes repeatedly reach a human before a sweep catches them, because they only surface when you drive the *live UI* into a specific real state — code review and API probes miss them. Each is a mischief target with a concrete check. Drive every staged/wizard/multi-step flow against all of them.
+These classes reach a human first because they surface only when the *live UI* is driven into a specific state. Drive every staged or multi-step flow against all of them.
 
 1. **Downstream stage reachable with an unmet upstream prerequisite.** A later step must be unreachable — by its nav control **and** by pasting its deep-link URL directly — until its upstream gate is genuinely satisfied. The classic root cause: the frontend derives "is this step available" from a source that can disagree with the backend's authoritative prerequisite state (e.g. "downstream data already exists in the store" gets treated as "the upstream gate passed"). Check every stage *both* ways (click the nav item, and paste the URL). A stage that renders — or half-renders, then throws an unclear "prerequisite not met" error — with an incomplete predecessor is a bug even if data appears. Verify the guard's *error copy* too: it must name what's missing and the next action, not emit a bare internal code.
 
@@ -89,21 +73,13 @@ These classes repeatedly reach a human before a sweep catches them, because they
 
 4. **First-visit / transient wrong state that only self-corrects on manual refresh.** Arrive at a page *immediately* from the upstream action, before any poller settles, and watch the first render without touching anything. A page that shows "not ready" / stale / empty until you hit refresh — while the backend is actually ready — is a real bug. Common shape: arriving on a page should auto-start a job (the precondition is met), but the job only kicks off after a manual refresh or re-trigger. It must converge to the true state on its own.
 
-5. **Flash of a control that then disappears.** On first load a page briefly shows a "trigger / generate" control, then auto-starts and hides it. Pick one behavior and commit — either auto-start (and never show the manual trigger) or require the click. A control that appears then vanishes reads as a missed click and a flicker.
-
-6. **Return-to-in-flight-job orphaning.** Start a long-running job on a page, navigate away, then return (or refresh) while it's still running. The page must re-attach to the in-flight run and keep reporting progress (or offer cancel) — not silently orphan the run, prompt a conflicting "re-run" that could double-fire, or leave the user unsure whether work is happening in the background. Test every page that launches an async job this way.
+5. **Return-to-in-flight-job orphaning.** Start a long-running job on a page, navigate away, then return (or refresh) while it's still running. The page must re-attach to the in-flight run and keep reporting progress (or offer cancel) — not silently orphan the run, prompt a conflicting "re-run" that could double-fire, or leave the user unsure whether work is happening in the background. Test every page that launches an async job this way.
 
 These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
 
 ### Front-door chaos (the user's real environment, not yours)
 
-The user isn't on your wide window with a fast connection taking the happy path. Recreate their hostile reality — full technique list in the frontend playbook in [driving.md](driving.md):
-
-- **Resize mid-flow.** Shrink to mobile/tablet width during a wizard and keep going; watch controls overflow, overlap, slide under a sticky header, or fall off-screen.
-- **Cover the control.** When a banner/toast/sticky header/modal overlays an interactive element, it is unusable even though it's in the DOM — screenshot and look, don't just trust that a ref click "succeeded."
-- **Reload mid-change.** Make a change (select, toggle, inline-edit) and hard-reload *before* it visually settles; it must have persisted or clearly not. Silent loss and optimistic-UI lies fall straight out.
-- **Back-button and cold deep-link.** Bounce Back mid-wizard then forward; paste each stage's URL cold in a fresh tab. State must rebuild and gates must hold on direct entry, not just via nav.
-- **Deploy / degraded window.** Hit the app while the backend is rolling or down. The front door should show a maintenance/updating state, not a raw 502 or a white screen. (Also rule this out as a false alarm before filing — see [findings.md](findings.md).)
+Run the [driving.md](driving.md) playbook hostile and mid-flow: resize during a wizard, reload before a change settles, Back and cold deep-links in a fresh tab, a banner over the control. Then hit the app while the backend is rolling or down: the front door should show a maintenance state, not a raw 502 or a white screen (rule out a false alarm first — see [findings.md](findings.md)).
 
 ## Report
 

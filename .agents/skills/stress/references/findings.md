@@ -75,71 +75,23 @@ Err on the side of **too much detail**. Future you (or another agent/human) shou
 Name the **failure**, not the session:
 
 - Good: `POST /api/orders after DELETE returns 200 and resurrects the row`
-- Good: `Authoring "Continue" stays enabled when SE gate is incomplete`
+- Good: `"Continue" stays enabled while the review gate is incomplete`
 - Bad: `Bug from mischief pass 3`
 - Bad: `Something weird on staging`
 
 ### Body template
 
-Use this structure (adapt section names if the repo has an issue template — fill theirs, but keep this level of detail):
+Adapt to the repo's issue template if it has one; keep this detail level. Sections, in order:
 
-```markdown
-## Summary
-One or two sentences: what breaks, where, and why it matters.
-
-## Why this is an issue
-Justify impact. Who gets hurt? Data loss? Wrong decision? Security? Silent corruption?
-Blocked workflow? Confusing UX that will generate support load?
-Do not file "nice to have polish" as if it were a defect unless you say so explicitly.
-
-## Environment
-- App URL / environment: (local / staging / prod — never prod unless user asked)
-- Commit / SHA / image tag / deploy id: (if known)
-- Date/time (UTC):
-- Account / role used: (throwaway id, not passwords)
-- Browser vs API (or both):
-- Agent / model that found it: (e.g. Cursor Grok, Claude Opus, …)
-
-## Steps to reproduce (overly detailed)
-Numbered steps a stranger can follow. Include:
-- Exact URLs and navigation path
-- Every click, field value, wait, and back-button
-- For API: full method, path, query, headers (secrets redacted), body
-- Timing / concurrency notes ("two tabs", "fire 10 parallel POSTs")
-- Starting state (empty project, seeded fixture name, prior API setup)
-
-1. …
-2. …
-3. …
-
-## Expected
-What should happen, and why (product rule, API contract, UI gate, security invariant).
-
-## Actual
-What happened instead — quote UI copy, status codes, response bodies, console errors.
-
-## Evidence
-Paste more than you think you need:
-- Response snippets (trim only secrets)
-- Console / network errors
-- Screenshots or recording paths if available
-- Log lines with timestamps
-- **Code pointers** (see below)
-
-## Suspected cause
-Best guess with pointers into the code. Say if uncertain.
-
-## Suggested fix
-Concrete, actionable suggestions (even if wrong — they accelerate triage):
-- Which function/handler/component to change
-- Invariant to enforce (e.g. "DELETE must make subsequent PATCH return 404")
-- Test to add (UI, API, or unit)
-- Whether a quick guard is enough vs a deeper redesign
-
-## Severity
-One of: `severity:critical` | `severity:high` | `severity:medium` | `severity:low` | `severity:latent`
-(Brief one-liner why this severity.)
-```
+- **Summary** — what breaks, where, why it matters.
+- **Why this is an issue** — impact: data loss, wrong decision, security, silent corruption, blocked workflow. Do not file polish as a defect unless you say so.
+- **Environment** — app URL and environment (never prod unless asked), commit / image tag, UTC time, throwaway account and role, browser vs API, finding agent and model.
+- **Steps to reproduce** — numbered, exact URLs, clicks, field values, waits, headers and bodies (secrets redacted), concurrency notes, starting state.
+- **Expected** and **Actual** — quote UI copy, status codes, response bodies, console errors; say which rule makes "expected" true.
+- **Evidence** — response snippets, console / network errors, screenshots, timestamped log lines, code pointers.
+- **Suspected cause** — best guess with code pointers; say if uncertain.
+- **Suggested fix** — function or invariant to change, and the test to add.
+- **Severity** — one severity label and one line why.
 
 ### Repro quality bar
 
@@ -153,114 +105,24 @@ Write repros as if the reader has **never seen the app**:
 
 ### Code links and snippets (required when you can)
 
-Point at code. Prefer **stable GitHub permalinks** over vague file names:
-
-```bash
-# Permalink to a line or range on the current commit (not floating branch HEAD)
-gh browse path/to/file.py:42-58 --commit "$(git rev-parse HEAD)"
-# Or construct: https://github.com/<owner>/<repo>/blob/<sha>/path/to/file.py#L42-L58
-```
-
-In the issue body:
-
-1. **Permalink** to the relevant lines (blob URL with SHA + `#Lstart-Lend`)
-2. **Short inline snippet** (5–30 lines) so the issue stays readable if the SHA ages
-3. Call out the bad assumption ("swallows all exceptions and returns `None`", "UI disables the button but API has no check")
-
-Example:
-
-```markdown
-## Evidence (code)
-
-Permalink: https://github.com/org/repo/blob/a1b2c3d/services/orders.py#L88-L101
-
-```python
-# services/orders.py (a1b2c3d)
-def update_order(order_id, body):
-    try:
-        return repo.save(order_id, body)
-    except Exception:
-        return None  # callers treat None as "no change" — masks deleted rows
-```
-```
-
-If the bug is UI/API disagreement, link **both** sides (frontend gate + backend handler).
+Give a **permalink** at the current commit (`gh browse path/to/file.py:42-58 --commit "$(git rev-parse HEAD)"`), a short inline snippet (5–30 lines) so the issue stays readable when the SHA ages, and the bad assumption ("swallows all exceptions and returns `None`"). For a UI/API disagreement, link both sides (frontend gate and backend handler).
 
 ### Suggested fix + justification
 
-Always include both:
-
-| Section | Purpose |
-|---------|---------|
-| **Why this is an issue** | Persuade a busy maintainer it deserves attention |
-| **Suggested fix** | Reduce time-to-first-patch; show you've thought past the symptom |
-
-Good justification names the failure mode: data integrity, authz hole, user-blocking workflow, incorrect clinical/business output, security, silent wrong answer, accessibility trap, etc.
-
-Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.se_complete` is false and match API", "add regression test X".
+Always include both: **Why this is an issue** persuades a busy maintainer (name the failure mode: data integrity, authz hole, blocked workflow, wrong output, security, silent wrong answer, accessibility trap); **Suggested fix** cuts time-to-first-patch with something small and testable ("reject PATCH after DELETE with 404", "add regression test X").
 
 ---
 
-## Labels (use more, not fewer)
+## Labels
 
-Apply **all** labels that fit. Sparse labeling makes triage worse. If a label is missing in the repo, **create it** (via `gh label create` or the UI) with a short description, then apply it — unless the user forbade creating labels.
+Follow the repo's own label rules first (`AGENTS.md`, `CONTRIBUTING.md`, issue docs). Apply every label that fits: kind, severity, every area that applies. Run `gh label list` first and reuse names; create a missing label only when none fits.
 
-### Severity (required)
+Stress-specific additions:
 
-Always set exactly one severity label:
-
-| Label | Use when |
-|-------|----------|
-| `severity:critical` | Data loss, security breach, prod-down, wrong irreversible action |
-| `severity:high` | User-blocking on a primary workflow; major incorrect output; authz failure |
-| `severity:medium` | Real bug, workaround exists, or non-primary path |
-| `severity:low` | Minor UX/copy/edge annoyance; low blast radius |
-| `severity:latent` | Smell / landmine not yet user-visible but will bite (swallowed errors, missing checks) |
-
-Mirror the same severity in the issue body.
-
-### Model / agent identity (recommended)
-
-Add a label for **who found it**, so humans can filter agent-filed noise and follow up with the right tool:
-
-- Prefer a stable slug: `model:grok`, `model:claude-opus`, `model:gpt`, `model:composer`, etc.
-- Or `agent:cursor`, `agent:claude-code` if the harness matters more than the model
-- Create the label if missing; put the precise model name in the issue body Environment section either way
-
-### Area / layer (apply all that apply)
-
-Create and use specific labels rather than one vague `bug`:
-
-| Label examples | Meaning |
-|----------------|---------|
-| `frontend` / `backend` / `infrastructure` | Layer |
-| `api` / `ui` / `ux` / `user-experience` / `user-interface` | Surface |
-| `workflow` / `logic` / `state-machine` | Behavioral class |
-| `security` / `auth` / `authz` | Safety |
-| `data` / `database` / `migrations` | Persistence |
-| `testing` / `flaky` | Test harness issues |
-| `performance` / `reliability` | Ops qualities |
-| `docs` | Documentation-only |
-| `comb` / `mischief` / `bug-hunter` | Which stress mode found it |
-| `browser` / `api-repro` | Drive surface that demonstrated it |
-
-Also use repo-existing labels (`bug`, `enhancement`, team names) when they fit — **in addition to**, not instead of, the specific ones above.
-
-### Creating labels via CLI
-
-```bash
-gh label create "severity:high" --description "User-blocking or major incorrect output" --color E11D48
-gh label create "model:grok" --description "Filed by Grok-family agent" --color 6E40C9
-gh label create "workflow" --description "Multi-step workflow / state machine" --color 1D4ED8
-# then on the issue:
-gh issue create --title "…" --body-file /tmp/issue.md \
-  --label "bug" --label "severity:high" --label "backend" --label "api" \
-  --label "workflow" --label "mischief" --label "api-repro" --label "model:grok"
-```
-
-List first so you reuse existing names when close enough (`gh label list`), but **prefer adding a precise label** over overloading a vague one.
-
----
+- **Severity** (exactly one): `severity:critical` (data loss, security breach, prod-down), `severity:high` (primary workflow blocked, wrong output, authz failure), `severity:medium` (workaround exists), `severity:low` (minor UX), `severity:latent` (landmine not yet user-visible). Repeat it in the body.
+- **Mode**: `comb`, `mischief` or `bug-hunter`.
+- **Finder**: a `model:<slug>` label for the model that found it, with the precise name in the body's Environment section.
+- **Drive surface**: `browser` or `api-repro` when it demonstrated the bug.
 
 ## Fixing and closing issues
 
@@ -312,7 +174,7 @@ Periodically:
 
 1. Pull the closed **and** open bugs that originated from human/user feedback (e.g. a `human-feedback` label, or issues filed by real users rather than agents).
 2. Cluster them by *class*, not instance — ask "what kind of check would have caught each?"
-3. For each class, generalize it into a reusable check and add it to the right mode file: [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for state-contradiction and timing, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
+3. For each class, generalize it into a reusable check and add it to the right mode file: [process.md](process.md) for an affordance the inventory missed, [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for state-contradiction and timing, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
 4. Re-run the sweep with the enriched catalog to find the **still-present** siblings of each human-found bug — the same class almost always has other live instances.
 
 A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see the browser-only callout in [driving.md](driving.md).)
@@ -321,9 +183,10 @@ A human-found bug is a hole in the catalog; the durable fix is the generalized c
 
 Summarize for the user:
 
+- **Coverage** — inventory rows tried and skipped (with the reason), from the run list in [process.md](process.md)
+- **Findings per lane** — links to every issue (or the artifact path)
 - Modes run (comb / mischief / bug hunter)
 - Surfaces used (browser / API / hybrid)
-- Links to every issue (or artifact path)
 - Severity mix (counts per severity label)
 - Ask which items to fix now if they haven't already said
 
