@@ -183,7 +183,7 @@ A human-found bug is a hole in the catalog; the durable fix is the generalized c
 
 Summarize for the user:
 
-- **Coverage** — inventory rows tried and skipped (with the reason), from the run list in [process.md](process.md)
+- **Coverage** — inventory rows tried and skipped (with the reason), and predictions matched / falsified / unknown, from the run list and log in [process.md](process.md)
 - **Findings per lane** — links to every issue (or the artifact path)
 - Modes run (comb / mischief / bug hunter)
 - Surfaces used (browser / API / hybrid)

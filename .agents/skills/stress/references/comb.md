@@ -21,7 +21,7 @@ Start wide every time you hit a fresh surface or a new deploy. Breadth-first on 
 
 ## Specifics
 
-- **Work the run list, not memory.** Each pass takes the next items from `run-list.md` ([process.md](process.md)) with their variations: order, timing, value shape, role, device width, repeat, interrupt. A variation you invent mid-pass goes into the run list first, so coverage stays true.
+- **Work the run list, not memory.** Each pass takes the next items from `run-list.md` ([process.md](process.md)) with their variations: order, timing, value shape, role, device width, repeat, interrupt. Run the step loop at each step; a calm user's expectation is the prediction, and a variation you invent mid-pass goes into the run list first.
 - Stay close to the last path; move outward slowly so each knot is reproducible.
 - Do not cause mischief. Use the system as expected; deviate only gradually.
 - Cross-check layers before you believe a knot — see [findings.md](findings.md).

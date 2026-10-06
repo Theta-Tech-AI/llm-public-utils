@@ -38,7 +38,7 @@ Useful under stress:
 
 ## Frontend driving playbook — be the user at the front door
 
-A whole class of real bugs exists only in the rendered UI and its async timing (gate state that disagrees with the backend, first-visit races, a raw id flashing before a lookup resolves, loading and error copy, hide-vs-disable dead ends). Code review and API probes miss them. Run these on **every** page you touch, roughly from "do nothing" to "abuse it":
+A whole class of real bugs exists only in the rendered UI and its async timing (gate state that disagrees with the backend, first-visit races, a raw id flashing before a lookup resolves, loading and error copy, hide-vs-disable dead ends). Code review and API probes miss them. This is real usage: run the step loop in [process.md](process.md) — snapshot, choose, predict, act, measure — at every click, and use the checks below as what to look at, on **every** page you touch, roughly from "do nothing" to "abuse it":
 
 1. **Watch the first paint.** Land cold and *do nothing* for a few seconds. Note anything that flashes, a raw value (id/UUID) that appears then resolves to a name, a control that shows then hides, a "not ready"/empty state that self-corrects, or blank skeletons that read as "no data." First-visit races are invisible if you interact immediately — most of them only exist in the first second.
 
@@ -60,9 +60,9 @@ A whole class of real bugs exists only in the rendered UI and its async timing (
 
 10. **Feel the latency.** Time frequent, simple actions (lock, toggle, save). A multi-second wait on something that should feel instant, with no immediate feedback, reads as broken even when it eventually succeeds — file it as a perceived-performance bug, and consider optimistic feedback.
 
-**Cross-check stays mandatory** (a clean render is not proof — see [findings.md](findings.md)): the browser is the source of truth for *what the user sees*; `console` + `network` + API/logs are the truth for *what actually happened*. Pair them — when they disagree (UI says success, network shows a 500; UI blocks, API allows), you've found something.
+**Measure on two layers** (a clean render is not proof — see [findings.md](findings.md)): the browser is the truth for *what the user sees*; `console`, `network`, API and logs are the truth for *what actually happened*. When they disagree (UI says success, network shows a 500; UI blocks, API allows), you found something.
 
-Mechanics: resize via the CLI viewport before a mobile pass and re-snapshot; reload-to-verify is `open <same url>` then compare with the pre-reload state; for occlusion, screenshot rather than trust a ref click that "succeeded".
+Mechanics: the step loop's snapshot is `snapshot -i` plus a screenshot; resize via the CLI viewport before a mobile pass and re-snapshot; reload-to-verify is `open <same url>` then compare with the pre-reload state; for occlusion, screenshot rather than trust a ref click that "succeeded".
 
 ## API driving
 

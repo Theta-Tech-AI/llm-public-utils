@@ -24,7 +24,7 @@ Break staging early, on purpose, in private. **A found bug is the goal, never a 
 
 ## How to hunt
 
-One loop — stay in it: `recon → pick tier → pick hands (browser / API / both) → invent the attack this page invites → execute → cross-check (UI lies) → file if real → escalate or descend tier`.
+It is the step loop of [process.md](process.md) with a hostile choice: `recon (snapshot) → pick tier and hands → invent the attack this state invites (choose) → predict what a hardened app does → execute → cross-check (measure; the UI lies) → file if real → escalate or descend tier`.
 
 ### 1. Recon — re-map before you re-break
 
@@ -51,7 +51,7 @@ The catalog names the buttons; your job is the order of presses nobody tried. Ab
 
 ### 5. Cross-check always — the UI lies by omission
 
-A clean snapshot is **not** proof. Mischief triggers 4xx/5xx constantly; SPAs swallow them into "button does nothing." Half the best bugs never appear on screen. Every probe: UI → `console` + `network` (xhr/fetch, 4xx/5xx) → API probe of the same resource → logs if needed. Twin mischief (UI silent / API screaming, or UI blocked / API allowed) is this class.
+A clean snapshot is **not** proof: SPAs swallow the 4xx/5xx that mischief triggers into "button does nothing." Measure every probe on UI, `console` + `network`, an API probe of the same resource, and logs if needed. Twin mischief (UI silent / API screaming, or UI blocked / API allowed) is this class.
 
 ### 6. Patterns that flush bugs
 
