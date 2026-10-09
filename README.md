@@ -36,17 +36,24 @@ Then restart your agent harness, and it should automatically pick up any install
 
 ## Updating skills
 
-From your project repo directory:
+Update all skills:
 
 ```bash
-# Re-fetch every installed skill from the repo it came from
 npx skills update -y
+```
 
-# …or just one of them
-npx skills update deslop -y
+Update a single skill (e.g. the "_deslop_" skill):
+
+```bash
+npx skills update -y --skill deslop
+```
 
 # Show what is currently installed
+
 npx skills list
+
+```
+
 ```
 
 No clone and no `git pull` — the installer reads `skills-lock.json` and refreshes each skill from its
