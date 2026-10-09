@@ -1,0 +1,12 @@
+[
+  {"type": "wait", "ms": 500},
+  {"type": "click", "selector": "#load-more"},
+  {"type": "wait", "ms": 500},
+  {"type": "scroll", "y": 2000},
+  {"type": "wait", "ms": 300},
+  {"type": "scroll", "y": 0},
+  {"type": "eval", "expression": "document.querySelector('input[name=q]').focus()"},
+  {"type": "key", "key": "a"},
+  {"type": "navigate", "url": "http://localhost:3000/dashboard"},
+  {"type": "wait", "ms": 1000}
+]

@@ -142,6 +142,7 @@ Each skill directory contains a `SKILL.md` with instructions. Some include bundl
 | Skill | Description |
 |-------|-------------|
 | [linear-issues](.agents/skills/linear-issues/) | Linear issue lifecycle: create, start, continue, stop, close — with honest statuses and heavy commenting |
+| [perf](.agents/skills/perf/) | Measure performance before and after a change — frontend rendering, frames and FPS over the Chrome DevTools Protocol, backend timing from `perf_counter()` and timestamped logs, deploy markers, budgets and the regression ledger. Never assume a change was faster |
 | [deslop](.agents/skills/deslop/) | Code quality analysis and refactoring against a library of 50+ coding principles — scoped passes and whole-codebase simplification campaigns, with measurement — and the procedure for extending that library |
 | [stress](.agents/skills/stress/) | Stress-test apps via browser/API — confirm reliability, comb happy paths, cause mischief, hunt bugs |
 | [shatter](.agents/skills/shatter/) | Split large files into focused, single-responsibility pieces |
