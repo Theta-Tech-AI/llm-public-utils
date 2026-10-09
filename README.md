@@ -2,23 +2,31 @@
 
 A collection of agent skills, utility scripts, and experiments for LLM-assisted development workflows. Skills are installed with [`npx skills`](https://github.com/vercel-labs/skills) — GitHub is the registry, so a **public repo needs no clone**: there is nothing to clone, pull, or keep beside your project. The installer fetches from `Theta-Tech-AI/llm-public-utils` directly and records what it took.
 
-## Installing skills
-
 *Note: Run all these from your project repository directory.*
 
-List all available skills:
+## Listing Skills
+
+List all available skills from the public cloud:
 
 ```bash
 npx skills add Theta-Tech-AI/llm-public-utils --list
 ```
 
-Add all the skills to your project:
+List installed skills for this project:
+
+```bash
+npx skills list
+```
+
+## Installing skills
+
+Install all the skills to your project:
 
 ```bash
 npx skills add Theta-Tech-AI/llm-public-utils -y --skill '*'
 ```
 
-Add a specific skill to your project (e.g. the "*deslop*" skill):
+Install a specific skill to your project (e.g. the "*deslop*" skill):
 
 ```bash
 npx skills add Theta-Tech-AI/llm-public-utils -y --skill deslop
@@ -44,7 +52,7 @@ npx skills list
 No clone and no `git pull` — the installer reads `skills-lock.json` and refreshes each skill from its
 recorded source, so this picks up whatever has landed upstream.
 
-## Skills
+## Skills Digest
 
 
 | Skill                                                              | Description                                                                                                                                                                                                                                                          |
