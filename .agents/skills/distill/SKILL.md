@@ -40,40 +40,19 @@ This requires reviewing downstream code (perhaps from multiple repositories) and
 
 In addition, look for opportunities to refactor downstream code bases so that it's easier to distill. For instance, by collecting common function parameters into a configuration object that is passed around, this may unlock new distillation opportunities even if the original code itself was difficult to distill.
 
-When code moves upstream, give it upstream's vocabulary. Rename branded or project-specific identifiers, constants and modules to generic ones, and turn branded values (product names, storage-key prefixes, service names) into parameters the downstream supplies. Values that are already persisted (database names, stored event strings, wire identifiers) keep their spelling.
+When code moves upstream, rename branded identifiers to generic ones, and turn branded values into parameters the downstream supplies. Persisted values (database names, stored strings) keep their spelling.
 
 ### Catch Up First
 
-Before moving anything, bump the submodule pin to the newest upstream. The downstream overlay is often the stale side: upstream has moved on, and the overlay still carries an old full copy of a file that upstream has since improved or restructured. Those copies are the cheapest wins. Delete them, and if they still carry a real downstream change, keep only that change (usually as a seam, below). A recent pin also means new upstream work can start from upstream's main line instead of an old commit.
+Start by bumping the submodule pin to the newest upstream. The overlay is often the stale side, still carrying an old copy of a file upstream has since improved. Delete those copies, keeping only any real downstream change.
 
 ### Wire It Up
 
-Distilled code must be used by upstream itself. Moving a file upstream that no upstream code calls only relocates the downstream's code: it leaves placeholder code in upstream that nothing exercises, so it rots and its tests prove nothing about the product.
-
-For every piece you move, do one of these:
-
-- **Replace** upstream's own copy of the same logic with it, so upstream's callers now use it.
-- **Mount** it in upstream's runtime (the app factory, the startup, the router table, the request pipeline), so upstream runs it in production.
-- **Leave it downstream** when upstream has no genuine use for it yet.
-
-A feature behind a flag that is off by default counts as unused. Prefer turning the moved behaviour on upstream. Before calling a round done, check every added module and public function for a caller in upstream's own non-test code.
+Distilled code must be used by upstream itself, not just moved there. Either replace upstream's own copy of the same logic with it, or mount it in upstream's runtime. If upstream has no use for it, leave it downstream. A feature behind a flag that is off by default is not used.
 
 ### Seams
 
-Mixed code is code that is mostly generic, with a small downstream-specific part. Do not copy it whole into the overlay, and do not move the downstream part upstream. Add a seam upstream: a registration call, an injected protocol or callback, or a slot, with a neutral default. Upstream's own code calls the seam, so the default path is used upstream. The downstream registers its part, and the overlay shrinks to that registration.
-
-```mermaid
-flowchart TB
-  mixed["mixed code in the overlay"]
-  seam["upstream: generic code plus a seam<br/>with a neutral default, called by upstream"]
-  register["downstream: one registration<br/>supplying its own part"]
-
-  mixed -->|1. generic part| seam
-  mixed -->|2. downstream part| register
-  register -->|plugs into| seam
-```
-
-Upstream never imports downstream code. If generic code needs downstream behaviour, that behaviour arrives through a seam.
+When an overlay file is mostly generic with a small downstream-specific part, move the generic part upstream with a seam: a registration hook or injected callback that upstream calls, with a neutral default. The downstream registers its part, and the overlay shrinks to that registration. Upstream never imports downstream code.
 
 ### Submodule Pins
 
@@ -107,7 +86,7 @@ flowchart TB
   pin -->|yes| delete["delete the overlay copy"]
 ```
 
-Merge upstream work with merge commits, not squashes, so the commit the downstream pins stays reachable from upstream's branch. The new pin must contain the old one.
+Merge upstream work with merge commits rather than squashes, so the pinned commit stays reachable upstream.
 
 ### Shattering
 
@@ -115,9 +94,4 @@ Sometimes if there is a really long upstream file, and the downstream overlay on
 
 ### Verify
 
-A round is done when both sides are green:
-
-- Upstream's tests pass, including new tests for every moved piece and seam.
-- The assembled tree (upstream at the new pin plus the overlay) passes the downstream's full checks.
-- Every moved piece has an upstream caller.
-- The overlay is smaller.
+A round is done when upstream's tests pass, the assembled tree passes the downstream's checks, every moved piece has an upstream caller, and the overlay is smaller.
