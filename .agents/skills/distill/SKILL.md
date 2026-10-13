@@ -36,7 +36,7 @@ To _distill_ is to clearly and cleanly separate which code belongs upstream vers
 
 Look for generic functionality in downstream repositories, and wonder if any could be re-usable which belongs in upstream. Often, legal requirements may need any project-specific functionality to be delivered in the downstream repository, so you must consider carefully if something is intellectual property for a downstream user and cannot legally be distilled upstream. However, there is often more that can be distilled upstream than you think. There are general functionalities and utilities and common code patterns which are not downstream-specific but falsely live in downstream.
 
-This requires reviewing downstream code (perhaps from multiple repositories) and comparing it to upstream code, and seeing where that distillation boundary should really lie. Catalogue potential places that could be affected, and look at the overall catalogue before deciding.
+This requires reviewing downstream code (perhaps from multiple repositories) and comparing it to upstream code, and seeing where that distillation boundary should really lie. Catalogue potential places that could be affected, and look at the overall catalogue before deciding. Judge each file by what it does, not where it lives: generic mechanism (logging, timing, retries, cancellation) often sits inside a folder named for a downstream feature.
 
 In addition, look for opportunities to refactor downstream code bases so that it's easier to distill. For instance, by collecting common function parameters into a configuration object that is passed around, this may unlock new distillation opportunities even if the original code itself was difficult to distill.
 
@@ -48,7 +48,7 @@ Start by bumping the submodule pin to the newest upstream. The overlay is often 
 
 ### Wire It Up
 
-Distilled code must be used by upstream itself, not just moved there. Either replace upstream's own copy of the same logic with it, or mount it in upstream's runtime. If upstream has no use for it, leave it downstream. A feature behind a flag that is off by default is not used.
+Distilled code must be used by upstream itself, not just moved there. Either replace upstream's own copy of the same logic with it, or mount it in upstream's runtime. Before deciding upstream has no use for it, look for upstream code doing the same job another way, such as parsing a stream where the downstream uses middleware; replacing that is the use. Leave it downstream only when nothing upstream does that job. A feature behind a flag that is off by default is not used.
 
 ### Seams
 
@@ -77,7 +77,7 @@ flowchart TB
   file["an overlay file"]
   file --> owned{"specific to this downstream?"}
   owned -->|yes| stay["keep it in the overlay"]
-  owned -->|no| used{"will upstream use it?"}
+  owned -->|no| used{"does upstream do this job,<br/>or will it?"}
   used -->|no| stay
   used -->|yes| commit["commit it to the upstream repository<br/>and wire it up there"]
   commit --> pin{"submodule pin contains that commit?"}
