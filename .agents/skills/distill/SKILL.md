@@ -48,21 +48,26 @@ Start by bumping the submodule pin to the newest upstream. The overlay is often 
 
 ### Survey, Triage, Then Act
 
-Do not act on the first candidate you find. It is the one closest to hand, not the most valuable, and each way of slicing the repositories shows candidates the others miss.
+Do not act on the first candidate you find. It is the one closest to hand, not the most valuable, and every way of looking at the code shows candidates the others miss.
 
-1. **Survey through several lenses**, in parallel where you can. Each lens produces candidates, not changes:
-   - *by behaviour*: grep for what any copy must touch (heartbeat threads, caches, retries, storage calls, status updates), and group hits by what the code does, never by name or folder;
-   - *by shadow*: overlay files that replace an upstream file, ranked by diff size (seam and shattering candidates);
-   - *by staleness*: overlay copies that upstream has since improved;
-   - *by layer*: backend, frontend, schema, infrastructure, prompts;
-   - *by upstream need*: jobs upstream does badly that a downstream does well.
-2. **Record each candidate** in one line: the unit in a sentence, where it lives in each repository, the upstream code that would call it, and the overlay lines it would remove.
-3. **Aggregate**: merge the surveys, drop duplicates, and group candidates that are one unit spread across several places, since one move may settle all of them.
-4. **Triage each group** and write the pros and cons: value (overlay lines removed, upstream code replaced or improved), risk (behaviour, schema, auth, boot), ownership (is any of it downstream property?), and order (what must land first).
-5. **Decide** the action or actions with the best value for their risk, in dependency order, and record why each other candidate waits or stays downstream.
-6. **Act**, one reviewable change per decision.
+1. **Keep a backlog.** Candidates persist across rounds in one place both repositories' maintainers can see. A round adds to it; a candidate leaves only when it is done or ruled out with a written reason, never because a later survey forgot it.
+2. **Start from demand.** What upstream must do next, and what hurts at every pin bump: files that change together in both repositories, shadows that conflict at each adoption. These candidates arrive with a caller.
+3. **Survey through many lenses, and invent new ones each round.** Each lens yields candidates, not changes. Some lenses:
+   - behaviour: grep for what any copy must touch (heartbeat threads, caches, retries, storage calls, status updates), and group by what the code does, never by name or folder;
+   - shadows ranked by diff size, and stale copies upstream has since improved;
+   - modules, layers, frontend against backend;
+   - types and function signatures that describe the same record or job;
+   - one unit spread across packages, and other anti-patterns;
+   - upstream code with no caller of its own.
 
-Why: surveying is cheap and moving code is not. A move upstream changes a contract every downstream inherits, and a wrong one costs a second move to undo. One lens finds what it was built to find; aggregating several finds the move that settles the most at once, and the written triage lets someone else check the decision.
+   A lens fitted to this pair of repositories beats a stock one.
+4. **Record each candidate** in one line: the unit in a sentence, where it lives in each repository, its upstream caller, and the overlay lines it would remove.
+5. **Aggregate.** Merge duplicates, and group candidates that are one unit in several places. A unit that several lenses found is a stronger candidate, and one move may settle the whole group.
+6. **Triage each group in writing**: value, risk (behaviour, schema, auth, boot), ownership, and order. Mechanical deletions, such as an overlay copy identical to upstream or differing only in comments, skip triage and go straight through.
+7. **Decide** the moves with the best value for their risk, in dependency order, and note why each other candidate waits.
+8. **Re-check at the current tip, then act**, one reviewable change per decision. Other people push while you survey.
+
+Why: surveying is cheap and moving code is not. A move upstream changes a contract every downstream inherits, and a wrong one costs a second move to undo. Starting from demand gives each move a caller; many lenses find what any single lens misses; the backlog stops each round from rediscovering the last; and the written triage lets someone else check the decision.
 
 ### Wire It Up
 
