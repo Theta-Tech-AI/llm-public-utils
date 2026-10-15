@@ -38,6 +38,14 @@ Track descendants in the same board. Do not let nested authors each start their 
 
 At each worker completion, before a CI/deploy wait, and before a status reply, refresh the live roster and ready work, then re-rank remaining acceptance and independent tasks. For each freed reusable slot, record its next useful bounded assignment or the specific resource limit, full downstream WIP stage, or lack of safe work. Start and verify useful independent work while it remains; a CI/deploy wait alone does not block unrelated review, repair, or acceptance. Keep reviewer, integration, and acceptance WIP limits and one owner per live browser/session; do not create busywork to preserve a worker count. A queued message may not restart a completed worker; use the runtime's follow-up or spawn operation and verify that it is running.
 
+
+## Failure patterns
+
+- **More authors produced more patches but fewer closures.** — Review, CI repair, and publication were saturated. Rule above. Evidence: Closures/hour, review age, accepted work, rework.
+- **The coordinator kept planning improvements while ready work waited.** — Process work had no delivery bound. Make one small improvement aimed at the current bottleneck, apply it to the next item, and resume delivery. Delegate preparation around the coordinator's final decision, and measure the improvement by shorter queue age and more accepted outcomes rather than more process artifacts
+- **All three workers completed while review and acceptance work remained, and refill was deferred during CI/deploy waiting.** — The coordinator had no checkpoint to re-plan before waiting or sending status. Rule above. Evidence: Live roster, next assignment or constraint per freed slot, and movement in review or acceptance.
+- **A local pass was reported as live acceptance.** — Implementation, integration, deployment, and acceptance were collapsed. Rule above. Evidence: Deployed revision and real acceptance artifact.
+
 ---
 
 Related: [worker lifecycle](worker-lifecycle-and-resources.md) · [the assignment record](assignment-and-handoff.md) · [measurement](measurement.md)

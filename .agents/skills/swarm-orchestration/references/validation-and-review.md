@@ -38,6 +38,22 @@ Record separate author and reviewer identities, and treat a shared or unestablis
 
 Verify the claimed revision and tree from the files (`git hash-object` for changed blobs; compare tree and commit with the remote) and build from the exact upstream pin the candidate recorded; a stale checkout or symlink makes missing imports and deletions look valid. A reviewer who removes a symbol or module must search its importers and runtime entry points first. Before merge, verify the PR base, exact head, required CI jobs and their artifacts; a green job from another revision, or an early gate, is not evidence for the candidate.
 
+
+## Failure patterns
+
+- **Many “easy” slices left the original tasks open.** — Assignments optimized patch size instead of full acceptance. Rule above. Evidence: Remaining rows and actual task closures.
+- **Several ready items waited on the same prerequisite repair.** — Each delivery path treated the shared blocker as separate work. Rule above. Evidence: One repair, fewer duplicate investigations, and reduced blocked time.
+- **A local branch appeared current but omitted a provider-side update.** — A remote-tracking ref was treated as live state. Rule above. Evidence: Provider-side head and local ref agree.
+- **Validation passed against the wrong source.** — Build directories were stale, or overlays contaminated the mirror. Rule above. Evidence: File hashes, composition manifest, reproducible checks.
+- **A “pre-existing” test failure disappeared after composition.** — Baseline used an old disposable build. Rule above. Evidence: Same failing test and same context on baseline.
+- **Local typing passed but CI rejected the same test file.** — Single-file inference and local settings differed from CI. Rule above. Evidence: Changed-file diagnostics in the full context.
+- **Focused tests passed, but publication failed on cheap repository-wide checks.** — The delivery plan omitted checks outside the changed module. Read the required CI contract early; run its cheap applicable checks before publication, and watch whether failed publication attempts fall. Fix new violations without weakening checks Evidence: Fewer failed publication attempts and less CI repair time.
+- **A gate printed PASS despite new type errors.** — Typing was informational inside a broader gate. Rule above. Evidence: Explicit type result and final required-check state.
+- **Tests passed while the production path bypassed the new abstraction.** — Tests exercised only helpers or mocked the changed behavior. Rule above. Evidence: Production consumer and relevant boundary test.
+- **Review approved an old revision.** — Amendments were not coupled to review records. Rule above. Evidence: Reviewed revision equals delivered revision.
+- **An upstream update dropped previously consumed fixes.** — The candidate was newer but on divergent ancestry. Rule above. Evidence: Ancestry, required content, composed tests.
+- **A provider refactor retained duplicate selection variables.** — Compatibility tests passed, but acceptance required one observable selection value. Record the observable configuration contract before splitting resolver and config-writer work; allocate both sides against that contract, and do not call symbol centralization a full migration Evidence: One accepted selection value and tests for the contract.
+
 ---
 
 Related: [the assignment record](assignment-and-handoff.md) · [publication and acceptance](publication-and-acceptance.md) · [worker lifecycle](worker-lifecycle-and-resources.md)
