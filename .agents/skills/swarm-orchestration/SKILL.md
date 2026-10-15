@@ -76,4 +76,4 @@ At each meaningful transition and regular campaign checkpoint, persist the revis
 
 At campaign checkpoints, report active workers and descendants, review/integration queue age, pending checks, and the next action. Before a context handoff, refresh the board and record which agents are running, which are idle, and how to resume each. A message to an idle worker may not restart it; check the runtime's actual behavior.
 
-Read [lessons and failure patterns](references/lessons.md) when diagnosing coordination waste. After a costly failure, add the smallest supported improvement: observation → cause → rule → evidence that the rule helped. Keep generic guidance in this skill and local commands in the owning project. Remove obsolete rules instead of accumulating incident folklore.
+Read [lessons and failure patterns](references/lessons.md) when diagnosing coordination waste. After a costly failure, add the smallest supported improvement: observation → cause → rule → the evidence that would show the rule helped. Keep generic guidance in this skill and local commands in the owning project. Remove obsolete rules instead of accumulating incident folklore.
