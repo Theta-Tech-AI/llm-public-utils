@@ -45,7 +45,7 @@ Track each item as `ready → implementing → review → integrating → accept
 
 ## Review and deliver the exact result
 
-Read [validation and independent review](references/validation-and-review.md) before accepting a handoff, and [publication and acceptance](references/publication-and-acceptance.md) before publishing, merging, closing, or recovery.
+Read [validation and independent review](references/validation-and-review.md) before validating a candidate or accepting a handoff, and [publication and acceptance](references/publication-and-acceptance.md) before publication, integration, merging, closing, or recovery.
 
 Require independent review of the final revision and relevant acceptance evidence. The coordinator resolves review findings and makes the final decision. Review approval is not an automatic merge instruction.
 
