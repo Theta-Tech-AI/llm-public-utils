@@ -67,6 +67,12 @@ Report completed/total and percentage from a live task query, completions per ho
 
 Compare equal windows before and after a scheduling change. Small samples, different task difficulty, batch closure, and other contributors limit causal claims. If more workers do not improve delivery, identify the slowest stage and change one scheduling factor. Do not weaken acceptance or split issues merely to inflate the count.
 
+
+## Failure patterns
+
+- **A worker started an issue that was already closed.** — Assignment used an old backlog snapshot. Refresh task state, comments, claims, and linked work at assignment time. Evidence: No duplicate implementation.
+- **A run reported a successful terminal status having produced almost nothing.** — The status vocabulary folds partial progress into warnings, so a near-empty run reads as success unless the caller checks populated counts. Assert on produced-versus-expected counters before accepting any success status, and never roll a run's status into a progress total on its own Evidence: completions with empty or near-empty output.
+
 ---
 
 Related: [the assignment record](assignment-and-handoff.md) · [planning and capacity](planning-and-capacity.md) · [GitHub closure metrics](github-closure-metrics.md)

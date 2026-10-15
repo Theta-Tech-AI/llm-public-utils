@@ -18,6 +18,16 @@ Before closure, reconcile every acceptance row against the live task and deliver
 
 Use the exact remote parent and pass its **tree** SHA as `base_tree` — a commit SHA is not a tree SHA. Compare the new tree's changed paths with the intended manifest before updating any ref, and re-read the ref afterwards.
 
+
+## Failure patterns
+
+- **“Merged” appeared in a report while the PR remained open.** — Narrative status was trusted without a fresh remote check. Verify hosting-service state before reporting or closing — check the merge timestamp and merge revision. Evidence: the procedure above.
+- **A publication retry used a stale object manifest.** — Requests were generated before the final amendment. Regenerate from the final revision and verify returned object IDs Evidence: Exact final tree/commit and intended feature ref.
+- **An "independent review" returned a verdict from the same actor that wrote the change.** — Independence was treated as a role label rather than a property of the artefact, and one shared identity puppets every agent, so "reviewer" carried no distinguishing identifier. Require an independent reviewing actor and record who authored and who reviewed, as structured fields the delivery gate can compare. If the identity is shared, or independence cannot be established, record that limitation and leave independent review outstanding — disclosing a shared identity does not satisfy the requirement, and a finding marked unverifiable must not contribute to a pass Evidence: a self-reviewed change whose record nonetheless shows a reviewer.
+- **Every small fix voided an approval and serialized the gate.** — Reviews were pinned to an exact revision behind an amend-then-re-review loop with no batching. Rule above. Evidence: successive approvals on one branch.
+- **Two concurrent writers raced on one shared integration branch.** — Rebase-then-push against a mutable shared target has no per-branch reservation, and each accepted merge invalidates every other branch at once. Fetch and rebase immediately before push, push only with force-with-lease, exclude agent-owned branches from bulk refresh sweeps, and re-read the head after the base moves Evidence: repeat non-fast-forward rejections.
+- **A merge landed carrying conflict-marker text that nobody inspected.** — Approval verified the source branch and the success of the merge command, never the content of the merge result on the target ref. After every merge, fetch the target ref and check the changed files for conflict markers before treating the merge as delivered. Evidence: merges whose result was never read back.
+
 ---
 
 Related: [validation and review](validation-and-review.md) · [the assignment record](assignment-and-handoff.md) · [measurement](measurement.md)

@@ -30,6 +30,11 @@ Updated at:
 
 A local path or “tests pass” alone is not a durable result. Store the useful result summary with an accessible artifact, commit, or task record. Exclude secrets and sensitive payloads from reports.
 
+
+## Failure patterns
+
+- **Reports survived only in temporary paths.** — The recovery record was incomplete. Rule above. Evidence: A new session can resume without chat or local files.
+
 ---
 
 Related: [planning and capacity](planning-and-capacity.md) · [validation and review](validation-and-review.md) · [publication and acceptance](publication-and-acceptance.md)
