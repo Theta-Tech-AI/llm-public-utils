@@ -1,0 +1,4 @@
+interface:
+  display_name: "Swarm Orchestration"
+  short_description: "Coordinate parallel agents and measure delivery"
+  default_prompt: "Use $swarm-orchestration to coordinate parallel agents, control review workload, and measure completed outcomes."
