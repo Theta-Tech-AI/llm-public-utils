@@ -1,6 +1,6 @@
 ---
 name: swarm-orchestration
-description: "Coordinate multiple agents doing parallel work: capacity, ownership, independent review, integration, handoff recovery, and accepted delivery rates. Use for delegation, parallel backlogs, worker expansion, or stalled multi-agent delivery. Do not load for ordinary solo implementation, application concurrency, or one isolated helper task without coordination needs."
+description: "Coordinate multiple agents doing parallel work: capacity, ownership, independent review, integration, handoff recovery, and accepted delivery rates. Use for delegation, parallel backlogs, worker expansion, nested subagents, CLI agents, review queues, rework, or stalled multi-agent delivery. Do not load for ordinary solo implementation, application concurrency, or one isolated helper task without coordination needs."
 ---
 
 # Swarm orchestration
@@ -22,7 +22,7 @@ This applies when fanning out a backlog or milestone, adding workers, using nest
 6. Check the filesystem before creating compositions, clones, or test output. If `/tmp` is a full or constrained tmpfs, use an ignored, disk-backed workspace inside the repository (or another authorized disk-backed path), record its owner and cleanup plan, and remove only owned disposable output after preserving the evidence. Do not let scratch allocation become the campaign blocker.
 7. Start with small, unblocked, independently verifiable tasks. Rank by likely time to full acceptance and dependency value, not code size alone. Reassess aging or critical-path work so easy items do not starve it.
 
-Read [capacity and assignments](references/capacity-and-assignments.md) before a large fan-out, model verification, CLI workers, or nested delegation.
+Read [planning and capacity](references/planning-and-capacity.md) before a large fan-out or re-ranking, and [worker lifecycle and resources](references/worker-lifecycle-and-resources.md) before model verification, CLI workers, or nested delegation.
 
 ## Run a bounded pipeline
 
@@ -63,9 +63,9 @@ For a branch or composed tree, use [validation and independent review](reference
 
 ## Measure and adapt
 
-Use [measurement and experiments](references/measurement.md) for definitions, attribution, and the optional read-only GitHub adapter.
+Use [measurement](references/measurement.md) for definitions, attribution, and the optional read-only GitHub adapter.
 
-Report completed/total and percentage from a live task query, the accepted rate over a stated window, and each stage's WIP, at campaign start, after each accepted closure, and at regular checkpoints. The full metric set, its definitions, and the causal limits are in [measurement and experiments](references/measurement.md).
+Report completed/total and percentage from a live task query, the accepted rate over a stated window, and each stage's WIP, at campaign start, after each accepted closure, and at regular checkpoints. The full metric set, its definitions, and the causal limits are in [measurement](references/measurement.md).
 
 ## Leave a recoverable system
 

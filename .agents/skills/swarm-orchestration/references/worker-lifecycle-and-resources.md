@@ -21,7 +21,7 @@ The coordinator needs enough context to resolve design and acceptance disputes. 
 - Give each test composition, browser session, output file, and log a unique owner. Do not rebuild a source tree while another worker tests it.
 - Limit expensive suites by memory and environment capacity. Use the project's memory cap and serialize broad suites when needed. Do not start duplicate builds or live probes for the same evidence.
 - Enforce a per-process time and memory cap on every heavy or possibly diverging command, and isolate it so one runaway test cannot exhaust the shared host and kill every sibling session. After replacing a runaway with a fix, confirm the offending process has actually terminated — editing the file does not stop a running loop.
-- Compute overlapping paths across the selected issues before each wave, and serialize or give a single owner to any file two assignments would write. An add/add conflict costs two workers and a merge repair.
+- Compute overlapping paths across the selected issues before each wave, and serialize or give a single owner to any file two assignments would write; check whether a repair task is still needed before spending a worker on it. An add/add conflict costs two workers and a merge repair.
 - Push each green slice as soon as it is green, and cap the number of concurrently test-running agents, so a host-level failure costs at most one slice.
 - Check free space and inodes on the actual filesystem before cloning or composing. Leave room for tools and cleanup. After review, remove only owned disposable builds whose source revisions and evidence are recorded.
 

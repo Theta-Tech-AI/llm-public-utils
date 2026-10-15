@@ -10,7 +10,9 @@ Use this compact record in a durable task tracker. Omit fields that do not apply
 Task and intended outcome:
 Primary task ID / current stage:
 Acceptance rows, including live/release requirements:
-Owner / independent reviewer / coordinator:
+Owner:
+Independent reviewer:
+Coordinator:
 Workspace / real remote / branch / baseline revision:
 Allowed paths or artifact boundary / excluded scope:
 Dependencies / active descendants / shared resources:
@@ -19,7 +21,7 @@ Checkpoint bound and next checkpoint:
 Final revision and changed paths:
 Source composition: upstream revision + overlay revision + generated inputs:
 Checks: command, working directory, tool version, result, durable evidence:
-Review: exact revision, findings, resolution:
+Review: reviewer identity, exact revision, findings, resolution:
 Delivery: PR/artifact link, target, exact head, check state, merge revision:
 Completed acceptance rows / remaining rows:
 Blocker / next action / responsible owner:
