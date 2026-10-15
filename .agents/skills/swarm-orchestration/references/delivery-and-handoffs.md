@@ -42,11 +42,11 @@ Do not widen error baselines, add ignores, or weaken assertions to make a regres
 
 After code changes, rerun affected checks and have the independent reviewer inspect the delta. Reuse evidence only when its source and assumptions still match. Do not rerun every expensive suite after a prose edit.
 
-Use a fresh, empty composition for each candidate and amendment. Verify the exact base revision and every provider or overlay pin before testing. Run full base-to-head repository gates, not only checks for the final commit. Include the cheap checks that commonly run early in CI, such as policy, documentation, comment, and whitespace checks, before publication. Keep the composition manifest and check output with the task record so another coordinator can reproduce the result. A last-commit diff or focused test is insufficient when an earlier commit can still fail a gate; run the affected tests in the same project context as CI, never reuse a populated scratch tree as evidence, and verify that the recorded base revision, pins, generated inputs and final tree or commit ID match the revision under review.
+Use a fresh, empty composition for each candidate and amendment. Verify the exact base revision and every provider or overlay pin before testing. Run full base-to-head repository gates, not only checks for the final commit. Include the cheap checks that commonly run early in CI, such as policy, documentation, comment, and whitespace checks, before publication. Keep the composition manifest and check output with the task record so another coordinator can reproduce the result. A last-commit diff or focused test is insufficient when an earlier commit can still fail a gate. Run the affected tests in the same project context as CI. Never reuse a populated scratch tree as evidence. Verify that the recorded base revision, pins, generated inputs, and final tree or commit ID match the revision under review.
 
 ## Composing a commit through a Git API
 
-Use the exact remote parent and pass its **tree** SHA as `base_tree` — a commit SHA is not a tree SHA. Compare the new tree's changed paths with the intended manifest before updating any ref, and re-read the ref afterwards. Green CI proves automated checks passed, not that the change is right: keep an independent review of the behavior and data-flow invariant (for example, whether an audit transaction is actually committed) and require fresh review after any amendment. Because an approval pinned to an exact revision is voided by every amendment, batch small fixes into one revision before requesting review and cap the open fix-chains per branch, so the gate is not serialized behind an amend-then-re-review loop.
+Use the exact remote parent and pass its **tree** SHA as `base_tree` — a commit SHA is not a tree SHA. Compare the new tree's changed paths with the intended manifest before updating any ref, and re-read the ref afterwards.
 
 ## Full scope and architectural judgment
 
@@ -63,6 +63,8 @@ For upstream/downstream work, fix provider-neutral behavior in its owning source
 ## Publication and acceptance
 
 Refresh actual remote state before publication and again before merge. Verify repository identity, base branch, exact head, independent review, required checks, and current task state. A comment saying “merged” is weaker evidence than the hosting service's live merge record. Never merge while required checks are pending.
+
+These acceptance rules apply to every delivery route — a CLI push, a branch, or a composed commit through an API — not only to API composition. Green CI proves automated checks passed, not that the change is right: keep an independent review of the behavior and data-flow invariant (for example, whether an audit transaction is actually committed). Because an approval pinned to an exact revision is voided by every amendment, batch small fixes into one revision before requesting review, cap the open fix-chains per branch, and require fresh review after any amendment, so the gate is not serialized behind an amend-then-re-review loop.
 
 If transport fails, diagnose the tool error before changing the patch. Use another supported publication route only within the same permissions and authorization. For object-based Git APIs, verify every returned blob, tree, and commit ID against the locally reviewed objects; update only the intended feature ref, without force. Do not publish stale request files after an amendment or write a default-branch ref as a shortcut. Keep such a route exceptional; do not build a publication service for a one-off fault.
 
