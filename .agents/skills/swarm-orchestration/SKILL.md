@@ -55,7 +55,7 @@ Before accepting a handoff, verify the claimed revision and tree from the files 
 
 When CI fails, read the failing job's artifact, step and log before changing code, reproduce the gate on the exact composition, and give one owner the smallest supported repair. A skipped, pending or early gate says nothing about later tests.
 
-For a branch or composed tree, and for composing a commit through a Git API, follow [delivery and handoffs](references/delivery-and-handoffs.md): it carries the base-to-head validation, the exact remote parent and `base_tree` rule, and what green CI does and does not prove.
+For a branch or composed tree and for composing a commit through a Git API, use [delivery and handoffs](references/delivery-and-handoffs.md): it carries the base-to-head validation, the exact remote parent and `base_tree` rule, and what green CI does and does not prove.
 
 ## Measure and adapt
 
