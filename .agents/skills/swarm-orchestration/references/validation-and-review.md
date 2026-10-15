@@ -39,3 +39,11 @@ Verify the claimed revision and tree from the files (`git hash-object` for chang
 ---
 
 Related: [the assignment record](assignment-and-handoff.md) · [publication and acceptance](publication-and-acceptance.md) · [worker lifecycle](worker-lifecycle-and-resources.md)
+
+## Handle an amendment
+
+Treat feedback as a small checkpoint amendment: validate the amended revision, obtain fresh review, and publish only with a revision receipt when authorized. Continue the delivery path without waiting for the campaign to end. Do not create a new framework or duplicate guidance to process routine feedback.
+
+## Diagnose a CI failure
+
+When CI fails, read the failing job's artifact, step and log before changing code, reproduce the gate on the exact composition, and give one owner the smallest supported repair. A skipped, pending or early gate says nothing about later tests.

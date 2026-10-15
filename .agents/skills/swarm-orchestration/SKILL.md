@@ -49,15 +49,15 @@ Read [validation and independent review](references/validation-and-review.md) be
 
 Require independent review of the final revision and relevant acceptance evidence. The coordinator resolves review findings and makes the final decision. Review approval is not an automatic merge instruction.
 
-Treat feedback as a small checkpoint amendment: validate the amended revision, obtain fresh review, and publish only with a revision receipt when authorized. Continue the delivery path without waiting for the campaign to end. Do not create a new framework or duplicate guidance to process routine feedback.
+Treat feedback as a small checkpoint amendment: validate the amended revision, obtain fresh review, and publish only with a revision receipt when authorized. The procedure is in [validation and independent review](references/validation-and-review.md).
 
 For code, validate the actual composed source and the relevant full-project check context. Keep the source immutable during testing. After a change, rerun the affected checks and review the delta; do not reuse approval for an older revision. Avoid broad repeated suites without a changed risk or unresolved failure.
 
-Before delivery, refresh the task state, target branch, remote, required checks, and exact head. Apply repository rules and existing user authorization. Close the task only when every required acceptance row has evidence. Keep partial progress visible without counting it as completion.
+Before delivery, refresh the task state, target branch, remote, and required checks, and close only on acceptance evidence. The receipts are in [publication and acceptance](references/publication-and-acceptance.md).
 
 Before accepting a handoff, verify the claimed revision and tree, and before merge verify the PR base, exact head, and required CI jobs. The commands and the failure modes are in [validation and independent review](references/validation-and-review.md).
 
-When CI fails, read the failing job's artifact, step and log before changing code, reproduce the gate on the exact composition, and give one owner the smallest supported repair. A skipped, pending or early gate says nothing about later tests.
+When CI fails, read the failing job's artifact, step and log before changing code, and give one owner the smallest supported repair. The procedure is in [validation and independent review](references/validation-and-review.md).
 
 For a branch or composed tree, use [validation and independent review](references/validation-and-review.md) for the base-to-head validation and what green CI does and does not prove, and [publication and acceptance](references/publication-and-acceptance.md) for the exact remote parent, the `base_tree` rule, and the delivery receipts.
 

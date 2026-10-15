@@ -21,3 +21,7 @@ Use the exact remote parent and pass its **tree** SHA as `base_tree` — a commi
 ---
 
 Related: [validation and review](validation-and-review.md) · [the assignment record](assignment-and-handoff.md) · [measurement](measurement.md)
+
+## Receipts before delivery
+
+Before delivery, refresh the task state, target branch, remote, required checks, and exact head. Apply repository rules and existing user authorization. Close the task only when every required acceptance row has evidence. Keep partial progress visible without counting it as completion.
