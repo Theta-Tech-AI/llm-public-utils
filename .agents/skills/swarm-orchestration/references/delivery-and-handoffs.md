@@ -44,7 +44,7 @@ Use a fresh empty composition for each candidate and amendment, verify the exact
 
 ## Composing a commit through a Git API
 
-Pass the exact remote parent's **tree** SHA as `base_tree` — a commit SHA is not one. Compare the new tree's changed paths with the intended manifest before updating any ref, re-read the ref afterwards, and update only the intended feature ref: never force, and never write a default-branch ref as a shortcut. Verify every returned blob, tree and commit ID against the locally reviewed objects, republish nothing generated before a final amendment, stay within the same permissions and authorisation, and treat the route as exceptional rather than building a publication service for a one-off fault.
+Pass the exact remote parent's **tree** SHA as `base_tree` — a commit SHA is not one. Compare the new tree's changed paths with the intended manifest before updating any ref, re-read the ref afterwards, and update only the intended feature ref: never force, and never write a default-branch ref as a shortcut. Verify every returned blob, tree and commit ID against the locally reviewed objects, republish nothing generated before a final amendment, stay within the same permissions and authorisation, diagnose a transport failure before changing the patch, and treat the route as exceptional rather than building a publication service for a one-off fault.
 
 Green CI proves the automated checks passed, not that the change is right. Keep independent review of the behaviour and data-flow invariant — for example, whether an audit transaction is actually committed — and require fresh review after any amendment.
 
