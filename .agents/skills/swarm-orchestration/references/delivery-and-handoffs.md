@@ -2,66 +2,64 @@
 
 ## Assignment and result record
 
-Use this compact record in a durable task tracker. Omit fields that do not apply. Put results next to the original acceptance criteria so a new session can see what remains.
+Keep one compact record in a durable tracker, omitting fields that do not apply, with results beside the original acceptance criteria so a new session can see what remains.
 
 ```text
-Task and intended outcome:
-Primary task ID / current stage:
-Acceptance rows, including live/release requirements:
+Task and intended outcome / primary task ID / stage:
+Acceptance rows, including live or release requirements:
 Owner / independent reviewer / coordinator:
 Workspace / real remote / branch / baseline revision:
-Allowed paths or artifact boundary / excluded scope:
+Allowed paths or artefact boundary / excluded scope:
 Dependencies / active descendants / shared resources:
-Checkpoint bound and next checkpoint:
+Checkpoint bound / next checkpoint:
 
-Final revision and changed paths:
+Final revision / changed paths:
 Source composition: upstream revision + overlay revision + generated inputs:
 Checks: command, working directory, tool version, result, durable evidence:
 Review: exact revision, findings, resolution:
-Delivery: PR/artifact link, target, exact head, check state, merge revision:
+Delivery: PR or artefact link, target, exact head, check state, merge revision:
 Completed acceptance rows / remaining rows:
-Blocker / next action / responsible owner:
-Updated at:
+Blocker / next action / owner / updated at:
 ```
 
-A local path or “tests pass” alone is not a durable result. Store the useful result summary with an accessible artifact, commit, or task record. Exclude secrets and sensitive payloads from reports.
+A local path or "tests pass" alone is not a durable result: store the summary with an accessible artefact, commit or task record, and keep secrets and sensitive payloads out of it.
 
 ## Validate the source you intend to deliver
 
-For layered repositories, record the upstream commit, overlay commit, generated inputs, and composition procedure. Keep the upstream snapshot immutable. Apply overlays into a separate disposable tree. Copying overlays into a mirror changes the baseline and can make a deletion or duplicate check falsely pass.
+For layered repositories record the upstream commit, overlay commit, generated inputs and composition procedure; keep the upstream snapshot immutable and apply overlays into a separate disposable tree. Copying overlays into a mirror changes the baseline and can make a deletion or duplicate check falsely pass.
 
-Confirm changed paths match the reviewed revision. Do not validate an old build directory or a worker's unstated local changes. A failure is “pre-existing” only after reproduction on the appropriate pristine baseline with the same dependency and composition context. Preserve other workers' work while establishing that baseline.
+Confirm changed paths match the reviewed revision, never validate an old build directory or a worker's unstated local changes, and classify a failure "pre-existing" only after reproducing it on the appropriate pristine baseline with the same dependencies and composition context. Preserve other workers' work while establishing that baseline.
 
-Test the behavior the task changes. A page test that mocks the polling hook cannot establish polling cadence or terminal refresh behavior. A passing helper test cannot prove its production caller uses the helper. Check real callers, side effects, error paths, and meaningful acceptance boundaries.
+Test the behaviour the task changes. A page test that mocks the polling hook cannot establish polling cadence or terminal refresh; a passing helper test does not prove its production caller uses the helper. Check real callers, side effects, error paths and meaningful acceptance boundaries.
 
-Run the relevant project-wide type-check context, configuration, version, and dependency set when CI does so. Single-file inference can miss errors found when the complete project is analyzed. A shell gate can print informational type errors and still exit successfully; inspect the diagnostics and the gate's contract.
+Run the project-wide type-check context, configuration, version and dependency set when CI does: single-file inference misses errors found in the complete project, and a shell gate can print type errors and still exit successfully — inspect the diagnostics and the gate's contract.
 
-Read the required CI contract before planning publication. Run cheap applicable repository-wide checks, such as documentation links and policy checks, before spending time on remote CI. Focused behavior tests do not cover those contracts. If several items share a failing prerequisite, give the repair one owner and reuse its verified revision; validate each resulting composition separately. When a remote check fails, inspect its job steps and artifacts to distinguish an early gate failure, a test failure, and an infrastructure failure before editing the patch.
+Read the required CI contract before planning publication and run the cheap repository-wide checks (documentation links, policy) before spending remote CI time; focused behaviour tests do not cover those contracts. When several items share a failing prerequisite, give one owner the repair and reuse its verified revision, validating each resulting composition. When a remote check fails, inspect its job steps and artefacts to separate an early gate failure, a test failure and an infrastructure failure before editing the patch.
 
-Do not widen error baselines, add ignores, or weaken assertions to make a regression disappear. Fix the cause or document a demonstrated intentional contract change. When a required check fails, isolate the failure once and assign one owner; avoid several workers repeating the same investigation.
+Never widen error baselines, add ignores or weaken assertions to remove a regression: fix the cause or document a demonstrated intentional contract change. Isolate a required failure once and give it one owner rather than several workers repeating the investigation.
 
-After code changes, rerun affected checks and have the independent reviewer inspect the delta. Reuse evidence only when its source and assumptions still match. Do not rerun every expensive suite after a prose edit.
+After code changes rerun the affected checks and have the independent reviewer inspect the delta, reusing evidence only while its source and assumptions still match; do not rerun every expensive suite after a prose edit.
 
-Use a fresh, empty composition for each candidate and amendment. Verify the exact base revision and every provider or overlay pin before testing. Run full base-to-head repository gates, not only checks for the final commit. Include the cheap checks that commonly run early in CI, such as policy, documentation, comment, and whitespace checks, before publication. Keep the composition manifest and check output with the task record so another coordinator can reproduce the result.
+Use a fresh empty composition for each candidate and amendment, verify the exact base revision and every provider or overlay pin before testing, and run full base-to-head gates rather than checks for the final commit alone — including the cheap policy, documentation, comment and whitespace checks that commonly run early in CI. Keep the composition manifest and check output with the task record so another coordinator can reproduce the result.
+
+## Composing a commit through a Git API
+
+Pass the exact remote parent's **tree** SHA as `base_tree` — a commit SHA is not one. Compare the new tree's changed paths with the intended manifest before updating any ref, re-read the ref afterwards, and update only the intended feature ref: never force, and never write a default-branch ref as a shortcut. Verify every returned blob, tree and commit ID against the locally reviewed objects, republish nothing generated before a final amendment, stay within the same permissions and authorisation, and treat the route as exceptional rather than building a publication service for a one-off fault.
+
+Green CI proves the automated checks passed, not that the change is right. Keep independent review of the behaviour and data-flow invariant — for example, whether an audit transaction is actually committed — and require fresh review after any amendment.
 
 ## Full scope and architectural judgment
 
-Build an acceptance matrix from the complete task, not only the latest proposed patch. Mark each row as demonstrated, outstanding, or no longer applicable with a reason and evidence. A partial implementation can merge if authorized, but the task remains open until its required outcome is complete.
+Build the acceptance matrix from the complete task, not the latest patch, marking each row demonstrated, outstanding or no longer applicable with a reason and evidence: a partial implementation may merge when authorised, but the task stays open until its required outcome is complete. Audit scope against the exact delivered revision or pin, comparing file hashes for the named final tree, including unchanged files used to waive a row — a stale default build cannot support a scope verdict.
 
-Audit scope against the exact delivered revision or pin. Compare file hashes for the named final tree, including unchanged files used to waive a scope row; a stale default build cannot support a scope verdict.
+Check dynamic imports, packaging behaviour, stable boundaries and real consumers before deleting a wrapper, empty package file or small module. Do not replace a narrow problem with a generic framework or an incomplete schema translator, and keep tightly coupled contract changes together. When a proposed implementation is obsolete but its outcome already holds, document the evidence and let the coordinator decide within existing scope; ask for operator approval only when a real product, safety, scope or authorisation decision is missing.
 
-Do not treat every wrapper, empty package file, or small module as waste. Check dynamic imports, packaging behavior, stable boundaries, and real consumers before deletion. Do not replace a narrow problem with a generic framework or an incomplete schema translator. Keep tightly coupled contract changes together.
-
-If a task's proposed implementation is obsolete but its outcome already holds, document the current evidence and let the coordinator decide within the existing scope. Do not invent a need for operator approval for routine architecture choices; ask only when a real product, safety, scope, or authorization decision is missing.
-
-For upstream/downstream work, fix provider-neutral behavior in its owning source. Consume a published revision that retains the currently consumed ancestry or an explicitly justified equivalent history; a newer-looking commit can still omit deployed fixes. Verify both ancestry and required content, then test the final composition. A test-only repair on an integration branch may not belong in upstream if those tests do not exist there.
+For upstream/downstream work, fix provider-neutral behaviour in its owning source and consume a published revision that retains the currently consumed ancestry or an explicitly justified equivalent, since a newer-looking commit can still omit deployed fixes. Verify ancestry and required content, then test the final composition; a test-only repair may not belong upstream where those tests do not exist.
 
 ## Publication and acceptance
 
-Refresh actual remote state before publication and again before merge. Verify repository identity, base branch, exact head, independent review, required checks, and current task state. A comment saying “merged” is weaker evidence than the hosting service's live merge record. Never merge while required checks are pending.
+Refresh actual remote state before publication and again before merge, verifying repository identity, base branch, exact head, independent review, required checks and current task state. A comment saying "merged" is weaker evidence than the hosting service's live merge record, and required checks must not be pending at merge.
 
-If transport fails, diagnose the tool error before changing the patch. Use another supported publication route only within the same permissions and authorization. For object-based Git APIs, verify every returned blob, tree, and commit ID against the locally reviewed objects; update only the intended feature ref, without force. Do not publish stale request files after an amendment or write a default-branch ref as a shortcut. Keep such a route exceptional; do not build a publication service for a one-off fault.
+Repository merge, deployed revision and live behaviour are separate facts, each claimable only with matching evidence. Do not invent deployment or live-acceptance requirements; read-only acceptance checks proceed under existing authorisation while deployment needs its own. An unreachable environment is a blocked acceptance check, not a pass — keep useful independent work moving while recording the precise blocked step.
 
-Repository merge, deployed revision, and live behavior are separate facts. Claim each only with matching evidence. Do not invent deployment or live-acceptance requirements for a task that does not need them. Read-only acceptance checks can proceed under existing authorization; deployment needs its own applicable authorization. An unreachable environment is a blocked acceptance check, not a pass. Keep useful independent work moving while recording the precise blocked step.
-
-Before closure, reconcile every acceptance row against the live task and delivered revision. Confirm the hosting service reports the intended PR or artifact as merged or released, verify the exact merge or delivery revision, and check that no required acceptance row remains open. Post delivery links plus evidence in the task record, then refresh the campaign totals. Do not count partial slices, duplicate housekeeping closures, or unrelated contributors as this swarm's completed work.
+Before closure reconcile every acceptance row against the live task and delivered revision: confirm the hosting service reports the intended PR or artefact merged or released, verify the exact merge or delivery revision, and check that no required row remains open. Post delivery links and evidence in the task record, refresh the campaign totals, and never count partial slices, duplicate housekeeping closures or unrelated contributors as this swarm's completed work.
