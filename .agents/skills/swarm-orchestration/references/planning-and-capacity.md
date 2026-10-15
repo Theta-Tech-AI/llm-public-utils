@@ -41,10 +41,10 @@ At each worker completion, before a CI/deploy wait, and before a status reply, r
 
 ## Failure patterns
 
-- **More authors produced more patches but fewer closures.** — Review, CI repair, and publication were saturated. Rule above. Evidence: Closures/hour, review age, accepted work, rework.
+- **More authors produced more patches but fewer closures.** — Review, CI repair, and publication were saturated. Limit active delivery items; reserve reviewers; clear the ready queue before starting more code. Evidence: Closures/hour, review age, accepted work, rework.
 - **The coordinator kept planning improvements while ready work waited.** — Process work had no delivery bound. Make one small improvement aimed at the current bottleneck, apply it to the next item, and resume delivery. Delegate preparation around the coordinator's final decision, and measure the improvement by shorter queue age and more accepted outcomes rather than more process artifacts
 - **All three workers completed while review and acceptance work remained, and refill was deferred during CI/deploy waiting.** — The coordinator had no checkpoint to re-plan before waiting or sending status. Rule above. Evidence: Live roster, next assignment or constraint per freed slot, and movement in review or acceptance.
-- **A local pass was reported as live acceptance.** — Implementation, integration, deployment, and acceptance were collapsed. Rule above. Evidence: Deployed revision and real acceptance artifact.
+- **A local pass was reported as live acceptance.** — Implementation, integration, deployment, and acceptance were collapsed. Track and prove each required stage separately. Evidence: Deployed revision and real acceptance artifact.
 
 ---
 
