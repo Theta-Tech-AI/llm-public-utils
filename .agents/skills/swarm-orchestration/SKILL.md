@@ -49,15 +49,15 @@ Read [validation and independent review](references/validation-and-review.md) be
 
 Require independent review of the final revision and relevant acceptance evidence. The coordinator resolves review findings and makes the final decision. Review approval is not an automatic merge instruction.
 
-Treat feedback as a small checkpoint amendment: validate the amended revision, obtain fresh review, and publish only with a revision receipt when authorized. The procedure is in [validation and independent review](references/validation-and-review.md).
+Handle feedback as a checkpoint amendment per [validation and independent review](references/validation-and-review.md).
 
 For code, validate the actual composed source and the relevant full-project check context. Keep the source immutable during testing. After a change, rerun the affected checks and review the delta; do not reuse approval for an older revision. Avoid broad repeated suites without a changed risk or unresolved failure.
 
-Before delivery, refresh the task state, target branch, remote, and required checks, and close only on acceptance evidence. The receipts are in [publication and acceptance](references/publication-and-acceptance.md).
+Before delivery, close only on acceptance evidence per [publication and acceptance](references/publication-and-acceptance.md).
 
-Before accepting a handoff, verify the claimed revision and tree, and before merge verify the PR base, exact head, required CI jobs, and their artifacts. The commands and the failure modes are in [validation and independent review](references/validation-and-review.md).
+Before accepting a handoff or merging, follow the verification procedure in [validation and independent review](references/validation-and-review.md).
 
-When CI fails, read the failing job's artifact, step and log before changing code, and give one owner the smallest supported repair. The procedure is in [validation and independent review](references/validation-and-review.md).
+When CI fails, follow the diagnosis procedure in [validation and independent review](references/validation-and-review.md).
 
 For a branch or composed tree, use [validation and independent review](references/validation-and-review.md) for the base-to-head validation and what green CI does and does not prove, and [publication and acceptance](references/publication-and-acceptance.md) for the exact remote parent, the `base_tree` rule, and the delivery receipts.
 
@@ -65,7 +65,7 @@ For a branch or composed tree, use [validation and independent review](reference
 
 Use [measurement](references/measurement.md) for definitions and attribution, and [the GitHub closure-metrics runbook](references/github-closure-metrics.md) for the optional read-only adapter.
 
-Report completed/total and percentage from a live task query, the accepted rate over a stated window, and each stage's WIP, at campaign start, after each accepted closure, and at regular checkpoints. The full metric set, its definitions, and the causal limits are in [measurement](references/measurement.md).
+Report the measures at campaign start, after each accepted closure, and at regular checkpoints per [measurement](references/measurement.md).
 
 ## Leave a recoverable system
 
