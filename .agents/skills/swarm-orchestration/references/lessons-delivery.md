@@ -31,4 +31,4 @@ Each row is one failure: the observation, its cause, the correction, and the evi
 
 ---
 
-Related: [lessons: execution](lessons-execution.md) · [validation and review](validation-and-review.md) · [publication and acceptance](publication-and-acceptance.md)
+Related: [lessons: execution](lessons-execution.md) · [lessons: workers and resources](lessons-workers-and-resources.md) · [validation and review](validation-and-review.md)
