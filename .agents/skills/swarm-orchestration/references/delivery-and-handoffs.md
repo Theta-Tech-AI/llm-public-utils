@@ -46,7 +46,7 @@ Use a fresh, empty composition for each candidate and amendment. Verify the exac
 
 ## Composing a commit through a Git API
 
-Use the exact remote parent and pass its **tree** SHA as `base_tree` — a commit SHA is not a tree SHA. Compare the new tree's changed paths with the intended manifest before updating any ref, and re-read the ref afterwards. Green CI proves automated checks passed, not that the change is right: keep an independent review of the behavior and data-flow invariant (for example, whether an audit transaction is actually committed) and require fresh review after any amendment.
+Use the exact remote parent and pass its **tree** SHA as `base_tree` — a commit SHA is not a tree SHA. Compare the new tree's changed paths with the intended manifest before updating any ref, and re-read the ref afterwards. Green CI proves automated checks passed, not that the change is right: keep an independent review of the behavior and data-flow invariant (for example, whether an audit transaction is actually committed) and require fresh review after any amendment. Because an approval pinned to an exact revision is voided by every amendment, batch small fixes into one revision before requesting review and cap the open fix-chains per branch, so the gate is not serialized behind an amend-then-re-review loop.
 
 ## Full scope and architectural judgment
 

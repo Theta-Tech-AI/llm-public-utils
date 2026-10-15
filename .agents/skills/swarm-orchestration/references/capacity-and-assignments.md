@@ -50,6 +50,9 @@ Track descendants in the same board. Do not let nested authors each start their 
 - Do not switch branches, pop a shared stash, reset another agent's tree, or overwrite its report. Preserve mistaken edits and move the intended patch to its own clean checkout.
 - Give each test composition, browser session, output file, and log a unique owner. Do not rebuild a source tree while another worker tests it.
 - Limit expensive suites by memory and environment capacity. Use the project's memory cap and serialize broad suites when needed. Do not start duplicate builds or live probes for the same evidence.
+- Enforce a per-process time and memory cap on every heavy or possibly diverging command, and isolate it so one runaway test cannot exhaust the shared host and kill every sibling session. After replacing a runaway with a fix, confirm the offending process has actually terminated — editing the file does not stop a running loop.
+- Compute overlapping paths across the selected issues before each wave, and serialize or give a single owner to any file two assignments would write. An add/add conflict costs two workers and a merge repair.
+- Push each green slice as soon as it is green, and cap the number of concurrently test-running agents, so a host-level failure costs at most one slice.
 - Check free space and inodes on the actual filesystem before cloning or composing. Leave room for tools and cleanup. After review, remove only owned disposable builds whose source revisions and evidence are recorded.
 
 ## CLI workers and lifecycle
@@ -59,3 +62,5 @@ Use CLI workers only when the tool exists, delegation is authorized, and they fi
 Record process/session ID, working directory, source revision, model evidence, log path, and result path. Keep the detailed report separate from the CLI's final-output file; otherwise a short final message can overwrite the report. Provide a steering channel the worker actually reads at checkpoints.
 
 Use the runtime's resume/follow-up operation for an idle worker. A queued message can steer a running agent but may not trigger a new turn after completion. Check acknowledgment or state change. Stop only the owned process when cleanup is needed; never use a broad process-name kill that can terminate other agents.
+
+Bound each assignment so it can finish inside one worker budget, and require a durable report written before or during the work, so a worker that dies mid-task still leaves a recoverable handoff instead of uncommitted half-work the successor must reverse-engineer.
