@@ -16,4 +16,16 @@ Each row is one failure: the observation, its cause, the correction, and the evi
 | Hung external workers and a timed-out search were read as results. | A hung child emits nothing and exits into an empty file, and a size-bounded search returns empty on timeout — indistinguishable from a true no-match unless the wording is read. | Give every external agent a wall-clock timeout and a non-empty-output assertion; on a timed-out search, narrow the scope and re-run rather than concluding absence. Watch for zero-byte outputs and timeouts presented as findings. |
 | Cancelled workers had already pushed their effects. | Cancelling stops the process but does not roll back committed side effects, so "cancelled" was assumed to mean "did nothing". | Treat cancellation as non-idempotent: re-read the target's real state before re-dispatching, and make delegated actions checksum-guarded so a re-run is safe. Watch for duplicate or racing work after a cancel. |
 
+---
+
+## Turn experience into an improvement
+
+After a costly failure, identify the first missing fact that would have prevented the wasted work. Put that fact in the assignment, log, check, or handoff closest to the decision. Measure whether the change reduced rework or wait on the next items.
+
+Write a narrow rule supported by the failure. Do not convert a temporary environment fault into a permanent product workaround, an example pool size into a universal limit, or a single campaign into a claimed speedup. Keep the entrypoint short; add details here only when they change future decisions. Periodically remove rules that are obsolete or already enforced by tooling.
+
+Each table row is one lesson: the observation, its cause, and the correction. The evidence that the rule helped belongs in the correction when it changes a future decision — as a measured outcome or a failure to watch for — rather than in a separate cell. A lesson whose evidence cannot be stated is not yet supported; do not add it.
+
+---
+
 Related: [lessons: workers and resources](lessons-workers-and-resources.md) · [lessons: delivery](lessons-delivery.md) · [planning and capacity](planning-and-capacity.md)
