@@ -9,4 +9,5 @@ Where the old headings went:
 | Old heading | New file |
 |---|---|
 | Turn experience into an improvement | [lessons-execution.md](lessons-execution.md) |
-| The failure table (every row) | split by moment of failure between [lessons-execution.md](lessons-execution.md) and [lessons-delivery.md](lessons-delivery.md) |
+
+The failure table itself (which carried no heading) is split by moment of failure between [lessons-execution.md](lessons-execution.md) and [lessons-delivery.md](lessons-delivery.md).

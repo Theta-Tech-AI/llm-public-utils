@@ -12,6 +12,5 @@ Where the old headings went:
 |---|---|
 | Assignment and result record | [assignment-and-handoff.md](assignment-and-handoff.md) |
 | Validate the source you intend to deliver | [validation-and-review.md](validation-and-review.md) |
-| Composing a commit through a Git API | [publication-and-acceptance.md](publication-and-acceptance.md) |
 | Full scope and architectural judgment | [validation-and-review.md](validation-and-review.md) |
 | Publication and acceptance | [publication-and-acceptance.md](publication-and-acceptance.md) |

@@ -1,6 +1,6 @@
 # Lessons: delivery, review, and acceptance
 
-Failures in proving work: the source, the checks, the review, the merge, and the closure.
+Failures in proving work: the source, the checks, the review, the merge, and the closure. These are portable causes and corrections, not a claim that every campaign needs the same pool or tools.
 
 Each row is one failure: the observation, its cause, the correction, and the evidence to watch. The policy for evidence lives at the end of [lessons: execution](lessons-execution.md).
 

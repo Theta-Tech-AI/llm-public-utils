@@ -32,6 +32,8 @@ If a task's proposed implementation is obsolete but its outcome already holds, d
 
 For upstream/downstream work, fix provider-neutral behavior in its owning source. Consume a published revision that retains the currently consumed ancestry or an explicitly justified equivalent history; a newer-looking commit can still omit deployed fixes. Verify both ancestry and required content, then test the final composition. A test-only repair on an integration branch may not belong in upstream if those tests do not exist there.
 
+Record separate author and reviewer identities, and treat a shared or unestablishable identity as leaving independent review outstanding — a finding marked unverifiable cannot contribute to a pass.
+
 ## Verify a handoff before accepting it
 
 Verify the claimed revision and tree from the files (`git hash-object` for changed blobs; compare tree and commit with the remote) and build from the exact upstream pin the candidate recorded; a stale checkout or symlink makes missing imports and deletions look valid. A reviewer who removes a symbol or module must search its importers and runtime entry points first. Before merge, verify the PR base, exact head, required CI jobs and their artifacts; a green job from another revision, or an early gate, is not evidence for the candidate.

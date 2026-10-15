@@ -39,13 +39,13 @@ Track each item as `ready → implementing → review → integrating → accept
 - A checkpoint limit ends an assignment attempt, not the user's overall task. Record the evidence, replan, and continue useful authorized work. Avoid silent retries of the same failed approach.
 - Treat worker summaries as claims to verify. “Tests pass,” “merged,” “available model,” and “complete” each need a matching artifact or live state.
 - Keep credentials out of diagnostic output: ask workers for the specific non-secret fact needed, and never dump credential-helper results or whole environments. The exposure handling rule is in [worker lifecycle and resources](references/worker-lifecycle-and-resources.md).
-- At each worker completion, before a CI/deploy wait, and before a status reply, refresh the live roster and ready work and re-rank remaining acceptance; give each freed slot useful independent work or record its actual constraint. The full refill procedure is in [planning and capacity](references/planning-and-capacity.md).
+- At each worker completion, before a CI/deploy wait, and before a status reply, refresh the live roster and ready work and re-rank remaining acceptance and independent tasks; give each freed slot useful independent work or record its actual constraint. The full refill procedure is in [planning and capacity](references/planning-and-capacity.md).
 - Run the roster loop between transitions and at each checkpoint, and treat a worker that is neither running nor reported as an outstanding result rather than as still working. The cadence, result recovery, stop-versus-finish distinction, and control-plane failure handling are in [worker lifecycle and resources](references/worker-lifecycle-and-resources.md).
 - Treat a permission or policy denial as terminal for that slice: report the evidence and hand the operator the one command to run. Never retry the denied action verbatim and never route it to another worker — a peer executing it is not the operator's consent.
 
 ## Review and deliver the exact result
 
-Read [validation and independent review](references/validation-and-review.md) before accepting a handoff, and [publication and acceptance](references/publication-and-acceptance.md) before publishing, merging, or closing.
+Read [validation and independent review](references/validation-and-review.md) before accepting a handoff, and [publication and acceptance](references/publication-and-acceptance.md) before publishing, merging, closing, or recovery.
 
 Require independent review of the final revision and relevant acceptance evidence. The coordinator resolves review findings and makes the final decision. Review approval is not an automatic merge instruction.
 
@@ -55,7 +55,7 @@ For code, validate the actual composed source and the relevant full-project chec
 
 Before delivery, refresh the task state, target branch, remote, and required checks, and close only on acceptance evidence. The receipts are in [publication and acceptance](references/publication-and-acceptance.md).
 
-Before accepting a handoff, verify the claimed revision and tree, and before merge verify the PR base, exact head, and required CI jobs. The commands and the failure modes are in [validation and independent review](references/validation-and-review.md).
+Before accepting a handoff, verify the claimed revision and tree, and before merge verify the PR base, exact head, required CI jobs, and their artifacts. The commands and the failure modes are in [validation and independent review](references/validation-and-review.md).
 
 When CI fails, read the failing job's artifact, step and log before changing code, and give one owner the smallest supported repair. The procedure is in [validation and independent review](references/validation-and-review.md).
 
@@ -63,7 +63,7 @@ For a branch or composed tree, use [validation and independent review](reference
 
 ## Measure and adapt
 
-Use [measurement](references/measurement.md) for definitions, attribution, and the optional read-only GitHub adapter.
+Use [measurement](references/measurement.md) for definitions and attribution, and [the GitHub closure-metrics runbook](references/github-closure-metrics.md) for the optional read-only adapter.
 
 Report completed/total and percentage from a live task query, the accepted rate over a stated window, and each stage's WIP, at campaign start, after each accepted closure, and at regular checkpoints. The full metric set, its definitions, and the causal limits are in [measurement](references/measurement.md).
 
