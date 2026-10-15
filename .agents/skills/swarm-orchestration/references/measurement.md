@@ -29,12 +29,12 @@ Single-issue attribution or cost labels inferred from observed links are provisi
 - With usage records, count unique response IDs globally and assign each record only to its proven thread. Report input, cached input, uncached input, output, reasoning output and total separately; cached input is a subset of input and reasoning output a subset of output, so add neither to total.
 - Cumulative snapshots are reference values only: a window comparison needs a baseline at the window start, otherwise leave the difference unavailable.
 - For worker time, pair starts and completions by turn, then merge overlapping intervals per worker before calculating concurrency. Report closed intervals as measured and keep unfinished tasks explicit.
-- Cutoff-clipped durations are upper bounds — including completions after the cutoff — and missing and after-cutoff terminals are reported separately.
+- Report unfinished tasks' cutoff-clipped durations as upper bounds — including completions after the cutoff — and report missing and after-cutoff terminals separately.
 - Never infer that an available slot was busy, and count a replacement or nested worker only when its ownership and scope are proven.
 
 ## Membership and events
 
-Current milestone membership is not historical membership: save the member list at each observation and report additions and removals beside percentages, since a query of today's milestone cannot reconstruct removed issues.
+Current milestone membership is not historical membership: save the member list at each observation and report additions and removals beside percentages, since a query of today's milestone cannot reconstruct removed issues. Historical membership analysis needs membership events or a fixed initial cohort.
 
 Current `closed_at` values lose earlier close/reopen cycles. For an auditable rate use task timeline events, reporting close events, unique issues closed, reopen events and net separately. A reopened issue is rework, not sustained progress, and pull requests are not issues.
 
@@ -61,6 +61,6 @@ Bottleneck and scheduling change: <observation → action>.
 
 ## Optional GitHub adapter
 
-`scripts/closure_metrics.py --help` gives a read-only snapshot from authenticated `gh` or a saved fixture: current milestone members and their close/reopen timeline events. It mutates nothing, infers no model identity, and cannot establish historical membership or review wait without stage timestamps. Its unit tests ship beside it and need no network or credentials — run `python3 -m unittest discover -s tests` from this skill's directory.
+Use `scripts/closure_metrics.py --help` for a read-only snapshot from authenticated `gh` or a saved fixture: current milestone members and their close/reopen timeline events. It mutates nothing and infers no model identity; it cannot establish historical membership at all, and cannot measure review wait without stage timestamps. Its unit tests ship beside it and need no network or credentials — run `python3 -m unittest discover -s tests` from this skill's directory.
 
 Keep collected repository names, titles, identities and event data outside the skill package: the reusable skill carries instructions and synthetic examples, not a private campaign's records.

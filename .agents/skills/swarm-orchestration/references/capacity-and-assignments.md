@@ -28,17 +28,17 @@ When a merge train leaves CI runs queued for old commits, compare each run's SHA
 
 - Honour explicit model choices; never infer a model from an agent name such as `fast-worker` or `small-model-review`.
 - Distinguish requested configuration from runtime-reported identity: prefer a spawn receipt or run metadata, record agent ID, requested and observed model and the evidence source, and report identity as unverified when it is not exposed.
-- Read the installed version, configuration or help before changing settings; use an authoritative source for documentation, and never publish a guessed parameter as a working fix.
+- Read the installed version, configuration or help before changing settings; if documentation is needed, use the installed version and an authoritative source, and never publish a guessed parameter as a working fix.
 - Smoke-test one bounded worker before a large expansion — start it, observe a result, verify identity where possible, confirm cleanup. A harmless read-only task suffices.
 - A larger configured limit does not establish higher throughput; observe live capacity and measure delivery after expansion.
 
-The coordinator needs enough context to resolve design and acceptance disputes. Routine implementation and review can use the user's preferred worker profile; difficult diagnosis or review may escalate when its measured rework cost justifies another. Keep author and reviewer independent regardless of model — model size is not a review result.
+The coordinator needs enough context to resolve design and acceptance disputes. Routine implementation and review can use the user's preferred worker profile; escalate difficult diagnosis or review when its measured rework cost justifies another profile. Keep author and reviewer independent regardless of model — model size is not a review result.
 
 ## Assign a complete unit
 
 The assignment states the outcome, artefact boundary, source baseline, excluded scope, acceptance checks, review destination and publication authority ([record template](delivery-and-handoffs.md)), and asks for a concrete next checkpoint rather than unlimited investigation.
 
-Where two tasks touch one contract, one owner decides the contract first and independent callers or tests follow. Nested delegation suits a child with a concrete subtask while its parent still has useful independent work, and the parent owns reconciliation before reporting completion. Track descendants on the same board: no nested author starts an unrelated backlog, and a supervisor tree that only waits adds handoff delay without delivery value.
+Where two tasks touch one contract, one owner decides the contract first, and independent callers or tests follow once that decision is stable. Nested delegation suits a child with a concrete subtask while its parent still has useful independent work, and the parent owns reconciliation before reporting completion. Track descendants on the same board: no nested author starts an unrelated backlog, and a supervisor tree that only waits adds handoff delay without delivery value.
 
 ## Workspace and resource ownership
 
@@ -48,7 +48,7 @@ Where two tasks touch one contract, one owner decides the contract first and ind
 - Never switch branches, pop a shared stash, reset another agent's tree or overwrite its report. Preserve mistaken edits and move the intended patch to its own clean checkout.
 - Give each test composition, browser session, output file and log a unique owner, and do not rebuild a source tree while another worker tests it.
 - Limit expensive suites by memory and environment capacity: respect the project's cap, serialise broad suites, and start no duplicate builds or live probes for the same evidence.
-- Check free space and inodes before cloning or composing, leave room for tools and cleanup, and afterwards remove only owned disposable builds whose source revisions and evidence are recorded.
+- Check free space and inodes before cloning or composing, leave room for tools and cleanup, and afterwards — after review — remove only owned disposable builds whose source revisions and evidence are recorded.
 
 ## CLI workers and lifecycle
 
