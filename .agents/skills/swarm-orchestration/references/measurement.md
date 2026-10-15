@@ -1,4 +1,6 @@
-# Measurement and experiments
+# Measurement
+
+How to state delivery: completed against total, accepted rate over a stated window, queue age, WIP, and attribution limits.
 
 ## Measure outcomes and the queue
 
@@ -57,8 +59,14 @@ Queue: <implementation>, <review>, <integration>, <acceptance>; oldest <age>.
 Bottleneck and scheduling change: <observation → action>.
 ```
 
-## Optional GitHub adapter
+## Report the measures
 
-Use `scripts/closure_metrics.py --help` for a read-only snapshot from authenticated `gh` or a saved fixture. It queries current milestone members and their close/reopen timeline events. It does not mutate issues, infer model identity, establish historical membership, or measure review wait without stage timestamps. Its unit tests ship beside it and need no network or credentials — from this skill's directory run `python3 -m unittest discover -s tests`.
+Report completed/total and percentage from a live task query, completions per hour over a stated UTC window, time between completions, and time since the last completion. Also track review queue age, rework, blocked time, and each stage's WIP. Give these measures at campaign start, after each accepted closure, and at regular checkpoints; separate campaign-attributed outcomes from all repository activity.
 
-Keep collected repository names, titles, identities, and event data outside the skill package. The reusable skill should contain instructions and synthetic examples, not a private campaign's records.
+## Causal limits on a scheduling change
+
+Compare equal windows before and after a scheduling change. Small samples, different task difficulty, batch closure, and other contributors limit causal claims. If more workers do not improve delivery, identify the slowest stage and change one scheduling factor. Do not weaken acceptance or split issues merely to inflate the count.
+
+---
+
+Related: [the assignment record](assignment-and-handoff.md) · [planning and capacity](planning-and-capacity.md) · [GitHub closure metrics](github-closure-metrics.md)
