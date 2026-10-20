@@ -67,19 +67,17 @@ Two obligations decide whether a pass was worth running:
   move on. See [architecture/one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).
 - **Detection is prose you apply.** The tools' blind spots, and the control a detector script must pass
   before it earns its lines, are in [detecting-slop.md](detecting-slop.md).
-- **A private helper that reconciles a value is a finding, not a low-severity note.** Sweep the target for the
-  family before writing the report, and report any hit even when it ranks below the other findings:
-
-  ```
-  grep -rnE 'def _(truthy|first_nonempty|as_bool|to_bool|coerce|normali[sz]e|parse_|or_zero|get_or_default)' <target>
-  grep -rnE 'env: Mapping\[str, str\]|os\.environ|os\.getenv' <target>   # a config seam read by many consumers
-  ```
-
-  Each hit asks one question — *what would have to be true about this system for this function to be
-  unnecessary?* — and the answer names an owner that is missing **or exists and was not used**. Do not drop it
-  because a type-level reading ("primitive obsession", "boolean blindness") already nominally covers the
-  symptom: the finding is the unowned seam, and [architecture/helper-is-an-architecture-finding.md]
-  (architecture/helper-is-an-architecture-finding.md) is its home.
-
+- **Census the inputs; do not scan for names.** Before writing the report, enumerate every external input the
+  target consumes — environment variables, request bodies, query params, database rows, provider payloads, file
+  contents — and for each one answer three questions: *where does it enter, which single component turns it into
+  a decision or a domain value, and how many places interpret it again afterwards?* Zero owners or several is a
+  finding, and it outranks nothing else in the pass — report it even when it is the least interesting thing you
+  found. The tell is structural, never lexical: a consumer holding the vocabulary of a decision (a set of literal
+  tokens compared against a string, a `startswith` on an identifier, a first-non-empty scan over alternative
+  names, a literal default beside a lookup) instead of asking the component that owns the concept. **A grep list
+  of helper names is not this sweep** — it fires only on the spellings you thought of and misses the next
+  instance by construction; the question above is the instrument, and
+  [architecture/helper-is-an-architecture-finding.md](architecture/helper-is-an-architecture-finding.md) is where
+  the finding goes.
 And the library applies **before** the code exists, not only to what already does: re-reading the applicable
 principles while designing is cheaper than consolidating a fork that has callers.

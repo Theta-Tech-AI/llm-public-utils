@@ -51,6 +51,6 @@ Each principle is a self-contained file — open it when a finding implicates th
 | Principle | What it says |
 |-------------|----------------|
 | [Parse, Don't Validate](architecture/parse-dont-validate.md) | Convert input to precise types once at the boundary |
-| [A Helper That Must Exist Is an Architecture Finding](architecture/helper-is-an-architecture-finding.md) | Sweep for private reconciling helpers (`_truthy`, `_first_nonempty`, `_coerce_*`, `_normalize_*`, prefix sniffers): they prove no component owns the value — assign the owner; the helper's deletion is the fix |
+| [A Helper That Must Exist Is an Architecture Finding](architecture/helper-is-an-architecture-finding.md) | Census each external input: where it enters, which one component turns it into a decision, how many places re-interpret it. Zero owners or several is a finding — assign the owner; the reconciling helper's deletion is the fix |
 | [Immutability](architecture/immutability.md) | Values fixed after creation; never mutate caller data |
 | [Idempotency](architecture/idempotency.md) | Safe repetition; design for duplicate requests |

@@ -71,12 +71,20 @@ finding? Measured on one adapter directory, same checkout, same neutral prompt, 
 | Version of the rule | Fresh markdown-only agent | Verdict |
 |---------------------|---------------------------|---------|
 | The principle stated as doctrine only ("a private reconciling helper proves nothing owns the value") | Returned seven findings; caught the prefix-sniffing sibling seven lines away, and **never mentioned the `_truthy` sitting between its quoteline and that one**, nor the sibling duplicated in a second adapter | **Failed the control** |
-| Same principle, plus (a) a mandatory family sweep in [auditing.md](auditing.md) with grep tokens, and (b) each hit's reporting obligation overriding severity order | Nine findings; reported `_truthy` **and** the duplicated `_first_nonempty` under the principle by name, prescribed the owner-first repair verbatim, and cited the existing strict parser it bypassed | **Passed** |
+| Same principle, plus a mandatory **input census** in [auditing.md](auditing.md) — every external input: where it enters, which one component decides it, how many places re-interpret it — with the reporting obligation overriding severity order | Nine findings; reported `_truthy` **and** the duplicated `_first_nonempty` under the principle by name, prescribed the owner-first repair verbatim, and cited the existing strict parser it bypassed | **Passed** |
 
 The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
 one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
 outranked by whatever the pass finds more interesting — so put the trigger (a grep the pass must run, an
 obligation to report) in the protocol, and keep the doctrine in the principle file.
+
+**And the trigger must not be a list of names.** The first attempt at the sweep above was a grep for
+`def _(truthy|first_nonempty|to_bool|coerce|normali[sz]e|...)` — and it passed its control, which is exactly why
+it is dangerous: it fires on the spellings the author had in hand and walks past `_as_flag`, `_setting_switch`,
+`_resolve_capability` and every name invented afterwards. That is the fitted-detector failure this file already
+describes, reproduced inside the protocol. The replacement obligation is a *census* — for each external input,
+who owns turning it into a decision, and how many consumers re-interpret it — which is answerable without knowing
+any names, and which generalises to inputs that are not configuration at all (request bodies, rows, payloads).
 
 ## Where a script does earn its keep
 

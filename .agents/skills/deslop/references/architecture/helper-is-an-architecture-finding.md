@@ -64,36 +64,30 @@ Do not audit the helper. Audit its absence:
    type)? Then the finding is that the consumer was free to ignore it. Report the bypass, not merely the
    duplication.
 
-## Detection — run it as a sweep, not as a reading
+## Detection — census the inputs, never scan for names
 
-A principle an agent must *remember to apply* will be missed by an agent scanning for behaviour bugs. The
-family is cheap to enumerate, so enumerate it: any hit below is in scope, **including when it is small, tidy,
-well-named and less interesting than the other findings in the pass**.
+A principle an agent must *remember to apply* will be missed by an agent scanning for behaviour bugs. But the
+correction is not a list of function names: a grep for `_truthy` finds `_truthy` and misses `_as_flag`,
+`_setting_switch`, `_resolve_capability` and every name invented after the list was written. Name-matching is
+the same fitted detector this library refuses elsewhere — it encodes the instance and not the rule.
 
-```
-grep -rnE 'def _(truthy|first_nonempty|as_bool|to_bool|coerce|normali[sz]e|parse_|or_zero|get_or_default)'
-grep -rnE 'env: Mapping\[str, str\]|os\.environ|os\.getenv'     # one setting read by several consumers
-grep -rn  '<the identity of the concept>'                          # the closed set, where the domain type should be
-```
+**The instrument is a census.** For every external input the target consumes — environment variables, request
+bodies, query params, database rows, provider payloads, file contents — answer:
 
-**Two shapes of the same finding, and the second is the more common one in real code:**
+1. **Where does it enter?** The seam: a constructor parameter, a request handler, a loader, a reader.
+2. **Which single component turns it into a decision or a domain value?** Name it. If you cannot, that is the
+   finding ("no owner"). If you can, but consumers re-interpret the same input anyway, that is the other shape
+   ("owner exists, nothing enforces its use").
+3. **How many places interpret it again afterwards?** Count them. Two is already a finding; three is a design
+   that never had a boundary.
 
-- **No owner exists.** The value is created raw and every consumer improvises (the ❌ above).
-- **An owner exists and the architecture does not let it be used.** Measured case, and the reason plain DRY
-  files the wrong repair: a shared module already offered `get_bool_env(name, default)` (strict, raising) and
-  `is_env_truthy(name)` (permissive, silently `False`) — the second an exact twin of the private `_truthy` —
-  yet an adapter defined its own, and a second adapter re-implemented the sibling `_first_nonempty`. Both
-  shared helpers read **ambient** `os.environ` by name; every adapter takes an **injected**
-  `env: Mapping[str, str]` and resolves aliases (`FOUNDRY_*` before `AZURE_*`) itself. The duplicate cannot
-  be deleted in favour of the shared one without changing that module's contract — which means changing who
-  owns configuration. So: *could this consumer have used the existing owner?* If **no**, the finding is a
-  **seam mismatch**, and the repair is to settle which design owns the concern — injected mapping, aliases and
-  all — then make the shared module speak it. If **yes**, the finding is that the system let it not, and the
-  repair is a seam that admits no raw representation. Either way, not a lecture in a docstring.
-- **Signature-compatibility test**, the one that separates the two: put the existing owner's signature beside
-  the call site's. Same seam (both ambient, or both injected, same alias handling)? Then it is DRY and the copy
-  is sloppiness. Different seam? Then de-duplicating mechanically is impossible, and the finding is
-  architectural — which is why "the repo already has one of these" is *not* the end of the analysis.
+The tell is **structural and needs no vocabulary**: a consumer holding the vocabulary of a decision instead of
+asking its owner — a set of literal tokens compared against a string, a `startswith` on an identifier that names
+a thing, a first-non-empty scan over alternative spellings of one setting, a literal default sitting beside a
+lookup. Where those appear, ask what component should have answered and why the caller could not ask it.
+
+Report the result even when it is the least interesting finding in the pass: an unowned input outranks a tidy
+bug, and it will not be found by anyone else's tool.
 
 ## The forest: instances of one disease
 
