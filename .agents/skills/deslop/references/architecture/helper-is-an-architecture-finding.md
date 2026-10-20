@@ -41,6 +41,25 @@ are **load-bearing patchwork**: they exist because the architecture terminated c
 strings" and never built the component whose job is to turn that dictionary into decisions. Nothing owns the
 setting, so every consumer improvises — and each improvisation is locally reasonable and jointly incoherent.
 
+## One is enough
+
+**The finding fires on a single instance.** Duplication is corroboration, never the criterion: a helper is
+pointless because of *why it must exist*, not because there are two of it. If the value had been parsed at the
+seam it entered — a `bool`, a `Region`, a capability, a resolved credential — the function would have nothing
+left to do, and that is true whether the codebase contains one copy or nine.
+
+Two corollaries the audit must obey:
+
+- **Never downgrade a lone helper for being "only used in one place".** The single call site is the proof, not
+  the mitigation: the value crossed a boundary still raw, and one consumer is reconciling what should never
+  have arrived in that shape.
+- **Never wait for a second copy before filing it.** Waiting is how the fork happens: the second consumer
+  arrives, writes its own version with a slightly different token set, and now the finding looks like
+  duplication and gets fixed as duplication — leaving both versions where they are.
+
+This is also why "the repo already has one of these" is not the end of the analysis (see the signature test
+below): sharing an owner that the caller cannot reach still leaves the value unparsed at the point of use.
+
 ## The test
 
 Do not audit the helper. Audit its absence:
@@ -50,9 +69,9 @@ Do not audit the helper. Audit its absence:
    decides, and six call sites receive a decision", you have found the component the design was missing.
 2. **Owning-module test** — name the module with the authority to answer this question. If the answer is "none",
    the decision is unowned, and every helper is a separate vote on what it means.
-3. **Authority-duplication test** — would a second consumer write this function? Two `_truthy` with two token
-   sets, two `_supports_custom_temperature` with two prefix lists, is not DRY; it is two systems deciding one
-   question. The architecture permitted both.
+3. **Authority-duplication test** — *corroboration only, never the trigger.* Would a second consumer write this
+   function? Two token sets for one concept mean the fork has already happened, which strengthens a finding you
+   should already have from test 1. Use it as evidence, never as the reason.
 4. **Layer test** — how far is the helper from where the value entered? A codec at the edge is doing its job; a
    codec four layers in is a message that the edge did not finish its work and nobody noticed.
 5. **Reversibility test** — what does the helper do with input it cannot interpret (`"maybe"`, an unknown model
@@ -160,8 +179,8 @@ any type is chosen.
 
 1. **An unnecessary helper is an architecture finding.** Ask what would have to be true for it to be
    unnecessary; the answer names the component that is missing.
-2. **The helper is evidence, never the crime.** It is correct, careful, and load-bearing; there is nothing to
-   tidy.
+2. **The helper is evidence, never the crime** — and one instance is enough. It is correct, careful and
+   load-bearing because a raw value travelled; there is nothing to tidy and nothing to wait for.
 3. **The disease is a value nobody owns** between entry and use — which is why the same shape recurs as
    `_truthy`, `_first_nonempty`, prefix sniffers, normalisers and coercers. One cause, many costumes.
 4. **Assign the owner, then let the type follow**, delete the helpers in the same change, and treat their

@@ -51,6 +51,6 @@ Each principle is a self-contained file — open it when a finding implicates th
 | Principle | What it says |
 |-------------|----------------|
 | [Parse, Don't Validate](architecture/parse-dont-validate.md) | Convert input to precise types once at the boundary |
-| [A Helper That Must Exist Is an Architecture Finding](architecture/helper-is-an-architecture-finding.md) | Tells: a consumer comparing a string against a set of literal tokens, testing an identifier with `startswith`, scanning several names for the first non-empty one, or repeating `env.get("NAME", default)` across files — each means no single component owns that input. Census the inputs, name the missing owner; the helper's deletion is the fix |
+| [A Helper That Must Exist Is an Architecture Finding](architecture/helper-is-an-architecture-finding.md) | **One instance is enough.** A helper that turns a raw representation into a decision exists only because that value was allowed to travel unparsed — parse it at the seam and the function has nothing left to do. Never downgrade it for being the only copy: duplication only shows the fork already happened. Tells — a string compared against a set of literal tokens, `startswith` on an identifier, a first-non-empty scan over alternative names, a literal default beside a lookup |
 | [Immutability](architecture/immutability.md) | Values fixed after creation; never mutate caller data |
 | [Idempotency](architecture/idempotency.md) | Safe repetition; design for duplicate requests |
