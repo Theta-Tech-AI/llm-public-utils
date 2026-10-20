@@ -64,6 +64,46 @@ from a *method* (grep for the primitive, group by content, read the hits) genera
 cost more lines than the method and missed sets the method reached — which is why none of the three ships
 with this library.
 
+**The control applies to a principle too, not only to a script.** A principle file is detection prose, and the
+same question decides whether it works: does a fresh, markdown-only agent that has the rule actually find the
+finding? Measured on one adapter directory, same checkout, same neutral prompt, read-only:
+
+| Version of the rule | Fresh markdown-only agent (identical neutral prompt, read-only) | Verdict |
+|---------------------|------------------------------|---------|
+| Doctrine only — "a private reconciling helper proves nothing owns the value" | Seven findings; caught the prefix sniffing sibling seven lines away and **never mentioned the boolean helper between it and its quoted line**, nor the sibling duplicated in a second adapter | **Failed** |
+| Doctrine + a grep for helper *names* (`_truthy|_first_nonempty|to_bool|…`) | Nine findings; helper, twin and prefix all reported under the principle by name, owner-first repair prescribed | **Passed — and rejected anyway**: a name list fires only on the spellings its author had, which is the fitted detector described above, and it passed because detector and control case came from the same example |
+| Doctrine + input census in `auditing.md` only (no names) | Caught the configuration *seam* via [one-logical-unit-one-home](architecture/one-logical-unit-one-home.md) — alias precedence that ignores a credential alias the chat path supports — and applied the new principle twice, on the prefix sniff and on a bypassed wire-parameter decision, but never named the boolean helper | **Partial** |
+| Same, with the tells placed where a neutral pass actually reads them: the architecture index row states the *structural* tells (a string compared against a literal token set, `startswith` on an identifier, first-non-empty scans, the same `env.get("NAME", default)` repeated across files), and `SKILL.md` names the census in its always-read row | Six findings, two of them High, both under the new principle: one naming **the boolean helper and its twin** inside the Foundry-credential seam, one the prefix sniff — and it ran in-memory probes to confirm the stream-close, delay-cap and empty-validator defects rather than asserting them | **Passed, with no names anywhere** |
+| Principle file named directly (usability test rather than discovery) | Five instances, including a fourth — repeated `float(env.get("AGENT_MODEL_TEMPERATURE", "0"))` across four adapters — that appears nowhere in the principle, and three plausible false positives correctly declined because an owner already existed | **Usable** |
+
+**The index row is a trigger, and a trigger is not a criterion.** Three further runs, identical prompt, differing
+only in the architecture index row for this principle:
+
+| Row variant | Lone helper reported? | Reading |
+|---|---|---|
+| Thesis clause added, repeated-`env.get` sighting tell kept | Yes — twice, once as the first High finding | Hook present |
+| Rewritten to lead with "one instance is enough", sighting tell **removed** | **No** — the duplicate was reported, the lone helper was not | Removing an evidence hook because it is not the criterion costs recall |
+| One-instance rule **and** the hook, labelled "sighting aid only — not the criterion" | Yes | Both properties held |
+
+So: state the criterion architecturally (a raw value reached a consumer that had to interpret it — one instance
+is enough), and keep the cheap sighting pattern in the trigger position, named for what it is. Conflating the two
+in either direction fails — a hook allowed to decide admits padding, a hook deleted for being imperfect loses the
+finding. And note what no neutral run did: *speak* the thesis. Detection came from the index; the reasoning came
+only from opening the principle file, which is the division of labour those two files are for.
+
+The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
+one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
+outranked by whatever the pass finds more interesting — so put the trigger (a grep the pass must run, an
+obligation to report) in the protocol, and keep the doctrine in the principle file.
+
+**And the trigger must not be a list of names.** The first attempt at the sweep above was a grep for
+`def _(truthy|first_nonempty|to_bool|coerce|normali[sz]e|...)` — and it passed its control, which is exactly why
+it is dangerous: it fires on the spellings the author had in hand and walks past `_as_flag`, `_setting_switch`,
+`_resolve_capability` and every name invented afterwards. That is the fitted-detector failure this file already
+describes, reproduced inside the protocol. The replacement obligation is a *census* — for each external input,
+who owns turning it into a decision, and how many consumers re-interpret it — which is answerable without knowing
+any names, and which generalises to inputs that are not configuration at all (request bodies, rows, payloads).
+
 ## Where a script does earn its keep
 
 Three properties, all required:

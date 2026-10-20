@@ -27,6 +27,8 @@ Influential writings that introduced or crystallized important concepts.
 | Article | Author | Year | Key Idea |
 |---------|--------|------|----------|
 | [Parse, Don't Validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) | Alexis King | 2019 | Transform unstructured data into types that prove validity; let the type system enforce invariants |
+| [Boolean blindness](https://shreevatsa.wordpress.com/2015/01/31/boolean-blindness/) | Dan Licata, recorded by Robert Harper | 2013–2015 | A Boolean carries no information beyond its value — using it means remembering the provenance you already erased |
+| [Stringly typed](https://github.com/SteveDunn/StringlyTyped#readme) | folk usage, paired with Fowler's primitive obsession | 2010s | Carrying a domain concept as `str` — the primitive-obsession pejorative |
 | [The Wrong Abstraction](https://sandimetz.com/blog/2016/1/20/the-wrong-abstraction) | Sandi Metz | 2016 | "Duplication is far cheaper than the wrong abstraction"; prefer inline code over premature DRY |
 | [Cognitive Load is What Matters](https://github.com/zakirullin/cognitive-load) | Artem Zakirullin | 2023 | Minimize mental effort required to understand code; endorsed by Rob Pike, Andrej Karpathy |
 | [Tell Don't Ask](https://martinfowler.com/bliki/TellDontAsk.html) | Martin Fowler | 2013 | Tell objects what to do rather than asking for data and acting on it |
@@ -58,4 +60,7 @@ Origins of specific principles referenced in this document.
 | **Postel's Law** | Jon Postel, RFC 761 (TCP), 1980 |
 | **Deep Modules** | John Ousterhout, *A Philosophy of Software Design*, 2018 |
 | **Cognitive Load** | Psychology (John Sweller, 1988); applied to code by Zakirullin, 2023 |
+| **Boolean blindness** | Dan Licata, CMU (as a PhD student); recorded by Robert Harper; catalogued as a smell by Jerzyk, 2022 |
+| **Primitive obsession / stringly typed** | Martin Fowler, *Refactoring*, 1999; "stringly typed" as the pejorative for the string case |
+| **A Helper That Must Exist Is an Architecture Finding** | This library (2026) — the architectural framing, the six-test audit, and the owner-before-type ordering; the type-level smells are the named concepts above |
 | **Normalization / Normal Forms** | Edgar F. Codd, 1970 (relational model) |

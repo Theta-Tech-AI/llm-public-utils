@@ -20,7 +20,7 @@ Whether or not you use this deslop command on your code base, you should read al
 
 | File | When |
 |------|------|
-| [references/auditing.md](references/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format |
+| [references/auditing.md](references/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/loop-until-dry.md](references/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
 | [references/campaign-mode.md](references/campaign-mode.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
 | [references/measuring.md](references/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
@@ -33,7 +33,7 @@ Each index below is a short table of principles and their one-line essences, lin
 | File | Contents |
 |------|----------|
 | [references/clean-code.md](references/clean-code.md) | **Clean Code** — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork |
-| [references/architecture.md](references/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency |
+| [references/architecture.md](references/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency |
 | [references/reliability.md](references/reliability.md) | **Reliability** — Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability |
 | [references/when-to-relax.md](references/when-to-relax.md) | **When to relax rules** — contexts where principles are over-applied, plus the meta-principle |
 

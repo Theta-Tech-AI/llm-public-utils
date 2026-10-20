@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture
-description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency.
+description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency.
 ---
 
 # Architecture
@@ -51,5 +51,6 @@ Each principle is a self-contained file — open it when a finding implicates th
 | Principle | What it says |
 |-------------|----------------|
 | [Parse, Don't Validate](architecture/parse-dont-validate.md) | Convert input to precise types once at the boundary |
+| [A Helper That Must Exist Is an Architecture Finding](architecture/helper-is-an-architecture-finding.md) | **One instance is enough** — a helper that turns a raw representation into a decision exists only because that value travelled unparsed; parse it at the seam and the function has nothing left to do. Never downgrade a lone helper for being the only copy. Tells: a string compared against a set of literal tokens, `startswith` on an identifier, a first-non-empty scan over alternative names, a literal default beside a lookup — plus, as a **sighting aid only**, the same `env.get("NAME", default)` repeated across files (that is not the criterion) |
 | [Immutability](architecture/immutability.md) | Values fixed after creation; never mutate caller data |
 | [Idempotency](architecture/idempotency.md) | Safe repetition; design for duplicate requests |
