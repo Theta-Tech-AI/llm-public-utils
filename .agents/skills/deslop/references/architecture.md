@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture
-description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Immutability, Idempotency.
+description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, SOLID, CQS, Reusability, Parse Don't Validate, Coercion Is a Boundary, Immutability, Idempotency.
 ---
 
 # Architecture
@@ -51,5 +51,6 @@ Each principle is a self-contained file — open it when a finding implicates th
 | Principle | What it says |
 |-------------|----------------|
 | [Parse, Don't Validate](architecture/parse-dont-validate.md) | Convert input to precise types once at the boundary |
+| [Coercion Is a Boundary, Not a Helper](architecture/coercion-is-a-boundary.md) | A private `_truthy`/`_int`/`_first_nonempty` proves the boundary was never built — parse once, delete the helper |
 | [Immutability](architecture/immutability.md) | Values fixed after creation; never mutate caller data |
 | [Idempotency](architecture/idempotency.md) | Safe repetition; design for duplicate requests |
