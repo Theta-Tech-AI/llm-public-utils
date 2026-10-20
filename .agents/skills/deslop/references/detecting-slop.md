@@ -76,6 +76,21 @@ finding? Measured on one adapter directory, same checkout, same neutral prompt, 
 | Same, with the tells placed where a neutral pass actually reads them: the architecture index row states the *structural* tells (a string compared against a literal token set, `startswith` on an identifier, first-non-empty scans, the same `env.get("NAME", default)` repeated across files), and `SKILL.md` names the census in its always-read row | Six findings, two of them High, both under the new principle: one naming **the boolean helper and its twin** inside the Foundry-credential seam, one the prefix sniff — and it ran in-memory probes to confirm the stream-close, delay-cap and empty-validator defects rather than asserting them | **Passed, with no names anywhere** |
 | Principle file named directly (usability test rather than discovery) | Five instances, including a fourth — repeated `float(env.get("AGENT_MODEL_TEMPERATURE", "0"))` across four adapters — that appears nowhere in the principle, and three plausible false positives correctly declined because an owner already existed | **Usable** |
 
+**The index row is a trigger, and a trigger is not a criterion.** Three further runs, identical prompt, differing
+only in the architecture index row for this principle:
+
+| Row variant | Lone helper reported? | Reading |
+|---|---|---|
+| Thesis clause added, repeated-`env.get` sighting tell kept | Yes — twice, once as the first High finding | Hook present |
+| Rewritten to lead with "one instance is enough", sighting tell **removed** | **No** — the duplicate was reported, the lone helper was not | Removing an evidence hook because it is not the criterion costs recall |
+| One-instance rule **and** the hook, labelled "sighting aid only — not the criterion" | Yes | Both properties held |
+
+So: state the criterion architecturally (a raw value reached a consumer that had to interpret it — one instance
+is enough), and keep the cheap sighting pattern in the trigger position, named for what it is. Conflating the two
+in either direction fails — a hook allowed to decide admits padding, a hook deleted for being imperfect loses the
+finding. And note what no neutral run did: *speak* the thesis. Detection came from the index; the reasoning came
+only from opening the principle file, which is the division of labour those two files are for.
+
 The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
 one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
 outranked by whatever the pass finds more interesting — so put the trigger (a grep the pass must run, an
