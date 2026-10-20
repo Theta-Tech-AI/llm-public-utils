@@ -62,5 +62,5 @@ Origins of specific principles referenced in this document.
 | **Cognitive Load** | Psychology (John Sweller, 1988); applied to code by Zakirullin, 2023 |
 | **Boolean blindness** | Dan Licata, CMU (as a PhD student); recorded by Robert Harper; catalogued as a smell by Jerzyk, 2022 |
 | **Primitive obsession / stringly typed** | Martin Fowler, *Refactoring*, 1999; "stringly typed" as the pejorative for the string case |
-| **Coercion Is a Boundary, Not a Helper** | This library (2026) — the framing and diagnostics; the underlying smells are the named concepts above |
+| **A Helper That Must Exist Is an Architecture Finding** | This library (2026) — the architectural framing, the six-test audit, and the owner-before-type ordering; the type-level smells are the named concepts above |
 | **Normalization / Normal Forms** | Edgar F. Codd, 1970 (relational model) |
