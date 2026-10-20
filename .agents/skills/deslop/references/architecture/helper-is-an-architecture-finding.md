@@ -90,6 +90,15 @@ correction is not a list of function names: a grep for `_truthy` finds `_truthy`
 `_setting_switch`, `_resolve_capability` and every name invented after the list was written. Name-matching is
 the same fitted detector this library refuses elsewhere — it encodes the instance and not the rule.
 
+**Trigger and criterion are different things, and neither may be mistaken for the other.** The criterion is
+architectural — a raw value reached a consumer that had to interpret it. The *trigger* is whatever makes that
+visible on sight, and a cheap sighting aid is legitimate even when it is evidence rather than proof: the same
+`env.get("NAME", default)` appearing in several files, a set of literal tokens sitting in a consumer, an
+identifier tested with `startswith`. Removing a hook because it is not the criterion costs recall — measured: a
+row that led with "one instance is enough" and dropped the repeated-across-files hook stopped surfacing a lone
+helper, while rows carrying it surfaced it twice. Keep the hook, label it a hook, and never let it decide
+whether the finding is real.
+
 **The instrument is a census.** For every external input the target consumes — environment variables, request
 bodies, query params, database rows, provider payloads, file contents — answer:
 
