@@ -60,6 +60,31 @@ Do not audit the helper. Audit its absence:
    absent, it is being impersonated at the read site.
 6. **Family check** — grep for the *shape* rather than the subject: `_`-prefixed, one or two parameters, returns
    a domain type, body is normalising. Where they cluster in one file, that file is standing in for a component.
+7. **Bypass test** — does the codebase already own this decision somewhere (a util module, a catalog, a domain
+   type)? Then the finding is that the consumer was free to ignore it. Report the bypass, not merely the
+   duplication.
+
+## Detection — run it as a sweep, not as a reading
+
+A principle an agent must *remember to apply* will be missed by an agent scanning for behaviour bugs. The
+family is cheap to enumerate, so enumerate it: any hit below is in scope, **including when it is small, tidy,
+well-named and less interesting than the other findings in the pass**.
+
+```
+grep -rnE 'def _(truthy|first_nonempty|as_bool|to_bool|coerce|normali[sz]e|parse_|or_zero|get_or_default)'
+grep -rnE 'env: Mapping\[str, str\]|os\.environ|os\.getenv'     # one setting read by several consumers
+grep -rn  '<the identity of the concept>'                          # the closed set, where the domain type should be
+```
+
+**Two shapes of the same finding, and the second is the more common one in real code:**
+
+- **No owner exists.** The value is created raw and every consumer improvises (the ❌ above).
+- **An owner exists and nothing enforces its use.** Measured case: a module already offered
+  `get_bool_env(name, default)` — strict, raising on an unrecognised token — and an adapter nevertheless
+  defined its own private `_truthy` beside it, silently defaulting to `False`, while a second adapter
+  re-implemented the sibling `_first_nonempty`. The owner was never missing; the seam that would have forced
+  its use was. Ask also: *could a consumer have avoided this helper?* If yes, the finding is that the system
+  let it not, and the repair is a seam that admits no raw representation — not a lecture in a docstring.
 
 ## The forest: instances of one disease
 
