@@ -79,12 +79,21 @@ grep -rn  '<the identity of the concept>'                          # the closed 
 **Two shapes of the same finding, and the second is the more common one in real code:**
 
 - **No owner exists.** The value is created raw and every consumer improvises (the ❌ above).
-- **An owner exists and nothing enforces its use.** Measured case: a module already offered
-  `get_bool_env(name, default)` — strict, raising on an unrecognised token — and an adapter nevertheless
-  defined its own private `_truthy` beside it, silently defaulting to `False`, while a second adapter
-  re-implemented the sibling `_first_nonempty`. The owner was never missing; the seam that would have forced
-  its use was. Ask also: *could a consumer have avoided this helper?* If yes, the finding is that the system
-  let it not, and the repair is a seam that admits no raw representation — not a lecture in a docstring.
+- **An owner exists and the architecture does not let it be used.** Measured case, and the reason plain DRY
+  files the wrong repair: a shared module already offered `get_bool_env(name, default)` (strict, raising) and
+  `is_env_truthy(name)` (permissive, silently `False`) — the second an exact twin of the private `_truthy` —
+  yet an adapter defined its own, and a second adapter re-implemented the sibling `_first_nonempty`. Both
+  shared helpers read **ambient** `os.environ` by name; every adapter takes an **injected**
+  `env: Mapping[str, str]` and resolves aliases (`FOUNDRY_*` before `AZURE_*`) itself. The duplicate cannot
+  be deleted in favour of the shared one without changing that module's contract — which means changing who
+  owns configuration. So: *could this consumer have used the existing owner?* If **no**, the finding is a
+  **seam mismatch**, and the repair is to settle which design owns the concern — injected mapping, aliases and
+  all — then make the shared module speak it. If **yes**, the finding is that the system let it not, and the
+  repair is a seam that admits no raw representation. Either way, not a lecture in a docstring.
+- **Signature-compatibility test**, the one that separates the two: put the existing owner's signature beside
+  the call site's. Same seam (both ambient, or both injected, same alias handling)? Then it is DRY and the copy
+  is sloppiness. Different seam? Then de-duplicating mechanically is impossible, and the finding is
+  architectural — which is why "the repo already has one of these" is *not* the end of the analysis.
 
 ## The forest: instances of one disease
 
@@ -132,6 +141,7 @@ Small scripts are exempt only until they become services.
 |-----------|--------------|
 | [**One Logical Unit, One Home**](one-logical-unit-one-home.md) | The same rule seen from the other side: that one names the unit that has drifted; this names the unit that was never created, detected through the helpers squatting in its place. |
 | [**Parse, Don't Validate**](parse-dont-validate.md) | Supplies the *repair mechanism* — parse once into a precise type. This supplies the *finding and its location*: who is missing, not what type to use. |
+| [**DRY**](dry.md) | Names the copy and its usual repair — delete the duplicate, call the shared one. Reach for this principle when that repair is *possible*; when the shared implementation's seam does not fit the caller's, the finding has moved up a level and DRY alone will prescribe a change that cannot be made. |
 | [**Single Source of Truth**](single-source-of-truth.md) | Two helpers answering one question are two sources of truth; the cause is one missing owner, and fixing only the duplication leaves the owner missing. |
 | [**Patchwork**](../clean-code/patchwork.md) | The general theory this is a sharp instance of: compensating code you cannot simplify by deleting. This adds the architectural reason it cannot be deleted — deletion requires building the owner. |
 | [**No Silent Defaults**](../reliability/no-silent-defaults.md) | What the impersonating helper does when the owner is absent: manufactures a value from absence or nonsense. |

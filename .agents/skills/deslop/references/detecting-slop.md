@@ -64,6 +64,20 @@ from a *method* (grep for the primitive, group by content, read the hits) genera
 cost more lines than the method and missed sets the method reached — which is why none of the three ships
 with this library.
 
+**The control applies to a principle too, not only to a script.** A principle file is detection prose, and the
+same question decides whether it works: does a fresh, markdown-only agent that has the rule actually find the
+finding? Measured on one adapter directory, same checkout, same neutral prompt, read-only:
+
+| Version of the rule | Fresh markdown-only agent | Verdict |
+|---------------------|---------------------------|---------|
+| The principle stated as doctrine only ("a private reconciling helper proves nothing owns the value") | Returned seven findings; caught the prefix-sniffing sibling seven lines away, and **never mentioned the `_truthy` sitting between its quoteline and that one**, nor the sibling duplicated in a second adapter | **Failed the control** |
+| Same principle, plus (a) a mandatory family sweep in [auditing.md](auditing.md) with grep tokens, and (b) each hit's reporting obligation overriding severity order | Nine findings; reported `_truthy` **and** the duplicated `_first_nonempty` under the principle by name, prescribed the owner-first repair verbatim, and cited the existing strict parser it bypassed | **Passed** |
+
+The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
+one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
+outranked by whatever the pass finds more interesting — so put the trigger (a grep the pass must run, an
+obligation to report) in the protocol, and keep the doctrine in the principle file.
+
 ## Where a script does earn its keep
 
 Three properties, all required:
