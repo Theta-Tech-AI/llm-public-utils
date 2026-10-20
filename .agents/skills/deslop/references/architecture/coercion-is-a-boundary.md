@@ -90,6 +90,24 @@ deployment alias differs from the model id, a new family ships under a colliding
 reached by a fully qualified path. If the set is closed, it has a home; if the set is open, the boundary
 decides and returns the typed answer.
 
+## Prior art — what is already named, and what is ours
+
+The smells underneath this have names; the label on this file is ours. Claiming otherwise would be the slop it
+describes.
+
+| Named concept | Source | How it relates |
+|---|---|---|
+| **Boolean blindness** | coined by **Dan Licata** (CMU, as a PhD student), recorded by **Robert Harper**; catalogued as a code smell by Jerzyk (2022) | A `bool` carries no information beyond its value — to use it you must remember its provenance (McBride). Here blindness begins *earlier*: the value is still a `str`, and provenance has not been established at all. |
+| **Stringly typed / primitive obsession** | Fowler, *Refactoring* (primitive obsession); "stringly typed" as the pejorative for carrying everything as `str` | The representation riding around as `str \| None` instead of the domain type. |
+| **Shotgun parsing** | Alexis King, *Parse, Don't Validate* (2019) | The check scattered per call site instead of parsed once — what `_truthy` performs at every read. |
+| **Typed settings parsed once at startup** | 12-factor config; `pydantic-settings` `BaseSettings` as the mainstream Python form | The standard repair for the config case: one parse, one typed object, everything downstream reads a `bool`. |
+
+**What this file adds, and does not claim as prior art:** the *artifact* is the finding. Existing vocabulary
+names the type disease (primitive obsession) and its symptom (boolean blindness), but leaves the repair to
+judgement; nothing names the private codec helper as the thing to hunt for, nor states that its presence is
+evidence a boundary was never built. The six diagnostics below, and the rule that the helper is deleted rather
+than tightened, are this library's own framing.
+
 ## Diagnostics
 
 Ask these of every `_`-prefixed function that returns `bool`, `int`, `float`, an enum, or `Path`:
