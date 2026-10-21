@@ -1,8 +1,11 @@
 {
-  "_comment": "Default principle grouping for any planned deslop pass (readings applied to slices). Every per-principle file under references/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance — the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
+  "_comment": "Default principle grouping for any planned deslop pass (readings applied to slices). Every per-principle file under references/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance \u2014 the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
   "version": 1,
   "shared": {
-    "protocols": ["auditing.md", "when-to-relax.md"],
+    "protocols": [
+      "auditing.md",
+      "when-to-relax.md"
+    ],
     "orchestrator_only": [
       "detecting-slop.md",
       "measuring.md",
@@ -11,12 +14,16 @@
       "extending-the-library.md",
       "further-reading.md",
       "duplication.md",
-      "case-study-simplification-agent-fleet.md"
+      "case-study-simplification-agent-fleet.md",
+      "pass-planning.md",
+      "aggregating-findings.md",
+      "consolidating-and-triage.md",
+      "reporting-results.md"
     ]
   },
   "lenses": {
     "boundaries": {
-      "stance": "Where does this code belong, and does each part hold one concern? Judge seams, ownership and cohesion — not function size.",
+      "stance": "Where does this code belong, and does each part hold one concern? Judge seams, ownership and cohesion \u2014 not function size.",
       "files": [
         "architecture/separation-of-concerns.md",
         "architecture/modularity.md",
@@ -26,13 +33,15 @@
       ]
     },
     "duplication": {
-      "stance": "What knowledge exists more than once, and where is its single owner? Read duplication.md as well — the sweep primitives live there.",
+      "stance": "What knowledge exists more than once, and where is its single owner? Read duplication.md as well \u2014 the sweep primitives live there.",
       "files": [
         "architecture/dry.md",
         "architecture/single-source-of-truth.md",
         "architecture/code-reusability.md"
       ],
-      "also_protocols": ["duplication.md"]
+      "also_protocols": [
+        "duplication.md"
+      ]
     },
     "coupling": {
       "stance": "What does each unit know about its neighbours, and what does it construct or reach through that it should have been handed?",
@@ -57,7 +66,7 @@
       ]
     },
     "shape": {
-      "stance": "How big and how tangled is each unit's control flow? Depth, conditional chains, parameter lists, nesting — the measurable shape of the code.",
+      "stance": "How big and how tangled is each unit's control flow? Depth, conditional chains, parameter lists, nesting \u2014 the measurable shape of the code.",
       "files": [
         "clean-code/small-functions.md",
         "clean-code/guard-clauses.md",
@@ -108,7 +117,7 @@
         "data-layer/slop-tells.md",
         "data-layer/unused-indexes.md"
       ],
-      "skip_when": "the target has no schema, migration, ORM model or SQL — say so in the report rather than inventing findings"
+      "skip_when": "the target has no schema, migration, ORM model or SQL \u2014 say so in the report rather than inventing findings"
     }
   }
 }
