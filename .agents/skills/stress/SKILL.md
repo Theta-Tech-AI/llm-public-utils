@@ -5,16 +5,17 @@ description: Stress-test apps (especially webapps) — confirm reliability, comb
 
 # Stress: Unearth Bugs Before Users Do
 
-A stress run is **sequential**, not a pick-list: prove the happy path works, groom it, attack it, then hunt the code. All of it hardens an app's *functionality* (not load/scale — that can be a future `load.md`):
+A stress run is **sequential**, not a pick-list: snapshot what a user can do at every step, prove the happy path works, groom it, attack it, then hunt the code. All of it hardens an app's *functionality* (not load/scale — that can be a future `load.md`):
 
 | # | Phase | Temper | Question it answers |
 |---|-------|--------|---------------------|
+| 0 | **Run list** (first) | Triage the inventory into ordered, parallel lanes with variations | What will I try, in what order and lanes? |
 | 1 | **Reliability** (gate) | Patient happy-path repetition until it earns trust | Does the happy path *consistently* complete? |
 | 2 | **Comb** | Gentle, repeated happy-path grooming | Where are the knots on and around the path? |
 | 3 | **Mischief** | Hostile, out-of-order chaos | What breaks under abuse the system doesn't expect? |
 | 4 | **Bug hunt** | Code-first, multi-angle review | What do layers, workflows, and data models hide? |
 
-Run the phases **in order, 1-3 passes each** for the app-driving phases — the full shape lives in [process.md](references/process.md). A failed reliability gate *ends the run early*: there is no point combing or attacking a system that can't reliably do its one job.
+Run the phases **in order, 1-3 passes each** for the app-driving phases — the full shape lives in [process.md](references/process.md). **Every step of every pass runs the step loop** in process.md — snapshot the actions available now → choose one on purpose → predict → act → measure — and the snapshots build a living inventory, so nothing that appears in a state goes untried without an explicit skip. A failed reliability gate *ends the run early*: there is no point combing or attacking a system that can't reliably do its one job.
 
 Phase 4 is **code review, not app driving** — it never touches the running app, so it may run **in parallel** (a subagent reading code while you drive phases 1-3) instead of strictly last. Run any single phase standalone only when the user asks for exactly that (e.g. "just cause mischief"); otherwise the sequence is the default, and reliability is the entrance fee for everything downstream.
 
@@ -26,7 +27,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 
 | File | When |
 |------|------|
-| [references/process.md](references/process.md) | **The standard run** — deployment lay of the land, then 1-3 reliability → 1-3 comb → 1-3 mischief passes |
+| [references/process.md](references/process.md) | **The standard run** — the step loop, the inventory and run list, then 1-3 reliability → 1-3 comb → 1-3 mischief passes, then a coverage check |
 | [references/driving.md](references/driving.md) | Choosing **browser vs API vs hybrid** — different surfaces catch different bugs |
 | [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix) |
 
@@ -51,7 +52,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 - **"Break it" / "try to mess it up" / chaos** → mischief (optionally after one comb pass so you know the happy path)
 - **"Review the code for bugs"** → bug hunter
 - **"Hit the API" / contract / concurrency stress** → comb or mischief with an **API-first** drive plan
-- **"Stress test this" / vague** → the standard run in [process.md](references/process.md): reliability first, then comb, then mischief; bug-hunt ugly code along the way
+- **"Stress test this" / vague** → the standard run in [process.md](references/process.md): step loop and run list first, then reliability, comb, mischief; bug-hunt ugly code along the way
 
 ## Your job
 

@@ -14,99 +14,31 @@ Stress testing needs hands on the system. Two primary surfaces, different bugs:
 
 Neither replaces the other. Prefer **hybrid**: use the API to set up state and probe contracts fast; use the browser to confirm what a human would actually experience.
 
-**But for a webapp, the browser is not the "confirm" step — it is the product.** The user never sees your `curl`; their entire experience is what renders, when it renders, what it says, and whether the controls behave. It is easy to slide into API/code hunting because it's fast and systematic — and then report a pile of backend defects while the bugs users actually hit (a stage you can reach too early, a value that flashes raw, a save that didn't save, a control a banner covers) sit untouched. **Default your hands to the browser for any webapp** and drive it deliberately with the playbook below. Treat "my findings are all backend/contract" as a symptom that you skipped the front door, not that the UI is clean.
+**For a webapp the browser is not the "confirm" step, it is the product.** Users never see your `curl`; they see what renders, when, what it says and whether controls behave. Default your hands to the browser for any webapp. If your findings are all backend or contract defects, you skipped the front door; the UI is not clean.
 
 ---
 
 ## Agent browser
 
-**[agent-browser](https://github.com/vercel-labs/agent-browser)** (Vercel Labs) is a browser automation CLI built for AI agents — open pages, snapshot interactive elements as `@refs`, click/fill, screenshot, and inspect network. Docs and releases:
+**[agent-browser](https://github.com/vercel-labs/agent-browser)** (Vercel Labs CLI): `open → snapshot -i → act → re-snapshot`; refs go stale after DOM changes. Install with `npm install -g agent-browser && agent-browser install`; for commands run `agent-browser skills get core`. If the repo documents its own browser auth (token scripts, test accounts), use that.
 
-| Resource | URL |
-|----------|-----|
-| GitHub | https://github.com/vercel-labs/agent-browser |
-| npm | https://www.npmjs.com/package/agent-browser |
-| Site / changelog | https://agent-browser.dev/changelog |
-| Skills directory | https://skills.sh/vercel-labs/agent-browser |
-| Built-in dogfood skill (exploratory QA) | `agent-browser skills get dogfood` after install |
-
-### Consent first
-
-Before installing or driving a real browser against a target app:
-
-1. **Ask the user** for explicit consent to install/use agent-browser (it downloads a Chrome for Testing binary and can interact with live apps, including login flows).
-2. Confirm the **target URL / environment** (local, staging, prod) and that throwaway accounts/data are OK.
-3. Do **not** store secrets in chat logs or commit auth state files; add `auth.json` / session dumps to `.gitignore` and delete when done.
-
-If they decline, fall back to **API-only** driving (below) and say so.
-
-### Install
-
-After consent:
-
-```bash
-# CLI (recommended)
-npm install -g agent-browser
-agent-browser install                 # Chrome for Testing (first time)
-# Linux if system libs are missing:
-agent-browser install --with-deps
-
-# Optional: Homebrew (macOS) or Cargo
-# brew install agent-browser && agent-browser install
-# cargo install agent-browser && agent-browser install
-
-agent-browser doctor                  # sanity-check install
-agent-browser upgrade                 # later updates
-```
-
-Also install the **agent skill** so coding agents know the workflow (version-matched content lives in the CLI):
-
-```bash
-npx skills add vercel-labs/agent-browser -y
-# After CLI install, load current instructions:
-agent-browser skills get core         # snapshot/ref/act loop + troubleshooting
-agent-browser skills get core --full  # full command reference
-agent-browser skills get dogfood      # exploratory testing / bug-hunt patterns
-```
-
-### Brief usage (stress loop)
-
-Core pattern: **open → snapshot → act → re-snapshot**. Refs go stale after DOM changes — always re-snapshot.
-
-```bash
-agent-browser open https://staging.example.com
-agent-browser snapshot -i             # interactive elements → @e1, @e2, ...
-agent-browser fill @e1 "user@example.com"
-agent-browser fill @e2 "password"
-agent-browser click @e3
-agent-browser wait --load networkidle # use sparingly; prefer wait --text / wait @ref
-agent-browser snapshot -i             # fresh refs after navigation
-agent-browser screenshot --full
-agent-browser network requests --type xhr,fetch   # cross-check what the UI actually called
-agent-browser close
-```
+Ask the user before installing or driving a real browser at a live app, and never commit auth state files. If they decline, drive by API only.
 
 Useful under stress:
 
-- `agent-browser batch "open …" "snapshot -i"` — chain when you don't need intermediate output
-- `network requests` / `network request <id>` — pair with API asserts (hybrid)
-- `network route "**/api/*" --abort` — mischief: break the frontend's dependencies
-- Auth: prefer project token scripts or `--state ./auth.json` / `--session-name …` over typing prod passwords into the agent; see the CLI's auth docs via `agent-browser skills get core --full`
-- If a click fails because something covers the target (banner/modal), dismiss the cover, re-snapshot, retry
+- `agent-browser batch "open …" "snapshot -i"` chains steps when you do not need intermediate output.
+- `network requests` / `network request <id>` pair with API asserts (hybrid).
+- `network route "**/api/*" --abort` breaks the frontend's dependencies (mischief).
 
-For deeper command reference, prefer `agent-browser skills get core` over copying stale snippets from memory.
+### Gotchas
 
----
-
-### Agent-browser gotchas while poking tools
-
-- **Refs shift** after every click that re-renders. For repeated clicks, grab the ref **fresh** each iteration (`snapshot -i` again) — do not reuse `@e3` from three actions ago.
-- **Read rendered document/content via snapshot** (or dedicated get-text on a scoped ref). Some layouts do not expose body text to a naive page `eval`; don't conclude "empty/missing" from a bad eval.
-- **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
+- Refs shift after every re-render: take a fresh `snapshot -i` per iteration.
+- Read rendered content via snapshot or get-text on a scoped ref, not a page `eval`; some layouts hide body text from `eval`, so an empty result proves nothing.
+- Wrap every `eval` body in an IIFE (a bare `return` throws).
 
 ## Frontend driving playbook — be the user at the front door
 
-Driving the UI well is a skill, not a screenshot. A whole class of real bugs exists *only* here — what renders, when, what it says, and how controls behave — and none of it shows up in an API response or a code read. Run these deliberately on **every** page you touch, not just the one you came to test. The list is roughly ordered from "do nothing" to "abuse it":
+A whole class of real bugs exists only in the rendered UI and its async timing (gate state that disagrees with the backend, first-visit races, a raw id flashing before a lookup resolves, loading and error copy, hide-vs-disable dead ends). Code review and API probes miss them. This is real usage: run the step loop in [process.md](process.md) — snapshot, choose, predict, act, measure — at every click, and use the checks below as what to look at, on **every** page you touch, roughly from "do nothing" to "abuse it":
 
 1. **Watch the first paint.** Land cold and *do nothing* for a few seconds. Note anything that flashes, a raw value (id/UUID) that appears then resolves to a name, a control that shows then hides, a "not ready"/empty state that self-corrects, or blank skeletons that read as "no data." First-visit races are invisible if you interact immediately — most of them only exist in the first second.
 
@@ -114,7 +46,7 @@ Driving the UI well is a skill, not a screenshot. A whole class of real bugs exi
 
 3. **Drive the async settle.** Trigger loads and long-running jobs and watch the loading→loaded transition end to end. Is progress loud enough for a blocking wait? Leftover or technical loading text? When several progress indicators run at once, is it clear which is the overall vs a sub-task? Then leave the page idle for a couple of poll intervals and watch for stale toasts or leaked pollers still firing.
 
-4. **Exercise every affordance, not just the forward CTA.** Click every clickable thing and confirm it goes somewhere *real* — a badge, count, or link that references an entity must navigate or scroll to it, never open an empty panel or do nothing. Open every drawer/panel/modal and confirm it has a visible close. Check hover and focus states, not just the resting look — missing or inconsistent hover/focus affordances on sibling controls are real bugs.
+4. **Exercise every inventory row on the page, not just the forward CTA** ([process.md](process.md)). Click every clickable thing and confirm it goes somewhere *real* — a badge, count, or link that references an entity must navigate or scroll to it, never open an empty panel or do nothing. Open every drawer/panel/modal and confirm it has a visible close. Check hover and focus states, not just the resting look — missing or inconsistent hover/focus affordances on sibling controls are real bugs.
 
 5. **Reload to verify persistence — the single highest-yield frontend check.** After *any* change (select a row, toggle, inline-edit, autosave), hard-reload and confirm it actually stuck. This catches optimistic-UI lies, silent non-persistence (the click looked saved but no write happened), and 500s hidden behind a cheerful success toast. If a change the user expects to auto-save requires a non-obvious explicit "save," that's also a bug.
 
@@ -128,18 +60,13 @@ Driving the UI well is a skill, not a screenshot. A whole class of real bugs exi
 
 10. **Feel the latency.** Time frequent, simple actions (lock, toggle, save). A multi-second wait on something that should feel instant, with no immediate feedback, reads as broken even when it eventually succeeds — file it as a perceived-performance bug, and consider optimistic feedback.
 
-**Cross-check stays mandatory** (a clean render is not proof — see [findings.md](findings.md)): the browser is the source of truth for *what the user sees*; `console` + `network` + API/logs are the truth for *what actually happened*. Pair them — when they disagree (UI says success, network shows a 500; UI blocks, API allows), you've found something.
+**Measure on two layers** (a clean render is not proof — see [findings.md](findings.md)): the browser is the truth for *what the user sees*; `console`, `network`, API and logs are the truth for *what actually happened*. When they disagree (UI says success, network shows a 500; UI blocks, API allows), you found something.
 
-### Agent-browser mechanics for this playbook
-
-- Resize via the CLI's viewport/window sizing before a mobile pass; re-`snapshot -i` after — layout refs move.
-- **Reload-to-verify** is just `open <same url>` (or a reload) then re-`snapshot`/get-text and compare to the pre-reload state.
-- To catch occlusion, don't only trust a ref click "succeeding" — screenshot and look, and check whether a banner/toast/modal is on top.
-- Read rendered text via snapshot/get-text on a scoped ref, not a naive page `eval` (some layouts don't expose body text to eval).
+Mechanics: the step loop's snapshot is `snapshot -i` plus a screenshot; resize via the CLI viewport before a mobile pass and re-snapshot; reload-to-verify is `open <same url>` then compare with the pre-reload state; for occlusion, screenshot rather than trust a ref click that "succeeded".
 
 ## API driving
 
-Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different and equally real class** of bugs, often faster: authz/IDOR, concurrency and lost updates, idempotency, validation gaps, state-machine holes, data-integrity and audit/compliance failures — landmines that never surface in the UI until they've already corrupted something. On a webapp, **lead with the browser but do not skip this** — spend real time here too; the correction is only that API/code hunting should no longer *crowd out* the front door, not that it's optional. Use it to set up state, probe contracts, amplify a UI-discovered suspicion, and hunt the invisible class the browser can't reach.
+Talk to the backend the way a client would. It finds a different and equally real class of bugs, often faster: authz/IDOR, concurrency and lost updates, idempotency, validation gaps, state-machine holes, data-integrity and audit failures. Lead with the browser on a webapp, but do not skip this. Use it to set up state, probe contracts, amplify a UI-found suspicion and hunt what the browser cannot reach.
 
 ### Setup
 
@@ -161,63 +88,11 @@ Talk to the backend the way a client would. This is not a lesser substitute for 
 | **Contract drift** | Compare response shape to OpenAPI or to what the SPA expects | Field renames, null vs missing, pagination surprises |
 | **Worker/async** | Trigger job via API; poll status; kill/retry mid-flight if you can | Stuck jobs, duplicate processing, silent failure |
 
-Minimal sketch (adapt to the app):
-
-```bash
-# Login / mint (example — use the project's real script when one exists)
-TOKEN=$(curl -sS -X POST "$BASE/auth/token" -H 'content-type: application/json' \
-  -d '{"user":"'"$STRESS_USER"'","password":"'"$STRESS_PASS"'"}' | jq -r .access_token)
-
-# Happy path step
-curl -sS -o /tmp/create.json -w "%{http_code}" -X POST "$BASE/api/items" \
-  -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
-  -d '{"name":"STRESS-comb-1"}'
-
-# Mischief: delete then mutate
-ID=$(jq -r .id /tmp/create.json)
-curl -sS -X DELETE "$BASE/api/items/$ID" -H "authorization: Bearer $TOKEN"
-curl -sS -X PATCH "$BASE/api/items/$ID" -H "authorization: Bearer $TOKEN" \
-  -H 'content-type: application/json' -d '{"name":"after-delete"}'   # expect 404, not 200/500
-
-# Concurrency sketch: two writers
-seq 1 20 | xargs -P 10 -I{} curl -sS -X POST "$BASE/api/items/$ID/lock" \
-  -H "authorization: Bearer $TOKEN"
-```
-
 Record repros as **method + path + headers (secrets redacted) + body + expected vs actual**. That travels better than "I clicked around."
 
-### When to lean API-first
+## Which surface first
 
-- Many repetitions (50× variants) — browsers are slow; scripts are cheap
-- Contracts, pagination, filters, webhooks, batch endpoints
-- Concurrency and idempotency
-- Auth is easier via tokens than full IdP UI
-- Bug is behind the UI (worker, DB invariant, permission check)
-- Surface is API-native (CLI, mobile, partner integrations)
-
----
-
-## When to lean browser-first
-
-- Product *is* a webapp and the user cares about **UX knots**
-- Affordance bugs: wrong enabled buttons, bad CTAs, modal traps
-- Client-only failure modes: stale chunks, optimistic UI lies, local cache vs server
-- Still learning the happy path and need to *see* the app
-
----
-
-## A large class of real bugs is browser-only — budget live passes
-
-Code review and API probes systematically miss an entire population of bugs that real users report first, because these exist only in the rendered UI and its async timing:
-
-- gate/nav state that disagrees with the backend's authoritative prerequisite state (a reachable stage with an unmet predecessor);
-- first-visit / transient render races (stale "not ready" until a manual refresh; a control that flashes then auto-hides);
-- flash of a raw internal value before a lookup resolves;
-- loading-state and progress-indicator polish;
-- error/status copy clarity;
-- hide-vs-disable and dead-end panels.
-
-**Diagnostic:** if your findings are dominated by backend/code defects and you have few or no UI knots, you are *under-driving the browser* — not out of bugs. Budget explicit live-browser passes that: load each page on **first visit** and watch the async settle without interacting; read **every** rendered string (badges, toasts, headers, timestamps); and reach each stage **both** via its nav control and by pasting its deep-link URL. The state-contradiction catalog is in [mischief.md](mischief.md); the rendered-output knots are in [comb.md](comb.md).
+API-first: many repetitions, contracts, pagination, webhooks, batch endpoints, concurrency, idempotency, token auth easier than the IdP UI, bugs behind the UI, API-native surfaces. Browser-first: the product is a webapp and UX knots matter (wrong enabled buttons, modal traps, stale chunks, optimistic-UI lies, local cache vs server), or you still need to see the happy path. The state-contradiction catalog is in [mischief.md](mischief.md); rendered-output knots are in [comb.md](comb.md).
 
 ## Hybrid patterns (high leverage)
 
