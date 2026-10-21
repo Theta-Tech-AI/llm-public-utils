@@ -1,12 +1,13 @@
 ---
 name: deslop-pass-planning
-description: Plan, slice, order and triage a deslop pass — decompose code into cells, group the principles, rank the permutations, then aggregate and triage the findings.
+description: Plan a deslop pass — survey the code, design slices, group the principles, write the permutation list, then rank and order the cells against a budget.
 ---
 
 # Planning a pass: cells, grouping, order
 
-This file is about how to **think about a deslop pass before running one**, and how to turn what comes back into
-ordered work. It states principles and leaves the mechanism to you: you may have subagents, a harness with its
+This file is about how to **think about a deslop pass before running one**. It ends where the readings begin;
+aggregation, consolidation and reporting are separate references (§11), so planning does not carry context it has
+not earned yet. It states principles and leaves the mechanism to you: you may have subagents, a harness with its
 own fan-out, one context, or a fleet of cheaper models. None of that is the point. The point is that slop is
 found by **looking at a specific piece of code with a specific set of principles in mind**, and by **aggregating
 several such readings** — and a pass that does neither finds remarkably little.
@@ -110,7 +111,7 @@ Every group also carries [auditing.md](auditing.md) (report format and the input
 
 ## 5. Write the permutation list
 
-Now the cross-product, **written down rather than run**: slices × groups. It is far too large to execute, and
+Now the cross-product, **written down rather than run**: slices × groups. (Ordering the *cells* happens here; triaging the *findings* that come back is a later stage — §11.) It is far too large to execute, and
 that is the point — writing it makes the choice explicit and stops the pass from quietly becoming "one reading,
 one directory, whatever it noticed".
 
@@ -118,7 +119,7 @@ For each cell record: the group, the slice, **the evidence** that put it there, 
 — the part people skip — **what would make it worth running**. A cell justified by a directory name is a guess;
 a cell justified by "eleven files read `os.environ`, across five layers" is a finding waiting to be written.
 
-## 6. Triage and order the cells
+## 6. Order the cells against a budget
 
 Ordering is where a plan becomes a pass. Sort on these, in this order:
 
@@ -167,40 +168,8 @@ What must hold regardless of mechanism:
 - **If the plan looks thin, add slices — never a group across every module.** The full cross-product is the
   thousand-agent pass; the filtered list is the pass.
 
-## 8. Aggregate the findings
 
-Reports must become one list before they become work. Merge on **locus + principle** and sort into three buckets:
-
-| Bucket | Meaning | What you owe it |
-|---|---|---|
-| **Corroborated** | same locus, same principle, charged by more than one cell | read the source line before believing it — two readers can share one misreading |
-| **Single** | one cell, one instance | **not weaker.** One instance is enough to be real; several cells only say it was subtle. Verify at the line, then keep it |
-| **Disputed** | same locus charged under two different principles | an adjudication, not a duplicate: one defect, one owner, one principle — pick the owner that would delete it |
-
-Aggregate **coverage** too, not just findings: which cells returned nothing, and did they quote code? A cell
-reporting zero findings and quoting nothing is a **failed reading**, not a clean slice — re-run it before
-accepting a thin result. Cross-cell sightings (something noticed outside the assigned group) are leads for the
-next pass, not findings.
-
-## 9. Triage the findings into work
-
-Findings are not issues. Before anything is filed:
-
-1. **Verify at the source line.** Every finding, corroborated or not, is read at its locus first. Filing
-   unverified findings costs more in triage than the pass saved.
-2. **One issue per concern, not per finding or per cell.** Three loci expressing one missing owner are one issue
-   naming the owner; two principles charging one locus are one defect.
-3. **Apply the guardrail.** Where [when-to-relax.md](when-to-relax.md) says the "violation" is the cheaper truth,
-   drop it and say so. An audit that files churn is an audit nobody reads.
-4. **Score for order:** severity (what breaks, how silently) × blast radius (what depends on it) ÷ fix cost. The
-   order should let a reader fix the dangerous ones while they still remember the code.
-5. **Group into a milestone or epic**, not a flat list, so the work has a denominator ("18 of 24 closed") rather
-   than an unbounded queue. State HOW each is fixed, not only that it is wrong: an issue a stranger can start
-   beats an issue that needs its author.
-6. **State what you left out** — cells skipped, findings relaxed, areas unsurveyed. Coverage claims are what make
-   the next pass possible.
-
-## 10. Let the results reroute the plan
+## 8. Let the results reroute the plan
 
 A pass is a loop, not a batch:
 
@@ -211,7 +180,7 @@ A pass is a loop, not a batch:
 - Finish with an **independent second opinion** — another model, another harness, or the same one after the
   fixes. A different prior finds what the first reader normalised away.
 
-## 11. Instruments (optional)
+## 9. Instruments (optional)
 
 Two scripts implement the bookkeeping above. They are conveniences, not requirements: if your harness cannot run
 them, do the same steps by hand — the **plan** is the deliverable, not the script.
@@ -228,7 +197,7 @@ python3 scripts/swarm_lenses.py --emit /tmp/cell --target <slice> --only <group>
 python3 scripts/swarm_merge.py /tmp/plan/findings-*.jsonl --out /tmp/plan/merged.md        # aggregate
 ```
 
-## 12. Control
+## 10. Control
 
 A protocol that promises coverage is tested like a detector: does it find what a monolithic pass missed, on the
 same commit and the same neutral prompt? Recorded runs belong here — version, what changed, verdict, failures
@@ -239,7 +208,18 @@ included.
 | 1 | Paired control, same commit and same target (`backend/src/services/agents/model_provider/`, 10 files): **A** — one neutral monolithic pass with the shipped skill; **B** — eight cells, one per group, each forced to read its assigned principle files in full. Read-only, same model, same neutral prompt. | **A: 19 findings across 9 principles. B: 55 findings, 54 distinct, across 25 principles.** B raised **17 principles A never touched** — encapsulation, orthogonality, SOLID, immutability, observability, least privilege, fail-fast, helper-is-an-architecture-finding, small-functions, SLAP, cognitive load, guard clauses, KISS, self-documenting-code, documentation-discipline, least-surprise, elegance — and A raised exactly one B did not (`yagni`, once). Groups that carried the difference: duplication 12 (A had 4 DRY), legibility 11 (A: none of its principles), parsing 10, boundaries 7, guarantees 6, shape 6. `data-layer` returned **0 with an explicit no-schema statement** — a correctly declining group, which is the shape a healthy cell makes when its slice lacks the signal. 34 loci were charged under two different principles, which is precisely the adjudication work the aggregation step (§8) exists for, and 0 were corroborated — no two groups independently fixed the same charge, so the reports were complementary rather than redundant. |
 | 1a | Sample verification of run 1 B's findings at source | `model_provider/azure_openai.py:70-90` read directly: the connection decision is re-derived in the adapter (`_first_nonempty` over `AZURE_OPENAI_*`/`FOUNDRY_*`, a bare `env.get("AZURE_OPENAI_API_VERSION")`, `_truthy` over two identity flags), confirming the `one-logical-unit-one-home` / `dry` / `immutability` charges on those lines. Findings remain *candidates*: every one is verified at its line before filing (§9). |
 
-## 13. What this is not
+## 11. The next stages (each is its own file, read when you reach it)
+
+This file ends where the readings begin. The stages after dispatch live in their own references so that planning
+does not carry context it has not earned yet:
+
+| Stage | Read | When |
+|---|---|---|
+| **Aggregation** — merge reports on locus + principle; corroborated / single / disputed; coverage accounting; failed readings | [aggregating-findings.md](aggregating-findings.md) | the moment more than one reading has reported |
+| **Consolidation and triage** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse to concerns, group into a milestone | [consolidating-and-triage.md](consolidating-and-triage.md) | after aggregation, before anything is reported or filed |
+| **Reporting** — the shape of the message: lead with the answer, bucket the work, stay short | [reporting-results.md](reporting-results.md) | immediately before you speak to the person who asked |
+
+## 12. What this is not
 
 - **Not a mandate to parallelise.** Sequential cells in one context satisfy the principle; parallelism is an
   accelerator, and a bad plan parallelised is just faster noise.

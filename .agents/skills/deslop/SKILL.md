@@ -22,7 +22,10 @@ Whether or not you use this deslop command on your code base, you should read al
 |------|------|
 | [references/auditing.md](references/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/loop-until-dry.md](references/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
-| [references/pass-planning.md](references/pass-planning.md) | **Any pass that must cover the library, or that has missed something before** — how to survey, slice and group the code into cells, rank the permutations against a budget, choose the execution mechanism you actually have, then aggregate and triage the findings into ordered work |
+| [references/pass-planning.md](references/pass-planning.md) | **Before a pass that must cover the library** — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
+| [references/aggregating-findings.md](references/aggregating-findings.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
+| [references/consolidating-and-triage.md](references/consolidating-and-triage.md) | **After aggregation, before anything is reported or filed** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse findings into concerns, group into a milestone |
+| [references/reporting-results.md](references/reporting-results.md) | **Immediately before you speak to the person who asked** — lead with the answer, bucket the work, keep it short, and never bury the result in method |
 | [references/campaign-mode.md](references/campaign-mode.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
 | [references/measuring.md](references/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
 | [references/extending-the-library.md](references/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
@@ -77,23 +80,20 @@ cell: `swarm_lenses.py --emit <dir> --only boundaries --target <module>`, or sim
 files and read the module whole. That request is the one a general pass cannot satisfy, because a general pass
 decides for itself what to open.
 
-## Triage and order the work
+## Aggregate, consolidate, then report
 
-Findings are not issues. Before anything is filed (in full:
-[references/pass-planning.md](references/pass-planning.md) §8–§9):
+A pass always finds more than anyone should act on at once, and a flat list is not a triage. Three stages follow
+the readings, each with its own file so that planning does not carry context it has not earned yet:
 
-- **Aggregate first**, on locus + principle: corroborated (same locus, same principle, more than one reading —
-  still verify: two readers can share one misreading), single (one instance is enough to be real; multiple
-  readings only say it was subtle), disputed (same locus, two principles — adjudicate one owner, one principle).
-  A cell that reports nothing and quotes no code is a **failed reading**, not a clean slice.
-- **Verify at the source line** before filing. Unverified findings cost more in triage than the pass saved.
-- **One issue per concern**, not per finding or per cell: three loci expressing one missing owner are one issue.
-- **Apply the guardrail** — where [when-to-relax.md](references/when-to-relax.md) says the "violation" is the
-  cheaper truth, drop it and say so.
-- **Order by severity × blast radius ÷ fix cost**, so the dangerous ones are fixed while the reader still
-  remembers the code, and group the work into a milestone with a denominator rather than a flat queue. State
-  HOW each is fixed, so a stranger can start it.
-- **Say what you left out** — cells skipped, findings relaxed, areas unsurveyed.
+1. **[aggregating-findings.md](references/aggregating-findings.md)** — merge on locus + principle (corroborated /
+   single / disputed), account for coverage, and treat a cell that reports nothing and quotes nothing as a *failed
+   reading*. Corroboration is a hint; a single instance is enough to be a real finding.
+2. **[consolidating-and-triage.md](references/consolidating-and-triage.md)** — verify at the source line, apply
+   [when-to-relax.md](references/when-to-relax.md), then bucket by severity × blast radius ÷ fix cost into **now /
+   next / wait-or-drop**, collapse findings into concerns (one issue per concern, never per finding), group the
+   work into a milestone with a denominator, and state what was skipped or relaxed.
+3. **[reporting-results.md](references/reporting-results.md)** — the shape of the message: the answer first, the
+   short "fix first" list, the contained work, what was left out, then stop. Method goes in one line at most.
 
 ## Principle references (indexes)
 
