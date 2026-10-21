@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code
-description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Patchwork, Ceremony Is Not a Repair, Least Surprise.
+description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Patchwork, An Unclaimed Guarantee, Least Surprise.
 ---
 
 # Clean Code
@@ -24,5 +24,5 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Elegance](clean-code/elegance.md) | Minimality, accomplishment, modesty, revelation |
 | [Legibility](clean-code/legibility.md) | Navigable codebase: followable call paths, discoverable entry points, honest names |
 | [Patchwork](clean-code/patchwork.md) | Compensating code you cannot simplify by deleting — re-decide the interface, don't trim the guards |
-| [Ceremony Is Not a Repair](clean-code/ceremony-is-not-a-repair.md) | Tells: an added `WithCancel`/`done`/returned cleanup beside an existing `ctx`; a second lock beside a transaction; a hand-rolled retry beside a retry client. Delete the added lines — if behaviour is unchanged it is ceremony, and the manual obligation it adds is worse than the gap it pretends to close |
+| [An Unclaimed Guarantee](clean-code/unclaimed-guarantee.md) | Tells: an added `WithCancel`/`done`/returned cleanup beside an existing `ctx`, a second lock beside a transaction, a hand-rolled retry beside a retry client. Name the guarantee it adds and the caller that would be wrong without it — no claimant, no finding |
 | [Principle of Least Surprise](clean-code/least-surprise.md) | Components behave the way users expect |
