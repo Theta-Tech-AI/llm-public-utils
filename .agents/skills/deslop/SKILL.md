@@ -22,6 +22,7 @@ Whether or not you use this deslop command on your code base, you should read al
 |------|------|
 | [references/auditing.md](references/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/loop-until-dry.md](references/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
+| [references/swarm-mode.md](references/swarm-mode.md) | **Coverage passes** — "look for X specifically", "we keep missing things", or any audit that must cover the whole library: one parallel agent per principle lens (8 lenses over 53 principle files), each forced to read its assigned files in full, merged and adjudicated by `scripts/swarm_merge.py` |
 | [references/campaign-mode.md](references/campaign-mode.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
 | [references/measuring.md](references/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
 | [references/extending-the-library.md](references/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
@@ -29,6 +30,8 @@ Whether or not you use this deslop command on your code base, you should read al
 ## Principle references (indexes)
 
 Each index below is a short table of principles and their one-line essences, linking to self-contained per-principle files under `references/<category>/`. **Read the indexes up front; open a principle's full file only when a finding implicates it** (or when fixing a violation of it).
+
+Know the cost of that rule: the pass can only open a principle it has already suspected, so principles that need a boundary held in mind — above all **Separation of Concerns** — are routinely never read. When the ask is coverage rather than speed, or a named concern has been missed before, run [references/swarm-mode.md](references/swarm-mode.md) instead of reading harder: it partitions the library into lenses, forces each agent to read its files before scanning, and merges the reports.
 
 | File | Contents |
 |------|----------|
@@ -42,6 +45,7 @@ Each index below is a short table of principles and their one-line essences, lin
 | File | Read when |
 |------|-----------|
 | [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, indexes (**The Data Layer**) |
+| [references/lenses.json](references/lenses.json) + [references/swarm-mode.md](references/swarm-mode.md) | Dispatching a swarm pass — the lens assignment and the dispatch/merge protocol (validated by `scripts/swarm_lenses.py --check`) |
 | [references/duplication.md](references/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/detecting-slop.md](references/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
 | [references/case-study-simplification-agent-fleet.md](references/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |

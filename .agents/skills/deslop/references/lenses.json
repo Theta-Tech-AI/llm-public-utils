@@ -1,0 +1,114 @@
+{
+  "_comment": "Lens assignment for deslop swarm passes. Every per-principle file under references/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance — the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
+  "version": 1,
+  "shared": {
+    "protocols": ["auditing.md", "when-to-relax.md"],
+    "orchestrator_only": [
+      "detecting-slop.md",
+      "measuring.md",
+      "campaign-mode.md",
+      "loop-until-dry.md",
+      "extending-the-library.md",
+      "further-reading.md",
+      "duplication.md",
+      "case-study-simplification-agent-fleet.md"
+    ]
+  },
+  "lenses": {
+    "boundaries": {
+      "stance": "Where does this code belong, and does each part hold one concern? Judge seams, ownership and cohesion — not function size.",
+      "files": [
+        "architecture/separation-of-concerns.md",
+        "architecture/modularity.md",
+        "architecture/one-logical-unit-one-home.md",
+        "architecture/encapsulation.md",
+        "architecture/orthogonality.md"
+      ]
+    },
+    "duplication": {
+      "stance": "What knowledge exists more than once, and where is its single owner? Read duplication.md as well — the sweep primitives live there.",
+      "files": [
+        "architecture/dry.md",
+        "architecture/single-source-of-truth.md",
+        "architecture/code-reusability.md"
+      ],
+      "also_protocols": ["duplication.md"]
+    },
+    "coupling": {
+      "stance": "What does each unit know about its neighbours, and what does it construct or reach through that it should have been handed?",
+      "files": [
+        "architecture/law-of-demeter.md",
+        "architecture/dependency-injection.md",
+        "architecture/composition-over-inheritance.md",
+        "architecture/solid.md",
+        "architecture/command-query-separation.md",
+        "architecture/convention-over-configuration.md"
+      ]
+    },
+    "parsing": {
+      "stance": "Where does an external value enter, and which single component turns it into a decision? Follow each input from the edge to every place that re-interprets it.",
+      "files": [
+        "architecture/parse-dont-validate.md",
+        "architecture/helper-is-an-architecture-finding.md",
+        "reliability/no-silent-defaults.md",
+        "reliability/fail-fast.md",
+        "reliability/postels-law.md",
+        "reliability/design-by-contract.md"
+      ]
+    },
+    "shape": {
+      "stance": "How big and how tangled is each unit's control flow? Depth, conditional chains, parameter lists, nesting — the measurable shape of the code.",
+      "files": [
+        "clean-code/small-functions.md",
+        "clean-code/guard-clauses.md",
+        "clean-code/cognitive-load.md",
+        "clean-code/cyclomatic-complexity.md",
+        "clean-code/slap.md",
+        "clean-code/kiss.md",
+        "clean-code/yagni.md"
+      ]
+    },
+    "legibility": {
+      "stance": "Can a competent stranger read this without the author present? Naming, comment discipline, surprise, elegance, and code that copes where it should decide.",
+      "files": [
+        "clean-code/self-documenting-code.md",
+        "clean-code/documentation-discipline.md",
+        "clean-code/elegance.md",
+        "clean-code/legibility.md",
+        "clean-code/least-surprise.md",
+        "clean-code/patchwork.md",
+        "clean-code/decide-dont-cope.md"
+      ]
+    },
+    "guarantees": {
+      "stance": "What does this code promise, who claims the promise, and what happens when it is broken? State, lifetime, cancellation, privilege, and telling the truth when it fails.",
+      "files": [
+        "clean-code/unclaimed-guarantee.md",
+        "architecture/immutability.md",
+        "architecture/idempotency.md",
+        "reliability/observability.md",
+        "reliability/resilience.md",
+        "reliability/least-privilege.md",
+        "reliability/boy-scout-rule.md"
+      ]
+    },
+    "data-layer": {
+      "stance": "If there is a database: what does the schema promise, what does the query shape do to it, and where is an invariant only in application code?",
+      "files": [
+        "data-layer/database-identity.md",
+        "data-layer/database-timestamps.md",
+        "data-layer/domain-constraints.md",
+        "data-layer/foreign-keys.md",
+        "data-layer/index-access-columns.md",
+        "data-layer/index-defeaters.md",
+        "data-layer/index-foreign-keys.md",
+        "data-layer/index-query-shape.md",
+        "data-layer/invariant-constraints.md",
+        "data-layer/normalization.md",
+        "data-layer/slop-tells.md",
+        "data-layer/unused-indexes.md"
+      ],
+      "skip_when": "the target has no schema, migration, ORM model or SQL — say so in the report rather than inventing findings"
+    }
+  }
+}
