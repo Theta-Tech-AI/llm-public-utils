@@ -6,7 +6,7 @@ description: Merge deslop cell reports into one candidate list — corroborated,
 # Aggregating findings
 
 **Read this the moment more than one reading has reported** — a planned pass, several agents, or a second-opinion
-run. Not before: during planning you do not need this. [pass-planning.md](pass-planning.md) produced the cells;
+run. Not before: during planning you do not need this. [pass-planning.md](planning.md) produced the cells;
 this stage turns their reports into **one candidate list**, still unordered.
 
 A pass that skips this stage reports the same defect three times under three names, files the loudest rather than
@@ -65,4 +65,4 @@ proposed repair, the bucket it landed in (corroborated / single / disputed-resol
 at the source line yet.
 
 Nothing here is ordered, and nothing is filed. That is the next stage: read
-[consolidating-and-triage.md](consolidating-and-triage.md) before you tell anyone anything.
+[consolidating-and-triage.md](consolidation.md) before you tell anyone anything.

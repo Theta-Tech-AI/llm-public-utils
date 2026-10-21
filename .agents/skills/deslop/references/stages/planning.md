@@ -12,7 +12,7 @@ own fan-out, one context, or a fleet of cheaper models. None of that is the poin
 found by **looking at a specific piece of code with a specific set of principles in mind**, and by **aggregating
 several such readings** — and a pass that does neither finds remarkably little.
 
-[auditing.md](auditing.md) governs the audit itself. This file governs the shape of the pass around it.
+[auditing.md](../readings/auditing.md) governs the audit itself. This file governs the shape of the pass around it.
 
 ## 1. The principle: cells, not surveys
 
@@ -91,7 +91,7 @@ same code. Boundary ownership belongs with Modularity and One Logical Unit One H
 with A Helper That Must Exist and No Silent Defaults; shape with KISS and Guard Clauses; guarantees (state,
 lifetime, cancellation, privilege) together; the data layer together.
 
-The library ships a default grouping in [lenses.json](lenses.json) — eight groups over 53 principle files — and
+The library ships a default grouping in [lenses.json](../lenses.json) — eight groups over 53 principle files — and
 you may regroup it. Two constraints:
 
 - **Related principles must sit together.** Splitting DRY from Single Source of Truth, or Parse Don't Validate
@@ -137,8 +137,8 @@ The shipped groups, for reference — each is one way of looking, not a folder:
 | `guarantees` | An Unclaimed Guarantee, Immutability, Idempotency, Observability, Resilience, Least Privilege, Boy Scout Rule | What is promised, who claims the promise, what happens when it breaks? |
 | `data-layer` | the thirteen database principles | What does the schema promise, where is an invariant only in application code, and what access path does each query actually have? |
 
-Every group also carries [auditing.md](auditing.md) (report format and the input census) and
-[when-to-relax.md](when-to-relax.md) as its guardrail.
+Every group also carries [auditing.md](../readings/auditing.md) (report format and the input census) and
+[when-to-relax.md](../readings/when-to-relax.md) as its guardrail.
 
 ## 5. Write the permutation list
 
@@ -274,9 +274,9 @@ does not carry context it has not earned yet:
 
 | Stage | Read | When |
 |---|---|---|
-| **Aggregation** — merge reports on locus + principle; corroborated / single / disputed; coverage accounting; failed readings | [aggregating-findings.md](aggregating-findings.md) | the moment more than one reading has reported |
-| **Consolidation and triage** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse to concerns, group into a milestone | [consolidating-and-triage.md](consolidating-and-triage.md) | after aggregation, before anything is reported or filed |
-| **Reporting** — the shape of the message: lead with the answer, bucket the work, stay short | [reporting-results.md](reporting-results.md) | immediately before you speak to the person who asked |
+| **Aggregation** — merge reports on locus + principle; corroborated / single / disputed; coverage accounting; failed readings | [aggregating-findings.md](aggregation.md) | the moment more than one reading has reported |
+| **Consolidation and triage** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse to concerns, group into a milestone | [consolidating-and-triage.md](consolidation.md) | after aggregation, before anything is reported or filed |
+| **Reporting** — the shape of the message: lead with the answer, bucket the work, stay short | [reporting-results.md](reporting.md) | immediately before you speak to the person who asked |
 
 ## 13. What this is not
 
@@ -284,7 +284,7 @@ does not carry context it has not earned yet:
   accelerator, and a bad plan parallelised is just faster noise.
 - **Not a licence to skip the indexes.** The category indexes still explain how the library is organised; the
   plan decides what gets read in full.
-- **Not the campaign fleet.** [campaign-mode.md](campaign-mode.md) parallelises over *files being rewritten*,
+- **Not the campaign fleet.** [campaign-mode.md](../modes/campaign.md) parallelises over *files being rewritten*,
   with file-level disjointness so writers do not clobber each other. This parallelises over *readings applied* to
   the same files, read-only. Confusing the two produces eight agents editing one file.
 - **Not a coverage guarantee by itself.** The partition guarantees every principle is *assigned*; only §8 can tell

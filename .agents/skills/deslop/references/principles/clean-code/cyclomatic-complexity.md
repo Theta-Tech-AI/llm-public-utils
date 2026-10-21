@@ -100,7 +100,7 @@ number.
 
 | Principle | Relationship |
 |-----------|--------------|
-| [**Measuring a campaign**](../measuring.md) | The harness that produces the number, and the reporting discipline that keeps it honest |
+| [**Measuring a campaign**](../../library/measuring.md) | The harness that produces the number, and the reporting discipline that keeps it honest |
 | [**KISS**](kiss.md) | Lists "cyclomaticism" as a complexity tell — the metric is one input to that judgement, not the judgement |
 | [**Cognitive Load**](cognitive-load.md) | What the metric cannot see: nested depth and working-memory cost |
 | [**Small Functions**](small-functions.md) | The tempting-but-wrong response — splitting per branch buys the number and loses the reader |

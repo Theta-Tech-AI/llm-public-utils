@@ -43,7 +43,7 @@ Behaviour first — a copy renames every file, function and variable, and cannot
 
 1. **The same primitive hand-written in three or more packages**: a heartbeat thread, a TTL cache, a content
    hash, a retry loop, a lock guard, an object-store wrapper. Grep for the primitive, then read the hits
-   (the table in [hunting duplication](../duplication.md)). This finds copies that share no name at all.
+   (the table in [hunting duplication](../../readings/duplication.md)). This finds copies that share no name at all.
 2. **One record described several times**: group classes and tables by the overlap of their field sets, not
    their names.
 3. **A comment that admits it**: "same numbers as the other worker lease", "mirrors X".
@@ -98,7 +98,7 @@ has.
   [patchwork](../clean-code/patchwork.md).
 - **Do not merge deliberate symmetry.** Parallel domain packages built to a common scaffold, framework DI
   idioms and per-model configuration lines all look like this and are not — they are meant to evolve
-  independently. See the false-positive list in [hunting duplication](../duplication.md).
+  independently. See the false-positive list in [hunting duplication](../../readings/duplication.md).
 
 ## The shape, before and after
 
@@ -133,7 +133,7 @@ state as a design aim:
 | [**Single Source of Truth**](single-source-of-truth.md) | SSoT asks "which copy is correct?" of a datum. This asks the same question of behaviour and shape. |
 | [**YAGNI**](../clean-code/yagni.md) | Supplies the permission to delete the specialist's capability: no stated goal requires it. |
 | [**Code Reusability**](code-reusability.md) | Says do not generalise before real callers exist. Here the callers already exist — as copies — which is exactly when to generalise. |
-| [**Hunting Duplication**](../duplication.md) | The sweep that usually finds this; this file is the finding type and its repair. |
+| [**Hunting Duplication**](../../readings/duplication.md) | The sweep that usually finds this; this file is the finding type and its repair. |
 | [**Patchwork**](../clean-code/patchwork.md) | Patchwork is one file that cannot be simplified by deleting. This is several files that should not exist separately. |
 
 ## Summary

@@ -63,7 +63,7 @@ A legible codebase lets you answer "what breaks if I touch this?" without runnin
 - **Leaky abstraction.** Callers reach through an interface into its internals, so the abstraction
   documents a boundary that does not exist.
 - **God module** — everything imports it, so everything is coupled to everything. (See
-  [campaign-mode §Sweep 1](../campaign-mode.md), and the `shatter` skill for the mechanics.)
+  [campaign-mode §Sweep 1](../../modes/campaign.md), and the `shatter` skill for the mechanics.)
 
 ## The legibility artifacts
 

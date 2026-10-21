@@ -41,11 +41,11 @@ and asking would be ignoring an explicit instruction.
   the target, a risk of data loss — surface that one thing and continue with everything else; do not
   convert it into a general stop.
 
-This is campaign mode; see [campaign-mode.md](campaign-mode.md) for the full protocol.
+This is campaign mode; see [campaign-mode.md](../modes/campaign.md) for the full protocol.
 
 Analyze: $ARGUMENTS
 
-If no argument provided, operate on the current folder or current code base. Read the principle indexes linked from [SKILL.md](../SKILL.md) (plus any situational references that apply), read target files, identify violations — opening the full principle file for any principle you cite — and suggest concrete fixes.
+If no argument provided, operate on the current folder or current code base. Read the principle indexes linked from [SKILL.md](../../SKILL.md) (plus any situational references that apply), read target files, identify violations — opening the full principle file for any principle you cite — and suggest concrete fixes.
 
 For each violation list:
 
@@ -55,7 +55,7 @@ For each violation list:
 - **Summary:** One sentence description of the violation.
 - **Improvement:** Suggest a less sloppy way.
 
-For a thorough pass, iterate per [loop-until-dry.md](loop-until-dry.md).
+For a thorough pass, iterate per [loop-until-dry.md](../modes/loop-until-dry.md).
 
 ### What the audit owes when it notices something
 
@@ -64,11 +64,11 @@ Two obligations decide whether a pass was worth running:
 - **A spread is a finding, not a note.** The moment you notice one logical unit split across packages, or
   one shape re-implemented per feature, the pass has found something. Name the unit, name the module that
   should own it, and propose the consolidation as an actionable item — never report it as an observation and
-  move on. See [architecture/one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).
+  move on. See [architecture/one-logical-unit-one-home.md](../principles/architecture/one-logical-unit-one-home.md).
 - **Name the claimant of every second handle.** When you see a cleanup closure, a derived context, a second
   lock, or a hand-rolled retry beside an owner that already exists, the report must say what guarantee it adds and
   which caller would be wrong without it — then delete it or claim it. A pass that only lists behaviour bugs has
-  not looked for this class. See [clean-code/unclaimed-guarantee.md](clean-code/unclaimed-guarantee.md).
+  not looked for this class. See [clean-code/unclaimed-guarantee.md](../principles/clean-code/unclaimed-guarantee.md).
 - **Detection is prose you apply.** The tools' blind spots, and the control a detector script must pass
   before it earns its lines, are in [detecting-slop.md](detecting-slop.md).
 - **Census the inputs; do not scan for names.** Before writing the report, enumerate every external input the
@@ -81,7 +81,7 @@ Two obligations decide whether a pass was worth running:
   names, a literal default beside a lookup) instead of asking the component that owns the concept. **A grep list
   of helper names is not this sweep** — it fires only on the spellings you thought of and misses the next
   instance by construction; the question above is the instrument, and
-  [architecture/helper-is-an-architecture-finding.md](architecture/helper-is-an-architecture-finding.md) is where
+  [architecture/helper-is-an-architecture-finding.md](../principles/architecture/helper-is-an-architecture-finding.md) is where
   the finding goes.
 And the library applies **before** the code exists, not only to what already does: re-reading the applicable
 principles while designing is cheaper than consolidating a fork that has callers.
