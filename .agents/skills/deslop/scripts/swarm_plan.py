@@ -96,6 +96,17 @@ CONCEPTS = {
 
 GLOBAL_LENSES = ["boundaries", "coupling", "shape", "legibility", "duplication"]
 
+# The database is a slice in its own right, and it is the one whose files usually sit OUTSIDE the target
+# directory (migrations live next to the app's deployment, not inside backend/src/services/...). Index analysis
+# needs both halves: the DDL says what was built, the query call sites say what is actually reached, and neither
+# file set proves "unused" or "missing" on its own.
+SCHEMA_DIRS = {"migrations", "migration", "alembic", "versions", "schema", "schemas", "ddl", "sql"}
+SCHEMA_FILE = re.compile(r"(schema|migration|migrate|\.sql$|models?\.py$|entities?\.py$)", re.I)
+DDL_PAT = re.compile(r"CREATE\s+(?:TABLE|INDEX|UNIQUE\s+INDEX)|ALTER\s+TABLE|__tablename__|"
+                     r"Table\(|declarative_base|alembic|ADD\s+CONSTRAINT", re.I)
+QUERY_PAT = re.compile(r"\.execute\(|session\.(?:execute|query|commit|add)|\.objects\.filter|"
+                       r"select\(|SELECT\s+[\w*, .]+\s+FROM", re.I)
+
 
 @dataclass
 class Cell:
@@ -136,6 +147,35 @@ def walk(root: Path, target: Path, include_tests: bool):
         code = [f for f in filenames if Path(f).suffix in CODE_EXT]
         if code:
             yield Path(dirpath), code
+
+
+def schema_surface(root: Path, limit_files: int = 4000) -> tuple[list[tuple[str, int]], list[tuple[str, int]]]:
+    """Find the database: DDL/migration files, and the code that queries it. Repo-wide by design."""
+    ddl: list[tuple[str, int]] = []
+    queries: list[tuple[str, int]] = []
+    seen = 0
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        in_schema_dir = any(part.lower() in SCHEMA_DIRS for part in Path(dirpath).relative_to(root).parts)
+        for name in filenames:
+            if Path(name).suffix not in CODE_EXT and Path(name).suffix != ".sql":
+                continue
+            seen += 1
+            if seen > limit_files:
+                return ddl, queries
+            fp = Path(dirpath)
+            text = read(fp / name)
+            if not text:
+                continue
+            loc = len(text.splitlines())
+            rel = str((fp / name).relative_to(root))
+            if in_schema_dir or name.lower().endswith(".sql") or SCHEMA_FILE.search(name):
+                if DDL_PAT.search(text):
+                    ddl.append((rel, loc))
+                    continue
+            if QUERY_PAT.search(text):
+                queries.append((rel, loc))
+    return ddl, queries
 
 
 def enumerate_cells(root: Path, target: Path, include_tests: bool, min_loc: int, min_hits: int) -> list[Cell]:
@@ -201,7 +241,38 @@ def enumerate_cells(root: Path, target: Path, include_tests: bool, min_loc: int,
             c._files = list(m["files"])
             cells.append(c)
 
-    # tier 4 — cross-folder concept clusters
+    # tier 4 — the database itself: DDL/migrations, and the query call sites that must use its indexes
+    ddl_files, query_files = schema_surface(root)
+    if ddl_files:
+        c = Cell("data-layer", "schema", "schema-ddl", len(ddl_files), sum(f[1] for f in ddl_files),
+                 f"{len(ddl_files)} DDL/migration file(s) outside the target")
+        c._files = [f[0] for f in ddl_files]
+        cells.append(c)
+        # query call sites are paired with the DDL, but grouped by top-level area so a cell stays readable:
+        # 213 query files in one reading is a survey, not a cell.
+        groups: dict[str, list[tuple[str, int]]] = defaultdict(list)
+        for rel, loc in query_files:
+            key = "/".join(Path(rel).parts[:2]) if len(Path(rel).parts) > 2 else (Path(rel).parts[0] if Path(rel).parts else rel)
+            groups[key].append((rel, loc))
+        # a group too large to read in one sitting gets split one segment deeper, once
+        split: dict[str, list[tuple[str, int]]] = defaultdict(list)
+        for key, files in groups.items():
+            if len(files) > 60:
+                for rel, loc in files:
+                    deep = "/".join(Path(rel).parts[:3]) if len(Path(rel).parts) > 3 else key
+                    split[deep].append((rel, loc))
+            else:
+                split[key].extend(files)
+        for key, files in sorted(split.items(), key=lambda kv: -len(kv[1])):
+            if len(files) < 3:
+                continue
+            q = Cell("data-layer", "schema", f"query-shapes:{key}", len(files),
+                     sum(f[1] for f in files),
+                     f"{len(files)} file(s) here execute SQL — pair the indexes with the queries that reach them")
+            q._files = [f[0] for f in files] + [f[0] for f in ddl_files]
+            cells.append(q)
+
+    # tier 5 — cross-folder concept clusters
     for concept, (_namepat, _bodypat, lenses) in CONCEPTS.items():
         files = sorted(concept_files.get(concept, set()))
         if len(files) < 3:
@@ -223,8 +294,8 @@ def score_cells(cells: list[Cell]) -> None:
             c.components = {"signal": 0.55, "fit": 1.0, "cross": 1.0, "size": 0.5, "overlap": 0.0}
         else:
             density = min(1.0, c.loc / 400.0)                                   # evidence needs bulk to hide in
-            fit = {"module": 1.0, "archetype": 0.72, "concept": 0.9}[c.kind]
-            cross = 1.0 if c.kind == "concept" else 0.0                          # only concepts cross folders
+            fit = {"module": 1.0, "archetype": 0.72, "concept": 0.9, "schema": 0.95}[c.kind]
+            cross = 1.0 if c.kind in {"concept", "schema"} else 0.0              # these cross folders by nature
             size = 1.0 - min(1.0, abs(c.loc - prefer) / max_loc)                 # mid-size: hides defects, affordable
             c.components = {"signal": round(density, 2), "fit": fit, "cross": cross,
                             "size": round(size, 2), "overlap": 0.0}

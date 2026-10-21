@@ -46,6 +46,11 @@ first — cheaply, read-only — and write down what you learn:
   world is reached (providers, SDKs, network, filesystem, clocks). Boundary defects live at these seams.
 - **Cross-cutting concerns:** every place configuration is read, every retry, every logger, every serializer,
   every error translation. These live in no single directory, which is why a directory walk misses them.
+- **The database, if there is one:** where the DDL lives (migrations, `schema.sql`, ORM models, alembic
+  versions) and where the queries are written. Both halves are needed: the schema says what was built, the call
+  sites say what is actually reached, and neither proves "missing index" or "unused index" alone. The schema is
+  usually **outside** the directory being audited, which is why it is missed when the target is an application
+  folder.
 - **Roles:** which directories play a role — adapters, handlers, workers, schedulers, repositories, migrations.
   A role predicts the defects it characteristically carries.
 - **History, where available:** churn and fix density. A file that changes constantly and looks tidy is a
@@ -63,12 +68,16 @@ principle applies to all of it. Useful families, roughly in order of how often t
 
 | Family | What it is | Why it pays |
 |---|---|---|
+| **Schema and indexes** | the DDL (migrations, `schema.sql`, ORM models) **plus** the query call sites that must use it | integrity is a property of the schema (foreign keys, normalization, constraints) and index work is a property of the pair: an index nothing queries is waste, a query with no index is a cliff — neither is visible from one side |
 | **Concept cluster** | every file touching one concern, across the tree — config reading, retries, serialization, providers, auth, logging, error translation | the defect is usually that one concern was solved twice in two places, which no single directory shows |
 | **Module** | one directory or package | enough context to judge cohesion and coupling inside a boundary |
 | **Role archetype** | a module read as the role it plays — adapter, handler, worker, scheduler, repository, migration | roles have signature defects: an adapter parses and reaches, a writer forgets idempotency, a repo re-derives a schema |
 | **Flow** | one path end to end: request → handler → service → persistence → response | shows where a value is re-interpreted at every hop, including hops in different directories |
 | **Contract surface** | every caller of one function, interface or endpoint | exposes wrappers that exist only to cope, and call sites that duplicate a decision |
 | **Diff / change set** | what a PR or the last N commits touched | the pragmatic slice for review rather than audit |
+
+A target that has a database always earns a `data-layer` cell over the schema — even when the schema lives
+outside the named target. If it does not, the pass has silently excluded the most expensive place to be wrong.
 
 Invent the slices the code asks for; the table is a palette, not a taxonomy. Two rules: a slice must be
 **nameable in one sentence** ("every place a retry delay is decided"), and a slice that is **one file is fine** —

@@ -47,8 +47,9 @@ The full protocol — slicing families, grouping rules, scoring, aggregation, tr
    that skips this is guessing at its own scope.
 2. **Design the slices.** Not only directories. Modules; modules read as the role they play; **concept clusters**
    — every retry, every env reader, every provider adapter, wherever they live (the slices a directory walk
-   cannot express, and where duplicated knowledge hides); flows end-to-end; the callers of one contract; a diff.
-   Name each in one sentence. One file is a legitimate slice when four concerns share one home.
+   cannot express, and where duplicated knowledge hides); **the schema and the queries that reach it**; flows
+   end-to-end; the callers of one contract; a diff. Name each in one sentence. One file is a legitimate slice
+   when four concerns share one home.
 3. **Group the principles.** Each group is a *reading stance*: the principles you must weigh against each other
    while reading the same code. [references/lenses.json](references/lenses.json) ships a default — 8 groups over
    53 principle files — and you may regroup. Two constraints: related principles stay together (or one defect
@@ -112,7 +113,7 @@ Know the cost of that rule: the pass can only open a principle it has already su
 
 | File | Read when |
 |------|-----------|
-| [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, indexes (**The Data Layer**) |
+| [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, foreign keys, normalization, constraints, **and indexes alongside the queries that must use them** (**The Data Layer**). Treat the schema as a slice in its own right: it usually sits outside the directory being audited, and no index finding is provable from the DDL alone |
 | [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 53 principle files into 8 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
 | [references/duplication.md](references/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/detecting-slop.md](references/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
