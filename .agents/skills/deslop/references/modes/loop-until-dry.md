@@ -16,6 +16,6 @@ of the scope yields nothing actionable, then have a second model
 different prior reliably finds violations the first reviewer normalized.
 Two guardrails while looping: pin every behavior-adjacent fix with a test
 that was red before it (a refactor with no failing-test proof is a hope,
-not a fix), and respect the [meta-principle](when-to-relax.md#the-meta-principle) — when a "violation" survives
+not a fix), and respect the [meta-principle](../readings/when-to-relax.md#the-meta-principle) — when a "violation" survives
 scrutiny because fixing it makes the code worse, record WHY and move on
 rather than churning.

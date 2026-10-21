@@ -1,0 +1,54 @@
+name: skill checks
+
+# No harness builds a manifest of a skill's files: only SKILL.md loads on activation, and every other
+# file is read on demand by path. So SKILL.md is the manifest, and a reference nothing links to is a
+# reference nobody opens. Nothing in any harness notices when a file is added, renamed or dropped —
+# these checks do, on every push and pull request.
+on:
+  push:
+    branches: [production]
+    paths: ['.agents/skills/**', '.github/workflows/skill-checks.yml']
+  pull_request:
+    paths: ['.agents/skills/**', '.github/workflows/skill-checks.yml']
+  workflow_dispatch:
+
+jobs:
+  deslop:
+    name: deslop — reachability, partition, scripts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .agents/skills/deslop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Every markdown is reachable from SKILL.md
+        run: python3 scripts/check_reachability.py --verbose
+
+      - name: Every principle file belongs to exactly one lens
+        run: python3 scripts/swarm_lenses.py --check
+
+      - name: Scripts compile
+        run: python3 -m py_compile scripts/*.py
+
+      - name: Planning scripts run end to end
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/fixture && mkdir -p /tmp/fixture/schema /tmp/fixture/app && cd /tmp/fixture
+          printf 'CREATE TABLE parent (id uuid PRIMARY KEY);\nCREATE TABLE child (\n  id uuid PRIMARY KEY,\n  parent_id uuid NOT NULL REFERENCES parent(id),\n  total integer\n);\n' > schema/001_init.sql
+          printf 'def totals(cur, pid):\n    cur.execute("SELECT * FROM child WHERE parent_id = %%s" %% pid)\n    return cur.fetchall()\n' > app/queries.py
+          git init -q . && git add -A && git -c user.name=ci -c user.email=ci@example.com commit -qm fixture
+          cd - >/dev/null
+          python3 scripts/swarm_plan.py --repo /tmp/fixture --target . --out /tmp/plan --budget 6
+          test -s /tmp/plan/plan.md
+          test -s /tmp/plan/candidates.md
+          python3 scripts/swarm_lenses.py --emit /tmp/cells --target . --repo /tmp/fixture --only data-layer --label ci --run 1
+          test -s /tmp/cells/lens-data-layer-ci-run1.md
+          test -s /tmp/cells/assignment-data-layer-ci-run1.txt
+          printf '{"file": "schema/001_init.sql", "line": 3, "principle": "index-foreign-keys", "severity": "high", "what": "x", "repair": "y"}\n' > /tmp/cells/findings-data-layer-ci-run1.jsonl
+          python3 scripts/swarm_merge.py /tmp/cells/findings-data-layer-ci-run1.jsonl --assignments /tmp/cells --out /tmp/cells/merged.md
+          test -s /tmp/cells/merged.md
