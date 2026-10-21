@@ -38,8 +38,7 @@ jobs:
       - name: Planning scripts run end to end
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fixture && cd /tmp/fixture
-          mkdir -p app/schema
+          rm -rf /tmp/fixture && mkdir -p /tmp/fixture/schema /tmp/fixture/app && cd /tmp/fixture
           printf 'CREATE TABLE parent (id uuid PRIMARY KEY);\nCREATE TABLE child (\n  id uuid PRIMARY KEY,\n  parent_id uuid NOT NULL REFERENCES parent(id),\n  total integer\n);\n' > schema/001_init.sql
           printf 'def totals(cur, pid):\n    cur.execute("SELECT * FROM child WHERE parent_id = %%s" %% pid)\n    return cur.fetchall()\n' > app/queries.py
           git init -q . && git add -A && git -c user.name=ci -c user.email=ci@example.com commit -qm fixture
