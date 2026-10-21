@@ -91,6 +91,14 @@ in either direction fails — a hook allowed to decide admits padding, a hook de
 finding. And note what no neutral run did: *speak* the thesis. Detection came from the index; the reasoning came
 only from opening the principle file, which is the division of labour those two files are for.
 
+**A decoy fixture beats a real repo for testing a change-shaped principle.** A principle about *diffs* cannot be
+controlled on a codebase that only contains the finished code, so build the target: one planted instance plus the
+look-alikes that a wrong rule would also flag, and require the pass to separate them.
+
+| Principle controlled | Fixture | Fresh markdown-only agent, neutral prompt | Verdict |
+|---|---|---|---|
+| **Ceremony Is Not a Repair** | a small Go package holding the ceremony (derived `WithCancel` + `done` + returned cleanup beside an existing `ctx`), a legitimate returned closer (`os.Open`-shaped), a legitimate `WithTimeout` + `defer cancel`, a hand-rolled retry and a watcher | Runs 1 and 2 both reported the ceremony as a High finding **under this principle by name**, with the owner-first repair; both **declined** the legitimate closer and the legitimate `WithTimeout`; both independently found a real double-close panic in one decoy | **Passed, 2 of 2** |
+
 The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
 one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
 outranked by whatever the pass finds more interesting — so put the trigger (a grep the pass must run, an
