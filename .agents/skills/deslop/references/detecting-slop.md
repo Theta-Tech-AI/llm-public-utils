@@ -106,7 +106,7 @@ look-alikes that a wrong rule would also flag, and require the pass to separate 
 
 | Principle controlled | Fixture | Fresh markdown-only agent, neutral prompt | Verdict |
 |---|---|---|---|
-| **An Unclaimed Guarantee** | a small Go package holding the diff's added trio (derived `WithCancel` + `done` + returned cleanup beside an existing `ctx`), a legitimate returned closer (`os.Open`-shaped), a legitimate `WithTimeout` + `defer cancel`, a hand-rolled retry and a watcher | Runs 1 and 2 both reported the trio as a High finding under the principle by name, both declined the two legitimate look-alikes, and one found a real double-close panic in a decoy | **Fired 2 of 2 — but see below** |
+| **An Unclaimed Guarantee** | a small Go package holding the diff's added trio (derived `WithCancel` + `done` + returned cleanup beside an existing `ctx`), a legitimate returned closer (`os.Open`-shaped), a legitimate `WithTimeout` + `defer cancel`, a hand-rolled retry and a watcher | v1 ("Ceremony Is Not a Repair") fired **2 of 2** but was **UNSOUND** on review. v2 (sound, but with a softer index row) fired **0 of 1** — the correction cost the trigger | **Sound and firing only after the trigger was restored** |
 
 The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
 one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
