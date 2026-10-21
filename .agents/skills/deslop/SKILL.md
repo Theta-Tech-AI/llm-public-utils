@@ -31,6 +31,20 @@ category. The directory a file sits in tells a reader what to do with it, and th
 | `references/library/` | about the library itself — extend it, measure it, cite it, see it worked | on request |
 | `references/lenses.json` | the principle partition, the indexes each group reads, and the trigger for each stage/mode/library file | by the scripts, and by anyone planning |
 
+**This file is the manifest.** No harness builds one: only `SKILL.md` loads when the skill activates, and every
+other file is read on demand *by path* — so a reference nothing here leads to (directly, or through an index that
+does) is a file nobody opens. Three checks enforce that, and they run in CI on every push and pull request
+(`.github/workflows/skill-checks.yml`):
+
+```bash
+python3 scripts/check_reachability.py     # every markdown reachable by following links from this file
+python3 scripts/swarm_lenses.py --check   # every principle in exactly one group; no unclassified markdown
+python3 -m py_compile scripts/*.py        # the instruments still load
+```
+
+Add, rename or move a file and CI names the orphan and which index should link it — so reorganising the library
+cannot silently leave a principle behind.
+
 ## Workflow references (read these to run a pass)
 
 | File | When |

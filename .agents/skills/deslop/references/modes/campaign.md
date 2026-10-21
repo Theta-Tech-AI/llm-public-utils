@@ -16,7 +16,7 @@ say any of:
 - "**get it all done**", "**no excuses**", "**don't wait for my decisions**"
 - "present me a PR / a set of PRs when you're done"
 
-Any of the last group **is the mode answer** — see [auditing.md](auditing.md#the-autonomy-rule).
+Any of the last group **is the mode answer** — see [auditing.md](../readings/auditing.md#the-autonomy-rule).
 Do not open a campaign with a mode question.
 
 ## Why campaigns fail
@@ -200,7 +200,7 @@ Each PR must stand alone: independently green, independently revertable.
 **Every PR body carries:**
 
 1. **Measured before/after** — LOC and branch count for the scope it touches, with the deletion vs
-   relocation split from §2. Use the reporting skeleton in [measuring.md](measuring.md#reporting-skeleton)
+   relocation split from §2. Use the reporting skeleton in [measuring.md](../library/measuring.md#reporting-skeleton)
    so the numbers are comparable across PRs.
 2. **The proof** — test command and its real result. Not "tests pass" but the command and the count.
    If tests could not be run, say "not run" and why; never imply a pass that did not happen.
@@ -222,4 +222,4 @@ Each PR must stand alone: independently green, independently revertable.
   step — not to skip the checks that make the result trustworthy. Autonomy covers *when to act*, never
   *what to verify*.
 - **When a "violation" survives scrutiny** because fixing it makes the code worse, record why and move
-  on — the [meta-principle](when-to-relax.md#the-meta-principle).
+  on — the [meta-principle](../readings/when-to-relax.md#the-meta-principle).

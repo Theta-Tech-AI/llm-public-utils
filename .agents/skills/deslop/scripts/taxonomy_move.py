@@ -62,7 +62,7 @@ for cat in ("architecture", "clean-code", "data-layer", "reliability"):
     for f in sorted((REF / cat).glob("*.md")):
         MOVES[f"{cat}/{f.name}"] = f"principles/{cat}/{f.name}"
 
-LINK = re.compile(r"\]\(([^)#\s]+?\.(?:md|json|py))\)")
+LINK = re.compile(r"\]\(([^)#\s]+?\.(?:md|json|py))(#[^)\s]*)?\)")
 
 
 def rewrite_links(text: str, old_rel: str) -> str:
@@ -71,14 +71,14 @@ def rewrite_links(text: str, old_rel: str) -> str:
     old_dir, new_dir = posixpath.dirname(old_rel), posixpath.dirname(new_rel)
 
     def sub(m: re.Match[str]) -> str:
-        target = m.group(1)
+        target, anchor = m.group(1), (m.group(2) or "")
         if target.startswith(("http://", "https://", "/")):
             return m.group(0)
         resolved = posixpath.normpath(posixpath.join(old_dir, target))
         if resolved not in MOVES:
             return m.group(0)          # outside references/ (scripts/, assets/) — scripts do not move
         new_target = posixpath.relpath(MOVES[resolved], new_dir or ".")
-        return f"]({new_target})"
+        return f"]({new_target}{anchor})"
 
     return LINK.sub(sub, text)
 
