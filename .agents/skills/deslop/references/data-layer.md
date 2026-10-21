@@ -1,6 +1,6 @@
 ---
 name: deslop-data-layer
-description: Deslop principles — The Data Layer: schema integrity (FKs, normalization, domain constraints), pushing logic into the database, indexing/access paths, and the common slop tells.
+description: Deslop principles — The Data Layer: schema integrity (FKs, normalization), pushing logic into the database, indexing and join access paths, and the common slop tells.
 ---
 
 # The Data Layer
@@ -35,6 +35,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 |-------------|----------------|
 | [Index Every Foreign Key](data-layer/index-foreign-keys.md) | Postgres does not auto-index FKs |
 | [Index What You Filter, Join, and Sort On](data-layer/index-access-columns.md) | Index the queries the table actually serves |
+| [Every Join Needs an Access Path on the Side Being Probed](data-layer/join-access-paths.md) | The FK target is auto-indexed, the source is not — and the plan decides which side is probed |
 | [Match the Index to the Query Shape](data-layer/index-query-shape.md) | Composite order, partial, covering, the right index type |
 | [Know What Defeats an Index](data-layer/index-defeaters.md) | Leading wildcards, functions on columns, type mismatches |
 | [Every Index Is Used or It's Dropped](data-layer/unused-indexes.md) | An index no query uses is pure loss |

@@ -102,7 +102,7 @@
       ]
     },
     "data-layer": {
-      "stance": "If there is a database: what does the schema promise, what does the query shape do to it, and where is an invariant only in application code?",
+      "stance": "If there is a database: what does the schema promise, where is an invariant only in application code, and what access path does each query actually have?",
       "files": [
         "data-layer/database-identity.md",
         "data-layer/database-timestamps.md",
@@ -112,6 +112,7 @@
         "data-layer/index-defeaters.md",
         "data-layer/index-foreign-keys.md",
         "data-layer/index-query-shape.md",
+        "data-layer/join-access-paths.md",
         "data-layer/invariant-constraints.md",
         "data-layer/normalization.md",
         "data-layer/slop-tells.md",

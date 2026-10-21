@@ -113,7 +113,7 @@ Know the cost of that rule: the pass can only open a principle it has already su
 
 | File | Read when |
 |------|-----------|
-| [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, foreign keys, normalization, constraints, **and indexes alongside the queries that must use them** (**The Data Layer**). Treat the schema as a slice in its own right: it usually sits outside the directory being audited, and no index finding is provable from the DDL alone |
+| [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, foreign keys, normalization, constraints, **indexes and join access paths alongside the queries that must use them** (**The Data Layer**). Treat the schema as a slice in its own right: it usually sits outside the directory being audited, and no index finding is provable from the DDL alone |
 | [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 53 principle files into 8 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
 | [references/duplication.md](references/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/detecting-slop.md](references/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |

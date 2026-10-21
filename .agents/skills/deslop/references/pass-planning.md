@@ -113,7 +113,7 @@ The shipped groups, for reference — each is one way of looking, not a folder:
 | `shape` | Small Functions, Guard Clauses, Cognitive Load, Cyclomatic Complexity, SLAP, KISS, YAGNI | How big and how tangled is each unit's control flow? |
 | `legibility` | Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork, Decide Don't Cope | Can a competent stranger read this without the author present? |
 | `guarantees` | An Unclaimed Guarantee, Immutability, Idempotency, Observability, Resilience, Least Privilege, Boy Scout Rule | What is promised, who claims the promise, what happens when it breaks? |
-| `data-layer` | the twelve database principles | What does the schema promise, and where is an invariant only in application code? |
+| `data-layer` | the thirteen database principles | What does the schema promise, where is an invariant only in application code, and what access path does each query actually have? |
 
 Every group also carries [auditing.md](auditing.md) (report format and the input census) and
 [when-to-relax.md](when-to-relax.md) as its guardrail.

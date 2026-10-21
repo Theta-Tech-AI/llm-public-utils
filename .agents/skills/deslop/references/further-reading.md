@@ -64,3 +64,23 @@ Origins of specific principles referenced in this document.
 | **Primitive obsession / stringly typed** | Martin Fowler, *Refactoring*, 1999; "stringly typed" as the pejorative for the string case |
 | **A Helper That Must Exist Is an Architecture Finding** | This library (2026) — the architectural framing, the six-test audit, and the owner-before-type ordering; the type-level smells are the named concepts above |
 | **Normalization / Normal Forms** | Edgar F. Codd, 1970 (relational model) |
+
+## The data layer
+
+The principles under [data-layer/](data-layer/) rest on four sources, and each file cites the one it leans on:
+
+- **PostgreSQL manual** — [*Constraints*](https://www.postgresql.org/docs/current/ddl-constraints.html) (§5.5,
+  including `NOT VALID` / `VALIDATE CONSTRAINT`), [*Indexes*](https://www.postgresql.org/docs/current/indexes.html)
+  (multicolumn, ORDER BY, partial, index-only scans, examining usage),
+  [*Generated Columns*](https://www.postgresql.org/docs/current/ddl-generated-columns.html), and
+  [*Performance Tips*](https://www.postgresql.org/docs/current/performance-tips.html).
+- **Markus Winand, *Use The Index, Luke*** — <https://use-the-index-luke.com/> — the join algorithms
+  (nested loops / hash / sort-merge and what each wants from an index), the right column order in multi-column
+  indexes, and the N+1 pattern as a nested loop run in the client.
+- **Laurenz Albe, *Foreign key indexing and performance in PostgreSQL*** —
+  <https://www.cybertec-postgresql.com/en/index-your-foreign-key/> — the target side is auto-indexed, the
+  referencing side is not, and a parent-side delete scans the child table without one.
+- **E. F. Codd** — *A Relational Model of Data for Large Shared Data Banks* (1970) and *Further Normalization of
+  the Data Base Relational Model* (1971), summarized at
+  <https://en.wikipedia.org/wiki/Database_normalization> — the normal forms and the insert / update / delete
+  anomalies they prevent.
