@@ -30,6 +30,7 @@ property of the assignment.
 Both live in [scripts/](../scripts/) and are run from the skill root:
 
 ```bash
+python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/deslop-plan   # plan first (§2)
 python3 scripts/swarm_lenses.py --check                 # exit 1 unless every principle file is assigned once
 python3 scripts/swarm_lenses.py --list                  # the lens table
 python3 scripts/swarm_lenses.py --emit /tmp/deslop-swarm --target <dir> --repo <repo-root> --run 1
@@ -55,7 +56,54 @@ Every lens also reads [auditing.md](auditing.md) (the report format and the inpu
 principles whose findings would otherwise be reported twice under two names sit in the same lens, so the merge
 step sees one finding rather than a phantom corroboration.
 
-## 2. Dispatch
+## 2. Plan the partition before you dispatch
+
+Eight lenses over every directory is the cross-product, and it is the wrong shape twice: expensive, and
+**mis-scoped** — a boundary defect is invisible to an agent that reads one file at a time, while a data-layer
+drill over a module with no SQL produces nothing but an agent justifying its reading list. So the target is
+partitioned first, and the partition is a written artifact:
+
+```bash
+python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/deslop-plan
+# writes plan.md (the reasoning per cell) and dispatch.sh (ready to run)
+```
+
+The plan couples each lens to the scope its signal lives in — three tiers, and only three:
+
+| Tier | What runs | Why this scope |
+|---|---|---|
+| **Orientation** | `boundaries`, `coupling`, `shape`, `legibility`, `duplication` — whole target, one agent each | these findings *span* modules; split them per module and the evidence that two places disagree is cut in half |
+| **Module drill** | a signal-gated lens over **one module**: `parsing` where external input enters, `guarantees` where async/retry/lock/lifetime appears, `data-layer` where SQL, migrations or an ORM model does | the finding is local to the module and only visible if the reader holds that one principle while reading that one directory |
+| **Archetype drill** | the lenses a module's *role* characteristically violates, inferred from its path segment — an `adapters/` or `providers/` module gets boundaries + parsing + coupling, a `workers/`/`scheduler/` module gets guarantees, a `repo/`/`store/`/`migrations/` module gets data-layer | roles have signature defects; the grep is quiet precisely when the code is confidently wrong |
+
+`swarm_plan.py` reports LOC, file count and the biggest file per module, the signal counts that earned each
+cell, and the total agent cost, so the plan can be argued with before it is paid for. Two rules it enforces
+because they are how planning goes wrong:
+
+- **Never split a global lens per module**, and never add a lens to every module to look thorough. If a plan
+  looks thin, add **modules**, not lenses.
+- **Test trees are not slop targets** by default. They are fixtures, they are allowed to repeat themselves,
+  and a guarantees drill over them reports the harness. `--include-tests` opts in when a test *is* the target.
+
+The orchestrator owns the plan, not the script: the archetype tier is a heuristic on a path name, so drop a
+cell whose evidence is only that word, and add a cell where you know the codebase and the grep does not.
+
+### The directed deep dive
+
+There is a class of slop that only a **one-module, one-principle** agent finds: the agent reads every file in
+the module holding exactly one principle, not eight. It surfaces as a dialog rather than a sweep, and it is the
+right instrument in two cases — a sweep hinted at a defect and could not substantiate it, or the module *is*
+the archetype of a concern (a provider adapter and separation of concerns). Dispatch it with the drill form:
+
+```bash
+python3 scripts/swarm_lenses.py --emit /tmp/deep --repo <root> --target <one-module> \
+  --only separation-of-concerns-lens --label <module> --run 1
+```
+
+`--only <lens>` is also the answer to *"look at X specifically"* — the ask that a general pass cannot satisfy,
+because the general pass decides for itself what to open.
+
+## 3. Dispatch
 
 The contract is harness-neutral: **one process per lens, the emitted prompt passed through verbatim**, all
 launched in parallel. That is a shell loop with `&` and a background runner in Codex/Claude/OpenCode, or a
@@ -70,7 +118,7 @@ launched in parallel. That is a shell loop with `&` and a background runner in C
 - **`--only <lens>` is the directed pass.** When the ask is *"look at separation of concerns specifically"*,
   that is one lens, not the whole library — and it is the correct answer to a finding that a general pass missed.
 
-## 3. Merge, adjudicate, then file
+## 4. Merge, adjudicate, then file
 
 `swarm_merge.py` collapses N JSONL reports into three tables:
 
@@ -85,7 +133,7 @@ bookkeeping instrument, not a verdict: a swarm multiplies false positives exactl
 because eight agents each under pressure to justify their reading list will invent findings. A lens that
 reports zero findings and quotes no code is a **failed lens**, not a clean target — re-run it.
 
-## 4. Cost and when not to use it
+## 5. Cost and when not to use it
 
 | Ask | Mode |
 |---|---|
@@ -97,7 +145,7 @@ reports zero findings and quotes no code is a **failed lens**, not a clean targe
 Rule of thumb: a swarm is **8 processes against one target commit**. On a large codebase, split the target
 directory per wave — the merge step unions waves perfectly well, and a wave that dies does not lose the others.
 
-## 5. Control
+## 6. Control
 
 A protocol that promises coverage is tested like a detector: does the swarm find what the monolithic pass
 missed, on the same commit and the same neutral prompt? Recorded runs go here, version → what changed →
@@ -107,7 +155,7 @@ verdict, including failures.
 |---|---|---|
 | 1 | *(to be recorded)* | |
 
-## 6. What this is not
+## 7. What this is not
 
 - **Not a substitute for reading the code.** Eight lenses against a skimmed file produce eight confident
   misreadings; the prompt says whole files for that reason.

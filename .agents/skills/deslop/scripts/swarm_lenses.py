@@ -120,7 +120,8 @@ SIGHTINGS`, and anything in your lens you could not decide (say what would decid
 """
 
 
-def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | None) -> int:
+def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | None,
+         label: str = "") -> int:
     problems, _, _ = audit(m)
     if problems:
         print("REFUSING TO EMIT — the lens assignment is not a valid partition:", file=sys.stderr)
@@ -138,7 +139,8 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
         spec = lenses[lens]
         files = list(spec["files"]) + [p for p in spec.get("also_protocols", [])]
         reading = "\n".join(f"- `references/{f}`" for f in m["shared"]["protocols"] + files)
-        out_jsonl = str(outdir / f"findings-{lens}-run{run}.jsonl")
+        stem = f"{lens}-{label}-run{run}" if label else f"{lens}-run{run}"
+        out_jsonl = str(outdir / f"findings-{stem}.jsonl")
         body = PROMPT.format(
             n_peers=len(names) - 1,
             reading_list=reading,
@@ -149,8 +151,8 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
         )
         if spec.get("skip_when"):
             body += f"\nScope note: {spec['skip_when']}.\n"
-        (outdir / f"lens-{lens}.md").write_text(body)
-        lines.append(f"{lens}\t{len(files) + len(m['shared']['protocols'])} files\t{out_jsonl}")
+        (outdir / f"lens-{stem}.md").write_text(body)
+        lines.append(f"{stem}\t{len(files) + len(m['shared']['protocols'])} files\t{out_jsonl}")
     (outdir / "manifest.txt").write_text(
         f"target: {target}\nrepo: {repo}\nrun: {run}\nlenses: {len(names)}\n\n" + "\n".join(lines) + "\n"
     )
@@ -171,6 +173,7 @@ def main() -> int:
     ap.add_argument("--repo", default=".")
     ap.add_argument("--run", type=int, default=1)
     ap.add_argument("--only", default=None)
+    ap.add_argument("--label", default="", help="suffix for output names, for per-module drill cells")
     a = ap.parse_args()
 
     m = load()
@@ -188,7 +191,7 @@ def main() -> int:
             print(f"{lens:12s} {len(spec['files']):2d} principles  {spec['stance'][:90]}")
         return 0
     if a.emit:
-        return emit(m, Path(a.emit), a.target, a.repo, a.run, a.only)
+        return emit(m, Path(a.emit), a.target, a.repo, a.run, a.only, a.label)
     ap.print_help()
     return 0
 
