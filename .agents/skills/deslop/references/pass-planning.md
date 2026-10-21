@@ -236,7 +236,8 @@ included.
 
 | Run | Setup | Result |
 |---|---|---|
-| 1 | *(to be recorded)* | |
+| 1 | Paired control, same commit and same target (`backend/src/services/agents/model_provider/`, 10 files): **A** — one neutral monolithic pass with the shipped skill; **B** — eight cells, one per group, each forced to read its assigned principle files in full. Read-only, same model, same neutral prompt. | **A: 19 findings across 9 principles. B: 55 findings, 54 distinct, across 25 principles.** B raised **17 principles A never touched** — encapsulation, orthogonality, SOLID, immutability, observability, least privilege, fail-fast, helper-is-an-architecture-finding, small-functions, SLAP, cognitive load, guard clauses, KISS, self-documenting-code, documentation-discipline, least-surprise, elegance — and A raised exactly one B did not (`yagni`, once). Groups that carried the difference: duplication 12 (A had 4 DRY), legibility 11 (A: none of its principles), parsing 10, boundaries 7, guarantees 6, shape 6. `data-layer` returned **0 with an explicit no-schema statement** — a correctly declining group, which is the shape a healthy cell makes when its slice lacks the signal. 34 loci were charged under two different principles, which is precisely the adjudication work the aggregation step (§8) exists for, and 0 were corroborated — no two groups independently fixed the same charge, so the reports were complementary rather than redundant. |
+| 1a | Sample verification of run 1 B's findings at source | `model_provider/azure_openai.py:70-90` read directly: the connection decision is re-derived in the adapter (`_first_nonempty` over `AZURE_OPENAI_*`/`FOUNDRY_*`, a bare `env.get("AZURE_OPENAI_API_VERSION")`, `_truthy` over two identity flags), confirming the `one-logical-unit-one-home` / `dry` / `immutability` charges on those lines. Findings remain *candidates*: every one is verified at its line before filing (§9). |
 
 ## 13. What this is not
 
