@@ -91,13 +91,22 @@ in either direction fails — a hook allowed to decide admits padding, a hook de
 finding. And note what no neutral run did: *speak* the thesis. Detection came from the index; the reasoning came
 only from opening the principle file, which is the division of labour those two files are for.
 
+**A control proves a rule FIRES; only a review proves it is RIGHT.** Both runs above passed on a rule whose
+central claim — "delete the added lines and behaviour is identical" — was false: a context signals cancellation
+and never establishes completion, so the added handle did supply a guarantee (completion synchronisation) that
+the original lacked. The agents agreed with the rule because the fixture encoded the rule's own framing. An
+adversarial review by an independent harness, asked to challenge the Go semantics, the stated facts, the
+overreach and the decidability, returned **UNSOUND** and named all four; the second version of the file corrects
+them and adds a short 'facts this file's first version got wrong' section. Always run both instruments: the
+fixture for discovery, the review for soundness, and never quote the first as evidence of the second.
+
 **A decoy fixture beats a real repo for testing a change-shaped principle.** A principle about *diffs* cannot be
 controlled on a codebase that only contains the finished code, so build the target: one planted instance plus the
 look-alikes that a wrong rule would also flag, and require the pass to separate them.
 
 | Principle controlled | Fixture | Fresh markdown-only agent, neutral prompt | Verdict |
 |---|---|---|---|
-| **Ceremony Is Not a Repair** | a small Go package holding the ceremony (derived `WithCancel` + `done` + returned cleanup beside an existing `ctx`), a legitimate returned closer (`os.Open`-shaped), a legitimate `WithTimeout` + `defer cancel`, a hand-rolled retry and a watcher | Runs 1 and 2 both reported the ceremony as a High finding **under this principle by name**, with the owner-first repair; both **declined** the legitimate closer and the legitimate `WithTimeout`; both independently found a real double-close panic in one decoy | **Passed, 2 of 2** |
+| **An Unclaimed Guarantee** | a small Go package holding the diff's added trio (derived `WithCancel` + `done` + returned cleanup beside an existing `ctx`), a legitimate returned closer (`os.Open`-shaped), a legitimate `WithTimeout` + `defer cancel`, a hand-rolled retry and a watcher | Runs 1 and 2 both reported the trio as a High finding under the principle by name, both declined the two legitimate look-alikes, and one found a real double-close panic in a decoy | **Fired 2 of 2 — but see below** |
 
 The lesson is the same one the scanners taught: **the rule that fires is the one the workflow obliges**, not the
 one the doctrine implies. A principle whose detection depends on the agent remembering to think of it will be
