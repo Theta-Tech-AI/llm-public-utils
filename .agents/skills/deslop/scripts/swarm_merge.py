@@ -26,6 +26,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+import re as _re
 
 LENS_RE = re.compile(r"findings-(?P<lens>[a-z0-9-]+)-run(?P<run>\d+)\.jsonl$")
 
@@ -100,6 +101,9 @@ def main() -> int:
     ap.add_argument("findings", nargs="+")
     ap.add_argument("--out", default=None)
     ap.add_argument("--window", type=int, default=4, help="line tolerance for same-locus matching")
+    ap.add_argument("--assignments", default=None,
+                    help="directory holding assignment-<stem>.txt and files-read-<stem>.txt, to check that each "
+                         "reading actually opened the files it was given")
     a = ap.parse_args()
 
     rows, bad = load([Path(p) for p in a.findings])
@@ -127,6 +131,28 @@ def main() -> int:
             if g["principle"] != h["principle"] and same_locus(g["rows"][0], h["rows"][0], a.window):
                 disputed.append((g, h))
 
+    # read-manifest check: an assigned file the reading never opened is a failed reading, not a clean slice
+    manifest_report: list[str] = []
+    if a.assignments:
+        adir = Path(a.assignments)
+        for path in sorted(Path(p) for p in a.findings):
+            stem = _re.sub(r"^findings-", "", path.stem)
+            assign = adir / f"assignment-{stem}.txt"
+            read = adir / f"files-read-{stem}.txt"
+            if not assign.exists():
+                continue
+            expected = {Path(l.strip()).name for l in assign.read_text().splitlines() if l.strip()}
+            if not read.exists():
+                manifest_report.append(f"- **{stem}** — no read manifest written: treat as a failed reading")
+                continue
+            declared = {Path(l.strip().lstrip("-* ")).name for l in read.read_text().splitlines() if l.strip()}
+            missing = sorted(expected - declared)
+            if missing:
+                manifest_report.append(f"- **{stem}** — {len(expected) - len(missing)}/{len(expected)} read, "
+                                       f"**missing**: " + ", ".join(missing))
+            else:
+                manifest_report.append(f"- **{stem}** — {len(expected)}/{len(expected)} read")
+
     by_lens = defaultdict(int)
     by_principle = defaultdict(int)
     for r in rows:
@@ -141,6 +167,10 @@ def main() -> int:
     if bad:
         L.append("## Parse problems\n")
         L.extend(f"- {b}" for b in bad)
+        L.append("")
+    if manifest_report:
+        L.append("## Read manifests\n")
+        L.extend(manifest_report)
         L.append("")
     L.append("## Findings per lens\n")
     for lens, n in sorted(by_lens.items(), key=lambda kv: -kv[1]):
