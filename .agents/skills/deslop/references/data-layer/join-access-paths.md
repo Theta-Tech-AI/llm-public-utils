@@ -71,6 +71,22 @@ In relation to other principles, join access paths:
 | [**Enforce Invariants with Constraints, Not Application Code**](invariant-constraints.md) | Referential integrity belongs to the database; materialising it in a loop does not make it one |
 | [**Normalize to a Single Source of Truth**](normalization.md) | Joins are the cost normalization accepts; the access path is how you pay it |
 
+## Control
+
+Planted fixture (a three-file repo: a schema with an unindexed `document.project_id` used by a per-project query
+loop, a parent `DELETE`, a comma-joined `tags`, a hand-maintained `total_tokens`, and a copied
+`customer_email`/`address`), run read-only with a neutral prompt, two arms:
+
+| Arm | What ran | Result |
+|---|---|---|
+| baseline | the shipped skill, one monolithic pass | found the missing FK indexes and the per-project query loop — but charged the loop as **KISS** ("executed once per project"), a style complaint with no access-path framing |
+| treatment | this group alone, forced to read its files in full | charged the same loop under **Every Join Needs an Access Path on the Side Being Probed**, naming the N+1 as a nested-loop join run in the client, alongside the missing source-side indexes and the parent-delete scan |
+
+The honest reading: the rule **fired 1 of 1** on the planted N+1 and reframed an existing finding rather than
+inventing a new one. The normal-form additions did not change detection — the baseline's `normalization` row
+already caught the comma-joined column and the copied address — they change what the *repair* says and why, which
+is the point of naming an anomaly.
+
 ## Prior art
 
 The nested-loop / hash / sort-merge distinction, the equality-then-range column order, and the N+1 pattern are
