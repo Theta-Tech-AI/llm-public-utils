@@ -22,59 +22,84 @@ Whether or not you use this deslop command on your code base, you should read al
 |------|------|
 | [references/auditing.md](references/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/loop-until-dry.md](references/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
-| [references/swarm-mode.md](references/swarm-mode.md) | **Coverage passes** — "look for X specifically", "we keep missing things", or any audit that must cover the whole library: one parallel agent per principle lens (8 lenses over 53 principle files), each forced to read its assigned files in full, planned per module by `scripts/swarm_plan.py`, merged and adjudicated by `scripts/swarm_merge.py` |
+| [references/pass-planning.md](references/pass-planning.md) | **Any pass that must cover the library, or that has missed something before** — how to survey, slice and group the code into cells, rank the permutations against a budget, choose the execution mechanism you actually have, then aggregate and triage the findings into ordered work |
 | [references/campaign-mode.md](references/campaign-mode.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
 | [references/measuring.md](references/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
 | [references/extending-the-library.md](references/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
 
-## Plan the pass before you audit (the planning step)
+## Plan the pass before you audit
 
-**A pass is planned, not merely started.** The empirical fact this section exists for: an agent reliably finds
-slop when it is pointed at **a specific piece of code with a specific principle in mind**, and finds
-substantially less when told to "audit this directory" — the general pass reads the indexes, picks what
-*looks* implicated, and the principles that need a boundary held in mind are never opened at all. So work is
-decomposed into **cells**: one principle group against one slice of code. Four steps, in this order:
+**A pass is planned, not merely started.** The empirical fact this section exists for: slop is found when a
+reader is looking at **a specific piece of code with a specific set of principles in mind**, and much less when
+it is told to "audit this directory" — a general pass reads the indexes, picks what *looks* implicated, and the
+principles that need a boundary held in mind are never opened at all. So the unit of work is a **cell**: one
+group of principles × one slice of the code × one reading, whose report is merged with the others afterwards.
 
-1. **Enumerate the permutations.** The slices are not only directories. Name them all before choosing:
-   the whole target; each module; each module × the role it plays (an `adapters/` module against boundaries and
-   parsing, a `workers/` module against guarantees, a `migrations/` module against the data layer); and
-   **cross-folder concept clusters** — every retry implementation, every env reader, every provider adapter,
-   every logger, wherever they live. That last family is the one a directory walk cannot express, and it is
-   where duplicated knowledge hides. The principles side of the permutation is the lens grouping in
-   [references/lenses.json](references/lenses.json) (8 lenses over 53 principle files).
-2. **Score the cells** on evidence, not enthusiasm: does the slice actually contain the signal (env access,
-   async/retry/lock, SQL), how well does the lens fit (observed signal > role archetype > concept), is the
-   slice cross-cutting, and is it the right size — mid-size slices both hide defects and remain affordable.
-3. **Select under a budget.** Never run the cross-product. Pick the best N cells (default budget ~24 agents)
-   with caps — at most 2 cells per module, a per-lens cap, and a redundancy penalty for the same lens
-   re-reading files it is already reading. Different lenses on the same files is the *point* of a swarm; the
-   same lens twice is money burnt.
-4. **Order into waves**, cheapest evidence first, and let each wave reroute the next: a thin cell is evidence
-   about the code, and a rich one marks a neighbourhood worth a one-module, one-principle deep dive.
+The full protocol — slicing families, grouping rules, scoring, aggregation, triage — is
+[references/pass-planning.md](references/pass-planning.md). The short form, in order:
 
-All four are implemented — run them, do not improvise them:
+1. **Survey first.** Read the code's shape before slicing it: the units, the entry points, the seams where
+   requests and the outside world are reached, the cross-cutting concerns (every config read, every retry,
+   every logger), the roles directories play, and any history or existing findings. Write a short note; a pass
+   that skips this is guessing at its own scope.
+2. **Design the slices.** Not only directories. Modules; modules read as the role they play; **concept clusters**
+   — every retry, every env reader, every provider adapter, wherever they live (the slices a directory walk
+   cannot express, and where duplicated knowledge hides); flows end-to-end; the callers of one contract; a diff.
+   Name each in one sentence. One file is a legitimate slice when four concerns share one home.
+3. **Group the principles.** Each group is a *reading stance*: the principles you must weigh against each other
+   while reading the same code. [references/lenses.json](references/lenses.json) ships a default — 8 groups over
+   53 principle files — and you may regroup. Two constraints: related principles stay together (or one defect
+   gets reported twice under two names), and every principle file sits in exactly one group (a principle in no
+   group is silently never read; in two groups, paid for twice).
+4. **Write the permutation list, then triage it.** Cells = slices × groups, written down rather than run. Rank
+   by evidence strength, blast radius, prior misses, verification cost — and never penalise overlap *across*
+   groups: different principles reading the same files is the point, while the same group twice is waste. Cut
+   into must-run / if-budget / explicitly-skipped, with the skipped cells named and justified.
+5. **Choose the mechanism — whatever you have.** The decomposition is fixed; the execution is not. You may have
+   parallel subagents, a harness that fans out on its own, model tiers (a strong model for the judgement-heavy
+   groups, a cheap one for mechanical sweeps, a second model as an independent opinion), or just this context,
+   one cell at a time. All are legitimate. What must hold: one cell per reading, whole files not snippets,
+   read-only, prompts passed through verbatim, groups never merged to save budget, and **if the plan looks thin
+   add slices — never a group across every module.**
+
+Optional instruments for the bookkeeping (the plan is the deliverable, not the script):
 
 ```bash
 python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/deslop-plan --budget 24
 #   → plan.md        selected cells in wave order, with the reasoning per cell
-#   → candidates.md  the whole permutation space: every score component, and why each cell stood or fell
-#   → dispatch.sh    ready-to-run prompts, one agent per selected cell
+#   → candidates.md  the whole permutation list: score components, and why each cell stood or fell
+#   → dispatch.sh    ready-to-run prompts, one per selected cell
+python3 scripts/swarm_lenses.py --check     # prove every principle file sits in exactly one group
 ```
 
-Mechanics, prompt contract, merge and adjudication: [references/swarm-mode.md](references/swarm-mode.md). For a
-one-module or one-principle ask — *"look at separation of concerns in the provider adapters"* — skip the plan
-and dispatch the cell directly: `swarm_lenses.py --emit <dir> --only boundaries --target <module>`.
+For a **specific ask** — *"look at separation of concerns in the provider adapters"* — skip the plan and read one
+cell: `swarm_lenses.py --emit <dir> --only boundaries --target <module>`, or simply open that group's principle
+files and read the module whole. That request is the one a general pass cannot satisfy, because a general pass
+decides for itself what to open.
 
-**The plan is a draft for the orchestrator, not a verdict.** The archetype tier guesses from a path name, so
-drop a cell whose only evidence is that word, and add one where you know the codebase and the grep does not. If
-a plan looks thin, add **slices**, never a lens across every module — that cross-product is the thousand-agent
-swarm this step exists to prevent.
+## Triage and order the work
+
+Findings are not issues. Before anything is filed (in full:
+[references/pass-planning.md](references/pass-planning.md) §8–§9):
+
+- **Aggregate first**, on locus + principle: corroborated (same locus, same principle, more than one reading —
+  still verify: two readers can share one misreading), single (one instance is enough to be real; multiple
+  readings only say it was subtle), disputed (same locus, two principles — adjudicate one owner, one principle).
+  A cell that reports nothing and quotes no code is a **failed reading**, not a clean slice.
+- **Verify at the source line** before filing. Unverified findings cost more in triage than the pass saved.
+- **One issue per concern**, not per finding or per cell: three loci expressing one missing owner are one issue.
+- **Apply the guardrail** — where [when-to-relax.md](references/when-to-relax.md) says the "violation" is the
+  cheaper truth, drop it and say so.
+- **Order by severity × blast radius ÷ fix cost**, so the dangerous ones are fixed while the reader still
+  remembers the code, and group the work into a milestone with a denominator rather than a flat queue. State
+  HOW each is fixed, so a stranger can start it.
+- **Say what you left out** — cells skipped, findings relaxed, areas unsurveyed.
 
 ## Principle references (indexes)
 
 Each index below is a short table of principles and their one-line essences, linking to self-contained per-principle files under `references/<category>/`. **Read the indexes up front; open a principle's full file only when a finding implicates it** (or when fixing a violation of it).
 
-Know the cost of that rule: the pass can only open a principle it has already suspected, so principles that need a boundary held in mind — above all **Separation of Concerns** — are routinely never read. When the ask is coverage rather than speed, or a named concern has been missed before, run [references/swarm-mode.md](references/swarm-mode.md) instead of reading harder: it partitions the library into lenses, forces each agent to read its files before scanning, and merges the reports.
+Know the cost of that rule: the pass can only open a principle it has already suspected, so principles that need a boundary held in mind — above all **Separation of Concerns** — are routinely never read. When the ask is coverage rather than speed, or a named concern has been missed before, run [references/pass-planning.md](references/pass-planning.md) instead of reading harder: it partitions the library into lenses, forces each agent to read its files before scanning, and merges the reports.
 
 | File | Contents |
 |------|----------|
@@ -88,7 +113,7 @@ Know the cost of that rule: the pass can only open a principle it has already su
 | File | Read when |
 |------|-----------|
 | [references/data-layer.md](references/data-layer.md) | The target has a database — schema, SQL, migrations, indexes (**The Data Layer**) |
-| [references/lenses.json](references/lenses.json) + [references/swarm-mode.md](references/swarm-mode.md) | Dispatching a swarm pass — the lens assignment and the dispatch/merge protocol (validated by `scripts/swarm_lenses.py --check`) |
+| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 53 principle files into 8 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
 | [references/duplication.md](references/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/detecting-slop.md](references/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
 | [references/case-study-simplification-agent-fleet.md](references/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |

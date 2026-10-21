@@ -1,5 +1,5 @@
 {
-  "_comment": "Lens assignment for deslop swarm passes. Every per-principle file under references/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance — the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
+  "_comment": "Default principle grouping for any planned deslop pass (readings applied to slices). Every per-principle file under references/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance — the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
   "version": 1,
   "shared": {
     "protocols": ["auditing.md", "when-to-relax.md"],
