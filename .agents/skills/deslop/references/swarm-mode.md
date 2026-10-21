@@ -64,11 +64,13 @@ drill over a module with no SQL produces nothing but an agent justifying its rea
 partitioned first, and the partition is a written artifact:
 
 ```bash
-python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/deslop-plan
-# writes plan.md (the reasoning per cell) and dispatch.sh (ready to run)
+python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/deslop-plan --budget 24
+# writes plan.md (selected cells, wave order), candidates.md (the whole permutation space + every score
+# component + why each cell stood or fell), and dispatch.sh (ready to run)
 ```
 
-The plan couples each lens to the scope its signal lives in — three tiers, and only three:
+The plan is four steps — **enumerate, score, select, order** — and the slice families it enumerates are
+only these:
 
 | Tier | What runs | Why this scope |
 |---|---|---|
@@ -76,9 +78,35 @@ The plan couples each lens to the scope its signal lives in — three tiers, and
 | **Module drill** | a signal-gated lens over **one module**: `parsing` where external input enters, `guarantees` where async/retry/lock/lifetime appears, `data-layer` where SQL, migrations or an ORM model does | the finding is local to the module and only visible if the reader holds that one principle while reading that one directory |
 | **Archetype drill** | the lenses a module's *role* characteristically violates, inferred from its path segment — an `adapters/` or `providers/` module gets boundaries + parsing + coupling, a `workers/`/`scheduler/` module gets guarantees, a `repo/`/`store/`/`migrations/` module gets data-layer | roles have signature defects; the grep is quiet precisely when the code is confidently wrong |
 
-`swarm_plan.py` reports LOC, file count and the biggest file per module, the signal counts that earned each
-cell, and the total agent cost, so the plan can be argued with before it is paid for. Two rules it enforces
-because they are how planning goes wrong:
+Plus a fourth family the table above cannot hold: **cross-folder concept clusters** — every retry, every env
+reader, every provider adapter, every logger, wherever they live. Those are cells a directory walk cannot
+express, and they are where duplicated knowledge hides.
+
+### Scoring, budget, waves
+
+`swarm_plan.py` prints every component, so the ranking can be argued with rather than trusted:
+
+```
+score = 0.34·signal + 0.26·fit + 0.18·cross + 0.22·size      then  ×(1 − 0.35·overlap)
+```
+
+- **signal** — evidence density: does the slice contain the thing at all (env access, async/retry/lock, SQL).
+- **fit** — observed signal (1.0) beats concept (0.9) beats role archetype (0.72): a grep is stronger evidence
+  than a directory name.
+- **cross** — the slice crosses folders; only concept clusters do.
+- **size** — mid-size slices score highest: big enough for a defect to hide, cheap enough to afford.
+- **overlap** — *per lens*, never across lenses. Different lenses on the same files is the point of a swarm;
+  the same lens re-reading the same files is money burnt. This is the rule that stops a whole-tree concept
+  cluster from vetoing every module cell.
+
+Selection is greedy under `--budget` (default 24 agents) with caps — at most `--per-module` (2) cells per
+module, a per-lens cap of `max(3, budget/5)`, and `candidates.md` recording for **every** rejected cell whether
+it lost to budget, to a cap, or to redundancy. The chosen cells are then ordered into waves of `--wave` (4),
+orientation first, cheapest evidence next.
+
+`swarm_plan.py` also reports LOC, file count and the biggest file per module and the signal counts that earned
+each cell, so the plan can be argued with before it is paid for. Two rules it enforces because they are how
+planning goes wrong:
 
 - **Never split a global lens per module**, and never add a lens to every module to look thorough. If a plan
   looks thin, add **modules**, not lenses.

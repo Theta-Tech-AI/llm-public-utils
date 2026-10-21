@@ -27,6 +27,49 @@ Whether or not you use this deslop command on your code base, you should read al
 | [references/measuring.md](references/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
 | [references/extending-the-library.md](references/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
 
+## Plan the pass before you audit (the planning step)
+
+**A pass is planned, not merely started.** The empirical fact this section exists for: an agent reliably finds
+slop when it is pointed at **a specific piece of code with a specific principle in mind**, and finds
+substantially less when told to "audit this directory" — the general pass reads the indexes, picks what
+*looks* implicated, and the principles that need a boundary held in mind are never opened at all. So work is
+decomposed into **cells**: one principle group against one slice of code. Four steps, in this order:
+
+1. **Enumerate the permutations.** The slices are not only directories. Name them all before choosing:
+   the whole target; each module; each module × the role it plays (an `adapters/` module against boundaries and
+   parsing, a `workers/` module against guarantees, a `migrations/` module against the data layer); and
+   **cross-folder concept clusters** — every retry implementation, every env reader, every provider adapter,
+   every logger, wherever they live. That last family is the one a directory walk cannot express, and it is
+   where duplicated knowledge hides. The principles side of the permutation is the lens grouping in
+   [references/lenses.json](references/lenses.json) (8 lenses over 53 principle files).
+2. **Score the cells** on evidence, not enthusiasm: does the slice actually contain the signal (env access,
+   async/retry/lock, SQL), how well does the lens fit (observed signal > role archetype > concept), is the
+   slice cross-cutting, and is it the right size — mid-size slices both hide defects and remain affordable.
+3. **Select under a budget.** Never run the cross-product. Pick the best N cells (default budget ~24 agents)
+   with caps — at most 2 cells per module, a per-lens cap, and a redundancy penalty for the same lens
+   re-reading files it is already reading. Different lenses on the same files is the *point* of a swarm; the
+   same lens twice is money burnt.
+4. **Order into waves**, cheapest evidence first, and let each wave reroute the next: a thin cell is evidence
+   about the code, and a rich one marks a neighbourhood worth a one-module, one-principle deep dive.
+
+All four are implemented — run them, do not improvise them:
+
+```bash
+python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/deslop-plan --budget 24
+#   → plan.md        selected cells in wave order, with the reasoning per cell
+#   → candidates.md  the whole permutation space: every score component, and why each cell stood or fell
+#   → dispatch.sh    ready-to-run prompts, one agent per selected cell
+```
+
+Mechanics, prompt contract, merge and adjudication: [references/swarm-mode.md](references/swarm-mode.md). For a
+one-module or one-principle ask — *"look at separation of concerns in the provider adapters"* — skip the plan
+and dispatch the cell directly: `swarm_lenses.py --emit <dir> --only boundaries --target <module>`.
+
+**The plan is a draft for the orchestrator, not a verdict.** The archetype tier guesses from a path name, so
+drop a cell whose only evidence is that word, and add one where you know the codebase and the grep does not. If
+a plan looks thin, add **slices**, never a lens across every module — that cross-product is the thousand-agent
+swarm this step exists to prevent.
+
 ## Principle references (indexes)
 
 Each index below is a short table of principles and their one-line essences, linking to self-contained per-principle files under `references/<category>/`. **Read the indexes up front; open a principle's full file only when a finding implicates it** (or when fixing a violation of it).

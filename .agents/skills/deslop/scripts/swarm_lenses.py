@@ -121,7 +121,7 @@ SIGHTINGS`, and anything in your lens you could not decide (say what would decid
 
 
 def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | None,
-         label: str = "") -> int:
+         label: str = "", file_list: str | None = None) -> int:
     problems, _, _ = audit(m)
     if problems:
         print("REFUSING TO EMIT — the lens assignment is not a valid partition:", file=sys.stderr)
@@ -140,15 +140,22 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
         files = list(spec["files"]) + [p for p in spec.get("also_protocols", [])]
         reading = "\n".join(f"- `references/{f}`" for f in m["shared"]["protocols"] + files)
         stem = f"{lens}-{label}-run{run}" if label else f"{lens}-run{run}"
+        scope_note = ""
+        scan_target = target
+        if file_list:
+            paths = [l.strip() for l in Path(file_list).read_text().splitlines() if l.strip()]
+            files_md = "\n".join(f"- `{p}`" for p in paths)
+            scan_target = f"the {len(paths)} files listed below — a cross-folder slice, not a directory"
+            scope_note = f"\n### Scope files\n\n{files_md}\n"
         out_jsonl = str(outdir / f"findings-{stem}.jsonl")
         body = PROMPT.format(
             n_peers=len(names) - 1,
             reading_list=reading,
             stance=spec["stance"],
-            target=target,
+            target=scan_target,
             repo=repo,
             out_jsonl=out_jsonl,
-        )
+        ) + scope_note
         if spec.get("skip_when"):
             body += f"\nScope note: {spec['skip_when']}.\n"
         (outdir / f"lens-{stem}.md").write_text(body)
@@ -174,6 +181,9 @@ def main() -> int:
     ap.add_argument("--run", type=int, default=1)
     ap.add_argument("--only", default=None)
     ap.add_argument("--label", default="", help="suffix for output names, for per-module drill cells")
+    ap.add_argument("--file-list", default=None,
+                    help="a file of paths (one per line) — use for cross-folder concept slices, which are not "
+                         "a directory and cannot be named by a single path")
     a = ap.parse_args()
 
     m = load()
@@ -191,7 +201,7 @@ def main() -> int:
             print(f"{lens:12s} {len(spec['files']):2d} principles  {spec['stance'][:90]}")
         return 0
     if a.emit:
-        return emit(m, Path(a.emit), a.target, a.repo, a.run, a.only, a.label)
+        return emit(m, Path(a.emit), a.target, a.repo, a.run, a.only, a.label, a.file_list)
     ap.print_help()
     return 0
 
