@@ -65,6 +65,10 @@ Two obligations decide whether a pass was worth running:
   one shape re-implemented per feature, the pass has found something. Name the unit, name the module that
   should own it, and propose the consolidation as an actionable item — never report it as an observation and
   move on. See [architecture/one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).
+- **Name the claimant of every second handle.** When you see a cleanup closure, a derived context, a second
+  lock, or a hand-rolled retry beside an owner that already exists, the report must say what guarantee it adds and
+  which caller would be wrong without it — then delete it or claim it. A pass that only lists behaviour bugs has
+  not looked for this class. See [clean-code/unclaimed-guarantee.md](clean-code/unclaimed-guarantee.md).
 - **Detection is prose you apply.** The tools' blind spots, and the control a detector script must pass
   before it earns its lines, are in [detecting-slop.md](detecting-slop.md).
 - **Census the inputs; do not scan for names.** Before writing the report, enumerate every external input the
