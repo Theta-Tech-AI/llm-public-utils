@@ -148,8 +148,8 @@ In relation to other principles, patchwork sits closest to the diagnosis it desc
 | [**Parse, Don't Validate**](../architecture/parse-dont-validate.md) | The usual shape of the fix — illegal states made unrepresentable at the boundary |
 | [**Single Source of Truth**](../architecture/single-source-of-truth.md) | The symptom patchwork most often masquerades as: several places agreeing by hand |
 | [**Boy Scout Rule**](../reliability/boy-scout-rule.md) | The rule that does **not** fix patchwork — incremental tidying is what produced it |
-| [**Measuring a campaign**](../measuring.md) | LOC and duplication harnesses cannot see patchwork; say so in the report rather than implying coverage |
-| [**Campaign mode**](../campaign-mode.md) | Sweeps find dead weight and duplication. Patchwork needs the `changes-behaviour` lane instead. |
+| [**Measuring a campaign**](../../library/measuring.md) | LOC and duplication harnesses cannot see patchwork; say so in the report rather than implying coverage |
+| [**Campaign mode**](../../modes/campaign.md) | Sweeps find dead weight and duplication. Patchwork needs the `changes-behaviour` lane instead. |
 | [**Legibility**](legibility.md) | The reader's experience: patchwork is the file where the map in the reader's head cannot be built from anything on screen |
 
 ## Summary

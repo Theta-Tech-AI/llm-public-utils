@@ -20,7 +20,7 @@ a wrong finding costs more than a missing one, because it teaches the reader to 
 
 ## 2. Apply the guardrail
 
-Run the list through [when-to-relax.md](when-to-relax.md) before ranking. Where the "violation" is the cheaper
+Run the list through [when-to-relax.md](../readings/when-to-relax.md) before ranking. Where the "violation" is the cheaper
 truth — a small amount of duplication that keeps two modules independent, an explicit check that documents a real
 edge case — drop it, and say that you dropped it. An audit that files churn is an audit nobody reads.
 
@@ -76,4 +76,4 @@ the next reader trusts nothing in it.
 ## 7. Hand-off
 
 The consolidated, bucketed, concern-level list is now ready to be shown. How to say it — length, shape, what leads
-— is [reporting-results.md](reporting-results.md). Read it immediately before you speak, not now.
+— is [reporting-results.md](reporting.md). Read it immediately before you speak, not now.

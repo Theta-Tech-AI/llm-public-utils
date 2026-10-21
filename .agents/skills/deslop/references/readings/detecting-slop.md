@@ -22,7 +22,7 @@ exotic; they are precisely where the expensive slop lives.
   and re-express one design in another idiom. A copy renames its files, functions and variables and shares
   no lines, so name-matching finds only the copies nobody bothered to rename. What survives a rename is what the
   code *does*: the primitives it calls. (The behaviour-first hunt is in
-  [duplication.md](duplication.md) and [one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md).)
+  [duplication.md](duplication.md) and [one-logical-unit-one-home.md](../principles/architecture/one-logical-unit-one-home.md).)
 - **Linters and type checkers see contracts, never cohesion.** A unit split across four packages is
   perfectly typed and perfectly linted.
 - **Coverage sees what tests touch**, and a fork is usually well covered — that is why it was written.
@@ -72,7 +72,7 @@ finding? Measured on one adapter directory, same checkout, same neutral prompt, 
 |---------------------|------------------------------|---------|
 | Doctrine only — "a private reconciling helper proves nothing owns the value" | Seven findings; caught the prefix sniffing sibling seven lines away and **never mentioned the boolean helper between it and its quoted line**, nor the sibling duplicated in a second adapter | **Failed** |
 | Doctrine + a grep for helper *names* (`_truthy|_first_nonempty|to_bool|…`) | Nine findings; helper, twin and prefix all reported under the principle by name, owner-first repair prescribed | **Passed — and rejected anyway**: a name list fires only on the spellings its author had, which is the fitted detector described above, and it passed because detector and control case came from the same example |
-| Doctrine + input census in `auditing.md` only (no names) | Caught the configuration *seam* via [one-logical-unit-one-home](architecture/one-logical-unit-one-home.md) — alias precedence that ignores a credential alias the chat path supports — and applied the new principle twice, on the prefix sniff and on a bypassed wire-parameter decision, but never named the boolean helper | **Partial** |
+| Doctrine + input census in `auditing.md` only (no names) | Caught the configuration *seam* via [one-logical-unit-one-home](../principles/architecture/one-logical-unit-one-home.md) — alias precedence that ignores a credential alias the chat path supports — and applied the new principle twice, on the prefix sniff and on a bypassed wire-parameter decision, but never named the boolean helper | **Partial** |
 | Same, with the tells placed where a neutral pass actually reads them: the architecture index row states the *structural* tells (a string compared against a literal token set, `startswith` on an identifier, first-non-empty scans, the same `env.get("NAME", default)` repeated across files), and `SKILL.md` names the census in its always-read row | Six findings, two of them High, both under the new principle: one naming **the boolean helper and its twin** inside the Foundry-credential seam, one the prefix sniff — and it ran in-memory probes to confirm the stream-close, delay-cap and empty-validator defects rather than asserting them | **Passed, with no names anywhere** |
 | Principle file named directly (usability test rather than discovery) | Five instances, including a fourth — repeated `float(env.get("AGENT_MODEL_TEMPERATURE", "0"))` across four adapters — that appears nowhere in the principle, and three plausible false positives correctly declined because an owner already existed | **Usable** |
 
@@ -149,7 +149,7 @@ If a view fits in one command, it belongs in the instructions, not in a file. Se
 The views above audit code that already exists. The cheapest place for this library is the design, before
 the second copy exists: **re-read the applicable principles while designing, not only when auditing.** The
 design-time question is not "is this slop?" but "am I about to make a second home for something that
-already has one?" ([one-logical-unit-one-home.md](architecture/one-logical-unit-one-home.md)). A fork caught
+already has one?" ([one-logical-unit-one-home.md](../principles/architecture/one-logical-unit-one-home.md)). A fork caught
 while it is still a plan costs nothing to avoid; the same fork after it has callers costs a consolidation
 campaign.
 
@@ -167,9 +167,9 @@ In relation to other references, detecting slop governs the detector rather than
 |-----------|--------------|
 | [**Hunting Duplication**](duplication.md) | Its scanners look for repeated text; this file is about the detector's own packaging |
 | [**Auditing**](auditing.md) | The pass this file arms — the judgment stays with the agent |
-| [**Measuring a Campaign**](measuring.md) | The same discipline, a different object: measure the mechanism, not your part in it |
-| [**Extending the Library**](extending-the-library.md) | A detector script is a library artifact; the discovery-first rule applies before writing one |
-| [**One Logical Unit, One Home**](architecture/one-logical-unit-one-home.md) | The finding class that motivated the control test |
+| [**Measuring a Campaign**](../library/measuring.md) | The same discipline, a different object: measure the mechanism, not your part in it |
+| [**Extending the Library**](../library/extending-the-library.md) | A detector script is a library artifact; the discovery-first rule applies before writing one |
+| [**One Logical Unit, One Home**](../principles/architecture/one-logical-unit-one-home.md) | The finding class that motivated the control test |
 
 ## Summary
 

@@ -37,10 +37,7 @@ def load() -> dict:
 
 def principle_files() -> set[str]:
     """Every per-principle file: references/<category>/<slug>.md (top-level files are protocols)."""
-    return {
-        f"{p.parent.name}/{p.name}"
-        for p in sorted(REF.glob("*/*.md"))
-    }
+    return {str(p.relative_to(REF)) for p in sorted((REF / "principles").glob("*/*.md"))}
 
 
 def top_level_files() -> set[str]:
@@ -61,11 +58,11 @@ def classify(m: dict) -> tuple[dict[str, str], set[str]]:
         classes[f] = "lens-protocol:all"
     for f in m["shared"].get("stage_protocols", {}):
         classes[f] = "stage"
-    for f in m["shared"].get("situational", {}):
-        classes[f] = "situational"
-    reachable = set(classes)
-    everything = {f"{p.parent.name}/{p.name}" for p in REF.glob("*/*.md")}
-    everything |= {p.name for p in REF.glob("*.md")}
+    for f in m["shared"].get("modes", {}):
+        classes[f] = "mode"
+    for f in m["shared"].get("library", {}):
+        classes[f] = "library"
+    everything = {str(p.relative_to(REF)) for p in REF.rglob("*.md")}
     return classes, everything
 
 
@@ -86,6 +83,10 @@ def audit(m: dict) -> tuple[list[str], list[str], list[str]]:
     # reachability: no markdown left behind — a file reachable by no enforced path is the silent gap
     unreachable = sorted(everything_all - set(classes))
     if unreachable:
+        stray = [f for f in unreachable if "/" not in f]
+        if stray:
+            problems.append(f"{len(stray)} file(s) at the references root — the taxonomy has no role for them "
+                            f"(stages/, readings/, modes/, principles/, library/): " + ", ".join(stray))
         problems.append(f"{len(unreachable)} markdown file(s) reachable by no enforced path "
                         f"(not a principle, lens protocol, lens index, stage reference or situational): "
                         + ", ".join(unreachable))
@@ -134,7 +135,7 @@ Rules that bind you:
 `CROSS-LENS SIGHTINGS` in prose, one line each, so nothing is lost and nothing is double-counted.
 - One instance is enough to report. Do not wait for a second copy to prove a point, and do not downgrade a \
 finding because it appears once.
-- Obey `references/when-to-relax.md`: if the code survives scrutiny and fixing it would make things worse, say \
+- Obey `references/readings/when-to-relax.md`: if the code survives scrutiny and fixing it would make things worse, say \
 so and move on instead of manufacturing a violation.
 - No name lists. Do not grep for "functions that look like X" and call the match a finding; read for the \
 property the principle defines.

@@ -33,7 +33,7 @@ They fail in three predictable ways, and every rule below exists to prevent one 
 
 **Never state a target without a measured baseline.** The full harness — four tools, the unbiased task
 corpus, the metrics that actually carry the story, and the reporting skeleton — is in
-[**measuring.md**](measuring.md). **Read it before you start; it defines both the baseline you take
+[**measuring.md**](../library/measuring.md). **Read it before you start; it defines both the baseline you take
 now and the numbers you owe at the end.**
 
 The short version:
@@ -89,7 +89,7 @@ Run in this order — each one shrinks the surface the next has to read.
 
 ### Sweep 1 — God-file decomposition
 Any file past the house threshold (~400 LOC backend, ~250 frontend/TS) or mixing several
-responsibilities. **Delegate the mechanics to the [`shatter`](../../shatter/SKILL.md) skill** rather
+responsibilities. **Delegate the mechanics to the [`shatter`](../../../shatter/SKILL.md) skill** rather
 than improvising a split — it owns the thresholds and the responsibility-boundary analysis. What
 campaign mode adds: do the splits **after** the deletion sweeps below, or you will split code you are
 about to delete.
@@ -107,16 +107,16 @@ The highest-yield sweep. Two shapes:
   and one call site. Inline it unless it marks a genuine seam (test double, vendor boundary, planned
   second implementation).
 
-See [duplication.md](duplication.md) for the sweep mechanics and
-[architecture/dry.md](architecture/dry.md) for where to stop.
+See [duplication.md](../readings/duplication.md) for the sweep mechanics and
+[architecture/dry.md](../principles/architecture/dry.md) for where to stop.
 
 ### Sweep 3 — Branch-density reduction
 "Less if-if-if-if-if-else routing" is a *measurable* goal, not a vibe. Targets:
 
 - **Type/state ladders** (`if kind == 'a' … elif kind == 'b' …` ×7) → a dict/registry dispatch, a
   polymorphic method, or a `match`. Decide the type once at the boundary —
-  [decide-dont-cope.md](clean-code/decide-dont-cope.md).
-- **Nested pyramids** → guard clauses and early returns — [guard-clauses.md](clean-code/guard-clauses.md).
+  [decide-dont-cope.md](../principles/clean-code/decide-dont-cope.md).
+- **Nested pyramids** → guard clauses and early returns — [guard-clauses.md](../principles/clean-code/guard-clauses.md).
 - **Flag-parameter branching** (`if with_cache: … else: …`) → two functions, or a strategy passed in.
 - **Boolean ceremony** (`if cond: return True else: return False` → `return cond`).
 - **Dead branches** — conditions that can no longer be false because of an earlier guard.
@@ -128,12 +128,12 @@ fewer lines**, and it is the one the user's phrasing is actually asking for.
 YAGNI violations (unused config knobs, speculative extension points, "just in case" parameters),
 unused exports and imports, commented-out code, abandoned feature flags, vestigial models, duplicated
 docs, and defensive checks on already-validated inputs. Always grep for a symbol before deleting —
-tool reports miss dynamic/string/reflection use (see the pitfalls in [SKILL.md](../SKILL.md)).
+tool reports miss dynamic/string/reflection use (see the pitfalls in [SKILL.md](../../SKILL.md)).
 
 ### Sweep 5 — Legibility and connection
 The sweep most often skipped, and the one the user named explicitly ("interpretability of the
 codebase and how things connect to each other"). See
-[legibility.md](clean-code/legibility.md). In a campaign the typical deliverable is a small number of
+[legibility.md](../principles/clean-code/legibility.md). In a campaign the typical deliverable is a small number of
 **connection artifacts**: a module map, a documented call path for the two or three core flows, and
 the removal of the naming lies that make navigation guesswork.
 
@@ -149,7 +149,7 @@ Campaign mode changes a great deal at once, so the discipline is stricter, not l
   with no failing-test proof is a hope, not a fix.*
 - **Verify in slices, not at the end.** Run the suite after each sweep and each split. A campaign that
   discovers a breakage 15,000 lines in cannot attribute it.
-- **Respect [when-to-relax.md](when-to-relax.md).** Tests, DTOs, generated code, hot paths, security
+- **Respect [when-to-relax.md](../readings/when-to-relax.md).** Tests, DTOs, generated code, hot paths, security
   boundaries, and legitimate compat seams are not slop. Cutting them is churn, and it *inflates* the
   LOC number while making the codebase worse — the exact failure the target invites.
 - **A second model's independent pass** before delivery, per [loop-until-dry.md](loop-until-dry.md).
@@ -207,7 +207,7 @@ Each PR must stand alone: independently green, independently revertable.
 3. **What was deliberately not cut**, and why (the `when-to-relax` list, plus anything that survived
    the meta-principle).
 4. **The shortfall, if any** — the honest version of the number and the named cause.
-5. **Risk tiering** from [auditing.md](auditing.md) — which changes are SAFE / CAREFUL / RISKY, so a
+5. **Risk tiering** from [auditing.md](../readings/auditing.md) — which changes are SAFE / CAREFUL / RISKY, so a
    reviewer knows where to spend attention.
 
 ## 7. Guardrails
@@ -217,7 +217,7 @@ Each PR must stand alone: independently green, independently revertable.
   harder to understand has failed, whatever the diffstat says.
 - **Do not remove a boundary to win a number.** Compat shims, staged migrations, vendor isolation,
   and validation at trust boundaries look like bloat and are not — check `git blame` and the
-  surrounding comment before cutting, per the Chesterton's Fence rule in [SKILL.md](../SKILL.md).
+  surrounding comment before cutting, per the Chesterton's Fence rule in [SKILL.md](../../SKILL.md).
 - **"No excuses" is not "no judgment."** The mandate is to proceed without asking permission for each
   step — not to skip the checks that make the result trustworthy. Autonomy covers *when to act*, never
   *what to verify*.

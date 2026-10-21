@@ -8,7 +8,7 @@ description: Deslop principle — DRY: Don't Repeat Yourself: One authoritative 
 > "Every piece of knowledge must have a single, unambiguous, authoritative representation within a system."
 > — Andy Hunt & Dave Thomas, *The Pragmatic Programmer*
 
-DRY is about **knowledge**, not code — avoid duplicating *meaning*, not syntax. Knowledge duplication (the same business rule living in multiple places) must always be fixed, starting at the SECOND occurrence — not the third. Incidental duplication (code that *looks* similar but represents *different* concepts that will evolve independently) should be left alone; merging it couples unrelated concerns. The distinguishing test is never the occurrence count, it's whether it's the same knowledge: see [Hunting Duplication — Beyond Token Scanners](../duplication.md) for how to tell the two apart and what to do about it once found.
+DRY is about **knowledge**, not code — avoid duplicating *meaning*, not syntax. Knowledge duplication (the same business rule living in multiple places) must always be fixed, starting at the SECOND occurrence — not the third. Incidental duplication (code that *looks* similar but represents *different* concepts that will evolve independently) should be left alone; merging it couples unrelated concerns. The distinguishing test is never the occurrence count, it's whether it's the same knowledge: see [Hunting Duplication — Beyond Token Scanners](../../readings/duplication.md) for how to tell the two apart and what to do about it once found.
 
 > "Duplication is far cheaper than the wrong abstraction." — Sandi Metz
 

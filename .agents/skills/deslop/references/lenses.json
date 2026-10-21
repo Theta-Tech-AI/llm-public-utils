@@ -3,147 +3,156 @@
   "version": 1,
   "shared": {
     "protocols": [
-      "auditing.md",
-      "when-to-relax.md"
+      "readings/auditing.md",
+      "readings/when-to-relax.md"
     ],
     "stage_protocols": {
-      "pass-planning.md": "before a pass that must cover the library, or after one that missed something",
-      "aggregating-findings.md": "the moment more than one reading has reported",
-      "consolidating-and-triage.md": "after aggregation, before anything is reported or filed",
-      "reporting-results.md": "immediately before reporting to the person who asked",
-      "measuring.md": "any pass that will claim a number",
-      "campaign-mode.md": "a whole-codebase campaign with a target",
-      "loop-until-dry.md": "a thorough pass that must iterate to dry",
-      "extending-the-library.md": "adding a principle to the library",
-      "detecting-slop.md": "building or questioning a detector"
+      "stages/planning.md": "before a pass that must cover the library, or after one that missed something",
+      "stages/aggregation.md": "the moment more than one reading has reported",
+      "stages/consolidation.md": "after aggregation, before anything is reported or filed",
+      "stages/reporting.md": "immediately before reporting to the person who asked"
     },
-    "situational": {
-      "case-study-simplification-agent-fleet.md": "a worked KISS example, read on request",
-      "further-reading.md": "bibliography and attribution, not needed mid-audit"
+    "modes": {
+      "modes/campaign.md": "a whole-codebase campaign with a measured target",
+      "modes/loop-until-dry.md": "a thorough pass that iterates until a scan finds nothing"
+    },
+    "library": {
+      "library/extending-the-library.md": "adding a principle to the library",
+      "library/measuring.md": "any pass that will claim a number",
+      "readings/detecting-slop.md": "building or questioning a detector",
+      "library/case-study-simplification-agent-fleet.md": "a worked example, read on request",
+      "library/further-reading.md": "bibliography and attribution, not needed mid-audit"
+    },
+    "taxonomy": {
+      "stages/": "the four stages of a pass \u2014 planning, aggregation, consolidation, reporting",
+      "readings/": "what a single reading carries: the audit protocol, the guardrail, the dedup sweep, detector rationale",
+      "modes/": "modes a pass can run in \u2014 campaign, loop-until-dry",
+      "principles/": "<category>.md is a category index; <category>/<slug>.md is one principle",
+      "library/": "about the library itself \u2014 extend it, measure it, cite it, see it worked"
     }
   },
   "lenses": {
     "boundaries": {
       "stance": "Where does this code belong, and does each part hold one concern? Judge seams, ownership and cohesion \u2014 not function size.",
       "files": [
-        "architecture/separation-of-concerns.md",
-        "architecture/modularity.md",
-        "architecture/one-logical-unit-one-home.md",
-        "architecture/encapsulation.md",
-        "architecture/orthogonality.md"
+        "principles/architecture/separation-of-concerns.md",
+        "principles/architecture/modularity.md",
+        "principles/architecture/one-logical-unit-one-home.md",
+        "principles/architecture/encapsulation.md",
+        "principles/architecture/orthogonality.md"
       ],
       "indexes": [
-        "architecture.md"
+        "principles/architecture.md"
       ]
     },
     "duplication": {
       "stance": "What knowledge exists more than once, and where is its single owner? Read duplication.md as well \u2014 the sweep primitives live there.",
       "files": [
-        "architecture/dry.md",
-        "architecture/single-source-of-truth.md",
-        "architecture/code-reusability.md"
+        "principles/architecture/dry.md",
+        "principles/architecture/single-source-of-truth.md",
+        "principles/architecture/code-reusability.md"
       ],
       "also_protocols": [
-        "duplication.md"
+        "readings/duplication.md"
       ],
       "indexes": [
-        "architecture.md"
+        "principles/architecture.md"
       ]
     },
     "coupling": {
       "stance": "What does each unit know about its neighbours, and what does it construct or reach through that it should have been handed?",
       "files": [
-        "architecture/law-of-demeter.md",
-        "architecture/dependency-injection.md",
-        "architecture/composition-over-inheritance.md",
-        "architecture/solid.md",
-        "architecture/command-query-separation.md",
-        "architecture/convention-over-configuration.md"
+        "principles/architecture/law-of-demeter.md",
+        "principles/architecture/dependency-injection.md",
+        "principles/architecture/composition-over-inheritance.md",
+        "principles/architecture/solid.md",
+        "principles/architecture/command-query-separation.md",
+        "principles/architecture/convention-over-configuration.md"
       ],
       "indexes": [
-        "architecture.md"
+        "principles/architecture.md"
       ]
     },
     "parsing": {
       "stance": "Where does an external value enter, and which single component turns it into a decision? Follow each input from the edge to every place that re-interprets it.",
       "files": [
-        "architecture/parse-dont-validate.md",
-        "architecture/helper-is-an-architecture-finding.md",
-        "reliability/no-silent-defaults.md",
-        "reliability/fail-fast.md",
-        "reliability/postels-law.md",
-        "reliability/design-by-contract.md"
+        "principles/architecture/parse-dont-validate.md",
+        "principles/architecture/helper-is-an-architecture-finding.md",
+        "principles/reliability/no-silent-defaults.md",
+        "principles/reliability/fail-fast.md",
+        "principles/reliability/postels-law.md",
+        "principles/reliability/design-by-contract.md"
       ],
       "indexes": [
-        "architecture.md",
-        "reliability.md"
+        "principles/architecture.md",
+        "principles/reliability.md"
       ]
     },
     "shape": {
       "stance": "How big and how tangled is each unit's control flow? Depth, conditional chains, parameter lists, nesting \u2014 the measurable shape of the code.",
       "files": [
-        "clean-code/small-functions.md",
-        "clean-code/guard-clauses.md",
-        "clean-code/cognitive-load.md",
-        "clean-code/cyclomatic-complexity.md",
-        "clean-code/slap.md",
-        "clean-code/kiss.md",
-        "clean-code/yagni.md"
+        "principles/clean-code/small-functions.md",
+        "principles/clean-code/guard-clauses.md",
+        "principles/clean-code/cognitive-load.md",
+        "principles/clean-code/cyclomatic-complexity.md",
+        "principles/clean-code/slap.md",
+        "principles/clean-code/kiss.md",
+        "principles/clean-code/yagni.md"
       ],
       "indexes": [
-        "clean-code.md"
+        "principles/clean-code.md"
       ]
     },
     "legibility": {
       "stance": "Can a competent stranger read this without the author present? Naming, comment discipline, surprise, elegance, and code that copes where it should decide.",
       "files": [
-        "clean-code/self-documenting-code.md",
-        "clean-code/documentation-discipline.md",
-        "clean-code/elegance.md",
-        "clean-code/legibility.md",
-        "clean-code/least-surprise.md",
-        "clean-code/patchwork.md",
-        "clean-code/decide-dont-cope.md"
+        "principles/clean-code/self-documenting-code.md",
+        "principles/clean-code/documentation-discipline.md",
+        "principles/clean-code/elegance.md",
+        "principles/clean-code/legibility.md",
+        "principles/clean-code/least-surprise.md",
+        "principles/clean-code/patchwork.md",
+        "principles/clean-code/decide-dont-cope.md"
       ],
       "indexes": [
-        "clean-code.md"
+        "principles/clean-code.md"
       ]
     },
     "guarantees": {
       "stance": "What does this code promise, who claims the promise, and what happens when it is broken? State, lifetime, cancellation, privilege, and telling the truth when it fails.",
       "files": [
-        "clean-code/unclaimed-guarantee.md",
-        "architecture/immutability.md",
-        "architecture/idempotency.md",
-        "reliability/observability.md",
-        "reliability/resilience.md",
-        "reliability/least-privilege.md",
-        "reliability/boy-scout-rule.md"
+        "principles/clean-code/unclaimed-guarantee.md",
+        "principles/architecture/immutability.md",
+        "principles/architecture/idempotency.md",
+        "principles/reliability/observability.md",
+        "principles/reliability/resilience.md",
+        "principles/reliability/least-privilege.md",
+        "principles/reliability/boy-scout-rule.md"
       ],
       "indexes": [
-        "reliability.md"
+        "principles/reliability.md"
       ]
     },
     "data-layer": {
       "stance": "If there is a database: what does the schema promise, where is an invariant only in application code, and what access path does each query actually have?",
       "files": [
-        "data-layer/database-identity.md",
-        "data-layer/database-timestamps.md",
-        "data-layer/domain-constraints.md",
-        "data-layer/foreign-keys.md",
-        "data-layer/index-access-columns.md",
-        "data-layer/index-defeaters.md",
-        "data-layer/index-foreign-keys.md",
-        "data-layer/index-query-shape.md",
-        "data-layer/join-access-paths.md",
-        "data-layer/invariant-constraints.md",
-        "data-layer/normalization.md",
-        "data-layer/slop-tells.md",
-        "data-layer/unused-indexes.md"
+        "principles/data-layer/database-identity.md",
+        "principles/data-layer/database-timestamps.md",
+        "principles/data-layer/domain-constraints.md",
+        "principles/data-layer/foreign-keys.md",
+        "principles/data-layer/index-access-columns.md",
+        "principles/data-layer/index-defeaters.md",
+        "principles/data-layer/index-foreign-keys.md",
+        "principles/data-layer/index-query-shape.md",
+        "principles/data-layer/join-access-paths.md",
+        "principles/data-layer/invariant-constraints.md",
+        "principles/data-layer/normalization.md",
+        "principles/data-layer/slop-tells.md",
+        "principles/data-layer/unused-indexes.md"
       ],
       "skip_when": "the target has no schema, migration, ORM model or SQL \u2014 say so in the report rather than inventing findings",
       "indexes": [
-        "data-layer.md"
+        "principles/data-layer.md"
       ]
     }
   }
