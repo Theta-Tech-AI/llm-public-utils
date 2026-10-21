@@ -22,7 +22,10 @@ Four parts, in this order, and no fifth:
    why it matters, and the repair in two words. This is the part people act on; make it scannable.
 3. **Next** — the contained work, as a compact list or a small table. One line each. No prose.
 4. **Left out** — what was skipped, relaxed, or never surveyed, plus the condition that would change the bucket of
-   anything contentious ("if this becomes public API, the duplication becomes a defect").
+   anything contentious ("if this becomes public API, the duplication becomes a defect"). Include the **rotation
+   state** in one line: which principle groups this round exercised, and **which remain unread on this target**.
+   That line is what tells the reader a second round is worth commissioning — and what proves this one was not a
+   repeat of the last.
 
 Then stop. If they want the derivation, they will ask, and the report files are already written for that.
 

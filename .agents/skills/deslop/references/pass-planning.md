@@ -6,7 +6,7 @@ description: Plan a deslop pass — survey the code, design slices, group the pr
 # Planning a pass: cells, grouping, order
 
 This file is about how to **think about a deslop pass before running one**. It ends where the readings begin;
-aggregation, consolidation and reporting are separate references (§11), so planning does not carry context it has
+aggregation, consolidation and reporting are separate references (§12), so planning does not carry context it has
 not earned yet. It states principles and leaves the mechanism to you: you may have subagents, a harness with its
 own fan-out, one context, or a fleet of cheaper models. None of that is the point. The point is that slop is
 found by **looking at a specific piece of code with a specific set of principles in mind**, and by **aggregating
@@ -142,7 +142,7 @@ Every group also carries [auditing.md](auditing.md) (report format and the input
 
 ## 5. Write the permutation list
 
-Now the cross-product, **written down rather than run**: slices × groups. (Ordering the *cells* happens here; triaging the *findings* that come back is a later stage — §11.) It is far too large to execute, and
+Now the cross-product, **written down rather than run**: slices × groups. (Ordering the *cells* happens here; triaging the *findings* that come back is a later stage — §12.) It is far too large to execute, and
 that is the point — writing it makes the choice explicit and stops the pass from quietly becoming "one reading,
 one directory, whatever it noticed".
 
@@ -200,7 +200,35 @@ What must hold regardless of mechanism:
   thousand-agent pass; the filtered list is the pass.
 
 
-## 8. Let the results reroute the plan
+## 8. Rounds rotate — they do not repeat
+
+A second pass over the same code is **the complement of the first**, not a re-run with a fresh agent. The most
+expensive mistake here is silent: a repeat round re-reads the same groups over the same slices, reports a similar
+list, and everyone concludes the codebase is exhausted when in fact two groups were never opened. This is the
+"ask it for other perspectives" step — and it must not depend on being asked.
+
+So keep a **rotation ledger** (`--ledger <path>`) and plan every round against it:
+
+```bash
+python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/round2 \
+    --ledger .deslop-rounds.jsonl --round 2 --budget 24
+```
+
+- **Cells already run are excluded** by `(group, slice)`, and **whole-target orientation cells are not repeated**
+  unless you pass `--reorient` — that is for after the code has materially moved, not for a routine second pass.
+- **Groups already exercised are down-weighted** (×0.55) rather than banned, because a used group over an
+  *unread slice* — a concept cluster, a flow, a schema — is still new ground.
+- The plan states, in `plan.md`: which groups earlier rounds exercised, which this round uses, and **which groups
+  remain unread on this target**. That last line is what a third round — or a promotion decision — is planned from.
+- When a round reports **every** group read, the library is exercised on that target: the next round should
+  re-run the **thinnest** groups over **sharper slices** (concept clusters, flows, contract surfaces), and finish
+  with an independent second opinion from a different model.
+
+Report the ledger state as part of the result: "groups used so far — boundaries, coupling, shape, legibility,
+duplication, data-layer, guarantees; **parsing not yet run**". That single sentence replaces the operator having
+to ask for another angle, and it is the honest statement of coverage the pass actually achieved.
+
+## 9. Let the results reroute the plan
 
 A pass is a loop, not a batch:
 
@@ -211,7 +239,7 @@ A pass is a loop, not a batch:
 - Finish with an **independent second opinion** — another model, another harness, or the same one after the
   fixes. A different prior finds what the first reader normalised away.
 
-## 9. Instruments (optional)
+## 10. Instruments (optional)
 
 Two scripts implement the bookkeeping above. They are conveniences, not requirements: if your harness cannot run
 them, do the same steps by hand — the **plan** is the deliverable, not the script.
@@ -228,7 +256,7 @@ python3 scripts/swarm_lenses.py --emit /tmp/cell --target <slice> --only <group>
 python3 scripts/swarm_merge.py /tmp/plan/findings-*.jsonl --out /tmp/plan/merged.md        # aggregate
 ```
 
-## 10. Control
+## 11. Control
 
 A protocol that promises coverage is tested like a detector: does it find what a monolithic pass missed, on the
 same commit and the same neutral prompt? Recorded runs belong here — version, what changed, verdict, failures
@@ -239,7 +267,7 @@ included.
 | 1 | Paired control, same commit and same target (`backend/src/services/agents/model_provider/`, 10 files): **A** — one neutral monolithic pass with the shipped skill; **B** — eight cells, one per group, each forced to read its assigned principle files in full. Read-only, same model, same neutral prompt. | **A: 19 findings across 9 principles. B: 55 findings, 54 distinct, across 25 principles.** B raised **17 principles A never touched** — encapsulation, orthogonality, SOLID, immutability, observability, least privilege, fail-fast, helper-is-an-architecture-finding, small-functions, SLAP, cognitive load, guard clauses, KISS, self-documenting-code, documentation-discipline, least-surprise, elegance — and A raised exactly one B did not (`yagni`, once). Groups that carried the difference: duplication 12 (A had 4 DRY), legibility 11 (A: none of its principles), parsing 10, boundaries 7, guarantees 6, shape 6. `data-layer` returned **0 with an explicit no-schema statement** — a correctly declining group, which is the shape a healthy cell makes when its slice lacks the signal. 34 loci were charged under two different principles, which is precisely the adjudication work the aggregation step (§8) exists for, and 0 were corroborated — no two groups independently fixed the same charge, so the reports were complementary rather than redundant. |
 | 1a | Sample verification of run 1 B's findings at source | `model_provider/azure_openai.py:70-90` read directly: the connection decision is re-derived in the adapter (`_first_nonempty` over `AZURE_OPENAI_*`/`FOUNDRY_*`, a bare `env.get("AZURE_OPENAI_API_VERSION")`, `_truthy` over two identity flags), confirming the `one-logical-unit-one-home` / `dry` / `immutability` charges on those lines. Findings remain *candidates*: every one is verified at its line before filing (§9). |
 
-## 11. The next stages (each is its own file, read when you reach it)
+## 12. The next stages (each is its own file, read when you reach it)
 
 This file ends where the readings begin. The stages after dispatch live in their own references so that planning
 does not carry context it has not earned yet:
@@ -250,7 +278,7 @@ does not carry context it has not earned yet:
 | **Consolidation and triage** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse to concerns, group into a milestone | [consolidating-and-triage.md](consolidating-and-triage.md) | after aggregation, before anything is reported or filed |
 | **Reporting** — the shape of the message: lead with the answer, bucket the work, stay short | [reporting-results.md](reporting-results.md) | immediately before you speak to the person who asked |
 
-## 12. What this is not
+## 13. What this is not
 
 - **Not a mandate to parallelise.** Sequential cells in one context satisfy the principle; parallelism is an
   accelerator, and a bad plan parallelised is just faster noise.

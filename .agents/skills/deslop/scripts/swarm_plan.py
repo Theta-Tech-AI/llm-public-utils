@@ -303,9 +303,19 @@ def score_cells(cells: list[Cell]) -> None:
                         + 0.18 * c.components["cross"] + 0.22 * c.components["size"], 3)
 
 
-def select_cells(cells: list[Cell], budget: int, per_module: int) -> list[Cell]:
+def select_cells(cells: list[Cell], budget: int, per_module: int,
+                 used_cells: set[tuple[str, str]] | None = None,
+                 used_lenses: set[str] | None = None,
+                 reorient: bool = False) -> list[Cell]:
     """Greedy by score under a budget, with diversity caps and an overlap penalty for re-reading ground."""
     globs = [c for c in cells if c.kind == "global"]
+    if used_lenses and not reorient:
+        # an orientation cell is one whole-target reading of a group: re-running it on the same target in the next
+        # round is the repeat the rotation exists to prevent. --reorient re-baselines after the code has moved.
+        for c in globs:
+            if c.lens in used_lenses:
+                c.reason = "orientation already run on this target in an earlier round"
+        globs = [c for c in globs if c.lens not in used_lenses]
     ranked = sorted([c for c in cells if c.kind != "global"], key=lambda c: -c.score)
     chosen: list[Cell] = []
     per_scope: dict[str, int] = defaultdict(int)
@@ -322,7 +332,16 @@ def select_cells(cells: list[Cell], budget: int, per_module: int) -> list[Cell]:
         per_scope[c.scope] += 1
         per_lens[c.lens] += 1
         covered[c.lens] |= c.fileset()
+    used_cells = used_cells or set()
+    used_lenses = used_lenses or set()
     for c in ranked:
+        if (c.lens, c.scope) in used_cells:
+            c.reason = "already run in an earlier round on this target"
+            continue
+        if c.lens in used_lenses:
+            # a group already exercised on this target yields less than an unread one: same code, same eyes
+            c.score = round(c.score * 0.55, 3)
+            c.components["repeat"] = 0.55
         if len(chosen) >= budget:
             c.reason = "budget exhausted"
             continue
@@ -348,6 +367,48 @@ def select_cells(cells: list[Cell], budget: int, per_module: int) -> list[Cell]:
     return chosen
 
 
+def load_ledger(path: Path | None, target: str) -> tuple[set[tuple[str, str]], set[str], list[dict]]:
+    """Rounds already run on this target: which cells, which groups. Rotation is a ledger, not a memory."""
+    import json
+
+    if not path or not path.exists():
+        return set(), set(), []
+    entries = []
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        if e.get("target", "").rstrip("/") != target.rstrip("/"):
+            continue
+        entries.append(e)
+    cells: set[tuple[str, str]] = set()
+    lenses: set[str] = set()
+    for e in entries:
+        for c in e.get("cells", []):
+            cells.add((c["lens"], c["scope"]))
+            lenses.add(c["lens"])
+    return cells, lenses, entries
+
+
+def append_ledger(path: Path | None, target: str, round_no: int, chosen: list[Cell]) -> None:
+    import json
+
+    if not path:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    entry = {
+        "target": target,
+        "round": round_no,
+        "cells": [{"lens": c.lens, "scope": c.scope, "kind": c.kind, "score": c.score} for c in chosen],
+    }
+    with path.open("a") as fh:
+        fh.write(json.dumps(entry) + "\n")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--repo", required=True)
@@ -359,6 +420,14 @@ def main() -> int:
     ap.add_argument("--min-loc", type=int, default=60)
     ap.add_argument("--min-hits", type=int, default=2)
     ap.add_argument("--skillsrc", default=".")
+    ap.add_argument("--ledger", default=None,
+                    help="JSONL rotation ledger: rounds already run on this target. Earlier rounds are excluded "
+                         "cell-by-cell and their groups are down-weighted, so round 2 reads what round 1 did not")
+    ap.add_argument("--round", type=int, default=1, help="round number being planned (recorded in the ledger)")
+    ap.add_argument("--reorient", action="store_true",
+                    help="re-run whole-target orientation cells even if an earlier round already ran them "
+                         "(after the code has materially changed)")
+    ap.add_argument("--no-ledger-write", action="store_true")
     ap.add_argument("--include-tests", action="store_true")
     a = ap.parse_args()
 
@@ -372,7 +441,11 @@ def main() -> int:
 
     cells = enumerate_cells(root, target, a.include_tests, a.min_loc, a.min_hits)
     score_cells(cells)
-    chosen = select_cells(cells, a.budget, a.per_module)
+    ledger = Path(a.ledger) if a.ledger else None
+    used_cells, used_lenses, entries = load_ledger(ledger, a.target)
+    chosen = select_cells(cells, a.budget, a.per_module, used_cells, used_lenses, a.reorient)
+    if not a.no_ledger_write:
+        append_ledger(ledger, a.target, a.round, chosen)
     waves = [chosen[i:i + a.wave] for i in range(0, len(chosen), a.wave)]
 
     C = ["# Deslop candidate cells — the permutation space\n",
@@ -403,6 +476,23 @@ def main() -> int:
     P.append("Run wave 1, merge with `scripts/swarm_merge.py`, then let its findings reroute wave 2: a cell that "
              "came back thin is evidence about the *code*, and a rich cell marks a neighbourhood worth a "
              "directed deep dive (`--only <lens> --target <that module>`).\n")
+    P.append("## Round rotation\n")
+    all_lenses = sorted({c.lens for c in cells})
+    now_used = sorted({c.lens for c in chosen})
+    unread = [l for l in all_lenses if l not in set(now_used) | used_lenses]
+    if entries:
+        P.append(f"Round **{a.round}** on `{a.target}`. Earlier round(s): "
+                 f"{len(entries)} ({', '.join(str(e.get('round')) for e in entries)}), which already exercised "
+                 f"**{', '.join(sorted(used_lenses)) or 'nothing'}**. Cells already run were excluded and their "
+                 "groups down-weighted, so this round reads what the last one did not.\n")
+    else:
+        P.append(f"Round **{a.round}** on `{a.target}` — the first recorded round here.\n")
+    P.append(f"Groups this round: **{', '.join(now_used) or 'none'}**.")
+    P.append(f"Groups still unread on this target after this round: **{', '.join(unread) or 'none — the library '
+              'has been exercised here; next round should re-run the thinnest groups over sharper slices '
+              '(concept clusters, flows) and a second opinion model'}**.\n")
+    P.append("**A further pass must not repeat this one.** Plan it with `--round N+1` against the same `--ledger`: "
+             "the next round is the complement, and it is chosen without being asked.\n")
     P.append("## How the selection was made\n")
     P.append("- **Enumerated** four slice families: the whole target, each module, each module×role archetype, "
              "and cross-folder **concept clusters** (config/env, retry/timeout, provider/adapter, serialization, "

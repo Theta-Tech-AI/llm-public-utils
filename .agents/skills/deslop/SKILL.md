@@ -59,7 +59,12 @@ The full protocol — slicing families, grouping rules, scoring, aggregation, tr
    by evidence strength, blast radius, prior misses, verification cost — and never penalise overlap *across*
    groups: different principles reading the same files is the point, while the same group twice is waste. Cut
    into must-run / if-budget / explicitly-skipped, with the skipped cells named and justified.
-5. **Choose the mechanism — whatever you have.** The decomposition is fixed; the execution is not. You may have
+5. **Rotate the rounds.** A second pass over the same code is the **complement of the first**, never a re-run:
+   plan it with `swarm_plan.py --ledger <path> --round N+1`, which excludes cells already run, keeps whole-target
+   orientation cells from repeating unless `--reorient`, down-weights groups already exercised, and states in
+   `plan.md` which groups remain unread. Report that rotation state as part of the result — the reader should not
+   have to ask for "another angle" to get one.
+6. **Choose the mechanism — whatever you have.** The decomposition is fixed; the execution is not. You may have
    parallel subagents, a harness that fans out on its own, model tiers (a strong model for the judgement-heavy
    groups, a cheap one for mechanical sweeps, a second model as an independent opinion), or just this context,
    one cell at a time. All are legitimate. What must hold: one cell per reading, whole files not snippets,
