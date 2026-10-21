@@ -24,5 +24,5 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Elegance](clean-code/elegance.md) | Minimality, accomplishment, modesty, revelation |
 | [Legibility](clean-code/legibility.md) | Navigable codebase: followable call paths, discoverable entry points, honest names |
 | [Patchwork](clean-code/patchwork.md) | Compensating code you cannot simplify by deleting — re-decide the interface, don't trim the guards |
-| [An Unclaimed Guarantee](clean-code/unclaimed-guarantee.md) | Tells: an added `WithCancel`/`done`/returned cleanup beside an existing `ctx`, a second lock beside a transaction, a hand-rolled retry beside a retry client. Name the guarantee it adds and the caller that would be wrong without it — no claimant, no finding |
+| [An Unclaimed Guarantee](clean-code/unclaimed-guarantee.md) | Tells: a second handle beside an existing owner — an added `WithCancel`/`done`/returned cleanup beside a `ctx`, a lock beside a transaction, a retry loop beside a retry client. For every one you see: name the guarantee it adds and the caller that would be wrong without it, then **delete it or claim it**. No claimant is the finding |
 | [Principle of Least Surprise](clean-code/least-surprise.md) | Components behave the way users expect |
