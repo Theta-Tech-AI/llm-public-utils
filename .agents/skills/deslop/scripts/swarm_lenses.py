@@ -47,6 +47,28 @@ def top_level_files() -> set[str]:
     return {p.name for p in sorted(REF.glob("*.md"))}
 
 
+def classify(m: dict) -> tuple[dict[str, str], set[str]]:
+    """Every markdown under references/ must be reachable by an enforced path. Returns (classes, all_files)."""
+    classes: dict[str, str] = {}
+    for lens, spec in m["lenses"].items():
+        for f in spec["files"]:
+            classes[f] = f"lens:{lens}"
+        for idx in spec.get("indexes", []):
+            classes[idx] = f"lens-index:{lens}"
+        for f in spec.get("also_protocols", []):
+            classes[f] = f"lens-protocol:{lens}"
+    for f in m["shared"]["protocols"]:
+        classes[f] = "lens-protocol:all"
+    for f in m["shared"].get("stage_protocols", {}):
+        classes[f] = "stage"
+    for f in m["shared"].get("situational", {}):
+        classes[f] = "situational"
+    reachable = set(classes)
+    everything = {f"{p.parent.name}/{p.name}" for p in REF.glob("*/*.md")}
+    everything |= {p.name for p in REF.glob("*.md")}
+    return classes, everything
+
+
 def audit(m: dict) -> tuple[list[str], list[str], list[str]]:
     assigned: dict[str, list[str]] = {}
     for lens, spec in m["lenses"].items():
@@ -57,11 +79,19 @@ def audit(m: dict) -> tuple[list[str], list[str], list[str]]:
     unknown = sorted(set(assigned) - everything)
     dupes = sorted(f"{f} -> {', '.join(l)}" for f, l in assigned.items() if len(l) > 1)
     # protocol files must exist too
-    named = set(m["shared"]["protocols"]) | set(m["shared"]["orchestrator_only"])
-    for spec in m["lenses"].values():
-        named |= set(spec.get("also_protocols", []))
+    classes, everything_all = classify(m)
+    named = set(classes)
     absent = sorted(n for n in named if not (REF / n).exists())
     problems = []
+    # reachability: no markdown left behind — a file reachable by no enforced path is the silent gap
+    unreachable = sorted(everything_all - set(classes))
+    if unreachable:
+        problems.append(f"{len(unreachable)} markdown file(s) reachable by no enforced path "
+                        f"(not a principle, lens protocol, lens index, stage reference or situational): "
+                        + ", ".join(unreachable))
+    unknown_kind = sorted(k for k, v in classes.items() if not v)
+    if unknown_kind:
+        problems.append("unclassified: " + ", ".join(unknown_kind))
     if missing:
         problems.append(f"{len(missing)} principle file(s) assigned to no lens: " + ", ".join(missing))
     if unknown:
@@ -79,13 +109,16 @@ theirs. Your value is depth inside your lens, not breadth outside it.
 
 ## 1. Read first, in full, before you look at any code
 
-Read each of these principle files completely — the whole file, not the index row. They are your lens, and \
-your findings must be expressed in their terms.
+Read each file below completely — the whole file, not the index row. The first is your category index: read it
+for the stance and the tells, then read every principle file in full. They are your lens, and your findings must
+be expressed in their terms.
 
 {reading_list}
 
-State at the top of your report which files you read. A file you did not read cannot be claimed by you, and \
-a lens that skips reading is the failure this protocol exists to prevent.
+Then write `{out_manifest}` — the read manifest, one absolute-or-reference-relative path per line, naming every
+file you actually opened. It is checked against your assignment: a file you did not read cannot be claimed by you,
+and a manifest missing a line is reported as a failed reading rather than a clean pass. This is the only
+verification the protocol has that a lens read what it was given.
 
 Your stance, in one line: {stance}
 
@@ -138,7 +171,8 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
     for lens in names:
         spec = lenses[lens]
         files = list(spec["files"]) + [p for p in spec.get("also_protocols", [])]
-        reading = "\n".join(f"- `references/{f}`" for f in m["shared"]["protocols"] + files)
+        ordered = list(spec.get("indexes", [])) + m["shared"]["protocols"] + files
+        reading = "\n".join(f"- `references/{f}`" for f in ordered)
         stem = f"{lens}-{label}-run{run}" if label else f"{lens}-run{run}"
         scope_note = ""
         scan_target = target
@@ -148,6 +182,7 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
             scan_target = f"the {len(paths)} files listed below — a cross-folder slice, not a directory"
             scope_note = f"\n### Scope files\n\n{files_md}\n"
         out_jsonl = str(outdir / f"findings-{stem}.jsonl")
+        out_manifest = str(outdir / f"files-read-{stem}.txt")
         body = PROMPT.format(
             n_peers=len(names) - 1,
             reading_list=reading,
@@ -155,10 +190,12 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
             target=scan_target,
             repo=repo,
             out_jsonl=out_jsonl,
+            out_manifest=out_manifest,
         ) + scope_note
         if spec.get("skip_when"):
             body += f"\nScope note: {spec['skip_when']}.\n"
         (outdir / f"lens-{stem}.md").write_text(body)
+        (outdir / f"assignment-{stem}.txt").write_text("\n".join(f"references/{f}" for f in ordered) + "\n")
         lines.append(f"{stem}\t{len(files) + len(m['shared']['protocols'])} files\t{out_jsonl}")
     (outdir / "manifest.txt").write_text(
         f"target: {target}\nrepo: {repo}\nrun: {run}\nlenses: {len(names)}\n\n" + "\n".join(lines) + "\n"
@@ -189,7 +226,14 @@ def main() -> int:
     m = load()
     if a.check:
         problems, everything, assigned = audit(m)
+        classes, all_md = classify(m)
         print(f"principle files: {len(everything)}   assigned: {len(assigned)}   lenses: {len(m['lenses'])}")
+        counts: dict[str, int] = {}
+        for kind in classes.values():
+            head = kind.split(":")[0]
+            counts[head] = counts.get(head, 0) + 1
+        print(f"markdown reachability: {len(classes)}/{len(all_md)} files reachable — "
+              + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
         if problems:
             for p in problems:
                 print("FAIL " + p)

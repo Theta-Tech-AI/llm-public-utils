@@ -102,6 +102,28 @@ you may regroup it. Two constraints:
   `scripts/swarm_lenses.py --check` it will prove the partition; if not, do the list comparison by hand once and
   trust it thereafter.
 
+**No markdown left behind.** Assignment is not enough for the files that are not principles, so the same check
+audits *reachability* of every markdown in the library. Each file must sit in exactly one enforced class:
+
+| Class | How it is reached | When |
+|---|---|---|
+| **principle** | one group's reading list, read in full | every reading |
+| **category index** | read **first** by the groups it governs — it carries the stance and the tells that show a reader what a violation looks like | before the principle files |
+| **lens protocol** | `auditing.md` and `when-to-relax.md` in every reading; a situational protocol such as `duplication.md` in the group that needs it | with the lens |
+| **stage reference** | an explicit trigger — "read this when reports arrive", "read this before you speak" | at its stage |
+| **situational** | on request, e.g. a worked example or the bibliography | never assumed |
+
+An index file is **not** a substitute for the principle files (it carries one-line essences; a finding needs the
+full text), and a principle file is not a substitute for the index (the index is what tells a reader what a
+violated boundary even looks like). Read both, index first. `--check` fails on any file reachable by none of these
+paths and prints the tally — on this library: `72/72 files reachable — lens 54, lens-index 4, lens-protocol 3,
+situational 2, stage 9`.
+
+That is a guarantee of **reachability**, not of reading. No harness can prove an agent opened a file, but a
+reading can be made to *declare* what it opened: every cell writes `files-read-<cell>.txt` beside its findings,
+and the aggregation stage diffs that manifest against the assignment the cell was given (§8). A missing line is a
+failed reading — the only check the protocol has against an agent claiming a lens it skimmed.
+
 The shipped groups, for reference — each is one way of looking, not a folder:
 
 | Group | Principles | The question it holds |

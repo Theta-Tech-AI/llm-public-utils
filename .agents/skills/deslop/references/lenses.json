@@ -6,20 +6,21 @@
       "auditing.md",
       "when-to-relax.md"
     ],
-    "orchestrator_only": [
-      "detecting-slop.md",
-      "measuring.md",
-      "campaign-mode.md",
-      "loop-until-dry.md",
-      "extending-the-library.md",
-      "further-reading.md",
-      "duplication.md",
-      "case-study-simplification-agent-fleet.md",
-      "pass-planning.md",
-      "aggregating-findings.md",
-      "consolidating-and-triage.md",
-      "reporting-results.md"
-    ]
+    "stage_protocols": {
+      "pass-planning.md": "before a pass that must cover the library, or after one that missed something",
+      "aggregating-findings.md": "the moment more than one reading has reported",
+      "consolidating-and-triage.md": "after aggregation, before anything is reported or filed",
+      "reporting-results.md": "immediately before reporting to the person who asked",
+      "measuring.md": "any pass that will claim a number",
+      "campaign-mode.md": "a whole-codebase campaign with a target",
+      "loop-until-dry.md": "a thorough pass that must iterate to dry",
+      "extending-the-library.md": "adding a principle to the library",
+      "detecting-slop.md": "building or questioning a detector"
+    },
+    "situational": {
+      "case-study-simplification-agent-fleet.md": "a worked KISS example, read on request",
+      "further-reading.md": "bibliography and attribution, not needed mid-audit"
+    }
   },
   "lenses": {
     "boundaries": {
@@ -30,6 +31,9 @@
         "architecture/one-logical-unit-one-home.md",
         "architecture/encapsulation.md",
         "architecture/orthogonality.md"
+      ],
+      "indexes": [
+        "architecture.md"
       ]
     },
     "duplication": {
@@ -41,6 +45,9 @@
       ],
       "also_protocols": [
         "duplication.md"
+      ],
+      "indexes": [
+        "architecture.md"
       ]
     },
     "coupling": {
@@ -52,6 +59,9 @@
         "architecture/solid.md",
         "architecture/command-query-separation.md",
         "architecture/convention-over-configuration.md"
+      ],
+      "indexes": [
+        "architecture.md"
       ]
     },
     "parsing": {
@@ -63,6 +73,10 @@
         "reliability/fail-fast.md",
         "reliability/postels-law.md",
         "reliability/design-by-contract.md"
+      ],
+      "indexes": [
+        "architecture.md",
+        "reliability.md"
       ]
     },
     "shape": {
@@ -75,6 +89,9 @@
         "clean-code/slap.md",
         "clean-code/kiss.md",
         "clean-code/yagni.md"
+      ],
+      "indexes": [
+        "clean-code.md"
       ]
     },
     "legibility": {
@@ -87,6 +104,9 @@
         "clean-code/least-surprise.md",
         "clean-code/patchwork.md",
         "clean-code/decide-dont-cope.md"
+      ],
+      "indexes": [
+        "clean-code.md"
       ]
     },
     "guarantees": {
@@ -99,6 +119,9 @@
         "reliability/resilience.md",
         "reliability/least-privilege.md",
         "reliability/boy-scout-rule.md"
+      ],
+      "indexes": [
+        "reliability.md"
       ]
     },
     "data-layer": {
@@ -118,7 +141,10 @@
         "data-layer/slop-tells.md",
         "data-layer/unused-indexes.md"
       ],
-      "skip_when": "the target has no schema, migration, ORM model or SQL \u2014 say so in the report rather than inventing findings"
+      "skip_when": "the target has no schema, migration, ORM model or SQL \u2014 say so in the report rather than inventing findings",
+      "indexes": [
+        "data-layer.md"
+      ]
     }
   }
 }

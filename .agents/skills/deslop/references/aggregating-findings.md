@@ -40,6 +40,8 @@ Two rules that do the real work here:
 
 Findings are half the report. For every cell that ran, record:
 
+- what it **declared reading** — the `files-read-<cell>.txt` manifest diffed against the assignment it was
+  given. A file assigned and never opened is a **failed reading**, whatever its report says;
 - what it **quoted** — a cell that quotes nothing has not read;
 - what it **declined**, and why — a declared "no SQL here" is a healthy result, and it is the only evidence that a
   group looked and found nothing;
