@@ -20,3 +20,4 @@ In relation to other principles, indexing foreign keys:
 |-----------|--------------|
 | [**Foreign Keys Are Not Optional**](foreign-keys.md) | The FK and its index live in different declarations — both required |
 | [**Index What You Filter, Join, and Sort On**](index-access-columns.md) | FK columns are the most-joined columns you have |
+| [**Every Join Needs an Access Path on the Side Being Probed**](join-access-paths.md) | The index exists so the cheap plan is available — and the plan is the proof |

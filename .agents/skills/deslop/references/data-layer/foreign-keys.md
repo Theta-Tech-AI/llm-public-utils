@@ -36,3 +36,13 @@ In relation to other principles, foreign keys:
 | [**Normalize to a Single Source of Truth**](normalization.md) | FKs keep the graph's single truth connected |
 | [**Enforce Invariants with Constraints**](invariant-constraints.md) | Referential integrity is the canonical DB-owned invariant |
 | [**Index Every Foreign Key**](index-foreign-keys.md) | The FK and its index are declared in different places — both are required |
+| [**Every Join Needs an Access Path on the Side Being Probed**](join-access-paths.md) | Which side of a given join the index must sit on, and why the plan decides |
+| [**Constrain the Domain in the Schema**](domain-constraints.md) | FK is the relational half of the same instinct |
+| [**Normalize to a Single Source of Truth**](normalization.md) | A reference column is only meaningful if the referenced row exists |
+
+## Prior art
+
+Foreign-key semantics and the `NOT VALID`/`VALIDATE CONSTRAINT` sequence are in the PostgreSQL manual,
+[*Constraints*](https://www.postgresql.org/docs/current/ddl-constraints.html) (§5.5.5, §5.5.5 *Foreign Keys* and
+the `ALTER TABLE … VALIDATE CONSTRAINT` note), with the indexing asymmetry measured in Laurenz Albe,
+[*Foreign key indexing and performance in PostgreSQL*](https://www.cybertec-postgresql.com/en/index-your-foreign-key/).
