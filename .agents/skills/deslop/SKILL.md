@@ -66,7 +66,8 @@ python3 -m py_compile scripts/*.py        # the instruments still load
 ```
 
 Add, rename or move a file and CI names the orphan and which index should link it — so reorganising the library
-cannot silently leave a principle behind.
+cannot silently leave a principle behind. Moving a file between roles is `scripts/taxonomy_move.py`, which
+rewrites every cross-link by resolving each target from its old location and re-emitting it from the new one.
 
 ## Plan the pass before you audit
 
