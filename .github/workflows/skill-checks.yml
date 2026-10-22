@@ -26,14 +26,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Every markdown is reachable from SKILL.md
-        run: python3 scripts/check_reachability.py --verbose
-
-      - name: Every principle file belongs to exactly one lens
-        run: python3 scripts/swarm_lenses.py --check
-
-      - name: Scripts compile
-        run: python3 -m py_compile scripts/*.py
+      - name: Reachability, partition, scripts (the same `make check` a contributor runs)
+        run: |
+          python3 scripts/check_reachability.py --verbose
+          python3 scripts/swarm_lenses.py --check
+          python3 -m py_compile scripts/*.py
 
       - name: Planning scripts run end to end
         run: |
