@@ -325,7 +325,10 @@ def select_cells(cells: list[Cell], budget: int, per_module: int,
     # swarm, while the same lens reading the same files twice is money burnt. A shared "covered" set would let a
     # cross-folder concept cluster (which touches the whole tree) veto every module cell for every other lens.
     covered: dict[str, set[str]] = defaultdict(set)
-    # orientation is not optional: it runs before the budgeted drills, as the first wave
+    if len(globs) > budget:
+        raise SystemExit(f"--budget {budget} is below the {len(globs)} orientation cells; a pass smaller than its "
+                         f"own orientation is not a pass. Raise the budget or narrow the target.")
+    # orientation is not optional, and it is COUNTED: a budget is a ceiling, not a floor for the globals
     for c in globs:
         c.selected, c.reason = True, "orientation — always include"
         chosen.append(c)
@@ -525,7 +528,7 @@ def main() -> int:
             key = f"{c.lens}/{c.label}"
             used[key] += 1
             label = c.label if used[key] == 1 else f"{c.label}-{used[key]}"
-            if c.kind == "concept":
+            if c.kind in {"concept", "schema"}:
                 flist = out / f"cell-{c.lens}-{label}.files"
                 flist.write_text("\n".join(c._files) + "\n")
                 S.append(f'python3 "$SRC/scripts/swarm_lenses.py" --emit "$OUT" --target "{a.target}" '

@@ -108,10 +108,25 @@ def main() -> int:
 
     rows, bad = load([Path(p) for p in a.findings])
     if not rows:
-        print("no findings parsed", file=sys.stderr)
-        for b in bad:
-            print("  " + b, file=sys.stderr)
-        return 1
+        # a clean pass is a result, not an error: still validate every expected cell against its manifest
+        problems = [b for b in bad]
+        if a.assignments:
+            adir = Path(a.assignments)
+            for assign in sorted(adir.glob("assignment-*.txt")):
+                stem = assign.stem.replace("assignment-", "")
+                read = adir / f"files-read-{stem}.txt"
+                expected = {norm_file(l.strip()) for l in assign.read_text().splitlines() if l.strip()}
+                if not read.exists():
+                    problems.append(f"{stem}: no read manifest — failed reading")
+                    continue
+                declared = {norm_file(l.strip().lstrip("-* ")) for l in read.read_text().splitlines() if l.strip()}
+                missing = sorted(expected - declared)
+                if missing:
+                    problems.append(f"{stem}: {len(expected)-len(missing)}/{len(expected)} read, missing " + ", ".join(missing))
+        print("no findings parsed — a clean pass", file=sys.stderr)
+        for p_ in problems:
+            print("  " + p_, file=sys.stderr)
+        return 0 if not problems else 1
 
     groups = cluster(rows, a.window)
     for g in groups:
@@ -141,11 +156,11 @@ def main() -> int:
             read = adir / f"files-read-{stem}.txt"
             if not assign.exists():
                 continue
-            expected = {Path(l.strip()).name for l in assign.read_text().splitlines() if l.strip()}
+            expected = {norm_file(l.strip()) for l in assign.read_text().splitlines() if l.strip()}
             if not read.exists():
                 manifest_report.append(f"- **{stem}** — no read manifest written: treat as a failed reading")
                 continue
-            declared = {Path(l.strip().lstrip("-* ")).name for l in read.read_text().splitlines() if l.strip()}
+            declared = {norm_file(l.strip().lstrip("-* ")) for l in read.read_text().splitlines() if l.strip()}
             missing = sorted(expected - declared)
             if missing:
                 manifest_report.append(f"- **{stem}** — {len(expected) - len(missing)}/{len(expected)} read, "

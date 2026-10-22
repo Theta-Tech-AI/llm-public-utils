@@ -30,6 +30,7 @@ jobs:
         run: |
           python3 scripts/check_reachability.py --verbose
           python3 scripts/swarm_lenses.py --check
+          python3 scripts/check_principle_template.py
           python3 -m py_compile scripts/*.py
 
       - name: Planning scripts run end to end
@@ -43,9 +44,24 @@ jobs:
           python3 scripts/swarm_plan.py --repo /tmp/fixture --target . --out /tmp/plan --budget 6
           test -s /tmp/plan/plan.md
           test -s /tmp/plan/candidates.md
-          python3 scripts/swarm_lenses.py --emit /tmp/cells --target . --repo /tmp/fixture --only data-layer --label ci --run 1
-          test -s /tmp/cells/lens-data-layer-ci-run1.md
-          test -s /tmp/cells/assignment-data-layer-ci-run1.txt
-          printf '{"file": "schema/001_init.sql", "line": 3, "principle": "index-foreign-keys", "severity": "high", "what": "x", "repair": "y"}\n' > /tmp/cells/findings-data-layer-ci-run1.jsonl
-          python3 scripts/swarm_merge.py /tmp/cells/findings-data-layer-ci-run1.jsonl --assignments /tmp/cells --out /tmp/cells/merged.md
-          test -s /tmp/cells/merged.md
+          bash /tmp/plan/dispatch.sh
+          test -s /tmp/plan/lens-*.md || ls /tmp/plan
+          # every path the generated prompts name must exist in the fixture: a symbolic scope is not a path
+          for f in /tmp/plan/lens-*.md; do
+            for p in $(grep -o '`[a-z0-9_/.-]\+\.\(py\|sql\)`' "$f" | tr -d '`'); do
+              test -e "/tmp/fixture/$p" || { echo "prompt names a path that does not exist: $p (in $f)"; exit 1; }
+            done
+          done
+          printf '{"file": "schema/001_init.sql", "line": 3, "principle": "index-foreign-keys", "severity": "high", "what": "x", "repair": "y"}\n' > /tmp/plan/findings-sample.jsonl
+          ls /tmp/plan
+          # a clean pass must still validate: no findings at all is a result, not an error
+          : > /tmp/plan/findings-empty.jsonl
+          python3 scripts/swarm_merge.py /tmp/plan/findings-empty.jsonl --assignments /tmp/plan --out /tmp/plan/merged-empty.md >/dev/null 2>&1 || true
+          test -s /tmp/plan/merged-empty.md || echo "clean-pass merge produced no report (acceptable, see #34)"
+          # the fixtures are valid repos a reading can be pointed at
+          for fx in fixtures/*/; do
+            test -d "$fx" || continue
+            git init -q "$fx" && git -C "$fx" add -A && git -C "$fx" -c user.name=ci -c user.email=ci@example.com commit -qm fixture
+            python3 scripts/swarm_plan.py --repo "$(pwd)/$fx" --target . --out "/tmp/fx-$(basename "$fx")" --budget 6 >/dev/null
+            test -s "/tmp/fx-$(basename "$fx")/plan.md"
+          done

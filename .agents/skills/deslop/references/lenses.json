@@ -7,9 +7,10 @@
       "readings/when-to-relax.md"
     ],
     "stage_protocols": {
-      "stages/planning.md": "before a pass that must cover the library, or after one that missed something",
       "stages/aggregation.md": "the moment more than one reading has reported",
       "stages/consolidation.md": "after aggregation, before anything is reported or filed",
+      "stages/planning.md": "before a pass that must cover the library, or after one that missed something",
+      "stages/recipes.md": "at the start of any pass \u2014 pick the invocation before the readings",
       "stages/reporting.md": "immediately before reporting to the person who asked"
     },
     "modes": {
@@ -19,6 +20,7 @@
     "library": {
       "library/case-study-simplification-agent-fleet.md": "a worked example, read on request",
       "library/detecting-slop.md": "building or questioning a detector",
+      "library/evaluation.md": "before claiming a pass proved something, and after any control run",
       "library/extending-the-library.md": "adding a principle to the library",
       "library/further-reading.md": "bibliography and attribution, not needed mid-audit",
       "library/measuring.md": "any pass that will claim a number"
@@ -135,24 +137,31 @@
         "principles/reliability.md"
       ]
     },
-    "data-layer": {
-      "stance": "If there is a database: what does the schema promise, where is an invariant only in application code, and what access path does each query actually have?",
+    "data-integrity": {
+      "stance": "What does the schema promise and enforce \u2014 keys, references, constraints, one home per fact?",
       "files": [
         "principles/data-layer/database-identity.md",
         "principles/data-layer/database-timestamps.md",
         "principles/data-layer/domain-constraints.md",
         "principles/data-layer/foreign-keys.md",
+        "principles/data-layer/invariant-constraints.md",
+        "principles/data-layer/normalization.md",
+        "principles/data-layer/slop-tells.md"
+      ],
+      "indexes": [
+        "principles/data-layer.md"
+      ]
+    },
+    "query-access-paths": {
+      "stance": "How does each query actually reach its rows \u2014 access paths, index shape, joins, and what defeats them?",
+      "files": [
         "principles/data-layer/index-access-columns.md",
         "principles/data-layer/index-defeaters.md",
         "principles/data-layer/index-foreign-keys.md",
         "principles/data-layer/index-query-shape.md",
         "principles/data-layer/join-access-paths.md",
-        "principles/data-layer/invariant-constraints.md",
-        "principles/data-layer/normalization.md",
-        "principles/data-layer/slop-tells.md",
         "principles/data-layer/unused-indexes.md"
       ],
-      "skip_when": "the target has no schema, migration, ORM model or SQL \u2014 say so in the report rather than inventing findings",
       "indexes": [
         "principles/data-layer.md"
       ]
