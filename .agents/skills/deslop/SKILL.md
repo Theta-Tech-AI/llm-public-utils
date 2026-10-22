@@ -24,12 +24,14 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 |------|------|
 | [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: contexts where a principle is over-applied, and the meta-principle that says a violation worth "fixing" into worse code is not a violation |
+| [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — five asks, five invocations: scoped pass, directed cell, coverage pass, campaign, library extension. Pick the shape before the readings |
 | [references/stages/planning.md](references/stages/planning.md) | **Before a pass that must cover the library** — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
 | [references/stages/aggregation.md](references/stages/aggregation.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
 | [references/stages/consolidation.md](references/stages/consolidation.md) | **After aggregation, before anything is reported or filed** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse findings into concerns, group into a milestone |
 | [references/stages/reporting.md](references/stages/reporting.md) | **Immediately before you speak to the person who asked** — lead with the answer, bucket the work, keep it short, and never bury the result in method |
 | [references/modes/campaign.md](references/modes/campaign.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
 | [references/modes/loop-until-dry.md](references/modes/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
+| [references/library/evaluation.md](references/library/evaluation.md) | **Before claiming a pass proved anything**, and after any control run — the recorded controls, their numbers, and how to add one |
 | [references/library/measuring.md](references/library/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
 | [references/library/extending-the-library.md](references/library/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
 | [references/library/detecting-slop.md](references/library/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
@@ -37,7 +39,7 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
 | [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
-| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 54 principle files into 8 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
+| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 54 principle files into 9 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
 
 ## How the library is organised
 
@@ -104,8 +106,11 @@ stop).
 ## Principle references (indexes)
 
 Each index is a short table of principles with their one-line essences, linking to self-contained files under
-`references/principles/<category>/`. For a **scoped pass**, read the indexes and open a full principle file only
-when a finding implicates it — that is what keeps a small pass cheap.
+`references/principles/<category>/`. **Scope bounds the code you read, not the principles you apply.** A scoped
+pass still gets assigned readings — one or two groups, chosen by what the code is (see [recipes](references/stages/recipes.md)) — because reading the indexes and
+opening a principle only when a finding "implicates" it is the mechanism that leaves Separation of Concerns
+unopened forever. Index-only reconnaissance is a legitimate mode, but name it as one, and never let it be the
+default.
 
 Know its cost: a pass can only open a principle it has already suspected, so the ones that need a boundary held
 in mind — above all **Separation of Concerns** — are routinely never read. When the ask is coverage rather than

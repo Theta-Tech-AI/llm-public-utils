@@ -91,7 +91,7 @@ same code. Boundary ownership belongs with Modularity and One Logical Unit One H
 with A Helper That Must Exist and No Silent Defaults; shape with KISS and Guard Clauses; guarantees (state,
 lifetime, cancellation, privilege) together; the data layer together.
 
-The library ships a default grouping in [lenses.json](../lenses.json) — eight groups over 53 principle files — and
+The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 54 principle files — and
 you may regroup it. Two constraints:
 
 - **Related principles must sit together.** Splitting DRY from Single Source of Truth, or Parse Don't Validate
@@ -126,16 +126,8 @@ failed reading — the only check the protocol has against an agent claiming a l
 
 The shipped groups, for reference — each is one way of looking, not a folder:
 
-| Group | Principles | The question it holds |
-|---|---|---|
-| `boundaries` | Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Orthogonality | Where does this code belong, and does each part hold one concern? |
-| `duplication` | DRY, Single Source of Truth, Code Reusability | What knowledge exists more than once, and where is its single owner? |
-| `coupling` | Law of Demeter, DI, Composition Over Inheritance, SOLID, CQS, Convention Over Configuration | What does each unit know about, or construct, that it should have been handed? |
-| `parsing` | Parse Don't Validate, A Helper That Must Exist Is an Architecture Finding, No Silent Defaults, Fail-Fast, Postel's Law, Design by Contract | Where does external input enter, and which single component turns it into a decision? |
-| `shape` | Small Functions, Guard Clauses, Cognitive Load, Cyclomatic Complexity, SLAP, KISS, YAGNI | How big and how tangled is each unit's control flow? |
-| `legibility` | Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork, Decide Don't Cope | Can a competent stranger read this without the author present? |
-| `guarantees` | An Unclaimed Guarantee, Immutability, Idempotency, Observability, Resilience, Least Privilege, Boy Scout Rule | What is promised, who claims the promise, what happens when it breaks? |
-| `data-layer` | the thirteen database principles | What does the schema promise, where is an invariant only in application code, and what access path does each query actually have? |
+The roster itself is `lenses.json` and is not copied here — a second copy is a second thing to keep
+true. Read it (`python3 scripts/swarm_lenses.py --list`) when you need the membership.
 
 Every group also carries [auditing.md](../readings/auditing.md) (report format and the input census) and
 [when-to-relax.md](../readings/when-to-relax.md) as its guardrail.

@@ -116,9 +116,7 @@ surface; the principle file is the payload.
 
 ## 5. Publish
 
-- **Branch and open a PR against `production`** — that is the default branch here, not `main`. There is no
-  CI and no index generator in this repo: the reviewer is the only gate, so the index rows and the links are
-  yours to get right.
+- **Branch and open a PR against `production`** — that is the default branch here, not `main`.The library is checked in CI now: `.github/workflows/skill-checks.yml` runs reachability (every markdown must be reachable from `SKILL.md`), the lens partition (`scripts/swarm_lenses.py --check`, which also refuses a file whose directory contradicts its role) and `py_compile`; `make check` runs the same three locally.
 - **Verify the PR, not the push** — `gh pr view <n> --json files,baseRefName,state`.
 - **Consumers re-pin their own copies.** Projects install this library with `npx skills`, which records the
   source and a `computedHash` in `skills-lock.json`; after a merge, a consumer picks up the new principle
