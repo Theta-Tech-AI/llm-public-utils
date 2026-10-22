@@ -22,7 +22,7 @@ exotic; they are precisely where the expensive slop lives.
   and re-express one design in another idiom. A copy renames its files, functions and variables and shares
   no lines, so name-matching finds only the copies nobody bothered to rename. What survives a rename is what the
   code *does*: the primitives it calls. (The behaviour-first hunt is in
-  [duplication.md](duplication.md) and [one-logical-unit-one-home.md](../principles/architecture/one-logical-unit-one-home.md).)
+  [duplication.md](../readings/duplication.md) and [one-logical-unit-one-home.md](../principles/architecture/one-logical-unit-one-home.md).)
 - **Linters and type checkers see contracts, never cohesion.** A unit split across four packages is
   perfectly typed and perfectly linted.
 - **Coverage sees what tests touch**, and a fork is usually well covered — that is why it was written.
@@ -56,8 +56,8 @@ Reference results, for calibration. Each fresh agent had only the markdown, on a
 | Detector tried | Fresh markdown-only agent | Verdict |
 |----------------|---------------------------|---------|
 | File-name and role-word scanner, ~130 lines; its first version missed the main finding, and its later sections were fitted to one example | Found the main sibling set plus lock and activity copies in 12 calls, about a minute | **Deleted** |
-| Name-blind fingerprint scanner, ~90 lines (library calls, SQL tables, status values, exceptions per file, ranked by overlap) | Nine verified sets in 39 calls and under three minutes, by grepping for a primitive and reading the hits: lease-heartbeat threads (6), content hashing (6), TTL caches (4), schema bootstrap (6), run-worker skeletons (4), retrying HTTP clients, project-lock context managers, object-store wrappers (8), CSV exports — the scanner ranked the heartbeats and the object-store wrappers first and missed most of the rest | **Deleted**; the method is in [duplication.md](duplication.md) |
-| Field-overlap clustering of record shapes, ~160 lines | Ten calls and under a minute, by writing a throwaway field-overlap script: the activity event described 6 times, user identity 5 times | **Deleted**; the recipe is in [duplication.md](duplication.md) |
+| Name-blind fingerprint scanner, ~90 lines (library calls, SQL tables, status values, exceptions per file, ranked by overlap) | Nine verified sets in 39 calls and under three minutes, by grepping for a primitive and reading the hits: lease-heartbeat threads (6), content hashing (6), TTL caches (4), schema bootstrap (6), run-worker skeletons (4), retrying HTTP clients, project-lock context managers, object-store wrappers (8), CSV exports — the scanner ranked the heartbeats and the object-store wrappers first and missed most of the rest | **Deleted**; the method is in [duplication.md](../readings/duplication.md) |
+| Field-overlap clustering of record shapes, ~160 lines | Ten calls and under a minute, by writing a throwaway field-overlap script: the activity event described 6 times, user identity 5 times | **Deleted**; the recipe is in [duplication.md](../readings/duplication.md) |
 
 The pattern repeats: a detector fitted to the finding in hand describes that finding, while an agent working
 from a *method* (grep for the primitive, group by content, read the hits) generalises past it. Each scanner
@@ -142,7 +142,7 @@ grep -rlE 'Event\(\)' <src> --include='*.py' | xargs grep -lE '\.wait\(' | xargs
 ```
 
 If a view fits in one command, it belongs in the instructions, not in a file. See
-[duplication.md](duplication.md) for the primitives to grep for and the token scanner's proper role.
+[duplication.md](../readings/duplication.md) for the primitives to grep for and the token scanner's proper role.
 
 ## Detection runs twice: at design, and at audit
 
@@ -165,8 +165,8 @@ In relation to other references, detecting slop governs the detector rather than
 
 | Reference | Relationship |
 |-----------|--------------|
-| [**Hunting Duplication**](duplication.md) | Its scanners look for repeated text; this file is about the detector's own packaging |
-| [**Auditing**](auditing.md) | The pass this file arms — the judgment stays with the agent |
+| [**Hunting Duplication**](../readings/duplication.md) | Its scanners look for repeated text; this file is about the detector's own packaging |
+| [**Auditing**](../readings/auditing.md) | The pass this file arms — the judgment stays with the agent |
 | [**Measuring a Campaign**](../library/measuring.md) | The same discipline, a different object: measure the mechanism, not your part in it |
 | [**Extending the Library**](../library/extending-the-library.md) | A detector script is a library artifact; the discovery-first rule applies before writing one |
 | [**One Logical Unit, One Home**](../principles/architecture/one-logical-unit-one-home.md) | The finding class that motivated the control test |

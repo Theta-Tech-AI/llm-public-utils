@@ -70,7 +70,7 @@ Two obligations decide whether a pass was worth running:
   which caller would be wrong without it — then delete it or claim it. A pass that only lists behaviour bugs has
   not looked for this class. See [clean-code/unclaimed-guarantee.md](../principles/clean-code/unclaimed-guarantee.md).
 - **Detection is prose you apply.** The tools' blind spots, and the control a detector script must pass
-  before it earns its lines, are in [detecting-slop.md](detecting-slop.md).
+  before it earns its lines, are in [detecting-slop.md](../library/detecting-slop.md).
 - **Census the inputs; do not scan for names.** Before writing the report, enumerate every external input the
   target consumes — environment variables, request bodies, query params, database rows, provider payloads, file
   contents — and for each one answer three questions: *where does it enter, which single component turns it into
