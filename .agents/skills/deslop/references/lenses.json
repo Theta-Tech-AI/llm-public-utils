@@ -1,5 +1,5 @@
 {
-  "_comment": "Default principle grouping for any planned deslop pass (readings applied to slices). Every per-principle file under references/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance \u2014 the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
+  "_comment": "Default principle grouping for any planned deslop pass (readings applied to slices). Every per-principle file under references/principles/<category>/ must appear in exactly one lens; scripts/swarm_lenses.py --check enforces that and refuses to emit prompts otherwise. Grouping logic: a lens is a single reading stance \u2014 the principles in it are the ones whose findings a reader must weigh against each other (boundary ownership vs boundary parsing vs shape vs legibility). Related principles deliberately live together so a swarmed pass does not report the same smell twice under two names.",
   "version": 1,
   "shared": {
     "protocols": [
@@ -17,11 +17,11 @@
       "modes/loop-until-dry.md": "a thorough pass that iterates until a scan finds nothing"
     },
     "library": {
-      "library/extending-the-library.md": "adding a principle to the library",
-      "library/measuring.md": "any pass that will claim a number",
-      "readings/detecting-slop.md": "building or questioning a detector",
       "library/case-study-simplification-agent-fleet.md": "a worked example, read on request",
-      "library/further-reading.md": "bibliography and attribution, not needed mid-audit"
+      "library/detecting-slop.md": "building or questioning a detector",
+      "library/extending-the-library.md": "adding a principle to the library",
+      "library/further-reading.md": "bibliography and attribution, not needed mid-audit",
+      "library/measuring.md": "any pass that will claim a number"
     },
     "taxonomy": {
       "stages/": "the four stages of a pass \u2014 planning, aggregation, consolidation, reporting",
@@ -130,6 +130,8 @@
         "principles/reliability/boy-scout-rule.md"
       ],
       "indexes": [
+        "principles/architecture.md",
+        "principles/clean-code.md",
         "principles/reliability.md"
       ]
     },

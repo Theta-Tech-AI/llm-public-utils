@@ -36,7 +36,7 @@ def load() -> dict:
 
 
 def principle_files() -> set[str]:
-    """Every per-principle file: references/<category>/<slug>.md (top-level files are protocols)."""
+    """Every per-principle file: references/principles/<category>/<slug>.md."""
     return {str(p.relative_to(REF)) for p in sorted((REF / "principles").glob("*/*.md"))}
 
 
@@ -88,8 +88,28 @@ def audit(m: dict) -> tuple[list[str], list[str], list[str]]:
             problems.append(f"{len(stray)} file(s) at the references root — the taxonomy has no role for them "
                             f"(stages/, readings/, modes/, principles/, library/): " + ", ".join(stray))
         problems.append(f"{len(unreachable)} markdown file(s) reachable by no enforced path "
-                        f"(not a principle, lens protocol, lens index, stage reference or situational): "
+                        f"(not a principle, lens protocol, lens index, stage, mode or library reference): "
                         + ", ".join(unreachable))
+    # the directory must BE the class: a file registered under one role but living in another directory is the
+    # contradiction this taxonomy exists to prevent, and registration alone would let it pass
+    DIR_FOR_KIND = {"stages": "stage", "readings": "lens-protocol", "modes": "mode", "library": "library"}
+    misplaced = []
+    for path, kind in sorted(classes.items()):
+        head = kind.split(":")[0]
+        top = path.split("/")[0] if "/" in path else ""
+        if head == "lens":
+            ok = path.startswith("principles/") and path.count("/") == 2
+        elif head == "lens-index":
+            ok = path.startswith("principles/") and path.count("/") == 1
+        elif head == "lens-protocol":
+            ok = top in {"readings", "principles"} or path.endswith("protocols")
+        else:
+            ok = DIR_FOR_KIND.get(top, "") == head
+        if not ok:
+            misplaced.append(f"{path} (registered as {kind}, sits under {top or 'the root'})")
+    if misplaced:
+        problems.append(f"{len(misplaced)} file(s) whose directory contradicts their registered role: "
+                        + "; ".join(misplaced))
     unknown_kind = sorted(k for k, v in classes.items() if not v)
     if unknown_kind:
         problems.append("unclassified: " + ", ".join(unknown_kind))

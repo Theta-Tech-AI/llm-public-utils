@@ -4,7 +4,7 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈16 KB (≈4k tokens) and the `references/` tree is ≈325 KB across 72 files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈16 KB (≈4k tokens) and the `references/` tree is ≈325 KB across 72 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
@@ -16,6 +16,29 @@ Whether or not you use this deslop command on your code base, you should read al
 
 ---
 
+## Where to read what
+
+One row per file, in the order a pass meets them. Every markdown in this skill is reachable from this table or from a category index below, and CI fails if one is not.
+
+| File | When |
+|------|------|
+| [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
+| [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: contexts where a principle is over-applied, and the meta-principle that says a violation worth "fixing" into worse code is not a violation |
+| [references/stages/planning.md](references/stages/planning.md) | **Before a pass that must cover the library** — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
+| [references/stages/aggregation.md](references/stages/aggregation.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
+| [references/stages/consolidation.md](references/stages/consolidation.md) | **After aggregation, before anything is reported or filed** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse findings into concerns, group into a milestone |
+| [references/stages/reporting.md](references/stages/reporting.md) | **Immediately before you speak to the person who asked** — lead with the answer, bucket the work, keep it short, and never bury the result in method |
+| [references/modes/campaign.md](references/modes/campaign.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
+| [references/modes/loop-until-dry.md](references/modes/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
+| [references/library/measuring.md](references/library/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
+| [references/library/extending-the-library.md](references/library/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
+| [references/library/detecting-slop.md](references/library/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
+| [references/principles/data-layer.md](references/principles/data-layer.md) | The target has a database — schema, SQL, migrations, foreign keys, normalization, constraints, **indexes and join access paths alongside the queries that must use them** (**The Data Layer**). Treat the schema as a slice in its own right: it usually sits outside the directory being audited, and no index finding is provable from the DDL alone |
+| [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
+| [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
+| [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
+| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 54 principle files into 8 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
+
 ## How the library is organised
 
 `references/` is a taxonomy by **role in the pass**, not by topic — topic is already carried by the principle
@@ -25,10 +48,10 @@ category. The directory a file sits in tells a reader what to do with it, and th
 | Directory | Role | Read |
 |---|---|---|
 | `references/stages/` | the four moments of a pass — `planning`, `aggregation`, `consolidation`, `reporting` | at its stage, in order |
-| `references/readings/` | what a single reading carries — `auditing` (the report format and census), `when-to-relax` (the guardrail), `duplication` (the dedup sweep), `detecting-slop` (why detection is prose) | `auditing` and `when-to-relax` in **every** reading |
+| `references/readings/` | what a single reading carries — `auditing` (the report format and census), `when-to-relax` (the guardrail), `duplication` (the dedup sweep) | `auditing` and `when-to-relax` in **every** reading |
 | `references/modes/` | modes a pass can run in — `campaign` (measured whole-codebase programme), `loop-until-dry` | when the ask names the mode |
 | `references/principles/` | `<category>.md` is a category **index** (read first: the stance and the tells); `<category>/<slug>.md` is one principle | the index first, then every file of an assigned group, in full |
-| `references/library/` | about the library itself — extend it, measure it, cite it, see it worked | on request |
+| `references/library/` | reference opened when the ask needs it — claim a number, add a principle, build a detector, cite a source, see a worked example | on request |
 | `references/lenses.json` | the principle partition, the indexes each group reads, and the trigger for each stage/mode/library file | by the scripts, and by anyone planning |
 
 **This file is the manifest.** No harness builds one: only `SKILL.md` loads when the skill activates, and every
@@ -44,21 +67,6 @@ python3 -m py_compile scripts/*.py        # the instruments still load
 
 Add, rename or move a file and CI names the orphan and which index should link it — so reorganising the library
 cannot silently leave a principle behind.
-
-## Workflow references (read these to run a pass)
-
-| File | When |
-|------|------|
-| [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: contexts where a principle is over-applied, and the meta-principle that says a violation worth "fixing" into worse code is not a violation |
-| [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
-| [references/modes/loop-until-dry.md](references/modes/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
-| [references/stages/planning.md](references/stages/planning.md) | **Before a pass that must cover the library** — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
-| [references/stages/aggregation.md](references/stages/aggregation.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
-| [references/stages/consolidation.md](references/stages/consolidation.md) | **After aggregation, before anything is reported or filed** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse findings into concerns, group into a milestone |
-| [references/stages/reporting.md](references/stages/reporting.md) | **Immediately before you speak to the person who asked** — lead with the answer, bucket the work, keep it short, and never bury the result in method |
-| [references/modes/campaign.md](references/modes/campaign.md) | **Whole-codebase campaigns** — "massive simplification", "across the board", "minimum 30% LOC", "get it all done", "present me a PR". The five sweeps, the target discipline, running it at scale, and the delivery protocol |
-| [references/library/measuring.md](references/library/measuring.md) | **Any pass that will claim a number** — the four measurement harnesses, the unbiased task corpus, the metrics that carry the story (nesting depth, `elif` chains, cyclomatic complexity), and the honest before/after reporting skeleton |
-| [references/library/extending-the-library.md](references/library/extending-the-library.md) | **Adding a principle** — the ask is a *gap* in the library, not a pass over code: discovery against every existing principle, research, the house draft format, both indexes, and the publish path |
 
 ## Plan the pass before you audit
 
@@ -108,17 +116,6 @@ group its files, forces each reading to open them, and merges the reports.
 | [references/principles/clean-code.md](references/principles/clean-code.md) | **Clean Code** — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork, An Unclaimed Guarantee |
 | [references/principles/architecture.md](references/principles/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency |
 | [references/principles/reliability.md](references/principles/reliability.md) | **Reliability** — Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability |
-
-## Situational references (read when relevant)
-
-| File | Read when |
-|------|-----------|
-| [references/principles/data-layer.md](references/principles/data-layer.md) | The target has a database — schema, SQL, migrations, foreign keys, normalization, constraints, **indexes and join access paths alongside the queries that must use them** (**The Data Layer**). Treat the schema as a slice in its own right: it usually sits outside the directory being audited, and no index finding is provable from the DDL alone |
-| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 54 principle files into 8 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
-| [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
-| [references/readings/detecting-slop.md](references/readings/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
-| [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
-| [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
 
 ---
 
