@@ -33,6 +33,12 @@ If the happy path is already proven reliable (fresh green e2e in CI, a just-comp
 
 Once the path reliably completes, groom it per [comb.md](comb.md): repeat the happy path with slight deviations — different data, states, accounts, valid payloads — teasing out knots (wrong copy, stale state, dead ends, loading polish). Start wide, go finer each pass. Browser-heavy for webapps per [driving.md](driving.md); API or hybrid when the happy path is a call sequence.
 
+## Phase 2b — Persona panel (optional, and the default before a launch)
+
+Where comb grooms the path with **your** temperament, the panel replaces the driver: five independent first-time users — impatient, skeptic, mobile, literal reader, breaker — each cold, each alone, each pursuing first success in character and recording exactly where they get confused or quit. Merge their findings into one list ranked by how many personas hit each defect; a defect four strangers meet outranks anything you found by introspection. Full protocol, including the fix-then-rerun-the-identical-panel proof: [personas.md](personas.md).
+
+Run it **instead of** a comb pass when the question is "will strangers get through this?", and **after** comb when you want the breadth signal before release. It does not replace the reliability gate — the panel assumes the happy path completes — and it does not replace mischief, whose breaker persona contributes jitter rather than deep abuse.
+
 ## Phase 3 — Mischief (1-3 passes)
 
 Now that you know the happy path cold, refuse it per [mischief.md](mischief.md): wrong order, double-submit, mid-abandon, garbage input, concurrent mutation across tabs/clients. Aim the waves at whatever Phase 2 revealed as load-bearing.
@@ -49,5 +55,7 @@ Code-first, per [bug-hunter.md](bug-hunter.md): multi-angle review of layers, wo
 ## When to deviate
 
 - The user asked for one mode only → run that mode. This process is the default for an open-ended "stress test this."
+- It's a launch / onboarding change about to meet strangers → insert [Phase 2b, the persona panel](personas.md), and rerun that same panel after the fixes as its own proof step.
+- The findings are all polish and the panel hasn't run → the temperaments you didn't try are the unexplored surface; run the panel before concluding the app is clean.
 - Time-boxed → one real pass per phase beats three shallow ones or skipping a phase.
 - Phase 1 keeps failing → the run legitimately ends early; a broken happy path *is* the headline finding.
