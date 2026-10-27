@@ -1,6 +1,6 @@
 ---
 name: stress
-description: Stress-test apps (especially webapps) — confirm reliability, comb happy paths, cause mischief, and hunt bugs in code — via agent browser, API scripts, or both. Use whenever the user wants to find bugs, edge cases, knots, break an app, harden UX or APIs, QA a flow, or catch issues before users do — even if they only say "try the app", "test this", "hit the API", or "see what breaks".
+description: "Stress-test apps (especially webapps) — confirm reliability, comb happy paths, cause mischief, run a panel of distinct first-time users, and hunt bugs in code — via agent browser, API scripts, or both. Use whenever the user wants to find bugs, edge cases, knots, break an app, harden UX or APIs, QA a flow, run launch or onboarding QA, test what confuses real users, simulate different users or personas, or catch issues before users do — even if they only say try the app, test this, hit the API, or see what breaks."
 ---
 
 # Stress: Unearth Bugs Before Users Do
@@ -36,6 +36,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 - [references/comb.md](references/comb.md)
 - [references/mischief.md](references/mischief.md)
 - [references/bug-hunter.md](references/bug-hunter.md)
+- [references/personas.md](references/personas.md) — **the first-time-user panel** (5 independent persona agents, findings ranked by how many hit them, rerun to prove the fix)
 
 ## Before you start
 
@@ -50,6 +51,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 - **"Walk through the happy path" / "comb" / polish** → comb
 - **"Break it" / "try to mess it up" / chaos** → mischief (optionally after one comb pass so you know the happy path)
 - **"Review the code for bugs"** → bug hunter
+- **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents in parallel, merged into one list ranked by how many personas each defect hits, then a rerun of the identical panel to prove the fixes
 - **"Hit the API" / contract / concurrency stress** → comb or mischief with an **API-first** drive plan
 - **"Stress test this" / vague** → the standard run in [process.md](references/process.md): reliability first, then comb, then mischief; bug-hunt ugly code along the way
 
