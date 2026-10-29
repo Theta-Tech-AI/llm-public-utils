@@ -20,3 +20,5 @@ In relation to other principles, orthogonality:
 | [**Modularity**](modularity.md) | Self-contained modules are the vehicle |
 | [**Dependency Injection**](dependency-injection.md) | DI removes a whole axis of coupling |
 | [**DRY**](dry.md) | Duplicated knowledge is non-orthogonal by definition — one change needs N edits |
+| [**Implicit Coupling**](implicit-coupling.md) | The two culprits named above — global state and an agreement nobody declares — as a reading with a degree count |
+| [**Layering Violations**](layering-violations.md) | "Business logic coupled to a specific database dialect" is the instance; direction plus a gate is the general rule |

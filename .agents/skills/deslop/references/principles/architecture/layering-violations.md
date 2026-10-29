@@ -110,7 +110,7 @@ violation carries its own prevention.
 | [**Separation of Concerns**](separation-of-concerns.md) | Decides where code belongs; this decides what it may then see. |
 | [**Modularity**](modularity.md) | Deep modules with one surface are what an arrow can be drawn to. |
 | [**Dependency Injection**](dependency-injection.md) | How a module receives what it needs without reaching. |
-| [**Shotgun Surgery**](shotgun-surgery.md) | Feature-first layout removes the crossings a layer-first tree creates. |
+| [**Separation of Concerns**](separation-of-concerns.md) | Feature-first layout removes the crossings a layer-first tree creates. |
 | [**Errors at the Boundary**](../reliability/errors-at-the-boundary.md) | Translation at a seam — the error-side instance of the same rule. |
 
 ## Summary
