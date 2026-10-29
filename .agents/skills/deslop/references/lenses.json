@@ -41,7 +41,10 @@
         "principles/architecture/modularity.md",
         "principles/architecture/one-logical-unit-one-home.md",
         "principles/architecture/encapsulation.md",
-        "principles/architecture/orthogonality.md"
+        "principles/architecture/orthogonality.md",
+        "principles/architecture/shotgun-surgery.md",
+        "principles/architecture/god-file.md",
+        "principles/architecture/pass-through-wrappers.md"
       ],
       "indexes": [
         "principles/architecture.md"
@@ -69,7 +72,9 @@
         "principles/architecture/composition-over-inheritance.md",
         "principles/architecture/solid.md",
         "principles/architecture/command-query-separation.md",
-        "principles/architecture/convention-over-configuration.md"
+        "principles/architecture/convention-over-configuration.md",
+        "principles/architecture/implicit-coupling.md",
+        "principles/architecture/layering-violations.md"
       ],
       "indexes": [
         "principles/architecture.md"
@@ -83,7 +88,8 @@
         "principles/reliability/no-silent-defaults.md",
         "principles/reliability/fail-fast.md",
         "principles/reliability/postels-law.md",
-        "principles/reliability/design-by-contract.md"
+        "principles/reliability/design-by-contract.md",
+        "principles/architecture/illegal-states-unrepresentable.md"
       ],
       "indexes": [
         "principles/architecture.md",
@@ -129,7 +135,8 @@
         "principles/reliability/observability.md",
         "principles/reliability/resilience.md",
         "principles/reliability/least-privilege.md",
-        "principles/reliability/boy-scout-rule.md"
+        "principles/reliability/boy-scout-rule.md",
+        "principles/reliability/errors-at-the-boundary.md"
       ],
       "indexes": [
         "principles/architecture.md",

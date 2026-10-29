@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability
-description: Deslop principles — Reliability: Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
+description: Deslop principles — Reliability: Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Errors at the Boundary, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
 ---
 
 # Reliability
@@ -19,6 +19,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [No Silent Defaults](reliability/no-silent-defaults.md) | Model absence explicitly; never synthesize a plausible value for it |
 | [Design by Contract](reliability/design-by-contract.md) | Explicit preconditions, postconditions, invariants |
 | [Postel's Law (Robustness Principle)](reliability/postels-law.md) | Strict output, tolerant input; paranoid at security boundaries |
+| [Errors at the Boundary](reliability/errors-at-the-boundary.md) | **Detect at the edge, translate at the seam, decide where the context is.** Every `catch` must name a decision; a handler that only logs and continues, or re-raises unchanged, is a misplacement. Tells: `except Exception: log(e)` in a service; `if "duplicate key" in str(exc)` at a controller — string-matching a driver's message instead of an error type at the seam; a validator called from twelve leaves because the value was never made safe where it entered; a lower layer's exception type in a public signature; `raise X()` without `from`, losing the cause. Count the seams between throw and catch: more than one means nobody translated |
 | [Resilience & Graceful Degradation](reliability/resilience.md) | Retry, fall back, circuit-break; design for partial failure |
 | [Principle of Least Privilege](reliability/least-privilege.md) | Minimum permissions per component |
 
