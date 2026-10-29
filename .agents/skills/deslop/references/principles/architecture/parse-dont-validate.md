@@ -32,23 +32,7 @@ def process(items: NonEmptyList[T]) -> None:
     first = items[0]  # Type guarantees safety—no trust needed
 ```
 
-The opposite is "shotgun parsing" — the same `if not user_id` check scattered across every function, easy to miss and prone to leaving half-processed invalid data behind. It pairs with primitive obsession, where domain concepts ride around as raw `str`/`int`/`dict` (`create_order(customer_id: str, product_id: str, ...)` invites swapping arguments and allows negative quantities). Encode the constraints in the type instead, and make impossible combinations unrepresentable rather than guarding against them everywhere:
-
-```python
-# ❌ Invalid states representable
-@dataclass
-class Order:
-    status: str                  # "pending" | "shipped" | "delivered"
-    shipped_at: datetime | None  # Bug: can be None when status == "shipped"
-
-# ✅ Invalid states unrepresentable
-@dataclass
-class ShippedOrder:
-    items: list[Item]
-    shipped_at: datetime  # Required—impossible to forget
-
-Order = PendingOrder | ShippedOrder | DeliveredOrder
-```
+The opposite is "shotgun parsing" — the same `if not user_id` check scattered across every function, easy to miss and prone to leaving half-processed invalid data behind. It pairs with primitive obsession, where domain concepts ride around as raw `str`/`int`/`dict` (`create_order(customer_id: str, product_id: str, ...)` invites swapping arguments and allows negative quantities). Encode the constraints in the type instead. The *data-model* half of that decision — one variant per state, exactly the fields that state has — belongs to [Make Illegal States Unrepresentable](illegal-states-unrepresentable.md): this file owns the entry point, that file owns the shape the value lands in.
 
 Choose the parsing depth to fit: `NewType` for a zero-overhead marker, a frozen dataclass for richer invariants, Pydantic when you want full coercion and validation at the edge. For quick scripts, prototypes, and simple CRUD, not every field needs its own type.
 
@@ -62,3 +46,5 @@ In relation to other principles, parse, don't validate:
 | [**Fail-Fast**](../reliability/fail-fast.md) | Illegal states fail at the boundary, not three layers in |
 | [**Constrain the Domain in the Schema**](../data-layer/domain-constraints.md) | Parse-don't-validate for data at rest |
 | [**Immutability**](immutability.md) | Parsed domain types are best made immutable |
+| [**Make Illegal States Unrepresentable**](illegal-states-unrepresentable.md) | The data-model half: this file parses at the entry, that one forbids the combination |
+| [**Errors at the Boundary**](../reliability/errors-at-the-boundary.md) | Parsing is the detection moment; translation and the decision belong further in |

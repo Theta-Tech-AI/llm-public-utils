@@ -120,8 +120,8 @@ group its files, forces each reading to open them, and merges the reports.
 | File | Contents |
 |------|----------|
 | [references/principles/clean-code.md](references/principles/clean-code.md) | **Clean Code** — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork, An Unclaimed Guarantee |
-| [references/principles/architecture.md](references/principles/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency |
-| [references/principles/reliability.md](references/principles/reliability.md) | **Reliability** — Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability |
+| [references/principles/architecture.md](references/principles/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Shotgun Surgery, A God File, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, Implicit Coupling, Layering Violations, Pass-Through Wrappers, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, Make Illegal States Unrepresentable, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency |
+| [references/principles/reliability.md](references/principles/reliability.md) | **Reliability** — Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Errors at the Boundary, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability |
 
 ---
 
