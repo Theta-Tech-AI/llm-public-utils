@@ -35,3 +35,5 @@ In relation to other principles, encapsulation:
 | [**Modularity**](modularity.md) | Encapsulation is what makes a module deep |
 | [**Command-Query Separation**](command-query-separation.md) | Tell-don't-ask needs clean command/query lines |
 | [**Principle of Least Privilege**](../reliability/least-privilege.md) | Expose the minimum surface callers need |
+| [**Implicit Coupling**](implicit-coupling.md) | What breaks when encapsulation is partial: a required call order, or a shared literal |
+| [**Make Illegal States Unrepresentable**](illegal-states-unrepresentable.md) | The type-level form — an object that cannot be built in a state its rules forbid |
