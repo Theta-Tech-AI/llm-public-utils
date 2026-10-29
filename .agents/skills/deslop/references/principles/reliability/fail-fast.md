@@ -35,3 +35,4 @@ In relation to other principles, fail-fast:
 | [**Design by Contract**](design-by-contract.md) | Contracts define what to check; fail-fast defines when |
 | [**Decide, Don't Cope**](../clean-code/decide-dont-cope.md) | Rejecting at the boundary beats coping in the interior |
 | [**Postel's Law**](postels-law.md) | Strict on required fields, tolerant of unknown ones |
+| [**Errors at the Boundary**](errors-at-the-boundary.md) | This file says *when* to fail; that one places translation at the seam and the decision where it can be acted on |

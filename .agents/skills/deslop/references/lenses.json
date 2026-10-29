@@ -41,10 +41,7 @@
         "principles/architecture/modularity.md",
         "principles/architecture/one-logical-unit-one-home.md",
         "principles/architecture/encapsulation.md",
-        "principles/architecture/orthogonality.md",
-        "principles/architecture/shotgun-surgery.md",
-        "principles/architecture/god-file.md",
-        "principles/architecture/pass-through-wrappers.md"
+        "principles/architecture/orthogonality.md"
       ],
       "indexes": [
         "principles/architecture.md"
