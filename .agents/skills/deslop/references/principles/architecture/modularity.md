@@ -91,3 +91,4 @@ In relation to other principles, modularity:
 | [**Dependency Injection**](dependency-injection.md) | Injection removes the wrappers that exist only to hide wiring |
 | [**Cognitive Load**](../clean-code/cognitive-load.md) | Deep modules lower load; shallow ones raise it |
 | [**Small Functions**](../clean-code/small-functions.md) | Modularity at file granularity, small functions at logic granularity |
+| [**Orthogonality**](orthogonality.md) | A deep module hides one design decision. Orthogonality counts the reasons a unit holds and finds where two of them meet with no seam. |

@@ -137,5 +137,6 @@ In relation to other principles, separation of concerns:
 | [**Single Level of Abstraction**](../clean-code/slap.md) | SLAP is separation within one function |
 | [**SOLID**](solid.md) | SRP is separation of concerns at class granularity |
 | [**One Logical Unit, One Home**](one-logical-unit-one-home.md) | The same scattering seen as a unit spread across packages |
+| [**Orthogonality**](orthogonality.md) | The in-unit census of reasons to change, read from the code. This file reads where one change lands across folders and history. |
 | [**Layering Violations**](layering-violations.md) | The enforceable arrows that keep a feature-first layout from eroding |
 | [**Enforce Invariants with Constraints**](../data-layer/invariant-constraints.md) | The data layer owns "the data is well-formed" |
