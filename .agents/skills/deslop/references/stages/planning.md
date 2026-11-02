@@ -91,7 +91,7 @@ same code. Boundary ownership belongs with Modularity and One Logical Unit One H
 with A Helper That Must Exist and No Silent Defaults; shape with KISS and Guard Clauses; guarantees (state,
 lifetime, cancellation, privilege) together; the data layer together.
 
-The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 54 principle files — and
+The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 58 principle files — and
 you may regroup it. Two constraints:
 
 - **Related principles must sit together.** Splitting DRY from Single Source of Truth, or Parse Don't Validate
@@ -164,6 +164,10 @@ Then cut into tiers, and be honest about the budget:
 | **Must run** | orientation cells (cross-cutting groups over the whole target, because their findings span modules) and every cell with high evidence and high blast radius |
 | **If budget allows** | role-archetype and mid-evidence cells |
 | **Explicitly skipped** | cells you are *not* running, and why. A skipped cell can be picked up next pass; a forgotten one is how coverage quietly regresses |
+
+**The tiers apply to slices, not to groups.** A coverage pass (`stages/recipes.md`) runs every group at least once
+over the whole target, so no group sits in *If budget allows* or *Explicitly skipped*. The budget decides how finely
+the target is sliced and which slices get a second, deep reading.
 
 Where cost constrains, spend by **difficulty, not symmetry**: structural judgement (boundaries, coupling,
 guarantees) rewards the strongest reasoning available; mechanical sweeps (naming, comment discipline, log
