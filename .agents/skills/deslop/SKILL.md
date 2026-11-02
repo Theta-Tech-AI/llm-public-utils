@@ -4,7 +4,7 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈16 KB (≈4k tokens) and the `references/` tree is ≈325 KB across 72 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈14 KB (≈4k tokens) and the `references/` tree is ≈380 KB across 78 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
@@ -39,7 +39,7 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
 | [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
-| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 54 principle files into 9 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
+| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 58 principle files into 9 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
 
 ## How the library is organised
 

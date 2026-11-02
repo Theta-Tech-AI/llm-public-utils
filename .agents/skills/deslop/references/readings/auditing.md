@@ -85,3 +85,14 @@ Two obligations decide whether a pass was worth running:
   the finding goes.
 And the library applies **before** the code exists, not only to what already does: re-reading the applicable
 principles while designing is cheaper than consolidating a fork that has callers.
+- **Census the reasons to change for the units the pass reads in full.** Scope: every unit the pass reads in full, plus any unit with three or more collaborators. Scripts under 100 lines are exempt, as [When to Relax](when-to-relax.md) states. For each unit in scope, list the independent reasons it could change, read from what the code does: what triggers it, which external system it reads or writes, what transformation it applies, what it persists, and how it copes with failure. Each reason to change cites a line. Two or more reasons to change nominate the unit; the degree test in [orthogonality.md](../principles/architecture/orthogonality.md) decides whether it is a finding. Like the input census, this outranks nothing else in the pass, and it is reported even when it ranks last.
+
+### The census of reasons to change is a required section of the report
+
+Every report carries this table, placed after the violation list. A report without it is incomplete, even when it has no findings. It covers the three to five units with the most reasons to change in scope, as the census counts them, sorted by count of reasons to change. A trigger handler that performs its own work counts even with one collaborator:
+
+| Unit | Reasons to change present (each with a cited line) | Seams present (contract, and where it sits) | What crosses the seam (core vocabulary / a collaborator's representation) | Verdict |
+|---|---|---|---|---|
+| `<unit>` | trigger `file:line`; external read `file:line`; transformation `file:line`; … | `<contract>` at `file:line`, or none | `core` or `collaborator: <which>`, for each seam | welded, seamed or exempt, with the reason |
+
+A seam whose crossing data is a collaborator's representation is recorded as **nominal** in the seams column, and the unit's verdict is **welded**. A private helper function is never a seam by itself. A **welded** verdict cites the two probe results from the degree test: each touch point and the reasons to change it spans. Keep the table structural: unit names come from the code, and reasons to change come from what the code does.

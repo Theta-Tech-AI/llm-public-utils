@@ -27,3 +27,4 @@ In relation to other principles, SOLID:
 | [**Separation of Concerns**](separation-of-concerns.md) | SRP is SoC at class granularity |
 | [**Dependency Injection**](dependency-injection.md) | DI is Dependency Inversion in practice |
 | [**YAGNI**](../clean-code/yagni.md) | A speculative interface for one implementation violates YAGNI |
+| [**Orthogonality**](orthogonality.md) | SRP's "one reason to change", counted inside one unit: the census of reasons to change lists the reasons and the degree test decides which ones weld. Martin's 2014 essay ties the reason to the people who request changes; the census counts behaviour, not requesters. |
