@@ -119,6 +119,7 @@ repair order, which owns the vocabulary before removing the unbuildable state.
 | [**A Helper That Must Exist Is an Architecture Finding**](helper-is-an-architecture-finding.md) | That file finds the raw value; this one finds the agreement around it. |
 | [**Parse, Don't Validate**](parse-dont-validate.md) | The boundary-side repair; this is the coupling-side diagnosis. |
 | [**Layering Violations**](layering-violations.md) | Direction of knowledge between layers; here it is the shape of what is known. |
+| [**Orthogonality**](orthogonality.md) | Implicit agreements are what keep two reasons to change from moving apart. The degree count here is the degree test there. |
 
 ## Summary
 

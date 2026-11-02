@@ -91,7 +91,7 @@ same code. Boundary ownership belongs with Modularity and One Logical Unit One H
 with A Helper That Must Exist and No Silent Defaults; shape with KISS and Guard Clauses; guarantees (state,
 lifetime, cancellation, privilege) together; the data layer together.
 
-The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 54 principle files — and
+The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 58 principle files — and
 you may regroup it. Two constraints:
 
 - **Related principles must sit together.** Splitting DRY from Single Source of Truth, or Parse Don't Validate
@@ -116,8 +116,8 @@ audits *reachability* of every markdown in the library. Each file must sit in ex
 An index file is **not** a substitute for the principle files (it carries one-line essences; a finding needs the
 full text), and a principle file is not a substitute for the index (the index is what tells a reader what a
 violated boundary even looks like). Read both, index first. `--check` fails on any file reachable by none of these
-paths and prints the tally — on this library: `72/72 files reachable — lens 54, lens-index 4, lens-protocol 3,
-situational 2, stage 9`.
+paths and prints the tally — on this library: `78/78 files reachable — lens 58, lens-index 4, lens-protocol 3,
+library 6, mode 2, stage 5`.
 
 That is a guarantee of **reachability**, not of reading. No harness can prove an agent opened a file, but a
 reading can be made to *declare* what it opened: every cell writes `files-read-<cell>.txt` beside its findings,

@@ -135,6 +135,7 @@ state as a design aim:
 | [**Code Reusability**](code-reusability.md) | Says do not generalise before real callers exist. Here the callers already exist — as copies — which is exactly when to generalise. |
 | [**Hunting Duplication**](../../readings/duplication.md) | The sweep that usually finds this; this file is the finding type and its repair. |
 | [**Patchwork**](../clean-code/patchwork.md) | Patchwork is one file that cannot be simplified by deleting. This is several files that should not exist separately. |
+| [**Orthogonality**](orthogonality.md) | The mirror disease. Here one unit is scattered over many homes; in orthogonality, independent reasons to change are welded into one home. The repairs are opposite: gather the pieces, or split the reasons to change apart at a seam. |
 
 ## Summary
 
