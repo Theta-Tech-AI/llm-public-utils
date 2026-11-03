@@ -122,6 +122,7 @@ about type theory.
 | [**Design by Contract**](../reliability/design-by-contract.md) | Invariants as checks; this makes them unrepresentable instead. |
 | [**Domain Constraints**](../data-layer/domain-constraints.md) | The same invariant at the database boundary. |
 | [**Implicit Coupling**](implicit-coupling.md) | A discriminator string is a vocabulary several modules must agree on. |
+| [**A State Machine Nobody Wrote Down**](implicit-state-machine.md) | The shape of one state is this file; the moves between states are that one. |
 
 ## Summary
 

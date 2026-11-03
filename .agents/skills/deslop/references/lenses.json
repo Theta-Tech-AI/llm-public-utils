@@ -41,7 +41,8 @@
         "principles/architecture/modularity.md",
         "principles/architecture/one-logical-unit-one-home.md",
         "principles/architecture/encapsulation.md",
-        "principles/architecture/orthogonality.md"
+        "principles/architecture/orthogonality.md",
+        "principles/architecture/implicit-state-machine.md"
       ],
       "indexes": [
         "principles/architecture.md"
