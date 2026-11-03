@@ -4,7 +4,7 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈391 KB across 78 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈394 KB across 79 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
