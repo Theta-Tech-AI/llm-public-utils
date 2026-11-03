@@ -165,6 +165,10 @@ Then cut into tiers, and be honest about the budget:
 | **If budget allows** | role-archetype and mid-evidence cells |
 | **Explicitly skipped** | cells you are *not* running, and why. A skipped cell can be picked up next pass; a forgotten one is how coverage quietly regresses |
 
+**The tiers apply to slices, not to groups.** A coverage pass (`stages/recipes.md`) runs every group at least once
+over the whole target, so no group sits in *If budget allows* or *Explicitly skipped*. The budget decides how finely
+the target is sliced and which slices get a second, deep reading.
+
 Where cost constrains, spend by **difficulty, not symmetry**: structural judgement (boundaries, coupling,
 guarantees) rewards the strongest reasoning available; mechanical sweeps (naming, comment discipline, log
 formatting, repeated literals) are safe to hand to a smaller or cheaper model. One expensive cell that thinks

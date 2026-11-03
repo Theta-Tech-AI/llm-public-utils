@@ -4,13 +4,13 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈14 KB (≈4k tokens) and the `references/` tree is ≈380 KB across 78 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈394 KB across 79 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
 This command combines a code analysis workflow with an extensive library of coding principles living in [references/](references/). When you run `/deslop [file-or-directory]`, or even just `/deslop` or perhaps `/deslop my frontend typescript code` the AI will read your code, cross-reference it against these principles, and suggest specific fixes with before/after examples.
 
-**Scoped pass or whole-codebase campaign?** The default is a pass over the file, directory, or diff you name. When the ask is a **campaign** — "massive simplification", "across the board", "minimum 30% LOC", "break up the god files", "get it all done, no excuses, present me a PR" — follow [references/modes/campaign.md](references/modes/campaign.md) instead, and measure it with [references/library/measuring.md](references/library/measuring.md).
+**Coverage pass by default.** Any target that is not a diff or PR — a file, directory, module, package, subsystem or whole repository — gets a **coverage pass**: one reading per principle group in [references/lenses.json](references/lenses.json) (all nine today), each reading its group's index and then every principle file in that group, in full. Only a diff or PR review, or an explicit request for a quick or narrow look, gets a **scoped pass** instead, and its report names the groups it did not read. The shape of each pass, the mechanism and the receipt are in [references/stages/recipes.md](references/stages/recipes.md). When the ask is a **campaign** — "massive simplification", "across the board", "minimum 30% LOC", "break up the god files", "get it all done, no excuses, present me a PR" — follow [references/modes/campaign.md](references/modes/campaign.md) instead, and measure it with [references/library/measuring.md](references/library/measuring.md).
 
 Whether or not you use this deslop command on your code base, you should read all the coding principles yourself, as a human - you might actually learn something useful.
 
@@ -24,8 +24,8 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 |------|------|
 | [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: contexts where a principle is over-applied, and the meta-principle that says a violation worth "fixing" into worse code is not a violation |
-| [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — five asks, five invocations: scoped pass, directed cell, coverage pass, campaign, library extension. Pick the shape before the readings |
-| [references/stages/planning.md](references/stages/planning.md) | **Before a pass that must cover the library** — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
+| [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — the shapes of a pass: the **coverage pass** (the default for any target that is not a diff), the scoped pass (a diff, PR, or an explicit quick look), directed cell, campaign, library extension, second round. Pick the shape before the readings |
+| [references/stages/planning.md](references/stages/planning.md) | **Before every coverage pass** (the default) — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
 | [references/stages/aggregation.md](references/stages/aggregation.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
 | [references/stages/consolidation.md](references/stages/consolidation.md) | **After aggregation, before anything is reported or filed** — verify, apply the guardrail, bucket into now / next / wait-or-drop, collapse findings into concerns, group into a milestone |
 | [references/stages/reporting.md](references/stages/reporting.md) | **Immediately before you speak to the person who asked** — lead with the answer, bucket the work, keep it short, and never bury the result in method |
@@ -83,11 +83,13 @@ execution mechanism you actually have — subagents, a harness fan-out, model ti
 time.
 
 The protocol, with the rules that make each step checkable, is
-[references/stages/planning.md](references/stages/planning.md). The bookkeeping is optional and scripted:
+[references/stages/planning.md](references/stages/planning.md). A coverage pass emits every group of the partition, one
+reading each, and its procedure is in [references/stages/recipes.md](references/stages/recipes.md). The bookkeeping is
+scripted:
 
 ```bash
-python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/plan --budget 24 [--ledger <jsonl> --round N]
-python3 scripts/swarm_lenses.py --emit /tmp/cells --target <slice> --only <group>
+python3 scripts/swarm_lenses.py --emit /tmp/cells --repo <root> --target <dir>        # every group, one prompt each
+python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/plan --budget 24 [--ledger <jsonl> --round N]   # slice choice and rounds
 ```
 
 For a **specific ask** — *"look at separation of concerns in the provider adapters"* — skip the plan and read one
@@ -100,22 +102,23 @@ A pass always finds more than anyone should act on at once, and a flat list is n
 the readings, each read at its own moment: [aggregation](references/stages/aggregation.md) (merge on locus +
 principle; a cell that quotes nothing is a *failed reading*), [consolidation](references/stages/consolidation.md)
 (verify at the source line, apply the guardrail, bucket now / next / wait-or-drop, one issue per concern), and
-[reporting](references/stages/reporting.md) (the answer first, the short fix-first list, what was left out, then
-stop).
+[reporting](references/stages/reporting.md) (the answer first, the short fix-first list, what was left out with the
+coverage receipt, then stop).
 
 ## Principle references (indexes)
 
 Each index is a short table of principles with their one-line essences, linking to self-contained files under
-`references/principles/<category>/`. **Scope bounds the code you read, not the principles you apply.** A scoped
-pass still gets assigned readings — one or two groups, chosen by what the code is (see [recipes](references/stages/recipes.md)) — because reading the indexes and
-opening a principle only when a finding "implicates" it is the mechanism that leaves Separation of Concerns
-unopened forever. Index-only reconnaissance is a legitimate mode, but name it as one, and never let it be the
-default.
+`references/principles/<category>/`. **Scope bounds the code you read, not the principles you apply.** A coverage
+pass, the default, gives every group its reading over the target. A scoped pass (a diff or PR, or an explicit quick
+look) still gets one or two assigned groups, chosen by what the code is (see [recipes](references/stages/recipes.md)),
+because reading the indexes and opening a principle only when a finding "implicates" it is the mechanism that leaves
+Separation of Concerns unopened forever. Index-only reconnaissance is a legitimate mode, but name it as one, and
+never let it be the default.
 
 Know its cost: a pass can only open a principle it has already suspected, so the ones that need a boundary held
-in mind — above all **Separation of Concerns** — are routinely never read. When the ask is coverage rather than
-speed, plan the pass instead ([references/stages/planning.md](references/stages/planning.md)): it assigns each
-group its files, forces each reading to open them, and merges the reports.
+in mind — above all **Separation of Concerns** — are routinely never read. That cost is why the default is a
+coverage pass, planned by [references/stages/planning.md](references/stages/planning.md): it assigns each group its
+files, forces each reading to open them, and merges the reports.
 
 | File | Contents |
 |------|----------|

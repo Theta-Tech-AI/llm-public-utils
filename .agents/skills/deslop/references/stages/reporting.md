@@ -17,15 +17,17 @@ to fix on Monday. **Lead with the answer, then justify it in one line each.**
 Four parts, in this order, and no fifth:
 
 1. **The headline** — one or two sentences. What the pass covered, and the single most important thing it found.
-   Numbers with denominators: "42 findings across 9 modules; three are load-bearing."
+   Numbers with denominators: "42 findings across 9 modules; three are load-bearing." If not every group in
+   `references/lenses.json` was read, the headline begins **partial coverage**, and names the groups missing.
 2. **Now** — the short list that should be fixed first. Three to seven items, each one line: locus, what is wrong,
    why it matters, and the repair in two words. This is the part people act on; make it scannable.
 3. **Next** — the contained work, as a compact list or a small table. One line each. No prose.
 4. **Left out** — what was skipped, relaxed, or never surveyed, plus the condition that would change the bucket of
-   anything contentious ("if this becomes public API, the duplication becomes a defect"). Include the **rotation
-   state** in one line: which principle groups this round exercised, and **which remain unread on this target**.
-   That line is what tells the reader a second round is worth commissioning — and what proves this one was not a
-   repeat of the last.
+   anything contentious ("if this becomes public API, the duplication becomes a defect"). Then the **coverage
+   receipt**, in every report: one row per group in `references/lenses.json`, marked read or not read, with the
+   `files-read-<cell>.txt` manifest of each cell that ran it. The receipt is what proves a pass read what it claims.
+   The not-read rows are the rotation state: they tell the reader whether a second round is worth commissioning, and
+   they show that this round was not a repeat of the last (`stages/planning.md` §8).
 
 Then stop. If they want the derivation, they will ask, and the report files are already written for that.
 
@@ -63,6 +65,12 @@ Then stop. If they want the derivation, they will ask, and the report files are 
 
 **Left out** — <skipped cells>, <relaxed findings, and why>, <areas not surveyed>.
 
+**Coverage** — <groups read> of <groups in lenses.json>. One row per group:
+
+| Group | Read | Manifest |
+|---|---|---|
+| `<group>` | read / not read | `files-read-<cell>.txt` (or none) |
+
 <Optional single line: artifacts / where the full list lives.>
 ```
 
@@ -75,6 +83,7 @@ Then stop. If they want the derivation, they will ask, and the report files are 
 | "high severity" | "every request takes the silently-wrong branch" |
 | "shall I file these?" | filed, with the numbers, or explicitly out of scope and why |
 | a status of the machinery ("4 of 8 agents returned") | the result ("42 findings, 3 load-bearing") |
+| "full coverage" with no receipt | every group listed read or not read, each with its manifest; otherwise **partial coverage** |
 | "there is a lot here, let me know where to start" | your recommendation, in order |
 
 ## 5. One last check
