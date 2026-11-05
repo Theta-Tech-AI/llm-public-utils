@@ -4,7 +4,7 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈394 KB across 79 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈416 KB across 81 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
@@ -39,7 +39,7 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
 | [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
-| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 58 principle files into 9 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
+| [references/lenses.json](references/lenses.json) | Grouping the principles for a planned pass — the default partition of 61 principle files into 9 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it if the codebase asks for different stances |
 
 ## How the library is organised
 
@@ -122,8 +122,8 @@ files, forces each reading to open them, and merges the reports.
 
 | File | Contents |
 |------|----------|
-| [references/principles/clean-code.md](references/principles/clean-code.md) | **Clean Code** — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork, An Unclaimed Guarantee |
-| [references/principles/architecture.md](references/principles/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, Implicit Coupling, Layering Violations, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, Make Illegal States Unrepresentable, A State Machine Nobody Wrote Down, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency |
+| [references/principles/clean-code.md](references/principles/clean-code.md) | **Clean Code** — KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Least Surprise, Patchwork, An Unclaimed Guarantee
+| [references/principles/architecture.md](references/principles/architecture.md) | **Architecture** — DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Law of Demeter, Orthogonality, DI, Composition Over Inheritance, Implicit Coupling, Layering Violations, Depend in the Direction of Stability, SOLID, Convention Over Configuration, CQS, Reusability, Parse Don't Validate, Make Illegal States Unrepresentable, A State Machine Nobody Wrote Down, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency |
 | [references/principles/reliability.md](references/principles/reliability.md) | **Reliability** — Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Errors at the Boundary, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability |
 
 ---

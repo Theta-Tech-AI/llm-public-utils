@@ -144,6 +144,7 @@ In relation to other principles, patchwork sits closest to the diagnosis it desc
 
 | Principle | Relationship |
 |---|---|
+| [**A Special Case Is a Requirement the Design Never Accounted For**](special-cases.md) | Patchwork is the accumulated file; this names the unit inside it and the requirement nobody encoded. |
 | [**Decide, Don't Cope**](decide-dont-cope.md) | The parent diagnosis: patchwork *is* unmade decisions compounding as entropy. This file is its repair procedure. |
 | [**Parse, Don't Validate**](../architecture/parse-dont-validate.md) | The usual shape of the fix — illegal states made unrepresentable at the boundary |
 | [**Single Source of Truth**](../architecture/single-source-of-truth.md) | The symptom patchwork most often masquerades as: several places agreeing by hand |

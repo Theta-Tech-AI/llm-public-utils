@@ -107,6 +107,7 @@ violation carries its own prevention.
 
 | Principle | Relationship |
 |---|---|
+| [**Depend in the Direction of Stability**](dependency-stability.md) | The arrows point somewhere; this asks how fast each end moves. Either can fail alone. |
 | [**Separation of Concerns**](separation-of-concerns.md) | Decides where code belongs; this decides what it may then see. |
 | [**Modularity**](modularity.md) | Deep modules with one surface are what an arrow can be drawn to. |
 | [**Dependency Injection**](dependency-injection.md) | How a module receives what it needs without reaching. |
