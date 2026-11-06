@@ -9,5 +9,6 @@ description: Resume work on an issue that was previously started.
 3. **Rehydrate:** Read the issue's comments from the top — especially the most recent stop/pause comment, which should contain the state dump: what's done, what remains, where the work lives, and the exact next step. Also check the linked branch/PR and recent commits so your picture matches reality, not just the last comment.
 4. **Reconcile:** If reality has drifted from the last comment (someone else pushed, a blocker cleared or appeared, requirements changed in newer comments), reconcile before continuing and surface anything surprising to the user.
 5. **Resuming Comment:** Leave a comment that work is resuming, per [comment-rules.md](comment-rules.md) — what you're picking up from and the immediate next step.
-6. **Continue:** Pick up from the recorded next step. Keep commenting as you work per [comment-rules.md](comment-rules.md).
-7. **Rendering Ticket:** Render the resumed issue for the user per [render-ticket.md](render-ticket.md) — include a brief "where we left off / what's next" so the user is re-oriented too.
+6. **Reopen the Clock:** Record the new segment's start time per [effort-estimate.md](effort-estimate.md), so the effort accumulates across pauses rather than counting the gap.
+7. **Continue:** Pick up from the recorded next step. Keep commenting as you work per [comment-rules.md](comment-rules.md).
+8. **Rendering Ticket:** Render the resumed issue for the user per [render-ticket.md](render-ticket.md) — include a brief "where we left off / what's next" so the user is re-oriented too.
