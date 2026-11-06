@@ -72,7 +72,8 @@
         "principles/architecture/command-query-separation.md",
         "principles/architecture/convention-over-configuration.md",
         "principles/architecture/implicit-coupling.md",
-        "principles/architecture/layering-violations.md"
+        "principles/architecture/layering-violations.md",
+        "principles/architecture/dependency-stability.md"
       ],
       "indexes": [
         "principles/architecture.md"
@@ -118,6 +119,7 @@
         "principles/clean-code/legibility.md",
         "principles/clean-code/least-surprise.md",
         "principles/clean-code/patchwork.md",
+        "principles/clean-code/special-cases.md",
         "principles/clean-code/decide-dont-cope.md"
       ],
       "indexes": [

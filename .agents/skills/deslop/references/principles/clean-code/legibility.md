@@ -65,6 +65,33 @@ A legible codebase lets you answer "what breaks if I touch this?" without runnin
 - **God module** — everything imports it, so everything is coupled to everything. (See
   [campaign-mode §Sweep 1](../../modes/campaign.md), and the `shatter` skill for the mechanics.)
 
+## Nothing uses it, so nothing will ever need it
+
+The navigation cost of dead things is easy to state and hard to find, because the code still compiles and the
+linter only sees the imports. What linters cannot see is the half that survives in production: **a config key
+no deployment sets, a toggle stuck on since launch, a handler registered in a table by name, a branch for a
+region or plan that no longer exists, a compatibility shim for a dependency removed two majors ago.** Each reads
+as a live decision and occupies the place one would occupy.
+
+Three instruments, in order. **Census the consumers** before calling anything dead: importers, call sites, route
+and registration tables, DI wiring, plugin entry points, serializers, event subscriptions, and any downstream
+the package's own surface declares — a symbol reached only by name is *unproven*, not dead. **Check the read
+side against the set side** for every key and toggle, from the deployment side where no linter looks; read and
+set nowhere is dead, set and read nowhere is drift. **Apply the expiry test** to a shim or workaround that names
+a condition (a version, a ticket, a date): has the condition lapsed? Then it is dead with proof, and the
+sentence that lapses it is the proof.
+
+Then delete all of it in one change — the symbol, the key, the enum member, the tests asserting the dead
+behaviour, the comment that says "kept for the transition" — and let CI answer. A wrong guess is one reverted
+commit; a kept branch is a permanent tax on every future reader. Where a real consumer exists downstream, the
+repair is not deletion but a stated contract with an expiry.
+
+What is *not* dead: a library's public API, an extension point for consumers outside the repo, code reached by
+reflection or an entry-point declaration, a live expand-and-contract shim whose second phase has not shipped,
+and a seam deliberately left so a second implementation can be injected —
+[Modularity](../architecture/modularity.md) already decides whether that hop earns its keep. Commented-out
+code is a separate tell: git has the history, so delete it (see [Documentation Discipline](documentation-discipline.md)).
+
 ## The legibility artifacts
 
 Legibility is unusual among these principles: the fix is sometimes **writing the connection down**,

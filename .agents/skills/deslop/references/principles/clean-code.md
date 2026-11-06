@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code
-description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Patchwork, An Unclaimed Guarantee, Least Surprise.
+description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Patchwork, An Unclaimed Guarantee, Least Surprise, A Special Case Is a Requirement the Design Never Accounted For.
 ---
 
 # Clean Code
@@ -23,6 +23,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Documentation Discipline](clean-code/documentation-discipline.md) | Where docs live; which comments earn their place |
 | [Elegance](clean-code/elegance.md) | Minimality, accomplishment, modesty, revelation |
 | [Legibility](clean-code/legibility.md) | Navigable codebase: followable call paths, discoverable entry points, honest names |
+| [A Special Case Is a Requirement the Design Never Accounted For](clean-code/special-cases.md) | **A branch, delay, global or parameter that exists for one situation instead of following from how the system works** — `if tenant == "acme"` at a call site, a `sleep` that makes an ordering work, a `skipRefocus` flag set by one caller, `if provider == "x"` in a shared path. Owning-module test: which component would have made this unnecessary — *none* is the finding; reverse test: if the repair is another conditional, the design never changed. Collect and group by the mechanism each case reaches for; three of a shape is one missing owner, and the surviving count is the measure |
 | [Patchwork](clean-code/patchwork.md) | Compensating code you cannot simplify by deleting — re-decide the interface, don't trim the guards |
 | [An Unclaimed Guarantee](clean-code/unclaimed-guarantee.md) | Tells: a second handle beside an existing owner — an added `WithCancel`/`done`/returned cleanup beside a `ctx`, a lock beside a transaction, a retry loop beside a retry client. For every one you see: name the guarantee it adds and the caller that would be wrong without it, then **delete it or claim it**. No claimant is the finding |
 | [Principle of Least Surprise](clean-code/least-surprise.md) | Components behave the way users expect |
