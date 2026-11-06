@@ -8,7 +8,7 @@ Issues are the durable record; conversations and terminal sessions evaporate. **
 
 ## When to comment (at minimum)
 - **On create:** any context that didn't fit the description — links, screenshots, the conversation that spawned it.
-- **On start:** that work is starting, who/what is working it, the branch or worktree, and the initial plan of attack.
+- **On start:** that work is starting, who/what is working it, the branch or worktree, the initial plan of attack, and the before-estimate ([effort-estimate.md](effort-estimate.md)).
 - **While working:** meaningful progress, decisions made and why, dead ends ruled out, surprises found, scope changes. If it took you more than a few minutes to figure out, it's worth a comment.
 - **On stop (pausing, not done):** a handoff-quality state dump — what's done, what remains, where the work lives (branch/commit/PR), any gotchas, and the exact next step to take when picking it back up.
 - **On close:** the closing evidence — what changed, links to PR/commit/deploy, how it was verified, remaining risk, follow-ups created.
