@@ -63,7 +63,7 @@ inside one chunk, and a chunk fixer polishes copies the real fix deletes. So bef
 
 1. **Classify every verified concern on two axes** — **L2**, the fact or mechanism it is about (the run status, the
    invoice reference grammar, the plan-replacement column); **L1**, the pattern class from
-   [recurring-patterns.md](../readings/recurring-patterns.md). Tag each *local*, *cross* (needs one owner across
+   [patterns](../patterns.md). Tag each *local*, *cross* (needs one owner across
    modules or layers) or *next* (design, migration or API change).
 2. **Merge each L2 × L1 cluster into a theme with one owner.** A theme names the owner, the loci, and the consumers
    to reroute. Local concerns stay with their chunk; cross concerns go to themes.

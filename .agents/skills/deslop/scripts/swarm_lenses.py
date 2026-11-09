@@ -40,6 +40,11 @@ def principle_files() -> set[str]:
     return {str(p.relative_to(REF)) for p in sorted((REF / "principles").glob("*/*.md"))}
 
 
+def pattern_files() -> set[str]:
+    """Every per-pattern file: references/patterns/<slug>.md (the index is references/patterns.md)."""
+    return {str(p.relative_to(REF)) for p in sorted((REF / "patterns").glob("*.md"))}
+
+
 def top_level_files() -> set[str]:
     return {p.name for p in sorted(REF.glob("*.md"))}
 
@@ -56,6 +61,10 @@ def classify(m: dict) -> tuple[dict[str, str], set[str]]:
             classes[f] = f"lens-protocol:{lens}"
     for f in m["shared"]["protocols"]:
         classes[f] = "lens-protocol:all"
+    classes[m["shared"]["pattern_index"]] = "pattern-index"
+    for lens, spec in m["lenses"].items():
+        for f in spec.get("patterns", []):
+            classes.setdefault(f, "pattern")
     for f in m["shared"].get("stage_protocols", {}):
         classes[f] = "stage"
     for f in m["shared"].get("modes", {}):
@@ -81,6 +90,17 @@ def audit(m: dict) -> tuple[list[str], list[str], list[str]]:
     absent = sorted(n for n in named if not (REF / n).exists())
     problems = []
     # reachability: no markdown left behind — a file reachable by no enforced path is the silent gap
+    # patterns may belong to several lenses (they are tells, not a partition); each must be used by one lens and
+    # linked from the index, which is how a reader reaches it
+    pattern_users = {f for spec in m["lenses"].values() for f in spec.get("patterns", [])}
+    on_disk_patterns = pattern_files()
+    index_text = (REF / m["shared"]["pattern_index"]).read_text()
+    unused = sorted(on_disk_patterns - pattern_users)
+    unindexed = sorted(f for f in on_disk_patterns if Path(f).name not in index_text)
+    if unused:
+        problems.append(f"{len(unused)} pattern file(s) no lens lists: " + ", ".join(unused))
+    if unindexed:
+        problems.append(f"{len(unindexed)} pattern file(s) the pattern index does not link: " + ", ".join(unindexed))
     unreachable = sorted(everything_all - set(classes))
     if unreachable:
         stray = [f for f in unreachable if "/" not in f]
@@ -99,6 +119,10 @@ def audit(m: dict) -> tuple[list[str], list[str], list[str]]:
         top = path.split("/")[0] if "/" in path else ""
         if head == "lens":
             ok = path.startswith("principles/") and path.count("/") == 2
+        elif head == "pattern-index":
+            ok = path == "patterns.md"
+        elif head == "pattern":
+            ok = path.startswith("patterns/") and path.count("/") == 1
         elif head == "lens-index":
             ok = path.startswith("principles/") and path.count("/") == 1
         elif head == "lens-protocol":
@@ -132,7 +156,8 @@ theirs. Your value is depth inside your lens, not breadth outside it.
 
 Read each file below completely — the whole file, not the index row. The first is your category index: read it
 for the stance and the tells, then read every principle file in full. They are your lens, and your findings must
-be expressed in their terms.
+be expressed in their terms. The pattern files at the end (if any) are tells to read with, not extra principles:
+you never charge a finding to a pattern, only to the principle that owns the mechanism.
 
 {reading_list}
 
@@ -192,7 +217,10 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
     for lens in names:
         spec = lenses[lens]
         files = list(spec["files"]) + [p for p in spec.get("also_protocols", [])]
-        ordered = list(spec.get("indexes", [])) + m["shared"]["protocols"] + files
+        patterns = list(spec.get("patterns", []))
+        # the pattern index precedes the pattern files, as a category index precedes its principles
+        pattern_reading = [m["shared"]["pattern_index"]] + patterns if patterns else []
+        ordered = list(spec.get("indexes", [])) + m["shared"]["protocols"] + files + pattern_reading
         reading = "\n".join(f"- `references/{f}`" for f in ordered)
         stem = f"{lens}-{label}-run{run}" if label else f"{lens}-run{run}"
         scope_note = ""
@@ -217,7 +245,7 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
             body += f"\nScope note: {spec['skip_when']}.\n"
         (outdir / f"lens-{stem}.md").write_text(body)
         (outdir / f"assignment-{stem}.txt").write_text("\n".join(f"references/{f}" for f in ordered) + "\n")
-        lines.append(f"{stem}\t{len(files) + len(m['shared']['protocols'])} files\t{out_jsonl}")
+        lines.append(f"{stem}\t{len(ordered)} files\t{out_jsonl}")
     (outdir / "manifest.txt").write_text(
         f"target: {target}\nrepo: {repo}\nrun: {run}\nlenses: {len(names)}\n\n" + "\n".join(lines) + "\n"
     )
@@ -248,7 +276,9 @@ def main() -> int:
     if a.check:
         problems, everything, assigned = audit(m)
         classes, all_md = classify(m)
-        print(f"principle files: {len(everything)}   assigned: {len(assigned)}   lenses: {len(m['lenses'])}")
+        n_pat = len(pattern_files())
+        print(f"principle files: {len(everything)}   assigned: {len(assigned)}   lenses: {len(m['lenses'])}   "
+              f"pattern files: {n_pat}   lens pattern slots: {sum(len(l.get('patterns', [])) for l in m['lenses'].values())}")
         counts: dict[str, int] = {}
         for kind in classes.values():
             head = kind.split(":")[0]
@@ -259,7 +289,7 @@ def main() -> int:
             for p in problems:
                 print("FAIL " + p)
             return 1
-        print("OK — every principle file belongs to exactly one lens")
+        print("OK — every principle file belongs to exactly one lens; every pattern is indexed and used by a lens")
         return 0
     if a.list:
         for lens, spec in m["lenses"].items():

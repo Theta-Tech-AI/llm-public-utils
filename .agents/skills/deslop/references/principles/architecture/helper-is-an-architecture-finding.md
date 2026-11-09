@@ -134,7 +134,7 @@ external representation to internal decision. Fixing the type without placing th
 `_truthy(str) -> bool` into `_parse_bool(str) -> bool` in the same wrong file, and the next consumer writes
 `_parse_bool` again. Fixing the owner deletes the helper as a consequence.
 
-**Consumer re-decides the producer's decision** is the same disease at a service boundary: a client that merges two server answers, parses a typed field again, or hand-copies a server rule is a helper whose missing owner is the *producer's response*. The repair is to return the decision, not to harden the reconciler ([recurring patterns](../../readings/recurring-patterns.md#3-consumer-re-decides-the-producers-decision)); the same goes for one identifier grammar parsed by several regexes ([#6](../../readings/recurring-patterns.md#6-grammar-without-an-owner)) and one env value parsed by two rules ([#10](../../readings/recurring-patterns.md#10-config-parsed-twice-with-different-rules)).
+**Consumer re-decides the producer's decision** is the same disease at a service boundary: a client that merges two server answers, parses a typed field again, or hand-copies a server rule is a helper whose missing owner is the *producer's response*. The repair is to return the decision, not to harden the reconciler ([consumer re-decides the producer](../../patterns/consumer-redecides-producer.md)); the same goes for one identifier grammar parsed by several regexes or one env value parsed by two rules ([grammar without an owner](../../patterns/grammar-without-owner.md)).
 
 ## The repair
 

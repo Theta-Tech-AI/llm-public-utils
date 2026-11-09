@@ -23,7 +23,7 @@ def parse_user_csv(csv_data: str) -> list[dict]:
     return [dict(zip(headers, row.split(','))) for row in rows[1:]]
 ```
 
-The opposite error is the **fork of upstream**: a downstream copy of a module the framework already owns drifts and sometimes writes the same store twice — extend through the framework's seam, or add the seam upstream ([recurring patterns](../../readings/recurring-patterns.md#7-fork-of-upstream-instead-of-extension)). When reuse *is* warranted, minimize dependencies (a little copying beats a little dependency), accept abstract inputs (a `Protocol`, not a concrete class), provide sensible defaults, and keep the public interface stable. But remember reuse cuts both ways: isolated, duplicated code keeps bugs and changes contained, where a "reusable" component becomes a coupling point across every system that depends on it. Rewriting 50 obvious lines often beats understanding 500 lines of someone's framework.
+The opposite error is the **fork of upstream**: a downstream copy of a module the framework already owns drifts and sometimes writes the same store twice — extend through the framework's seam, or add the seam upstream ([fork instead of extension](../../patterns/fork-instead-of-extension.md)). When reuse *is* warranted, minimize dependencies (a little copying beats a little dependency), accept abstract inputs (a `Protocol`, not a concrete class), provide sensible defaults, and keep the public interface stable. But remember reuse cuts both ways: isolated, duplicated code keeps bugs and changes contained, where a "reusable" component becomes a coupling point across every system that depends on it. Rewriting 50 obvious lines often beats understanding 500 lines of someone's framework.
 
 ---
 

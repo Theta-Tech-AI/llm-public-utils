@@ -10,8 +10,8 @@ Pick the shape from the ask, then read only what that shape needs. A target that
 
 | The ask sounds like | Shape | What to read, in order | What you owe the end |
 |---|---|---|---|
-| "deslop this directory", "review this module", "we keep missing things", or any file, package, subsystem or repository that is not a diff | **coverage pass** (the default) | `readings/auditing.md`, `readings/when-to-relax.md`, `readings/recurring-patterns.md`, then **every group** in `lenses.json`: its index, then every principle file in it, in full (see *The default*) → `stages/aggregation.md` → `stages/consolidation.md` → `stages/reporting.md` | the bucketed list and the **coverage receipt**: each group read or not read, with a files-read manifest per cell. A pass that did not read every group is **partial coverage** |
-| "review this PR", "is this diff sloppy?", or an explicit "quick look" / "narrow look" | **scoped pass** | `readings/auditing.md`, `readings/when-to-relax.md`, `readings/recurring-patterns.md`, then the **one or two groups** the code is (a boundary question → `boundaries`; a parser → `parsing`), in full | a short findings list, verified at the line, and the groups it did not read |
+| "deslop this directory", "review this module", "we keep missing things", or any file, package, subsystem or repository that is not a diff | **coverage pass** (the default) | `readings/auditing.md`, `readings/when-to-relax.md`, then **every group** in `lenses.json`: its index, then every principle file in it, in full (see *The default*) → `stages/aggregation.md` → `stages/consolidation.md` → `stages/reporting.md` | the bucketed list and the **coverage receipt**: each group read or not read, with a files-read manifest per cell. A pass that did not read every group is **partial coverage** |
+| "review this PR", "is this diff sloppy?", or an explicit "quick look" / "narrow look" | **scoped pass** | `readings/auditing.md`, `readings/when-to-relax.md`, `patterns.md` and the pattern files of those groups, then the **one or two groups** the code is (a boundary question → `boundaries`; a parser → `parsing`), in full | a short findings list, verified at the line, and the groups it did not read |
 | "look at X specifically" — separation of concerns, coupling, duplication | **directed cell** | that group's index, then every file in the group, then the module whole | findings in that group's terms, with the declinations |
 | "massive simplification", "30% LOC", "get it all done" | **campaign** | `modes/campaign.md` (which names `library/measuring.md` before you start) | a PR or PR set with a measured before/after |
 | "this rule is wrong / we need a principle for X" | **library extension** | `library/extending-the-library.md`, then `readings/detecting-slop.md` for the control | a new principle that fires, merged upstream |
@@ -27,9 +27,9 @@ choice.
 - **Every group.** One reading per group in `lenses.json` — all nine today. A reading covers one group. No group is
   merged into another or dropped to save budget.
 - **The reading list, in order.** Each reading opens its group's category index first (the `indexes` the group
-  names in `lenses.json`), then `readings/auditing.md`, `readings/when-to-relax.md` and `readings/recurring-patterns.md`, then any protocol the group
+  names in `lenses.json`), then `readings/auditing.md`, `readings/when-to-relax.md`, then any protocol the group
   names (the duplication group also opens `readings/duplication.md`), then **every principle file in the group, in
-  full**.
+  full**, then `patterns.md` and the group's pattern files (the `patterns` list in `lenses.json`; a group with none skips the index).
 - **The mechanism.** If the harness can spawn subagents, dispatch one per group in parallel: read-only, whole files,
   the cell prompt passed verbatim. If it cannot, run the same cells one after another in this context, each with
   its own reading list and its own manifest. The execution changes; the cells do not.

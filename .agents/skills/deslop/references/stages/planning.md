@@ -86,7 +86,7 @@ most:** in that pass (332 cells), a cell tracing one concern across the tree pro
 1.2 for module cells, 1.3 for role cells and 1.0 for flow cells; the 24% of cells that crossed folders produced 28%
 of the high findings. Spend the budget on concepts first — config reading, status vocabularies, identifier formats,
 retry and error translation, one run's lifecycle — before the next module. The patterns in
-[recurring-patterns.md](../readings/recurring-patterns.md) are a ready list of concept cells.
+[patterns](../patterns.md) are a ready list of concept cells.
 
 Invent the slices the code asks for; the table is a palette, not a taxonomy. Two rules: a slice must be
 **nameable in one sentence** ("every place a retry delay is decided"), and a slice that is **one file is fine** —
@@ -118,7 +118,8 @@ audits *reachability* of every markdown in the library. Each file must sit in ex
 |---|---|---|
 | **principle** | one group's reading list, read in full | every reading |
 | **category index** | read **first** by the groups it governs — it carries the stance and the tells that show a reader what a violation looks like | before the principle files |
-| **lens protocol** | `auditing.md`, `when-to-relax.md` and `recurring-patterns.md` in every reading; a situational protocol such as `duplication.md` in the group that needs it | with the lens |
+| **pattern index and patterns** | `patterns.md` then the lens's own `patterns/*.md` (listed per group in `lenses.json`), after its principles | with the lens |
+| **lens protocol** | `auditing.md` and `when-to-relax.md` in every reading; a situational protocol such as `duplication.md` in the group that needs it | with the lens |
 | **stage reference** | an explicit trigger — "read this when reports arrive", "read this before you speak" | at its stage |
 | **situational** | on request, e.g. a worked example or the bibliography | never assumed |
 

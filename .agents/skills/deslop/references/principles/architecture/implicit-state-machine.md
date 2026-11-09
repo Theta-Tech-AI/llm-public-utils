@@ -98,7 +98,7 @@ next, neither obviously wrong.
 
 ## The family: one disease, many costumes
 
-A **nullable self-reference or timestamp** can hide the machine too: `replaced_by IS NULL` meaning "current", written by raw `UPDATE`s in several modules and read by several `WHERE` clauses. Count the writers and the readers; repair with named states, one transition function and a schema constraint ([recurring patterns](../../readings/recurring-patterns.md#8-unwritten-state-machine-in-a-column)).
+A **nullable self-reference or timestamp** can hide the machine too: `replaced_by IS NULL` meaning "current", written by raw `UPDATE`s in several modules and read by several `WHERE` clauses. Count the writers and the readers; repair with named states, one transition function and a schema constraint (a partial unique index for "at most one current"). In a very large audit this shape was 181 findings, 23 high; it is a tell of this principle, not a separate [pattern](../../patterns.md).
 
 | Artifact | The transition nobody owns | The component that was missing |
 |---|---|---|
