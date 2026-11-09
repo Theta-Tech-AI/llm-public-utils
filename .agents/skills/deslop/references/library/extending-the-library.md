@@ -92,6 +92,42 @@ Style notes, all of them load-bearing:
 - **Anonymize every worked example.** This repository is **public**: no client names, no repository paths, no
   internal issue or PR numbers, no product names. Quantities and magnitudes are fine; identifiers are not.
 
+### Write it so a newcomer can use it
+
+Every one of these rules comes from a review that sent a draft back.
+
+- **Teach the lesson, not the story of how you learned it.** Leave out the audit, its dates, its numbers and who
+  did what. The reader wants to know what bad code looks like and what to do about it. If a sentence is only true
+  of the one project you looked at, delete it.
+- **Write about code, not about how agents should work.** A lesson such as "a rule that nobody wrote down gets
+  answered differently in different places" belongs here. "The reviewing agent should treat the first agent's
+  output as..." does not; it describes one run, not code.
+- **Use plain words.** Someone who has never seen this library should understand each sentence the first time.
+  If you made up a term while working ("the input space", "the field run"), you are the only person who knows
+  what it means. Say the thing itself.
+- **Start with one small example, and set it up first.** Say what the function does and what the odd input is
+  before you say what goes wrong. "A search function takes a `limit`. What should `limit = 0` do?" works.
+  "What a zero or negative limit means" does not, because the reader has not met the limit yet.
+- **Say how to find it and how to fix it as numbered steps.** A reader should be able to follow them without
+  guessing what you meant.
+- **Check each addition with one sentence.** If you cannot say what it adds in one plain sentence, it is not
+  ready. Put those sentences in the pull request description.
+- **When review asks for a rewrite, go back to the evidence.** Read the findings again and build the text from
+  them. Editing the old draft keeps its faults.
+- **Fix the whole voice, not the marked lines.** A comment on one paragraph usually applies to everything written
+  the same way. Rewrite all of it.
+
+### Where a lesson from an audit goes
+
+Most lessons from an audit are not new principles. Try these places in order, and stop at the first that fits:
+
+1. **A new section in an existing pattern file** (`references/patterns/`), when the problem is a form of one
+   that is already there. Name the section "Variant: ...".
+2. **A new pattern file**, only when you both find it and fix it differently from every pattern already listed.
+   Say why in the pattern index.
+3. **A new principle**, by the steps in this file, when the lesson is a rule about one mechanism and no
+   principle states it.
+
 ### The refinement loop (expand, then compact — three times)
 
 Drafting once produces a summary of what you already knew. Each cycle: re-read the draft, research one
