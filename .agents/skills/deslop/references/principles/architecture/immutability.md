@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-immutability
-description: Deslop principle — Immutability: Values fixed after creation; never mutate caller data.
+description: Deslop principle — Immutability: values fixed after creation; never mutate caller data.
 ---
 
 # Immutability

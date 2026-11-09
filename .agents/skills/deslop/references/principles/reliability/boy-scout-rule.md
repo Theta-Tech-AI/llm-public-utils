@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability-boy-scout-rule
-description: Deslop principle — Boy Scout Rule: Leave code better than you found it, scoped to what you touch.
+description: Deslop principle — Boy Scout Rule: leave code better than you found it, scoped to what you touch; no drive-by rewrites.
 ---
 
 # Boy Scout Rule

@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-elegance
-description: Deslop principle — Elegance: Minimality, accomplishment, modesty, revelation.
+description: Deslop principle — Elegance: the least code that fully does the job and shows its intent; nothing to add, nothing left to remove.
 ---
 
 # Elegance

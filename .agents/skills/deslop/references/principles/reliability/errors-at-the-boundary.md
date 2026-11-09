@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability-errors-at-the-boundary
-description: Deslop principle — Errors at the Boundary: validation belongs where untrusted input enters, translation at each abstraction seam, and the decision where it can be acted on.
+description: Deslop principle — Errors at the Boundary: validate where untrusted input enters, translate at each abstraction seam, decide where it can be acted on.
 ---
 
 # Errors at the Boundary

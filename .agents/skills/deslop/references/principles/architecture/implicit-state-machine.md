@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-implicit-state-machine
-description: Deslop principle — A State Machine Nobody Wrote Down: a status or mode field whose legal transitions exist only as conditions scattered across call sites, so no single place can answer which moves are allowed.
+description: Deslop principle — A State Machine Nobody Wrote Down: a status field whose legal moves live only in scattered conditions; write the transitions down in one place.
 ---
 
 # A State Machine Nobody Wrote Down

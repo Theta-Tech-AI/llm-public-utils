@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-legibility
-description: Deslop principle — Legibility: a codebase you can navigate, where the path from entry point to effect is followable and the map in the reader's head matches the code.
+description: Deslop principle — Legibility: a navigable codebase where the path from entry point to effect is followable.
 ---
 
 # Legibility

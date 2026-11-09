@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-solid
-description: Deslop principle — SOLID Principles: SRP, OCP, LSP, ISP, DIP — with code smells.
+description: Deslop principle — SOLID Principles: SRP, OCP, LSP, ISP, DIP; with the smell each one catches.
 ---
 
 # SOLID Principles

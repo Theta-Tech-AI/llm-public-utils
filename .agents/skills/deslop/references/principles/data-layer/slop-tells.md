@@ -1,6 +1,6 @@
 ---
 name: deslop-data-layer-slop-tells
-description: Deslop principle — The Common Slop Tells: Grep-able schema smells, each mapping to a principle above.
+description: Deslop principle — The Common Slop Tells: grep-able schema smells, each mapped to the principle that owns it.
 ---
 
 # The Common Slop Tells

@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-law-of-demeter
-description: Deslop principle — Law of Demeter: Talk only to immediate friends; the one-dot rule.
+description: Deslop principle — Law of Demeter: talk only to immediate friends; a chain of dots reaching through an object's internals couples the caller to all of them.
 ---
 
 # Law of Demeter

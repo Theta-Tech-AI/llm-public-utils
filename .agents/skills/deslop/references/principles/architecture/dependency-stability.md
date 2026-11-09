@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-dependency-stability
-description: Deslop principle — Depend in the Direction of Stability: a unit that changes rarely importing one that changes often, so every change to the volatile side forces work in the stable side.
+description: Deslop principle — Depend in the Direction of Stability: a rarely-changing unit must not import an often-changing one.
 ---
 
 # Depend in the Direction of Stability

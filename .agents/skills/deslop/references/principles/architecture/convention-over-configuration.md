@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-convention-over-configuration
-description: Deslop principle — Convention Over Configuration: Sensible defaults with escape hatches.
+description: Deslop principle — Convention Over Configuration: sensible defaults with escape hatches; configure only what departs from the convention.
 ---
 
 # Convention Over Configuration

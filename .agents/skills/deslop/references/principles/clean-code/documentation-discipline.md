@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-documentation-discipline
-description: Deslop principle — Documentation Discipline: Where docs live; which comments earn their place.
+description: Deslop principle — Documentation Discipline: docs live next to what they describe; a comment earns its place by saying why, and stale prose is deleted.
 ---
 
 # Documentation Discipline

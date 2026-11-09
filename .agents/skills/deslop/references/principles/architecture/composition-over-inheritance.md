@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-composition-over-inheritance
-description: Deslop principle — Composition Over Inheritance: Has-a over is-a; black-box composition.
+description: Deslop principle — Composition Over Inheritance: has-a over is-a; assemble behaviour from small parts behind interfaces instead of inheriting it.
 ---
 
 # Composition Over Inheritance

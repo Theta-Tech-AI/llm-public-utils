@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability-observability
-description: Deslop principle — Observability & Transparency: Structured telemetry as your production debugger.
+description: Deslop principle — Observability & Transparency: structured, correlated telemetry as the production debugger; a failure is understood from the logs alone.
 ---
 
 # Observability & Transparency
