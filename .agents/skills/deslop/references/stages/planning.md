@@ -79,6 +79,15 @@ principle applies to all of it. Useful families, roughly in order of how often t
 A target that has a database always earns a `data-layer` cell over the schema — even when the schema lives
 outside the named target. If it does not, the pass has silently excluded the most expensive place to be wrong.
 
+**Cut at the code's own seams; line count is a ceiling, not a cut.** The size bound is only what one reader can hold
+whole. Packing files in path order to a line budget split one module in two and merged unrelated routers in a
+measured pass; the fix was module slices cut at the seams, plus flow, role and concept slices. **Concept cells pay
+most:** in that pass (332 cells), a cell tracing one concern across the tree produced 2.6 high findings, against
+1.2 for module cells, 1.3 for role cells and 1.0 for flow cells; the 24% of cells that crossed folders produced 28%
+of the high findings. Spend the budget on concepts first — config reading, status vocabularies, identifier formats,
+retry and error translation, one run's lifecycle — before the next module. The patterns in
+[recurring-patterns.md](../readings/recurring-patterns.md) are a ready list of concept cells.
+
 Invent the slices the code asks for; the table is a palette, not a taxonomy. Two rules: a slice must be
 **nameable in one sentence** ("every place a retry delay is decided"), and a slice that is **one file is fine** —
 the largest files are often the richest cells, because the defect is that four concerns share one home.
@@ -109,7 +118,7 @@ audits *reachability* of every markdown in the library. Each file must sit in ex
 |---|---|---|
 | **principle** | one group's reading list, read in full | every reading |
 | **category index** | read **first** by the groups it governs — it carries the stance and the tells that show a reader what a violation looks like | before the principle files |
-| **lens protocol** | `auditing.md` and `when-to-relax.md` in every reading; a situational protocol such as `duplication.md` in the group that needs it | with the lens |
+| **lens protocol** | `auditing.md`, `when-to-relax.md` and `recurring-patterns.md` in every reading; a situational protocol such as `duplication.md` in the group that needs it | with the lens |
 | **stage reference** | an explicit trigger — "read this when reports arrive", "read this before you speak" | at its stage |
 | **situational** | on request, e.g. a worked example or the bibliography | never assumed |
 

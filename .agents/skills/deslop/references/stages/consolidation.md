@@ -55,13 +55,36 @@ Before ordering, collapse to **concerns**:
 Then **one issue per concern**, never per finding or per cell. Each carries: the owner or missing component, the
 loci, the evidence (quoted, with line numbers), the repair stated so a stranger can start it, and the bucket.
 
-## 5. Group into a programme
+## 5. Classify, then theme the cross concerns
+
+Per-chunk fixing is the default failure at scale. In a measured pass, about 970 small reviewed local commits came
+from per-chunk fixers — yet 27% of verified concerns were **cross**: one fact with several owners cannot be fixed
+inside one chunk, and a chunk fixer polishes copies the real fix deletes. So before any fixer is dispatched:
+
+1. **Classify every verified concern on two axes** — **L2**, the fact or mechanism it is about (the run status, the
+   invoice reference grammar, the plan-replacement column); **L1**, the pattern class from
+   [recurring-patterns.md](../readings/recurring-patterns.md). Tag each *local*, *cross* (needs one owner across
+   modules or layers) or *next* (design, migration or API change).
+2. **Merge each L2 × L1 cluster into a theme with one owner.** A theme names the owner, the loci, and the consumers
+   to reroute. Local concerns stay with their chunk; cross concerns go to themes.
+3. **Order themes by dependency**: vocabularies, grammars and contracts first (everything else consumes them),
+   then the consumers that re-decided them, then the cleanups that become dead.
+4. **Schedule file-disjoint.** Themes that share a file never run at once; land and verify each wave before the
+   next begins, so a later theme reads the code the earlier one left.
+
+The taxonomy and clustering are the orchestration step, not bookkeeping: skip them and the pass produces many
+correct commits and an unfixed disease.
+
+**Read the reviewer's diffs yourself.** An adversarial reviewer that passes ~95% of commits (912 ok, 37 fix, 1 revert
+of 950) is a signal, not a result: sample the diffs by hand before trusting the rate.
+
+## 6. Group into a programme
 
 Put the "now" and "next" work into a milestone or epic with a denominator, so progress is a ratio ("18 of 24
 closed") rather than an unbounded queue. Order inside it by **risk per unit of effort**: the dangerous and cheap
 first, because that is where attention is available.
 
-## 6. State the edges
+## 7. State the edges
 
 Before the summary leaves your hands, write down — for the reader:
 
@@ -73,7 +96,7 @@ Before the summary leaves your hands, write down — for the reader:
 Coverage claims are what make the next pass credible. An audit that claims completeness without them is the reason
 the next reader trusts nothing in it.
 
-## 7. Hand-off
+## 8. Hand-off
 
 The consolidated, bucketed, concern-level list is now ready to be shown. How to say it — length, shape, what leads
 — is [reporting-results.md](reporting.md). Read it immediately before you speak, not now.
