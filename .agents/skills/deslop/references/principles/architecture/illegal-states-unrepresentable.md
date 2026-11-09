@@ -10,8 +10,8 @@ description: Deslop principle — Illegal States Unrepresentable: a field whose 
 
 When a model carries a field that is meaningful only in one mode — `shipped_at` when `status == "shipped"`,
 `session_id` when the connection is up, `is_admin` implying `is_user` — the type has admitted a state the domain
-forbids. Nothing prevents constructing it, so every reader downstream must re-derive which fields are valid, and the
-one that forgets produces the null that pages someone at 3 a.m. A validator is not the repair: it moves the same
+forbids. Nothing prevents constructing it, so the reader that forgets which fields are valid produces the null that pages
+someone at 3 a.m. (every other reader re-deriving it is [consumer re-decides the producer](../../patterns/consumer-redecides-producer.md)). A validator is not the repair: it moves the same
 check to a new place and leaves the type able to lie. **The repair is a shape in which the combination cannot be
 built at all** — one variant per state, each holding exactly the fields that state has.
 
@@ -66,8 +66,8 @@ invents an absent value; this covers the write-side shape that made absence expr
 1. **Implication table** — list the optional fields of a model and, for each pair, write "X is set only when Y…". Any
    sentence that begins "must be" is a representable illegal state; the table is the finding, and it is two minutes'
    work.
-2. **Discriminator test** — grep for the field that decides (`status`, `state`, `type`, `kind`). Each comparison is a
-   place re-deriving which fields are valid; that count is the cost of the shape.
+2. **Discriminator test** — grep for the field that decides (`status`, `state`, `type`, `kind`). The count of comparisons is
+   the cost of the shape.
 3. **Constructor test** — can an illegal instance be built without raising? Then the type is a suggestion and every
    consumer is on its own.
 4. **Flag test** — two booleans that never co-occur or never differ (`is_admin` + `is_user`, `is_draft` +

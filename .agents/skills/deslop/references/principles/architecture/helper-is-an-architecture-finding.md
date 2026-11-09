@@ -53,9 +53,8 @@ Two corollaries the audit must obey:
 - **Never downgrade a lone helper for being "only used in one place".** The single call site is the proof, not
   the mitigation: the value crossed a boundary still raw, and one consumer is reconciling what should never
   have arrived in that shape.
-- **Never wait for a second copy before filing it.** Waiting is how the fork happens: the second consumer
-  arrives, writes its own version with a slightly different token set, and now the finding looks like
-  duplication and gets fixed as duplication — leaving both versions where they are.
+- **Never wait for a second copy before filing it.** Waiting is how the fork happens; see
+  [one fact, many owners](../../patterns/one-fact-many-owners.md#file-the-first-copy).
 
 This is also why "the repo already has one of these" is not the end of the analysis (see the signature test
 below): sharing an owner that the caller cannot reach still leaves the value unparsed at the point of use.
@@ -70,8 +69,8 @@ Do not audit the helper. Audit its absence:
 2. **Owning-module test** — name the module with the authority to answer this question. If the answer is "none",
    the decision is unowned, and every helper is a separate vote on what it means.
 3. **Authority-duplication test** — *corroboration only, never the trigger.* Would a second consumer write this
-   function? Two token sets for one concept mean the fork has already happened, which strengthens a finding you
-   should already have from test 1. Use it as evidence, never as the reason.
+   function? Two token sets for one concept are the fork already
+   ([one fact, many owners](../../patterns/one-fact-many-owners.md#file-the-first-copy)); use it as evidence, never as the reason.
 4. **Layer test** — how far is the helper from where the value entered? A codec at the edge is doing its job; a
    codec four layers in is a message that the edge did not finish its work and nobody noticed.
 5. **Reversibility test** — what does the helper do with input it cannot interpret (`"maybe"`, an unknown model
@@ -109,10 +108,9 @@ bodies, query params, database rows, provider payloads, file contents — answer
 3. **How many places interpret it again afterwards?** Count them. Two is already a finding; three is a design
    that never had a boundary.
 
-The tell is **structural and needs no vocabulary**: a consumer holding the vocabulary of a decision instead of
-asking its owner — a set of literal tokens compared against a string, a `startswith` on an identifier that names
-a thing, a first-non-empty scan over alternative spellings of one setting, a literal default sitting beside a
-lookup. Where those appear, ask what component should have answered and why the caller could not ask it.
+The tell is **structural and needs no vocabulary**, and it is written once, in
+[consumer re-decides the producer](../../patterns/consumer-redecides-producer.md#the-structural-tell). Where it
+appears, ask what component should have answered and why the caller could not ask it.
 
 Report the result even when it is the least interesting finding in the pass: an unowned input outranks a tidy
 bug, and it will not be found by anyone else's tool.
@@ -134,7 +132,7 @@ external representation to internal decision. Fixing the type without placing th
 `_truthy(str) -> bool` into `_parse_bool(str) -> bool` in the same wrong file, and the next consumer writes
 `_parse_bool` again. Fixing the owner deletes the helper as a consequence.
 
-**Consumer re-decides the producer's decision** is the same disease at a service boundary: a client that merges two server answers, parses a typed field again, or hand-copies a server rule is a helper whose missing owner is the *producer's response*. The repair is to return the decision, not to harden the reconciler ([consumer re-decides the producer](../../patterns/consumer-redecides-producer.md)); the same goes for one identifier grammar parsed by several regexes or one env value parsed by two rules ([grammar without an owner](../../patterns/grammar-without-owner.md)).
+Seen in the field as [consumer re-decides the producer](../../patterns/consumer-redecides-producer.md), [grammar without an owner](../../patterns/grammar-without-owner.md) (rows 1-2, and its config variant) and [absence equals failure](../../patterns/absence-equals-failure.md) (rows 5-6).
 
 ## The repair
 

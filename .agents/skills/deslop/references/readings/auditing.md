@@ -76,9 +76,8 @@ Two obligations decide whether a pass was worth running:
   contents — and for each one answer three questions: *where does it enter, which single component turns it into
   a decision or a domain value, and how many places interpret it again afterwards?* Zero owners or several is a
   finding, and it outranks nothing else in the pass — report it even when it is the least interesting thing you
-  found. The tell is structural, never lexical: a consumer holding the vocabulary of a decision (a set of literal
-  tokens compared against a string, a `startswith` on an identifier, a first-non-empty scan over alternative
-  names, a literal default beside a lookup) instead of asking the component that owns the concept. **A grep list
+  found. The tell is structural, never lexical, and is written in
+  [consumer re-decides the producer](../patterns/consumer-redecides-producer.md#the-structural-tell). **A grep list
   of helper names is not this sweep** — it fires only on the spellings you thought of and misses the next
   instance by construction; the question above is the instrument, and
   [architecture/helper-is-an-architecture-finding.md](../principles/architecture/helper-is-an-architecture-finding.md) is where

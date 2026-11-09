@@ -130,7 +130,7 @@ first probe, not a proof, and it must never be quoted as "it does nothing".
 | a second logger threaded beside the contextual one | the logger derived from the request | nothing: no lifetime contract is involved |
 | an explicit lock inside a transaction | the transaction's isolation | exclusivity the transaction already has |
 
-The same shape appears **between two ends of one contract**: a client retries on an error code the server never emits, an idempotency key is sent and never honoured, a configured list is parsed and logged but used only as a switch. Walk each end to its partner; the end without one is the unclaimed guarantee. A docstring, name or route declaration that promises what the body does not is its mirror ([declaration vs enforcement](../../patterns/declaration-vs-enforcement.md), [one-sided contract](../../patterns/one-sided-contract.md)).
+The same shape appears **between two ends of one contract**: walk each end to its partner; the end without one is the unclaimed guarantee. Seen in the field as [one-sided contract](../../patterns/one-sided-contract.md) and, for a declaration that promises what the body does not, [declaration vs enforcement](../../patterns/declaration-vs-enforcement.md).
 
 ## The repair
 

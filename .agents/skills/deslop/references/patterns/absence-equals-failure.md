@@ -9,6 +9,8 @@ description: Deslop pattern — Absence Equals Failure: one value answers both "
 
 One return value (`None`, `[]`, `""`, `"not available"`, a `fallback=` argument) answers both "nothing is saved" and "the read failed". A catch-all wrapper turns every exception into the empty answer, so the caller cannot choose between *show empty* and *show an outage*.
 
+Its quieter form is a helper that settles what absence means for everyone: `_coerce_int_or_zero(text)` (is absence zero or an error?) or `_get_or_default(d, k, v)` (who may invent a missing value?). The owner is the parser at the boundary with a stated policy, or a type that cannot be partial.
+
 ## Why it arises
 
 An error once crashed a page, so someone wrapped the call. The wrapper's fallback happened to be the empty value.

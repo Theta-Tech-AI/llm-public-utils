@@ -9,6 +9,8 @@ description: Deslop pattern — Consumer Re-Decides the Producer: a client or la
 
 The client, or a later stage, reconciles answers the producer already reconciled: merging two server lists into one view, parsing again a field the API already typed, hand-copying a server rule ("orders over 50 ship free") into the SPA.
 
+The tell is **structural and needs no vocabulary**: a consumer holding the vocabulary of a decision instead of asking its owner — a set of literal tokens compared against a string, a `startswith` on an identifier that names a thing, a first-non-empty scan over alternative spellings of one setting, a literal default sitting beside a lookup. Where those appear, ask what component should have answered and why the caller could not ask it. A reader of a type that must re-derive which of its fields are valid (an optional field meaningful in only one mode) is the same shape inside one codebase.
+
 ## Why it arises
 
 The producer returned raw ingredients, or the consumer did not trust the contract. The consumer's copy of the rule then ages independently.

@@ -15,6 +15,10 @@ Two or more places decide the same thing — a threshold, a status label, a perm
 
 A second consumer needed the answer, and copying four lines was faster than finding or creating the owner. Nothing couples the copies, so a change to one is invisible to the rest.
 
+## File the first copy
+
+Never wait for a second copy before filing. Waiting is how the fork happens: the second consumer arrives and writes its own version with a slightly different token set, and the finding then looks like duplication and is fixed as duplication, leaving both versions where they are. Two token sets for one concept are the fork already; use that as corroboration, never as the trigger. A unit noticed spread across boundaries is the finding: if it is only noted ("this looks similar to X"), the next reader must re-notice, re-scope and re-decide it.
+
 ## Repair shape, owner first
 
 1. Pick the module whose change would be least surprising to the others.
@@ -22,6 +26,10 @@ A second consumer needed the answer, and copying four lines was faster than find
 3. Route every consumer through it and delete the copies **in the same change**.
 
 Polishing one copy of a fact that has several is the commonest wasted fix. Disagreeing copies are a bug report, not a style note.
+
+## Variant: the fact stored twice
+
+In the schema the same shape is the update anomaly: one fact on several rows, or in two columns (`status` plus `stage`, a JSON blob beside the scalars projected out of it, a "current" snapshot beside a versions table), so an update touches all of them or leaves them disagreeing. It survives in production for years because both reads still "work". A `# kept in sync by the app` comment is the confession. The repair is the same: one home for the fact, the rest derived (a view, a generated column).
 
 ## Who owns the mechanism
 

@@ -13,6 +13,8 @@ One closed set of values (status, kind, reason) is spelled as string literals in
 
 Strings cross every boundary for free, so each layer typed its own copy. A new member is added where the author looked and nowhere else.
 
+In the schema it shows as a `status text` or `*_type text` column with no `CHECK`: a closed vocabulary the application knows and the database does not. A partial index that hardcodes `WHERE status IN (...)` proves the set exists and is not enforced.
+
 ## Repair shape, owner first
 
 One enum or table per vocabulary, produced at the owner. A schema constraint where it is stored, a generated or shared type where it crosses the wire. A switch over it must fail loudly on a new member.

@@ -75,7 +75,7 @@ the reader has already performed.
 
 ## The family: one disease, many costumes
 
-At scale the vocabulary test pays most across layers: one status set spelled in several modules and again in the UI, where the copies disagree on a member ([vocabulary drift](../../patterns/vocabulary-drift.md)).
+Seen in the field as [vocabulary drift](../../patterns/vocabulary-drift.md).
 
 | Artifact | The agreement nobody owns | The component that was missing |
 |---|---|---|

@@ -33,7 +33,7 @@ The failure modes those rungs exist to prevent have names too, and they are the 
 - **Insertion anomaly** — a fact cannot be recorded because it has nowhere to live. A newly hired employee with
   no project yet cannot be stored without inventing a null project row.
 - **Update anomaly** — the same fact appears on several rows, so an update either touches all of them or leaves
-  them disagreeing. This is the one that survives in production for years, because both reads still "work".
+  them disagreeing (the data variant of [one fact, many owners](../../patterns/one-fact-many-owners.md#variant-the-fact-stored-twice)).
 - **Deletion anomaly** — deleting a row destroys an unrelated fact. Delete the last order for a customer and the
   customer's own record disappears with it.
 
