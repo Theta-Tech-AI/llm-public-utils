@@ -23,7 +23,8 @@
       "library/evaluation.md": "before claiming a pass proved something, and after any control run",
       "library/extending-the-library.md": "adding a principle to the library",
       "library/further-reading.md": "bibliography and attribution, not needed mid-audit",
-      "library/measuring.md": "any pass that will claim a number"
+      "library/measuring.md": "any pass that will claim a number",
+      "library/what-the-principles-buy.md": "explaining why a pass is worth doing, ranking which principles lead for a kind of code, or briefing workers who fix in parallel"
     },
     "taxonomy": {
       "stages/": "the four stages of a pass \u2014 planning, aggregation, consolidation, reporting",
