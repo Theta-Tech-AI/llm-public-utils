@@ -11,6 +11,17 @@ The client, or a later stage, reconciles answers the producer already reconciled
 
 The tell is **structural and needs no vocabulary**: a consumer holding the vocabulary of a decision instead of asking its owner — a set of literal tokens compared against a string, a `startswith` on an identifier that names a thing, a first-non-empty scan over alternative spellings of one setting, a literal default sitting beside a lookup. Where those appear, ask what component should have answered and why the caller could not ask it. A reader of a type that must re-derive which of its fields are valid (an optional field meaningful in only one mode) is the same shape inside one codebase.
 
+## Variant: the producer discards its own answer
+
+The decision was made in the right place and then thrown away, so later code has to make it again.
+
+- A request handler turns an id from text into a proper id type, then passes `str(id)` to the next function.
+- A settings loader checks that a mode is one of three allowed words, then returns the plain string.
+- A function reads settings into a typed object and keeps the raw environment variables next to it, and later code reads the raw ones.
+- A check runs, its result is ignored, and the same check runs again two calls later.
+
+Look for a function that checks its input and returns it unchanged, or a typed value turned back into text when it is passed on. Return the checked value in its own type and make the next function require that type. The repeated checks further along can then be deleted.
+
 ## Why it arises
 
 The producer returned raw ingredients, or the consumer did not trust the contract. The consumer's copy of the rule then ages independently.

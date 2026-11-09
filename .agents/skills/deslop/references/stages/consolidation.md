@@ -18,6 +18,17 @@ Every candidate — corroborated or single — is read at its source line first.
 claim is about that code, and the repair would work. Findings that cannot be verified are dropped, not deferred:
 a wrong finding costs more than a missing one, because it teaches the reader to skim.
 
+A finding can describe the code correctly and still be wrong. The reason is almost always in a **different file** from the one the finding points at. Before you accept a finding, check these six things:
+
+1. **Is this code ever run?** If nothing in production calls it, the problem is real but nobody can hit it. Report it as unused code, not as a live bug.
+2. **Does earlier code already prevent it?** The settings loader may already reject the zero that would break this function. If so, adding a check here only adds a duplicate
+   ([unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md)).
+3. **Does the "missing" thing already exist?** The helper the finding asks for may be two files away. The real finding is then smaller: one caller did not use it.
+4. **Do the two "copies" do the same job?** Two pieces of code can look alike and answer different questions
+   ([one-fact-many-owners](../patterns/one-fact-many-owners.md)). Check that they would disagree on the same input.
+5. **Is the "fallback" just the normal empty case?** "Falls back when the data is malformed" may really be "starts fresh when there is no data yet".
+6. **Would the fix break something shared?** The connection that looks like it is never closed may be one shared connection that the whole program uses.
+
 ## 2. Apply the guardrail
 
 Run the list through [when-to-relax.md](../readings/when-to-relax.md) before ranking. Where the "violation" is the cheaper

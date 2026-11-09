@@ -28,6 +28,7 @@ Read this index before the pattern files your lens lists, the way a reading open
 | [grammar-without-owner](patterns/grammar-without-owner.md) | one input format (identifier, config value) taken apart by several parsers | parsing | 427 / 37, plus 114 / 12 for the config variant |
 | [fork-instead-of-extension](patterns/fork-instead-of-extension.md) | a downstream copy of an upstream module drifts | duplication | 211 / 40 |
 | [one-sided-contract](patterns/one-sided-contract.md) | one end of an agreement has no partner | parsing, guarantees | 123 / 16 |
+| [unnamed-decision](patterns/unnamed-decision.md) | nobody decided what should happen in an odd case, so each place does something different | duplication, parsing | no count yet |
 
 The `shape` and query lenses carry no pattern: the field data showed none that they catch most.
 
@@ -37,3 +38,7 @@ A pattern gets its own file only when **both** its structural tell **and** its r
 
 - **Config parsed twice with different rules** — folded into [grammar-without-owner](patterns/grammar-without-owner.md) as a variant. Its tell (one input, several parsers that disagree) and its repair (one parser, typed output) are the identifier case with an environment value as the input. Its numbers stay with the variant.
 - **Lifecycle in a column** (a nullable self-reference or flag written from many modules) — dropped as a pattern. Its tell (count the writers and readers) and repair (named states, one transition, a constraint) are already the content of [implicit-state-machine](principles/architecture/implicit-state-machine.md); the principle now carries the prevalence (181 findings, 23 high) and the pattern file would only restate it.
+
+The counts in the table come from one large audit. The last row, [unnamed-decision](patterns/unnamed-decision.md), was added later, so it has no count.
+
+It has its own file, and is not part of *one fact, many owners*, for two reasons. You find it differently: nothing was copied, so there is no shared text to search for, and you have to ask every place that does the same job what it does in the odd case. You fix it differently: no existing behaviour is the original, so you must first decide what the rule is.

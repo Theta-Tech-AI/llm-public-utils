@@ -69,7 +69,8 @@
       ],
       "patterns": [
         "patterns/one-fact-many-owners.md",
-        "patterns/fork-instead-of-extension.md"
+        "patterns/fork-instead-of-extension.md",
+        "patterns/unnamed-decision.md"
       ]
     },
     "coupling": {
@@ -111,7 +112,8 @@
         "patterns/consumer-redecides-producer.md",
         "patterns/grammar-without-owner.md",
         "patterns/absence-equals-failure.md",
-        "patterns/one-sided-contract.md"
+        "patterns/one-sided-contract.md",
+        "patterns/unnamed-decision.md"
       ]
     },
     "shape": {

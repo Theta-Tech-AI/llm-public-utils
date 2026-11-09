@@ -11,6 +11,18 @@ The declaration was written once and the code changed under it; nothing couples 
 
 A docstring, name, comment, route declaration or config key promises behaviour that no line enforces: a `validate_*` that only logs, a route marked admin-only whose handler never checks, an "idempotent" docstring over an append, a `timeout` setting nothing reads. Read the promise, then find the line that keeps it. No such line is the finding.
 
+## Variant: kept on some routes
+
+The rule is enforced, but only on the path its author was working on. The same data also travels another path, and nothing checks it there.
+
+- An error message is hidden in the log, and sent unhidden in an event to the user interface.
+- Private text is removed from the body of a message and left in its title.
+- An admin right is given an expiry time, and the object that carries the right does not hold that time.
+- A database guard runs on insert and update, and not on delete.
+- Of two login checkers, one checks the token type and the other does not.
+
+This is easy to miss because a search for the check finds it, so the code looks correct. List every path the protected thing can take and look at each one. Put the check at the one place all paths go through.
+
 ## Why it arises
 
 Declarations are cheap and unchecked. Middleware is unmounted, a refactor drops the guard, or the setting was wired to nothing from the start.
