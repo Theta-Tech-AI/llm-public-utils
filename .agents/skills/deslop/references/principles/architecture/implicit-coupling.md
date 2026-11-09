@@ -75,6 +75,8 @@ the reader has already performed.
 
 ## The family: one disease, many costumes
 
+Seen in the field as [vocabulary drift](../../patterns/vocabulary-drift.md).
+
 | Artifact | The agreement nobody owns | The component that was missing |
 |---|---|---|
 | `configure()` then `use()` | the required call order | a type that cannot be constructed incomplete |

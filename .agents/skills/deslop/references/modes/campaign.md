@@ -166,6 +166,10 @@ A campaign is large enough that the *process* is the deliverable. From the refer
   campaigns fall apart.
 - **One working copy per worker — a `git worktree`, not a shared checkout.** Workers that write the
   same tree clobber each other; disjoint files are not enough, because the *tree* is shared state.
+- **Route cross concerns to themes before per-file fixers.** One fact with several owners is not fixable inside
+  one worker's files. Classify the verified concerns, merge each fact x pattern cluster into a theme with one
+  owner, and run themes in dependency order (vocabularies, grammars, contracts first); only local concerns go to
+  per-file fixers. See [consolidation](../stages/consolidation.md#5-classify-then-theme-the-cross-concerns).
 - **Disjoint by file, and sequenced by file.** Two workers touching one file must be one worker or one
   prompt — parallel agents on a shared file collide and clobber each other, and file-level disjointness
   is the only thing that makes a parallel wave safe.

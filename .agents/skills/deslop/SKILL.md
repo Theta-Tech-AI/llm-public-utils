@@ -4,7 +4,7 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈416 KB across 81 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈16 KB (≈4k tokens) and the `references/` tree is ≈456 KB across 91 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
@@ -24,6 +24,7 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 |------|------|
 | [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: contexts where a principle is over-applied, and the meta-principle that says a violation worth "fixing" into worse code is not a violation |
+| [references/patterns.md](references/patterns.md) | **In each reading, for the patterns of its lens** (listed per group in `lenses.json`), after the principles; **at consolidation** as the L1 axis that themes cross concerns. The index says how a *pattern* (a recurring diagnostic shape across many findings, never charged by itself) differs from a *principle* (one mechanism, one owner), and links one file per pattern under `references/patterns/` |
 | [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — the shapes of a pass: the **coverage pass** (the default for any target that is not a diff), the scoped pass (a diff, PR, or an explicit quick look), directed cell, campaign, library extension, second round. Pick the shape before the readings |
 | [references/stages/planning.md](references/stages/planning.md) | **Before every coverage pass** (the default) — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
 | [references/stages/aggregation.md](references/stages/aggregation.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
@@ -54,6 +55,7 @@ category. The directory a file sits in tells a reader what to do with it, and th
 | `references/readings/` | what a single reading carries — `auditing` (the report format and census), `when-to-relax` (the guardrail), `duplication` (the dedup sweep) | `auditing` and `when-to-relax` in **every** reading |
 | `references/modes/` | modes a pass can run in — `campaign` (measured whole-codebase programme), `loop-until-dry` | when the ask names the mode |
 | `references/principles/` | `<category>.md` is a category **index** (read first: the stance and the tells); `<category>/<slug>.md` is one principle | the index first, then every file of an assigned group, in full |
+| `references/patterns/` | `patterns.md` is the pattern **index** (pattern versus principle, the table); `patterns/<slug>.md` is one recurring diagnostic pattern: its tell, owner-first repair, the principles that own each mechanism | the index, then the group's own pattern files, after its principles; all of them at consolidation |
 | `references/library/` | reference opened when the ask needs it — claim a number, add a principle, build a detector, cite a source, see a worked example | on request |
 | `references/lenses.json` | the principle partition, the indexes each group reads, and the trigger for each stage/mode/library file | by the scripts, and by anyone planning |
 
@@ -96,6 +98,13 @@ python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/plan --bud
 For a **specific ask** — *"look at separation of concerns in the provider adapters"* — skip the plan and read one
 cell: emit the `boundaries` group against that module, or simply open those principle files and read the module
 whole. A general pass cannot satisfy that request, because it decides for itself what to open.
+
+## Pattern references
+
+[references/patterns.md](references/patterns.md) indexes eight recurring diagnostic patterns, one file each under
+`references/patterns/`. A pattern is a tell that spans principles and lenses, with an owner-first repair; it is never
+charged by itself, so every instance is still filed under the principle that owns the mechanism. Each lens lists the
+patterns it catches most (`patterns` in `lenses.json`) and reads them after its principles.
 
 ## Aggregate, consolidate, then report
 

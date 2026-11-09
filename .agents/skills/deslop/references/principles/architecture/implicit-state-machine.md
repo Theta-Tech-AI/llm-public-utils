@@ -12,8 +12,8 @@ caller, so the transitions live in the developers' heads.
 The states are rarely the problem; a field holding one of five named values is fine, and
 [Make Illegal States Unrepresentable](illegal-states-unrepresentable.md) may already have tightened it.
 What is missing is the **transition relation**: which move is legal from which state, and who may cause
-it. When that lives nowhere, every writer re-derives it with an `if`, the copies drift, and a workflow
-advanced by a worker, a job and an admin endpoint ends up with three answers to "is this move allowed".
+it. When that lives nowhere, a workflow advanced by a worker, a job and an admin endpoint ends up with three
+answers to "is this move allowed" ([one fact, many owners](../../patterns/one-fact-many-owners.md)).
 
 ```python
 # ❌ the transitions exist only as conditions in each writer, in three different modules
@@ -97,6 +97,8 @@ next, neither obviously wrong.
    re-grows its own `if`, the architecture changed nothing and the graph is still unwritten.
 
 ## The family: one disease, many costumes
+
+A **nullable self-reference or timestamp** can hide the machine too: `replaced_by IS NULL` meaning "current", written by raw `UPDATE`s in several modules and read by several `WHERE` clauses. Count the writers and the readers; repair with named states, one transition function and a schema constraint (a partial unique index for "at most one current"). In a very large audit this shape was 181 findings, 23 high.
 
 | Artifact | The transition nobody owns | The component that was missing |
 |---|---|---|

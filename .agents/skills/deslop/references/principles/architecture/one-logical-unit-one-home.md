@@ -23,7 +23,7 @@ The obligation this principle names is immediate, and it is the point of the fil
 a unit spread across boundaries, that *is* the finding.** Name the unit, name the module that should own it,
 propose the consolidation — in the pass, as an actionable item. Reporting the observation ("this looks
 similar to X") and moving on is the failure: the next reader must re-notice it, re-scope it, and re-decide
-it, for free, on your behalf.
+it, for free, on your behalf ([file the first copy](../../patterns/one-fact-many-owners.md#file-the-first-copy)).
 
 ## Why it happens
 
@@ -62,7 +62,8 @@ Name-based views find only what was named alike, so treat them as a second look,
    its own goal never names (a citation pipeline inside a runtime, voting rounds inside a job runner).
 7. **N partial implementations of one mechanism.** Count them: locking, activity, streams, configuration,
    telemetry. One is a question; more than two is a finding.
-8. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
+8. **Copies that already disagree** — two homes whose answers differ on one input. Seen in the field as [one fact, many owners](../../patterns/one-fact-many-owners.md).
+9. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
    one behaviour.
 
 ## Diagnostics

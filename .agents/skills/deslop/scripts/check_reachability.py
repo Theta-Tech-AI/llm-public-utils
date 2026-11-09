@@ -19,6 +19,8 @@ Rules:
   skill is legal and is not this skill's business).
 - A file may be reached through an index (`references/principles/<category>.md` linking each principle), which
   is the intended shape: `SKILL.md` names ~20 entries, the indexes carry the rest.
+- The same holds for `references/patterns.md` and the `references/patterns/<slug>.md` files it links: a pattern
+  file the index does not link is reported as an orphan, with the index named as where to link it.
 """
 from __future__ import annotations
 

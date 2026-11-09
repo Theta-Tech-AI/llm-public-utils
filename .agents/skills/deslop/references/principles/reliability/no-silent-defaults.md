@@ -32,6 +32,8 @@ precisely the point: a silent default is how a misconfiguration becomes a plausi
   timeout that defaults to permissive, a permission check that defaults to allowed, a required key that
   defaults to a placeholder — each converts "we did not know" into "we decided, generously".
 
+- **Absence equals failure.** A default that stands in for a failed read hides an outage as "empty"; the tell and the repair are in [absence equals failure](../../patterns/absence-equals-failure.md).
+
 ## The falsy trap
 
 The coalescing swallow has a second victim that has nothing to do with absence:

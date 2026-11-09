@@ -130,6 +130,8 @@ first probe, not a proof, and it must never be quoted as "it does nothing".
 | a second logger threaded beside the contextual one | the logger derived from the request | nothing: no lifetime contract is involved |
 | an explicit lock inside a transaction | the transaction's isolation | exclusivity the transaction already has |
 
+The same shape appears **between two ends of one contract**: walk each end to its partner; the end without one is the unclaimed guarantee. Seen in the field as [one-sided contract](../../patterns/one-sided-contract.md) and, for a declaration that promises what the body does not, [declaration vs enforcement](../../patterns/declaration-vs-enforcement.md).
+
 ## The repair
 
 **Claim it, or delete it.** Three legitimate endings, in order of preference:
