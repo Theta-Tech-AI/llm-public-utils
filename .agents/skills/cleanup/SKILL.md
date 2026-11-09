@@ -1,14 +1,15 @@
 ---
 name: cleanup
-description: End-to-end repo housekeeping pass — branch sync, submodule hygiene, stuck-deploy recovery, doc triage, E2E smoke. Use at session start or when repo/deploy state is unclear. Reports surgically; only applies safe fixes.
+description: Repo cleanup and consolidation — close every loop (PRs, issues, branches, worktrees, stale tests, leftover gates, dead code after a consolidation, stray browsers and containers) and the housekeeping audit (branch sync, submodules, deploy health, docs). Use on a cleanup day or when told to consolidate, clean up, prune, deslop, "too many issues/PRs/tests", or at session start when repo state is unclear.
 ---
 
 # /cleanup — repository housekeeping pass
 
-A single-command sweep that audits the repository, its deploy target, and
-docs the way you would when you sit down and ask "what state are we
-actually in?" Reports findings and applies safe fixes; surfaces
-blast-radius decisions for explicit confirmation.
+A sweep that audits the repository, its deploy target, and docs the way
+you would when you sit down and ask "what state are we actually in?"
+Reports findings and applies safe fixes; surfaces blast-radius decisions
+for explicit confirmation. On a cleanup day, run the close-every-loop
+checklist first, then the audit.
 
 This is **not** an autonomous "fix everything" command. The doc backlog
 is usually large; many followups are explicitly future PRs. The goal of
@@ -16,7 +17,44 @@ is usually large; many followups are explicitly future PRs. The goal of
 identify what's actually pending, and prove the deployed environment is
 alive — not to ship every queued change.
 
-## What it checks, in order
+## Cleanup day — close every loop
+
+Teams that run many agents in parallel open work faster than anyone finishes it. Words like "consolidate", "clean up", "prune" and "deslop" are the signal for a cleanup day. Each ask on such a day is one room of the same clean: name the intent, then run the whole checklist, not only the ask.
+
+### Checklist
+
+0. **Count first.** Run `python3 .agents/skills/cleanup/inventory.py --detail` (`--help` lists the optional inputs: code roots, frozen-docs prefix, CI baseline files, guidance file, review label, a test tree for the collected case count; every missing input drops its row instead of failing). It reports tests, comment and code lines, TODO markers, Python shape, **excess complexity** (sum of complexity above 10 per function), markdown files and tokens, open issues, PRs, worktrees, branches, stashes, containers, and **running agent-browser daemons and agent-browser Chrome processes** (these leak when agents crash). Steer by excess complexity and by hotspots (excess x commits in the last 60 days), never by the mean, which splitting lowers and deleting wrappers raises. Report at the start, after each merge batch and at the end **as a table**: one row per metric, columns "last reported", "now", "change", every row (flat or unflattering ones too). Compare with the last numbers you gave, not the start of the day, and post each report on the day's cleanup issue; the snapshot file is only this machine's last run. Tests near code lines mean test noise; worktrees, branches, containers and browsers above live work are leftovers.
+1. **Plan before you cut.** Between the count and the first change, turn the counts into ranked targets and post the plan where the team will see it.
+   - **One lever list per metric.** For each metric, name the few actions that move it most and the command that finds them: test lines (folders with the highest tests/code ratio; noise classes such as source-text pins and mock choreography), code lines (the same fact decided in several places, then dead code), complexity (excess in hotspots; a file with several hotspots is one decision re-derived), open issues (verify-and-close sweep first, then small bugs, then epics by the consolidations that close them), markdown (largest folders, the same topic in several docs, history in always-read files), baseline lines (entries already below their pin), worktrees/branches/containers/browsers (only those you can prove are stale, see the rules).
+   - **Estimate before acting:** expected change, confidence, cost, risk. Rank by change x confidence / cost. Risk to security, data, compliance or product quality becomes one multiple-choice decision for the owner.
+   - **Form waves by files.** Candidates sharing no files run in parallel (one worktree each); overlapping ones run in sequence.
+   - **Steer by numbers that resist gaming:** not mean complexity, raw test count, issue count by closing without work, or lines moved between files. Report deletion and consolidation separately.
+   - **Predict, then compare.** After each batch, post predicted versus measured change and the cause of each miss; use the misses to re-rank the next wave.
+2. **Open PRs.** Read each PR and its issue with comments, then finish it, merge it, or close it with one line of evidence (superseded, folded, decided against). Merge ready PRs in reviewed batches: combine locally, run the tests once, push once (each push may queue a deploy).
+3. **Issues.** Read each issue *with its comments* and verify the claim on the current integration branch before triage. Close what is fixed and verified, with evidence. Never close unfinished work without the owner's explicit permission, quoted in the closing comment. Comment what is left on partial ones; triage the rest (group, verified severity, size, decision needed). Fan out by number range and keep one record per issue.
+4. **Branches, worktrees, stashes, scratch.** Local and remote. Delete branches of merged or closed PRs, and branches whose own commits are all on the integration branch. Keep the long-lived branches, release branches and open-PR heads; retire a release branch only when a tag or kept branch fully contains it and the owner confirms. Never delete tags. See the stale-worktree test below before removing any worktree.
+5. **Processes and containers.** Count agent-browser daemons, agent-browser Chrome processes and containers; stop only the stale ones (see the rules).
+6. **Tests.** Consolidate under a budget: fold per-bug files into the module's behaviour file; delete duplicates, source-text greps, AST or digest pins, mock choreography, CSS-text asserts and tests of dead code. Keep compliance and security contracts, migration tests and the last refusal test per route and role.
+7. **Recently consolidated code.** Run the `deslop` skill on it (frontend and backend separately): merged pages and flows leave dead routes, second paths to one fact and parallel types. Delete gates and markers together with the design they served.
+8. **Sibling subsystems.** Run the `dup-hunt` behaviour-first hunt, which compares what code does, never what it is called. Two packages that solve one problem are a consolidation target that complexity scores and clone scanners miss. Apply the specialisation test: every feature only the specialised sibling has must name the goal it serves, else delete it.
+9. **Inventory.** End with the `inventory.py` numbers and their change since the start, not a claim.
+
+### Rules for the cleanup
+
+- **Read the code yourself, tools second.** Before consolidating an area, read every file in it and write a short map (file, what it owns, where it overlaps). Duplicate and dead-code tools only cross-check afterwards; they find copy-paste, not duplicated ideas.
+- **Aggressive on reversible work** (branches, PRs, issues, tests, gates, dead code): go to the end state first; a timid first cut costs a second round. **Careful where the owner is careful:** tags, production, compliance evidence.
+- **No backups.** Pushed history, tags and PR refs are the backup. Check that anything worth keeping is pushed, then delete.
+- **Verify every subagent claim** ("pre-existing failure", "already fixed", pin state) before acting on it.
+- **Call a failure pre-existing only after a run in the CI layout** (same build tree, submodules checked out for real, a freshly provisioned database).
+- **Stale-worktree test.** Remove a worktree only when all four hold: no process has its working directory inside it, it has no tracked changes, its HEAD is contained in the integration branch, and it has been untouched for 24 hours or more. "Merged" or "already on the integration branch" alone is not enough: a running agent's fresh worktree matches that. A merged PR from the branch is the best proof.
+- **Worktrees with submodules.** `git worktree remove` refuses a worktree that contains submodules. Check that it is clean and merged, then `rm -r` the folder and run `git worktree prune`, then `git branch -d` the branch. Never `--force`.
+- **Deletes go out as individual commands, not a shell loop.** A command analyzer may refuse a loop before any permission check. Read the batch back afterwards (`git worktree list`, `git branch --list`, `git ls-remote --heads origin`), not a scrollback of N success lines.
+- **Bulk deletes and permission blocks.** When the permission check blocks an agent, never route around it. Write one script that re-checks every condition for every item itself, run it read-only first and show the counts (how many items, how many would be deleted, how many skipped and why), and hand the operator the single command that runs it for real. An approval given in chat does not pass to a subagent.
+- **Count browsers, kill only stale ones.** Agents that crash leave browser daemons and Chrome processes behind, and they grow unnoticed. Count them every cleanup (`inventory.py` does). Kill only browsers older than the longest legitimate run, with a reaper (`inventory.py --reap-browsers-older-than HOURS` lists them; add `--yes` to terminate), never another agent's live session and never by a broad `pkill`.
+- **End-of-session cleanup.** Before you close, remove what you created: worktrees, branches, scratch trees, containers, and cloud resources tagged for throwaway work. Hand everything unfinished to the next owner through the issue tracker (a comment with state, next step and blockers), since local notes do not survive. Stop your own agents and background jobs before the session closes.
+- **Status in a few lines;** the inventory numbers are always a table.
+
+## Housekeeping audit — what it checks, in order
 
 Run each section. Report findings inline. Apply safe fixes; ask before
 destructive ones.
@@ -247,7 +285,8 @@ Blast-radius actions:
 - Cancel an in-progress deployment.
 - Restart the host/VM.
 - Push to a shared branch (staging / release / main).
-- Delete a remote branch.
+- Delete a remote `release/*` branch or a tag (branches of merged or
+  closed PRs are fine).
 - Re-trigger CI (`gh workflow run`).
 - `git -C <upstream-submodule-path> reset --hard` (clobbers a parallel
   contributor's sync).
