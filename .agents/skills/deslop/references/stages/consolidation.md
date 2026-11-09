@@ -18,6 +18,21 @@ Every candidate — corroborated or single — is read at its source line first.
 claim is about that code, and the repair would work. Findings that cannot be verified are dropped, not deferred:
 a wrong finding costs more than a missing one, because it teaches the reader to skim.
 
+What makes a true-looking finding false is nearly always **outside the cited file**. Check these before grading:
+
+1. **Nothing reaches it.** The defect is real and no production path calls the code: an unwired factory, a
+   parameter no caller passes. Grade by reachability; it is dead code, not a live fault.
+2. **A layer above already keeps the promise.** The loader refuses the zero the function would choke on; the
+   framework rejects the malformed id before the handler runs. A guard added here is a second handle with no
+   claimant ([unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md)).
+3. **The missing thing exists.** The dependency is already an interface; the accessor is two files away. The
+   finding shrinks to a caller that did not use it.
+4. **The two copies answer different questions.** Same shape, different decision
+   ([one-fact-many-owners](../patterns/one-fact-many-owners.md) tests disagreement on one input, not resemblance).
+5. **Absence is the designed case.** "Falls back when the state is malformed" turns out to be "starts fresh when
+   there is no state".
+6. **The repair would break a shared owner.** The handle that looks leaked is a process-wide singleton.
+
 ## 2. Apply the guardrail
 
 Run the list through [when-to-relax.md](../readings/when-to-relax.md) before ranking. Where the "violation" is the cheaper

@@ -9,6 +9,10 @@ description: Deslop pattern — Vocabulary Drift: one closed set of values spell
 
 One closed set of values (status, kind, reason) is spelled as string literals in several modules and again in the UI, and the spellings or the **set** differ: `cancelling` handled in one switch, absent from another. Count the places that spell the set, then diff the members.
 
+## Variant: the field list
+
+The closed set is a record's fields. A copy constructor names all eleven by hand; one type is converted into another field by field under a comment warning that new fields must be added here too; a column list is spelled in the create path, the migration path and the writer; an insert carries twenty-nine positional values. A new field compiles everywhere and is silently dropped at the copy nobody updated. Count the places that enumerate the fields, then diff them. Derive the copies from the one declaration (a `replace`, a mapping generated from the type), or make the omission a type error.
+
 ## Why it arises
 
 Strings cross every boundary for free, so each layer typed its own copy. A new member is added where the author looked and nowhere else.

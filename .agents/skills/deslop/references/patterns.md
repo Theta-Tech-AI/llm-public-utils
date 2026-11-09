@@ -28,6 +28,7 @@ Read this index before the pattern files your lens lists, the way a reading open
 | [grammar-without-owner](patterns/grammar-without-owner.md) | one input format (identifier, config value) taken apart by several parsers | parsing | 427 / 37, plus 114 / 12 for the config variant |
 | [fork-instead-of-extension](patterns/fork-instead-of-extension.md) | a downstream copy of an upstream module drifts | duplication | 211 / 40 |
 | [one-sided-contract](patterns/one-sided-contract.md) | one end of an agreement has no partner | parsing, guarantees | 123 / 16 |
+| [unnamed-decision](patterns/unnamed-decision.md) | a question the design never asked, answered differently wherever the code met it | duplication, parsing | not counted in the field run |
 
 The `shape` and query lenses carry no pattern: the field data showed none that they catch most.
 
@@ -37,3 +38,5 @@ A pattern gets its own file only when **both** its structural tell **and** its r
 
 - **Config parsed twice with different rules** — folded into [grammar-without-owner](patterns/grammar-without-owner.md) as a variant. Its tell (one input, several parsers that disagree) and its repair (one parser, typed output) are the identifier case with an environment value as the input. Its numbers stay with the variant.
 - **Lifecycle in a column** (a nullable self-reference or flag written from many modules) — dropped as a pattern. Its tell (count the writers and readers) and repair (named states, one transition, a constraint) are already the content of [implicit-state-machine](principles/architecture/implicit-state-machine.md); the principle now carries the prevalence (181 findings, 23 high) and the pattern file would only restate it.
+
+One shape was added after the field run and passes the same bar: [unnamed-decision](patterns/unnamed-decision.md). Its tell differs from *one fact, many owners* (no copied text or shared name to search for; the sites are found by asking one question of every route) and so does its repair (decide first, because no existing answer is the original).

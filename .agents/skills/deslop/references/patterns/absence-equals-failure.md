@@ -11,6 +11,14 @@ One return value (`None`, `[]`, `""`, `"not available"`, a `fallback=` argument)
 
 Its quieter form is a helper that settles what absence means for everyone: `_coerce_int_or_zero(text)` (is absence zero or an error?) or `_get_or_default(d, k, v)` (who may invent a missing value?). The owner is the parser at the boundary with a stated policy, or a type that cannot be partial.
 
+## Variant: absence read as the favourable answer
+
+The same collapse with the sign flipped: no evidence is recorded as the answer that lets work proceed. A check passes because its probe printed nothing; a report starts `complete = True` and is only ever set false; a cost with no amount becomes a charged zero; a stop signal defaults to "never stopped"; a record with no status is taken as active just before a destructive step. The tell is a pass condition phrased as "no failure seen", or a default that happens to be the permissive member. The repair is the same third value: *unknown* is neither pass nor fail, and the favourable answer must be earned by evidence.
+
+## Variant: several failures under one label
+
+Distinct causes leave through one name, and the name is the first cause the author met. A token of the wrong type is reported as a wrong audience; any failed status call reads as "still running"; every provider error becomes "not found"; a callback that throws after a successful start is reported as a failed start. The tell is a handler narrower in its message than in its `except` clause: read the clause, list what it admits, compare with what the label says. Narrow the clause to the cause the label names, or classify inside it. A caller cannot recover from a failure it was told was a different one.
+
 ## Why it arises
 
 An error once crashed a page, so someone wrapped the call. The wrapper's fallback happened to be the empty value.

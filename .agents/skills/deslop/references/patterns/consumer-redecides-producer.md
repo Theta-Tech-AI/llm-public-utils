@@ -11,6 +11,10 @@ The client, or a later stage, reconciles answers the producer already reconciled
 
 The tell is **structural and needs no vocabulary**: a consumer holding the vocabulary of a decision instead of asking its owner — a set of literal tokens compared against a string, a `startswith` on an identifier that names a thing, a first-non-empty scan over alternative spellings of one setting, a literal default sitting beside a lookup. Where those appear, ask what component should have answered and why the caller could not ask it. A reader of a type that must re-derive which of its fields are valid (an optional field meaningful in only one mode) is the same shape inside one codebase.
 
+## Variant: the producer discards its own answer
+
+The decision was made at the right place and then thrown away, so the consumer has no choice. A request model parses an id into its type and the handler passes `str(id)` on; a loader validates a mode against its closed set and returns the raw string; a factory reads typed settings and keeps the raw environment beside them; a check runs and its result is dropped, to be run again two calls later. The tell is a function that validates and returns its input unchanged, or a typed value converted back to text at a call boundary. Return the decided value and make the next signature require it; the re-checks downstream then delete themselves.
+
 ## Why it arises
 
 The producer returned raw ingredients, or the consumer did not trust the contract. The consumer's copy of the rule then ages independently.

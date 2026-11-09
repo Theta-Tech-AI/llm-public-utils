@@ -1,6 +1,6 @@
 ---
 name: deslop
-description: "Library of 61 coding principles and 8 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
+description: "Library of 61 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
 ---
 
 # Deslop: code quality analysis
@@ -34,7 +34,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 10. **Delete before you add.** No feature for later, no special case without a missing mechanism, no patch over a decision; leave touched code better, and relax a rule when applying it makes worse code. *Why:* every line is a liability that must be read, tested and kept true, so the best change often removes lines.
    [yagni](references/principles/clean-code/yagni.md), [special-cases](references/principles/clean-code/special-cases.md), [patchwork](references/principles/clean-code/patchwork.md), [when-to-relax](references/readings/when-to-relax.md)
 
-**What the library provides:** 61 principles in four categories (clean code, architecture, reliability, data layer), 8 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting stages, campaigns with honest before/after measurement, and a procedure to [extend the library](references/library/extending-the-library.md).
+**What the library provides:** 61 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting stages, campaigns with honest before/after measurement, and a procedure to [extend the library](references/library/extending-the-library.md).
 
 ## The library at a glance
 
@@ -133,6 +133,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 
 - One Fact, Many Owners — two places decide the same thing and already disagree on an input *(boundaries, duplication)*
 - Fork Instead of Extension — a downstream module copies an upstream one and edits it *(duplication)*
+- Unnamed Decision — a question never asked, answered per site *(duplication, parsing)*
 - Vocabulary Drift — one closed set of values spelled as literals in several layers *(coupling, data-integrity)*
 - Consumer Re-Decides the Producer — a client or later stage reconciles what the producer already decided *(parsing)*
 - Grammar Without an Owner — one input format (an identifier, a config value) taken apart by… *(parsing)*
@@ -145,7 +146,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 ## Where to read what
 
 
-One row per file, in the order a pass meets them. Every markdown in this skill is reachable from this table or from the indexes, and CI fails if one is not.
+One row per file, in the order a pass meets them. CI fails on a markdown that no row here and no index links.
 
 | File | When |
 |------|------|
