@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-least-surprise
-description: Deslop principle — Principle of Least Surprise: Components behave the way users expect.
+description: Deslop principle — Principle of Least Surprise: a name, default or side effect behaves as a reader expects, so no one must read the body to be safe.
 ---
 
 # Principle of Least Surprise

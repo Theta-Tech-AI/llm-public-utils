@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-one-logical-unit-one-home
-description: Deslop principle — One Logical Unit, One Home: parts of one unit spread across packages, or one shape re-implemented per feature, is a finding — consolidate to one module per responsibility.
+description: Deslop principle — One Logical Unit, One Home: one module per responsibility; parts of one unit spread across packages, or one shape re-implemented per feature, is a finding to consolidate.
 ---
 
 # One Logical Unit, One Home

@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-helper-is-an-architecture-finding
-description: Deslop principle — A Helper That Must Exist Is an Architecture Finding: when a private function exists to reconcile a value with the shape the system expects, the finding is not the helper and not its type — it is that nothing in the architecture owns that value's life, so the repair assigns the owner instead of tidying the helper.
+description: Deslop principle — A Helper That Must Exist Is an Architecture Finding: a function that reconciles a value with the shape the system expects means nothing owns that value's life; assign the owner.
 ---
 
 # A Helper That Must Exist Is an Architecture Finding

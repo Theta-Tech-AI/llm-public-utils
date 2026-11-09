@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-layering-violations
-description: Deslop principle — Layering Violations: a dependency that runs against the intended arrows, made invisible because no gate checks the direction.
+description: Deslop principle — Layering Violations: a dependency against the intended arrows, invisible because no gate checks direction.
 ---
 
 # Layering Violations

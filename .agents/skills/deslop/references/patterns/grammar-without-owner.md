@@ -1,6 +1,6 @@
 ---
 name: deslop-pattern-grammar-without-owner
-description: Deslop pattern — Grammar Without an Owner: one input format (an identifier, a config value) taken apart by several parsers that disagree; one parser and one formatter.
+description: Deslop pattern — Grammar Without an Owner: one input format (an identifier, a config value) taken apart by several disagreeing parsers; one parser and one formatter.
 ---
 
 # Grammar without an owner

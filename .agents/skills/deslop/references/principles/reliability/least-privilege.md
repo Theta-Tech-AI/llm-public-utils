@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability-least-privilege
-description: Deslop principle — Principle of Least Privilege: Minimum permissions per component.
+description: Deslop principle — Principle of Least Privilege: minimum permissions per component, so a flaw has a small blast radius.
 ---
 
 # Principle of Least Privilege

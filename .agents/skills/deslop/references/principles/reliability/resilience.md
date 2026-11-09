@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability-resilience
-description: Deslop principle — Resilience & Graceful Degradation: Retry, fall back, circuit-break; design for partial failure.
+description: Deslop principle — Resilience & Graceful Degradation: bounded retries, timeouts, fallbacks and circuit breakers for partial failure; never a retry that hides a bug.
 ---
 
 # Resilience & Graceful Degradation

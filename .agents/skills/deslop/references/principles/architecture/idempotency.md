@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-idempotency
-description: Deslop principle — Idempotency: Safe repetition; design for duplicate requests.
+description: Deslop principle — Idempotency: repeating an operation changes nothing the second time; design every write and handler for duplicate delivery and re-runs.
 ---
 
 # Idempotency

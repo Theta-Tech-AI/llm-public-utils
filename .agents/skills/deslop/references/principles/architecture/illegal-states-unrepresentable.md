@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-illegal-states-unrepresentable
-description: Deslop principle — Illegal States Unrepresentable: a field whose validity depends on another field's value, so every reader must re-check the combination the domain forbids.
+description: Deslop principle — Illegal States Unrepresentable: a field valid only given another field's value makes every reader re-check a combination the domain forbids; encode it in the type.
 ---
 
 # Make Illegal States Unrepresentable

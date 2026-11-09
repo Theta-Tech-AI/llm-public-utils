@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-unclaimed-guarantee
-description: Deslop principle — An Unclaimed Guarantee: added machinery that promises a real capability no caller claims, beside an owner that already covers what callers use, is ceremony — and an optional duty nobody enforces is worse than none.
+description: Deslop principle — An Unclaimed Guarantee: machinery promising a capability no caller claims, beside an owner that already covers it, is ceremony; delete it or claim it.
 ---
 
 # An Unclaimed Guarantee

@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-implicit-coupling
-description: Deslop principle — Implicit Coupling: two components agree on something the code never states, so the agreement is invisible to readers and compilers until a new caller breaks it.
+description: Deslop principle — Implicit Coupling: two components agree on something the code never states; make the agreement visible before a new caller breaks it.
 ---
 
 # Implicit Coupling

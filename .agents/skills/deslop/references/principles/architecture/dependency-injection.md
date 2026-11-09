@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-dependency-injection
-description: Deslop principle — Dependency Injection: Inject dependencies; declare what, not how.
+description: Deslop principle — Dependency Injection: hand a unit what it needs instead of letting it construct or look it up; declare what, not how, so it can be tested and swapped.
 ---
 
 # Dependency Injection

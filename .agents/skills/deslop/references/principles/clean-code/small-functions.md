@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-small-functions
-description: Deslop principle — Small Functions: Short, focused functions that do one thing (~15 lines).
+description: Deslop principle — Small Functions: short functions that do one thing (~15 lines); judged by the one job, not only the line count.
 ---
 
 # Small Functions

@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code-special-cases
-description: Deslop principle — A Special Case Is a Requirement the Design Never Accounted For: code that exists for one situation instead of following from how the system works, so the branches are evidence of a missing mechanism rather than the defect itself.
+description: Deslop principle — A Special Case Is a Requirement the Design Never Accounted For: a branch that exists for one situation is evidence of a missing mechanism, not the defect itself.
 ---
 
 # A Special Case Is a Requirement the Design Never Accounted For
