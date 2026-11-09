@@ -133,3 +133,17 @@ surface; the principle file is the payload.
 - **Do not skip step 1 because the concept feels obviously missing.** Twice, the obvious gap turned out to
   be a paragraph inside another principle — and once, an apparent duplicate turned out to be a genuine gap
   once the siblings were read rather than skimmed.
+
+## The library is code too: deslop it
+
+The library is not immune to slop. Each of these happened in the library itself, and each was fixed the way its code twin would be:
+
+| Slop in the library | Code twin | Fix |
+|---|---|---|
+| The same diagnostic tell written in several principle files and a protocol, so edits reached some copies | one fact, many owners | each idea gets one home; the others link to it |
+| One catch-all catalogue file every reading had to load | a god file | one file per pattern, assigned to the lenses that read it |
+| A count in the description ("50+") after the library had 61 principles | a stale constant | state counts once, in a checked place, and keep descriptions free of numbers that nothing verifies |
+| Summaries (description, SKILL.md) drifting from the files they summarize | a hand-kept copy | generate the map from the `description:` lines, and fail CI with `scripts/skill_summary.py --check` |
+| Files with no role, or that nothing links to | dead code | `check_reachability.py` and `swarm_lenses.py --check` name every orphan |
+
+The rule: every change to the library gets the treatment code gets. One owner per idea; generated where a copy would otherwise be written by hand; a check in CI for each invariant; a size budget (SKILL.md loads whole, so `skill_summary.py --check` fails above 24,576 bytes). Before adding a principle or pattern, search for the idea already written elsewhere, and delete or link the duplicate in the same change.

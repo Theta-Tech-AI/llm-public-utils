@@ -154,9 +154,9 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 | [references/patterns.md](references/patterns.md) | **In each reading, for the patterns of its lens** (`lenses.json`), after the principles; **at consolidation** as the axis that themes cross concerns. A *pattern* is a recurring diagnostic shape, never charged by itself; a *principle* is one mechanism with one owner |
 | [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — the shapes: **coverage pass** (default for any non-diff target), scoped pass (diff, PR, quick look), directed cell, campaign, library extension, second round |
 | [references/stages/planning.md](references/stages/planning.md) | **Before every coverage pass**, or after one that missed something: survey, slice, group, rank against a budget, choose the mechanism |
-| [references/stages/aggregation.md](references/stages/aggregation.md) | **When more than one reading has reported** — merge on locus + principle (corroborated / single / disputed); a cell that quotes nothing is a failed reading |
+| [references/stages/aggregation.md](references/stages/aggregation.md) | **When more than one reading has reported** — merge on locus + principle (corroborated / single / disputed); a cell quoting nothing failed |
 | [references/stages/consolidation.md](references/stages/consolidation.md) | **After aggregation, before reporting or filing** — verify, apply the guardrail, bucket now / next / wait-or-drop, one issue per concern |
-| [references/stages/reporting.md](references/stages/reporting.md) | **Just before you speak to the asker** — answer first, bucketed work, short, never method-first |
+| [references/stages/reporting.md](references/stages/reporting.md) | **Just before you speak to the asker** — answer first, bucketed work, short |
 | [references/modes/campaign.md](references/modes/campaign.md) | **Whole-codebase campaigns** ("massive simplification", "minimum 30% LOC", "present me a PR") — five sweeps, target discipline, scale, delivery |
 | [references/modes/loop-until-dry.md](references/modes/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
 | [references/library/evaluation.md](references/library/evaluation.md) | **Before claiming a pass proved anything**, and after any control run — the recorded controls, their numbers, and how to add one |
@@ -168,13 +168,13 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
 | [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
-| [references/lenses.json](references/lenses.json) | The default partition of 61 principles into 9 reading stances (validated by `scripts/swarm_lenses.py --check`); regroup it for different stances |
+| [references/lenses.json](references/lenses.json) | The default partition of 61 principles into 9 reading stances ; regroup it for different stances |
 
 ## Layout and checks
 
 `references/` is organised by **role in the pass**: `stages/` (read at their moment), `readings/` (`auditing` and `when-to-relax` in every reading), `modes/`, `principles/` (`<category>.md` index first, then `<category>/<slug>.md`), `patterns/` (index, then one file each), `library/` (on request). Principle files are linked from their category index: [clean-code](references/principles/clean-code.md), [architecture](references/principles/architecture.md), [reliability](references/principles/reliability.md), [data-layer](references/principles/data-layer.md).
 
-**This file is the manifest**: a reference nothing here leads to, directly or through an index, is a file nobody opens. CI runs on every push and pull request:
+**This file is the manifest**: a reference nothing here leads to is a file nobody opens. CI checks every push and pull request:
 
 ```bash
 python3 scripts/check_reachability.py     # every markdown reachable by links from this file
@@ -183,11 +183,11 @@ python3 scripts/skill_summary.py --check  # map matches the references; descript
 python3 -m py_compile scripts/*.py
 ```
 
-After editing a `description:` line run `python3 scripts/skill_summary.py` to regenerate the map. Moving a file between roles: `scripts/taxonomy_move.py`.
+Edit a `description:` line, then run `python3 scripts/skill_summary.py` to regenerate the map. The library is code too: [deslop it](references/library/extending-the-library.md#the-library-is-code-too-deslop-it). Moving files: `scripts/taxonomy_move.py`.
 
 ## Plan the pass before you audit
 
-**A pass is planned, not merely started.** The unit of work is a **cell**: one group of principles × one slice of code × one reading, merged afterwards. Survey the shape, design the slices (modules, role archetypes, concept clusters, the schema and its queries, flows, a diff), rank the permutations under a budget, rotate rounds so a second pass is the complement of the first, and choose the mechanism you have (subagents, a harness fan-out, or this context one cell at a time): [planning](references/stages/planning.md), [recipes](references/stages/recipes.md). Scripted:
+**A pass is planned.** The unit of work is a **cell**: one group of principles × one slice of code × one reading, merged afterwards. Survey the shape, design the slices (modules, role archetypes, concept clusters, the schema and its queries, flows, a diff), rank the permutations under a budget, rotate rounds so a second pass is the complement of the first, and choose the mechanism you have (subagents, a harness fan-out, or this context one cell at a time): [planning](references/stages/planning.md), [recipes](references/stages/recipes.md). Scripted:
 
 ```bash
 python3 scripts/swarm_lenses.py --emit /tmp/cells --repo <root> --target <dir>        # every group, one prompt each
