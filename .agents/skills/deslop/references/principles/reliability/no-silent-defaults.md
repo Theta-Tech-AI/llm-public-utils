@@ -32,6 +32,8 @@ precisely the point: a silent default is how a misconfiguration becomes a plausi
   timeout that defaults to permissive, a permission check that defaults to allowed, a required key that
   defaults to a placeholder — each converts "we did not know" into "we decided, generously".
 
+- **Absence equals failure.** One value answers both "nothing there" and "the read failed": a catch-all `degrade(..., fallback=[])`, a `None` for empty-success and error alike. The caller cannot choose between *show empty* and *show an outage* ([recurring patterns](../../readings/recurring-patterns.md#5-absence-and-failure-share-one-value)).
+
 ## The falsy trap
 
 The coalescing swallow has a second victim that has nothing to do with absence:

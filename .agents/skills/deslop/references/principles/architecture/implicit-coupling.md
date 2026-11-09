@@ -75,6 +75,8 @@ the reader has already performed.
 
 ## The family: one disease, many costumes
 
+At scale the vocabulary test pays most across layers: one status set spelled in several modules and again in the UI, where the copies disagree on a member ([recurring patterns](../../readings/recurring-patterns.md#4-vocabulary-drift-across-layers)).
+
 | Artifact | The agreement nobody owns | The component that was missing |
 |---|---|---|
 | `configure()` then `use()` | the required call order | a type that cannot be constructed incomplete |

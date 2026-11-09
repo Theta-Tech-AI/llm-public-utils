@@ -4,7 +4,7 @@ description: "Analyze and refactor code against a library of 50+ coding principl
 ---
 
 # Deslop: Code Quality Analysis Command
-<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈416 KB across 81 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
+<sub><sup>Size: this file is ≈15 KB (≈4k tokens) and the `references/` tree is ≈416 KB across 82 markdown files. Only this file loads when the skill activates; everything else is opened by path, so nothing here is paid for twice.</sup></sub>
 
 > A comprehensive command `/deslop` or $deslop (depending on your harness) for identifying and fixing "slop" in your codebase.
 
@@ -24,6 +24,7 @@ One row per file, in the order a pass meets them. Every markdown in this skill i
 |------|------|
 | [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, violation report format, and the **input census** (for each external input: who owns turning it into a decision, and how many places re-interpret it — zero owners or several is a finding, reported even when it ranks last) |
 | [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: contexts where a principle is over-applied, and the meta-principle that says a violation worth "fixing" into worse code is not a violation |
+| [references/readings/recurring-patterns.md](references/readings/recurring-patterns.md) | **With every reading** — the ten cross-principle patterns a 332-cell audit measured (one fact with many owners first: 40% of all high findings), each with its structural tell, owner-first repair and owning principles; also the L1 classes consolidation themes by |
 | [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — the shapes of a pass: the **coverage pass** (the default for any target that is not a diff), the scoped pass (a diff, PR, or an explicit quick look), directed cell, campaign, library extension, second round. Pick the shape before the readings |
 | [references/stages/planning.md](references/stages/planning.md) | **Before every coverage pass** (the default) — or after a pass that missed something: survey, slice, group the principles, write the permutation list, rank it against a budget, choose the execution mechanism you actually have |
 | [references/stages/aggregation.md](references/stages/aggregation.md) | **The moment more than one reading has reported** — merge on locus + principle into corroborated / single / disputed, account for coverage, and mark a cell that quotes nothing as a failed reading |
@@ -51,7 +52,7 @@ category. The directory a file sits in tells a reader what to do with it, and th
 | Directory | Role | Read |
 |---|---|---|
 | `references/stages/` | the four moments of a pass — `planning`, `aggregation`, `consolidation`, `reporting` | at its stage, in order |
-| `references/readings/` | what a single reading carries — `auditing` (the report format and census), `when-to-relax` (the guardrail), `duplication` (the dedup sweep) | `auditing` and `when-to-relax` in **every** reading |
+| `references/readings/` | what a single reading carries — `auditing` (the report format and census), `when-to-relax` (the guardrail), `recurring-patterns` (the cross-principle catalogue), `duplication` (the dedup sweep) | `auditing`, `when-to-relax` and `recurring-patterns` in **every** reading |
 | `references/modes/` | modes a pass can run in — `campaign` (measured whole-codebase programme), `loop-until-dry` | when the ask names the mode |
 | `references/principles/` | `<category>.md` is a category **index** (read first: the stance and the tells); `<category>/<slug>.md` is one principle | the index first, then every file of an assigned group, in full |
 | `references/library/` | reference opened when the ask needs it — claim a number, add a principle, build a detector, cite a source, see a worked example | on request |

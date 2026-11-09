@@ -98,6 +98,8 @@ next, neither obviously wrong.
 
 ## The family: one disease, many costumes
 
+A **nullable self-reference or timestamp** can hide the machine too: `replaced_by IS NULL` meaning "current", written by raw `UPDATE`s in several modules and read by several `WHERE` clauses. Count the writers and the readers; repair with named states, one transition function and a schema constraint ([recurring patterns](../../readings/recurring-patterns.md#8-unwritten-state-machine-in-a-column)).
+
 | Artifact | The transition nobody owns | The component that was missing |
 |---|---|---|
 | `status: str` written in three modules | publish / archive / retry moves | one transition table plus a guarded setter |

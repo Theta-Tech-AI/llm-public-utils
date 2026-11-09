@@ -62,7 +62,8 @@ Name-based views find only what was named alike, so treat them as a second look,
    its own goal never names (a citation pipeline inside a runtime, voting rounds inside a job runner).
 7. **N partial implementations of one mechanism.** Count them: locking, activity, streams, configuration,
    telemetry. One is a question; more than two is a finding.
-8. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
+8. **Copies that already disagree** — two homes whose answers differ on one input. Name the owner before touching either; polishing one copy of a fact with several owners is the commonest wasted fix ([recurring patterns](../../readings/recurring-patterns.md#1-one-fact-many-owners-already-disagreeing)).
+9. **The reader's tell**, the weakest and most reliable: you opened three files to answer one question about
    one behaviour.
 
 ## Diagnostics
