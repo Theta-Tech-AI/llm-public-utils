@@ -13,11 +13,26 @@ Its quieter form is a helper that settles what absence means for everyone: `_coe
 
 ## Variant: absence read as the favourable answer
 
-The same collapse with the sign flipped: no evidence is recorded as the answer that lets work proceed. A check passes because its probe printed nothing; a report starts `complete = True` and is only ever set false; a cost with no amount becomes a charged zero; a stop signal defaults to "never stopped"; a record with no status is taken as active just before a destructive step. The tell is a pass condition phrased as "no failure seen", or a default that happens to be the permissive member. The repair is the same third value: *unknown* is neither pass nor fail, and the favourable answer must be earned by evidence.
+The same mistake, turned around: when the code has no information, it reports the good result.
+
+- A health check passes because the command it ran printed nothing.
+- A report starts with `complete = True` and only changes to false when a problem is noticed.
+- A bill with no amount is saved as a paid bill of zero.
+- A "should I stop?" signal that nobody connected answers "no, keep going".
+- A record with no status is treated as active, just before a step that deletes things.
+
+Look for a test that means "I saw no failure", or a default value that happens to be the one that lets the work continue. Fix it the same way as the main pattern: add a third answer, *unknown*, that is neither pass nor fail. The good result has to come from evidence, not from silence.
 
 ## Variant: several failures under one label
 
-Distinct causes leave through one name, and the name is the first cause the author met. A token of the wrong type is reported as a wrong audience; any failed status call reads as "still running"; every provider error becomes "not found"; a callback that throws after a successful start is reported as a failed start. The tell is a handler narrower in its message than in its `except` clause: read the clause, list what it admits, compare with what the label says. Narrow the clause to the cause the label names, or classify inside it. A caller cannot recover from a failure it was told was a different one.
+Different things went wrong, and the code reports all of them with one message. The message names the first problem its author happened to hit.
+
+- A login token of the wrong kind is reported as "wrong audience".
+- A status request fails for any reason, and the code says "still running".
+- Every error from a provider is reported as "not found".
+- A job starts fine, a later step throws, and the user is told the job failed to start.
+
+Read the `except` (or `catch`) line and list every error it can catch. Then read the message. If the list is longer than the message admits, that is the finding. Either catch only the error the message names, or check which error it was and report each one truthfully. The caller cannot fix a problem it was told was a different problem.
 
 ## Why it arises
 

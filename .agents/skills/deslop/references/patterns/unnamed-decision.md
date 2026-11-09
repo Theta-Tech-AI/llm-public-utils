@@ -5,53 +5,74 @@ description: Deslop pattern — Unnamed Decision: a question never asked, answer
 
 # The decision nobody named
 
-Nothing was copied and nothing drifted. The question was never asked, so each author answered it by accident, in the shape of whatever line they happened to write.
+The code has to handle a situation nobody planned for. Nobody wrote down what should happen, so each programmer who ran into it made up an answer on the spot. The answers do not match.
 
 ## The structural tell
 
-An edge of the input space has no stated policy: what a zero or negative limit means, whether a record with no timestamp counts as old, whether a reply that fails to parse is content or an error, whether a blank credential is absent, which states count as "needs waking", whether a date with no zone is local, whether a per-item failure fails the batch. No function, constant, enum member or sentence anywhere names the question. The answer lives in an operator: `<` beside `<=`, `in {A, B}` beside `!= C`, `or 0`, an early `return`, a `continue` in an `except`.
+Take a search function with a `limit` argument: how many results to return. What should happen when the caller passes `limit = 0`? Nobody decided. So one search function raises an error, a second returns an empty list, and a third returns everything. Each author did something sensible. None of them knew there was a question to answer, and no function name, constant or comment says what the right behaviour is.
 
-Sites that answer it share no text and no vocabulary, so no clone scanner and no search by name finds them. Find them by the question: take one branch, say what it decides in one sentence, then open every other route to the same operation and ask each the same sentence. Routes worth opening side by side: the sync and the async method, the single call and the batch, one adapter per provider, the read filter and the write filter, the log line and the event built from one error, the client's guard and the server's.
+More questions of the same kind:
 
-Two different answers is the finding. One answer with no name is the finding one change early.
+- A document has no "last modified" date. Does it count as old?
+- A server sent back something that is not valid JSON. Is that an error, or is it the page text?
+- An API key is a string of spaces. Is that a key, or no key?
+- Ten items were sent together and one failed. Did the whole batch fail?
+
+The answer usually hides in one small piece of code: `<` in one place and `<=` in another, an `or 0`, an early `return`, a `continue` inside an `except`.
+
+Searching will not find these places, because they share no words. Find them this way:
+
+1. Pick one such piece of code and say in one sentence what it decides: "if the limit is zero, return nothing".
+2. Find every other place that does the same job. The usual pairs are the normal and the `async` version of a function, the function for one item and the function for many, the same feature built for two providers, the filter used when reading and the filter used when writing, and the check in the browser and the check on the server.
+3. Ask each place the same sentence.
+
+Two places that answer differently are a bug: report it. Places that all agree, with no name for the rule, are worth reporting too, because the next author will not know the rule exists.
 
 ## Why it arises
 
-The happy path was designed and the edge was met while typing. Each author closed it with the smallest thing that let the function finish, which is a local, reasonable, undocumented choice. Review sees one of them at a time and each one reads as fine.
+The author designed the normal case and met the odd case halfway through typing. They wrote the smallest thing that let the function finish. A reviewer sees one of these places at a time, and each one looks fine alone.
 
 ## Repair shape, owner first
 
-1. **Ask the question in words and get it answered.** Neither existing answer is presumed right; often the true answer is a third one, or "refuse". This is a design decision, so it may need a person.
-2. **Name the answer** where its concept lives: a predicate, an enum member, a parsed type that cannot hold the undecided case.
-3. Route every site through the name and delete the operators that used to carry it, in the same change.
+1. **Write the question down and get it answered.** Do not assume one of the existing behaviours is the right one. The right answer may be a third one, or "reject this input". A person may have to decide.
+2. **Give the answer a name**, in the module where that idea already lives: a small function, a named constant, or a type that cannot hold the undecided value.
+3. **Make every place use that name**, and delete the scattered pieces of code that used to carry the answer, in the same change.
 
-Aligning the operators without step 2 leaves the next author to answer it a third way.
+If you only make the pieces match and skip step 2, the next author will invent a new answer.
 
 ## Who owns the mechanism
 
-| Principle | Owns | Boundary with this pattern |
-|---|---|---|
-| [decide-dont-cope](../principles/clean-code/decide-dont-cope.md) | a decision deferred into control flow at one site | the single-site form; this pattern is the same dodge met at several sites with different outcomes |
-| [single-source-of-truth](../principles/architecture/single-source-of-truth.md) | one home for a fact | where the named answer goes once it exists |
-| [least-surprise](../principles/clean-code/least-surprise.md) | siblings that behave alike | the caller's view of two routes that disagree |
-| [design-by-contract](../principles/reliability/design-by-contract.md) | stated preconditions | "refuse" as the answer |
+File each instance under one of these principles. This pattern only groups them.
 
-Sibling pattern: [one-fact-many-owners](one-fact-many-owners.md) starts from a known fact that was copied and drifted, and its repair picks an owner among the copies. Here there is no fact yet and no copy is the original; the repair starts by deciding.
+| Principle | What it covers | How this pattern relates |
+|---|---|---|
+| [decide-dont-cope](../principles/clean-code/decide-dont-cope.md) | one place that avoids making a decision | this pattern is the same thing happening in several places, with different results |
+| [single-source-of-truth](../principles/architecture/single-source-of-truth.md) | one home for each rule | where the named answer goes once it exists |
+| [least-surprise](../principles/clean-code/least-surprise.md) | similar functions should behave alike | what the caller sees when two of them disagree |
+| [design-by-contract](../principles/reliability/design-by-contract.md) | a function states what input it accepts | use it when the answer is "reject this input" |
+
+This is not [one-fact-many-owners](one-fact-many-owners.md). There, a known rule was copied and the copies drifted apart; you fix it by picking one copy as the owner. Here nobody copied anything and there never was a rule; you fix it by deciding the rule first.
 
 ## Caught by
 
-Lenses `duplication` and `parsing`; `legibility` meets it as siblings that surprise.
+Lenses `duplication` and `parsing`.
 
 ## Measured
 
-Not a class in the field run's counts. Added from a later pass, where it accounted for most findings in which two routes to one operation disagreed.
+No count yet. This pattern was added after the audit that produced the counts in [the index](../patterns.md).
 
 ## Example
 
 ```python
-# ❌ "is a document with no modified time old enough?" — never asked, answered twice
-def page(docs, cutoff):   return [d for d in docs if d.modified is None or d.modified < cutoff]   # yes
-def query(cutoff):        return Filter.by("modified").less_than(cutoff)                           # no: null never matches
-# ✅ asked, answered, named; both routes use it
-def is_stale(modified, cutoff): return modified is None or modified < cutoff
+# ❌ "what does limit = 0 mean?" — never decided, so three functions give three answers
+def search_web(query, limit):    return [] if limit <= 0 else fetch(query)[:limit]
+def search_notes(query, limit):  return fetch_notes(query)[:limit or None]        # 0 means "no limit"
+def search_files(query, limit):
+    if limit <= 0: raise ValueError("limit must be positive")
+    return fetch_files(query)[:limit]
+
+# ✅ decided once, named, used by all three
+def checked_limit(limit):
+    if limit <= 0: raise ValueError("limit must be positive")
+    return limit
 ```

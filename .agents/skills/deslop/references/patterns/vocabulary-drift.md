@@ -11,7 +11,14 @@ One closed set of values (status, kind, reason) is spelled as string literals in
 
 ## Variant: the field list
 
-The closed set is a record's fields. A copy constructor names all eleven by hand; one type is converted into another field by field under a comment warning that new fields must be added here too; a column list is spelled in the create path, the migration path and the writer; an insert carries twenty-nine positional values. A new field compiles everywhere and is silently dropped at the copy nobody updated. Count the places that enumerate the fields, then diff them. Derive the copies from the one declaration (a `replace`, a mapping generated from the type), or make the omission a type error.
+Here the set that gets repeated is the list of fields of a record.
+
+- A function that copies an object names all eleven of its fields by hand.
+- One type is converted to another field by field, under a comment that says "add new fields here too".
+- A table's columns are listed where the table is created, again where it is upgraded, and again where rows are written.
+- An insert statement passes twenty-nine values by position.
+
+When someone adds a field, the code still runs, and the new field is silently dropped at the one list nobody updated. Count the places that list the fields and compare them. Build the copies from the one definition (for example with `dataclasses.replace`), or arrange it so that a missing field is an error.
 
 ## Why it arises
 

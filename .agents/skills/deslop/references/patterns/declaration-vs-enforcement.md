@@ -13,7 +13,15 @@ A docstring, name, comment, route declaration or config key promises behaviour t
 
 ## Variant: kept on some routes
 
-The promise is enforced, on the route its author was working in. A redaction flag governs the log line and not the event carrying the same text; redaction covers the body field and not the title beside it; a time bound is computed and the object that grants the privilege never carries it; a declared option reaches the main call and not the auxiliary one; a guard trigger covers insert and update and not delete; one of two sibling verifiers checks the token type. A search for the guard finds it, so the code looks compliant. List every route the protected thing can take, then check each; the enforcement belongs at the point all routes share.
+The rule is enforced, but only on the path its author was working on. The same data also travels another path, and nothing checks it there.
+
+- An error message is hidden in the log, and sent unhidden in an event to the user interface.
+- Private text is removed from the body of a message and left in its title.
+- An admin right is given an expiry time, and the object that carries the right does not hold that time.
+- A database guard runs on insert and update, and not on delete.
+- Of two login checkers, one checks the token type and the other does not.
+
+This is easy to miss because a search for the check finds it, so the code looks correct. List every path the protected thing can take and look at each one. Put the check at the one place all paths go through.
 
 ## Why it arises
 

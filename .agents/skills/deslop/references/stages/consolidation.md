@@ -18,20 +18,16 @@ Every candidate — corroborated or single — is read at its source line first.
 claim is about that code, and the repair would work. Findings that cannot be verified are dropped, not deferred:
 a wrong finding costs more than a missing one, because it teaches the reader to skim.
 
-What makes a true-looking finding false is nearly always **outside the cited file**. Check these before grading:
+A finding can describe the code correctly and still be wrong. The reason is almost always in a **different file** from the one the finding points at. Before you accept a finding, check these six things:
 
-1. **Nothing reaches it.** The defect is real and no production path calls the code: an unwired factory, a
-   parameter no caller passes. Grade by reachability; it is dead code, not a live fault.
-2. **A layer above already keeps the promise.** The loader refuses the zero the function would choke on; the
-   framework rejects the malformed id before the handler runs. A guard added here is a second handle with no
-   claimant ([unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md)).
-3. **The missing thing exists.** The dependency is already an interface; the accessor is two files away. The
-   finding shrinks to a caller that did not use it.
-4. **The two copies answer different questions.** Same shape, different decision
-   ([one-fact-many-owners](../patterns/one-fact-many-owners.md) tests disagreement on one input, not resemblance).
-5. **Absence is the designed case.** "Falls back when the state is malformed" turns out to be "starts fresh when
-   there is no state".
-6. **The repair would break a shared owner.** The handle that looks leaked is a process-wide singleton.
+1. **Is this code ever run?** If nothing in production calls it, the problem is real but nobody can hit it. Report it as unused code, not as a live bug.
+2. **Does earlier code already prevent it?** The settings loader may already reject the zero that would break this function. If so, adding a check here only adds a duplicate
+   ([unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md)).
+3. **Does the "missing" thing already exist?** The helper the finding asks for may be two files away. The real finding is then smaller: one caller did not use it.
+4. **Do the two "copies" do the same job?** Two pieces of code can look alike and answer different questions
+   ([one-fact-many-owners](../patterns/one-fact-many-owners.md)). Check that they would disagree on the same input.
+5. **Is the "fallback" just the normal empty case?** "Falls back when the data is malformed" may really be "starts fresh when there is no data yet".
+6. **Would the fix break something shared?** The connection that looks like it is never closed may be one shared connection that the whole program uses.
 
 ## 2. Apply the guardrail
 

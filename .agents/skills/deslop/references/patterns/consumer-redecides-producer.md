@@ -13,7 +13,14 @@ The tell is **structural and needs no vocabulary**: a consumer holding the vocab
 
 ## Variant: the producer discards its own answer
 
-The decision was made at the right place and then thrown away, so the consumer has no choice. A request model parses an id into its type and the handler passes `str(id)` on; a loader validates a mode against its closed set and returns the raw string; a factory reads typed settings and keeps the raw environment beside them; a check runs and its result is dropped, to be run again two calls later. The tell is a function that validates and returns its input unchanged, or a typed value converted back to text at a call boundary. Return the decided value and make the next signature require it; the re-checks downstream then delete themselves.
+The decision was made in the right place and then thrown away, so later code has to make it again.
+
+- A request handler turns an id from text into a proper id type, then passes `str(id)` to the next function.
+- A settings loader checks that a mode is one of three allowed words, then returns the plain string.
+- A function reads settings into a typed object and keeps the raw environment variables next to it, and later code reads the raw ones.
+- A check runs, its result is ignored, and the same check runs again two calls later.
+
+Look for a function that checks its input and returns it unchanged, or a typed value turned back into text when it is passed on. Return the checked value in its own type and make the next function require that type. The repeated checks further along can then be deleted.
 
 ## Why it arises
 
