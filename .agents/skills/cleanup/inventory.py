@@ -15,11 +15,13 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import io
 import json
 import re
 import os
 import shutil
+import sys
 import subprocess
 import tokenize
 from datetime import datetime, timedelta, timezone
@@ -29,7 +31,7 @@ from pathlib import Path
 REPO = Path(subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True).stdout.strip())
 # Previous snapshot lives outside the repo: it is per machine, not history. A timer passes its own
 # --state so its runs do not reset the change shown to an agent running this by hand.
-STATE = Path.home() / ".cache" / f"cleanup-inventory-{REPO.name}.json"
+STATE = Path.home() / ".cache" / f"cleanup-inventory-{REPO.name}-{hashlib.sha1(str(REPO).encode()).hexdigest()[:8]}.json"
 # Vendored or generated trees are not the project's code; --code-roots overrides this for a narrower scope.
 SKIP_DIRS = ("node_modules/", "vendor/", "dist/", "build/", "third_party/", ".venv/", "venv/")
 CODE_SUFFIXES = (".py", ".ts", ".tsx", ".sh")
@@ -50,16 +52,16 @@ def sh(*args: str) -> str:
 
 def soft(*args: str) -> str | None:
     """Output of an optional probe (gh, docker, a file in the ref); None when it is absent or fails."""
-    try:
-        return sh(*args)
-    except (OSError, subprocess.CalledProcessError):
+    try:  # a stalled remote must not stall the inventory
+        return subprocess.run(args, cwd=REPO, capture_output=True, text=True, check=True, timeout=60).stdout
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
 
 
 def is_test_file(path: str) -> bool:
     name = path.rsplit("/", 1)[-1]
     return (
-        "/tests/" in path or "/__tests__/" in path
+        "/tests/" in f"/{path}" or "/__tests__/" in f"/{path}"
         or name.startswith("test_") or name.startswith("conftest")
         or ".test." in name or ".spec." in name
     )
@@ -70,7 +72,8 @@ def python_comment_lines(text: str) -> set[int]:
     lines: set[int] = set()
     try:
         for tok in tokenize.generate_tokens(io.StringIO(text).readline):
-            if tok.type == tokenize.COMMENT:
+            # Only a comment alone on its line: an inline comment must not erase the code beside it.
+            if tok.type == tokenize.COMMENT and tok.line.lstrip().startswith("#"):
                 lines.add(tok.start[0])
         for node in ast.walk(ast.parse(text)):
             body = getattr(node, "body", None)
@@ -93,7 +96,7 @@ def ts_comment_lines(text: str) -> set[int]:
         elif stripped.startswith("/*"):
             lines.add(number)
             in_block = "*/" not in stripped
-        elif stripped.startswith("//") or "// " in line.split('"')[-1].split("'")[-1]:
+        elif stripped.startswith("//"):
             lines.add(number)
     return lines
 
@@ -177,9 +180,10 @@ def complexity_shape(functions: list[tuple[int, int, str]]) -> dict[str, int]:
         # Cyclomatic complexity approximated as 1 + branch points, averaged over production functions.
         "py_mean_branches_x100": round(100 * sum(1 + b for _, b, _ in functions) / max(len(functions), 1)),
         "py_functions_cc_over_20": sum(b + 1 > 20 for _, b, _ in functions),
-        # The steering number: branches above 10 per function, summed. Splitting a function or deleting
-        # a one-line wrapper moves the mean but not this; only removed decisions do.
+        # Branches above 10 per function, summed: splitting a function below the threshold lowers it without
+        # removing a decision, so read it beside the total and look for real consolidation.
         "py_excess_complexity_over_10": sum(max(0, b + 1 - 10) for _, b, _ in functions),
+        "py_total_decision_points": sum(b for _, b, _ in functions),
     }
 
 
@@ -290,10 +294,13 @@ def baseline_lines(ref: str, pattern: str) -> int | None:
 
 def collected_cases(tree: str) -> int:
     """Test cases pytest collects in a composed CI tree; unlike the source count, parametrized cases count."""
-    out = subprocess.run(["python3", "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", "src"],
-                         cwd=tree, capture_output=True, text=True).stdout
-    match = re.search(r"(\d+) tests? collected", out)
-    return int(match.group(1)) if match else -1
+    if not Path(tree).is_dir():
+        return -1
+    run = subprocess.run(["python3", "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
+                         cwd=tree, capture_output=True, text=True)
+    match = re.search(r"(\d+) tests? collected", run.stdout)
+    # -1 means the collection failed (exit status other than 0), never a partial count.
+    return int(match.group(1)) if match and run.returncode == 0 else -1
 
 
 def default_ref() -> str:
@@ -348,12 +355,18 @@ def agent_browser_processes() -> tuple[list[tuple[int, int]], list[tuple[int, in
 
 
 def reap_browsers(hours: float, yes: bool) -> None:
-    """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run."""
+    """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run.
+
+    Age is a proxy, not proof the owner is gone: pick HOURS above any real run, and look at the list first.
+    """
+    if not hours > 0:
+        sys.exit("--reap-browsers-older-than needs a positive number of hours")
     _, browsers = agent_browser_processes()
     stale = [(pid, age) for pid, age in browsers if age > hours * 3600]
     for pid, age in stale:
         print(f"  {'killing' if yes else 'would kill'} browser pid {pid} (age {age / 3600:.1f} h)")
-        if yes:
+        # Re-read the process just before signaling, so a recycled pid is never hit.
+        if yes and (pid, age) in [(p, a) for p, a in agent_browser_processes()[1] if a > hours * 3600]:
             os.kill(pid, 15)
     print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
 
@@ -377,6 +390,11 @@ def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None)
     if guidance is not None:
         # Always-loaded agent guidance costs every session: words x 1.35 estimates its tokens.
         rows["guidance_file_tokens"] = round(len(guidance.split()) * 1.35)
+    skipped = [name for name, ok in (("gh issues", issues is not None), ("gh prs", "open_prs" in rows),
+                                     ("origin branches", "origin_branches" in rows), ("docker", "containers" in rows),
+                                     ("guidance file", guidance is not None)) if not ok]
+    if skipped:  # a vanished row can hide an auth failure; name it
+        print("  skipped (unavailable): " + ", ".join(skipped))
     return rows
 
 
