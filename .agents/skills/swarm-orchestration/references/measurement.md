@@ -9,7 +9,7 @@ Record timestamps in UTC and name each window. Use the same completion definitio
 | Measure | Definition and limits |
 |---|---|
 | Completion percentage | Currently completed items / current total items × 100. Report both counts and membership changes. |
-| Completion rate | Accepted completion events / elapsed window hours. Report unique items and repeated closures separately. |
+| Completion rate | Accepted completion events / elapsed window hours. Report unique items and repeated closures separately, and report opened and closed per hour separately so a flat open count is diagnosable. |
 | Inter-completion gap | Time between consecutive events. Report median and largest gap; use null when fewer than two events exist. |
 | Current silence | Time since the last completion as of the observation time. This exposes a stalled tail that an internal median hides. |
 | Task lead time | Accepted completion minus task creation. This includes time before the swarm began. |

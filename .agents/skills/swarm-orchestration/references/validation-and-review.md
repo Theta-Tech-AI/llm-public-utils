@@ -16,7 +16,7 @@ Read the required CI contract before planning publication. Run cheap applicable 
 
 Do not widen error baselines, add ignores, or weaken assertions to make a regression disappear. Fix the cause or document a demonstrated intentional contract change. When a required check fails, isolate the failure once and assign one owner; avoid several workers repeating the same investigation.
 
-After code changes, rerun affected checks and have the independent reviewer inspect the delta. Reuse evidence only when its source and assumptions still match. Do not rerun every expensive suite after a prose edit.
+After code changes, rerun affected checks and have the independent reviewer inspect the delta. Reuse evidence only when its source and assumptions still match; a green review does not survive a conflicting merge, so re-run checks on the merged head. Do not rerun every expensive suite after a prose edit.
 
 Use a fresh, empty composition for each candidate and amendment. Verify the exact base revision and every provider or overlay pin before testing. Run full base-to-head repository gates, not only checks for the final commit. Include the cheap checks that commonly run early in CI, such as policy, documentation, comment, and whitespace checks, before publication. Keep the composition manifest and check output with the task record so another coordinator can reproduce the result. A last-commit diff or focused test is insufficient when an earlier commit can still fail a gate. Run the affected tests in the same project context as CI. Never reuse a populated scratch tree as evidence. Verify that the recorded base revision, pins, generated inputs, and final tree or commit ID match the revision under review.
 
