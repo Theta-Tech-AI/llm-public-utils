@@ -31,7 +31,7 @@ Use CLI workers only when the tool exists, delegation is authorized, and they fi
 
 Record process/session ID, working directory, source revision, model evidence, log path, and result path. Keep the detailed report separate from the CLI's final-output file; otherwise a short final message can overwrite the report. Provide a steering channel the worker actually reads at checkpoints.
 
-Use the runtime's resume/follow-up operation for an idle worker. A queued message can steer a running agent but may not trigger a new turn after completion. Check acknowledgment or state change. Stop only the owned process when cleanup is needed, by the exact PID you started; never kill by name or pattern, which can match your own shell or other agents' test runs. Put this in every worker brief.
+Use the runtime's resume/follow-up operation for an idle worker. A queued message can steer a running agent but may not trigger a new turn after completion. Check acknowledgment or state change. Stop only the owned process when cleanup is needed, through the runtime's cancellation or the exact PID or process group you started, and confirm its descendants ended; never kill by name or pattern, which can match your own shell or other agents' test runs. Put this in every worker brief.
 
 Bound each assignment so it can finish inside one worker budget, and require a durable report written before or during the work, so a worker that dies mid-task still leaves a recoverable handoff instead of uncommitted half-work the successor must reverse-engineer.
 
