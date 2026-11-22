@@ -44,6 +44,7 @@ A local path or "tests pass" is not a durable result. Store the summary with an 
 
 - Before you dispatch item N, run `git log --remotes --oneline --grep "#N"` and read the latest comments for a claim. A hit means message the owner. Never start a second worker. Search commit messages, not branch names.
 - Compute file overlap at dispatch: planned paths and reserved names across assignments, plus `git diff --name-only <base>...<branch>` for every open branch. Compute it again for every integration batch. Give any file that two assignments would write to one owner, or sequence the second assignment after the first lands. Overlapping branches share one batch and one combined test run, or the later one rebases first.
+- Treat a scope or owner change as a handoff. Tell the old owner to stop and reconcile its descendants. Read back its commits, closures and comments. Record the new boundary. The new owner waits for acknowledgment before it changes the same item or paths. With no acknowledgment, stop the old run and verify its side effects. Other items continue.
 - Allocate sequence-numbered names (migration numbers, ports, container names, id ranges) before work starts. Check the integration branch for collisions at merge. When a later number is ready first, swap the numbers. Do not land placeholders.
 
 ## Rank and refill
@@ -67,27 +68,26 @@ At each worker completion, before a CI or deploy wait, and before a status reply
 3. Give each reusable slot its next bounded task, or record its actual limit: a resource, a full downstream WIP stage, or no safe work.
 4. Start the task and check that it is running. A queued message may not restart a finished worker. Use the runtime's resume or spawn operation.
 
-A CI or deploy wait does not block unrelated review, repair or acceptance work. A one-shot status check is a completed task, not an active worker. If implementation outruns review, move qualified agents to review. If review is saturated, admit no new implementation until the queue age falls. An idle slot can be the correct choice. When the coordinator holds a decision, supply a compact decision packet so it clears fast.
+A CI or deploy wait does not block unrelated review, repair or acceptance work. A one-shot status check is a completed task, not an active worker. Saturation rules: [1](establish.md). When the coordinator holds a decision, supply a compact decision packet so it clears fast.
 
 ## Route decisions
 
-- Decide reversible engineering choices yourself, in the same turn, and say so. Do not invent a need for operator approval for routine architecture choices.
-- Send these to the operator as one batched multiple-choice question, after all unblocked work is dispatched: scope, money, production, security, irreversible data, regulated data, and anything your authorization does not cover.
+- Before you ask for a decision or call work externally blocked, check the governing requirement, the code, the configuration and the recorded authorization for the non-secret facts you need. Do not turn another party's operating policy into a project requirement.
+- Decide reversible choices within existing authorization in the same turn, and say so. Ask only about unresolved scope, new spending, an uncovered production or security action, irreversible or regulated data, or another choice reserved to the operator. State the exact missing fact. Send the choices as one batched multiple-choice question after all unblocked work is dispatched. Say where a requested input comes from and how the operator can supply it.
 - A permission or policy denial ends that slice. Report the evidence and hand the operator the one command to run. Never retry the denied action. Never pass it to another worker: a peer that runs it is not the operator's consent.
-- Treat worker summaries as claims. "Tests pass", "merged", "available model" and "complete" each need an artifact or live state. Check a claim about running-system state (a stuck queue, a livelock) against logs or data before you relay it. Label your own hypothesis as a hypothesis when you send it to a worker.
+- Treat worker summaries as claims. "Tests pass", "merged", "available model" and "complete" each need an artifact or live state. Check a claim about running-system state (a stuck queue, a livelock) against logs or data before you relay it.
+- Separate the symptom from its proposed cause. Before you prescribe a repair, ask for the smallest probe that can disprove the cause. Check what counters, timestamps, retries and revision numbers mean at their owner. Give the worker the observation and the competing explanations, not a required diagnosis. When a claim is disproved, correct the task record and every active brief that used it.
 
 ## Iterate a skill or prompt
 
-Write it. Get a cold-read critique from a reader with no context. Run a trial with a friction log. Revise with a new worker. Trial again. Keep the test answer out of the text you tune. A trial that finds the answer unaided is the pass signal.
+Write it. Get a cold-read critique from a reader with no context. Run a trial with a friction log. Revise with a new worker. Trial again. In a blind trial, keep expected answers, synonyms, answer-shaped examples and earlier findings out of the text, the brief and the inherited context. An evaluator holds the expected cases apart. Record any steering. A disclosed answer voids that case. Judge coverage against independent sources and new findings, not only recovery of the known example. A trial that finds the answer unaided is the pass signal.
 
 ## Failure patterns
 
 - **A second worker rebuilt an issue that was already on another branch.** — The duplicate check searched branch names. Rule: search commit messages and comments. Evidence: overlapping files between the two branches.
 - **Two workers wrote the same file and produced an add/add conflict.** — The wave was planned by issue, so path collisions were invisible. Rule: plan by file ownership. Evidence: repeat collisions and obsolete repairs.
-- **Three branches picked the same "next free" migration number.** — Nobody allocated the number. Rule: allocate up front. Evidence: collision count at merge.
 - **Several ready items waited on the same prerequisite repair.** — Each path treated the shared blocker as separate work. Rule: one owner, one verified revision, reused. Evidence: fewer duplicate investigations.
 - **The coordinator kept planning improvements while ready work waited.** — Process work had no delivery bound. Rule: make one small improvement aimed at the current bottleneck, apply it to the next item, and resume delivery. Evidence: shorter queue age, not more process artifacts.
 - **Workers confidently reported a stuck queue and a livelock that logs disproved.** — The queue was empty, and the revisions came from one global sequence. Rule: check state claims against logs before relaying. Evidence: log lines that match the claim.
-- **A permission denial was retried or handed to a peer.** — A blocked call looked like a routing problem. Rule: a denial is terminal for the slice. Evidence: a repeat attempt, or a peer that received the denied action.
 
 Next: [3. Build](build.md) · Related: [recover](recover.md)

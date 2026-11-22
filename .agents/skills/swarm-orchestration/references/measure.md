@@ -25,6 +25,7 @@ Record timestamps in UTC. Name each window. Use one completion definition throug
 
 - Show all backlog activity, and the subset that this campaign's delivery records support. Use task, PR and revision links. A shared account, a display name or a close timestamp does not identify the worker. Separate code completion from administrative closure of earlier work.
 - Per-issue attribution or cost inferred from links is provisional. Record the primary task ID and stage in the assignment. Do not infer cost from worker names, filenames or old issue references.
+- Reconcile each scope's open count as previous open + newly opened + reopened + moved in − closed − moved out. Show accepted closures, duplicate closures and scope moves apart. Label raw timeline closures as tracker events until delivery evidence shows acceptance. A smaller target after a deferral is not a faster delivery rate.
 - Current milestone membership is not historical membership. Save the member list at each observation, and report additions and removals next to percentages.
 - Current `closed_at` values lose earlier close and reopen cycles. For an auditable rate, use timeline events. Report close events, unique issues closed, reopen events and net events apart. A reopened issue is rework. Do not count pull requests as issues.
 
@@ -44,6 +45,8 @@ Record timestamps in UTC. Name each window. Use one completion definition throug
 One closure or two short windows cannot show that a larger pool caused a change. Task difficulty, outside contributors, batch closures, CI duration and work in progress also move the rate. A visibly growing review queue is enough reason to stop adding implementation work. Do not weaken acceptance or split issues to raise the count.
 
 ## Status report
+
+Record the operator's current target by name, item IDs and closure threshold, and keep that identity across reports and handoffs. Do not switch target because another scope has the same count. If a number is ambiguous, ask which named target it means, and continue the established work.
 
 Report rates per hour from completion timestamps. Group the open set by state (worked, blocked and by whom, epic, waiting). Call out anything unowned. Show last reported against now, as a table.
 
@@ -76,7 +79,7 @@ it next": a pie on the left, and the same slices as horizontal bars on the right
   An outsized non-focus bar is clipped with its true count, so it does not flatten the focus bars.
 - **The title carries the totals and the change**: total open, each focus count, and each focus count at the last
   chart with its time ("release 1.1 = 20, was 24 at 5:37 PM").
-- **Counts from a live query** at draw time. Give `total`; the script refuses slices that do not add up to it.
+- **Counts from one timestamped snapshot.** Start from item IDs, scope and stage. Check that each open item appears exactly once and that every item of the named target is accounted for. Reconcile additions, closures, reopenings and moves against the previous snapshot. Then aggregate and give `total`. The script's sum check does not prove membership. If the state changes before delivery, regenerate the image and the text together.
 - **Follow it with a short table** of the focus slices that names what moves each one next.
 
 ## GitHub adapter (optional)
@@ -86,6 +89,5 @@ it next": a pie on the left, and the same slices as horizontal bars on the right
 ## Failure patterns
 
 - **The open count stayed flat while workers finished.** — Delivered items waited for acceptance, and test runs filed duplicates. Rule: report opened and closed apart; run the sweep in [5](integrate-and-deliver.md). Evidence: closures per hour rose while the count did not fall.
-- **A rate change was credited to a larger pool.** — One short window, a different task mix. Rule: equal windows, one factor. Evidence: raw counts per window.
 
 Next: [7. Speed](speed.md)

@@ -28,21 +28,19 @@ Each reference ends with its failure patterns in the form symptom — cause — 
 
 ## Rules for every turn
 
-1. **Done means accepted.** A merged slice is not a completed task while an acceptance row is open. Close only on evidence.
-2. **Live state beats memory.** Refresh the remote, the task and the runtime roster before you assign, report or merge. A worker summary is a claim. Verify it against an artifact or live state.
-3. **One bounded deliverable, one workspace, one owner per item.** Give the owner through review, integration and acceptance.
-4. **Limit work in progress by the slowest stage.** Reserve capacity for review and integration. When review saturates, admit no new implementation. An idle slot can be correct.
-5. **Rank by time to full acceptance.** Almost-finished work outranks new easy work. Re-rank at every stage change.
-6. **Refill at every completion.** Before a CI wait or a status reply, refresh the roster and give each free slot a task or record its real limit.
-7. **Review is independent and pinned to a revision.** Author and reviewer are different actors. An amendment voids the review.
-8. **Validate the exact composed source** in the same context as CI. Never reuse a stale tree.
-9. **Merged, deployed and live are three facts.** Claim each with its own evidence.
-10. **Decide reversible choices yourself.** Send scope, money, production, security, irreversible and regulated-data choices to the operator, as one batched multiple-choice question after all unblocked work is dispatched.
-11. **A permission denial ends the slice.** Report it and give the operator the one command. Do not retry it or pass it to a peer.
-12. **Keep secrets out of output.** Ask for the specific non-secret fact.
-13. **Write state to the durable task record** at each transition. Local paths and chat do not survive.
-14. **A failed query is unknown, never zero.**
+Each rule has one owner stage. Read it there for the conditions.
+
+1. **Done means accepted.** Close only on the recorded closure event, with evidence. [1](references/establish.md), [5](references/integrate-and-deliver.md)
+2. **Live state beats memory.** A worker summary is a claim. Verify it against an artifact or live state. [2](references/assign.md)
+3. **One deliverable, one workspace, one owner per item**, through acceptance. [2](references/assign.md), [3](references/build.md)
+4. **The slowest stage limits work in progress.** Rank by time to full acceptance, and refill every free slot at each completion. [1](references/establish.md), [2](references/assign.md)
+5. **Review is independent and pinned to one revision.** Validate the exact composed source as CI does. [4](references/review.md)
+6. **Merged, deployed and live are three facts.** Claim each with its own evidence. [5](references/integrate-and-deliver.md)
+7. **Use existing authorization and verify blockers.** Decide covered reversible choices yourself. Send only unresolved operator decisions, with the verified missing fact, as one batched question after unblocked work is dispatched. [2](references/assign.md)
+8. **A permission denial ends the slice.** Report it. Do not retry it or pass it to a peer.
+9. **Keep secrets out of output.** Ask for the specific non-secret fact.
+10. **Write state to the durable task record** at each transition. A failed query is unknown, never zero. [8](references/recover.md)
 
 ## Improve the skill
 
-After a costly failure, add one lesson to the stage reference that owns it: observation, cause, rule, evidence. If you cannot state the evidence, do not add it. Delete obsolete and tooling-enforced rules. Keep generic guidance here and local commands in the owning project.
+After a costly failure, follow [8. Recover](references/recover.md#improve-the-skill-after-a-costly-failure).

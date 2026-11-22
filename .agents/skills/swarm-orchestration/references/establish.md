@@ -7,8 +7,9 @@ Read before the first dispatch and when a stage saturates. This stage fixes the 
 1. Read the project guidance and each selected task in full: comments, dependencies, claims, acceptance criteria.
 2. Turn each task into an acceptance matrix. List every required behavior, test, review, integration, release and live check. Mark each row demonstrated, outstanding, or not applicable (with a reason and evidence).
 3. Separate implementation, independent review, integration, release and live acceptance when they are distinct requirements. A merged slice is not a completed task while an acceptance row is open. Do not invent a deploy or live row for a task that does not need one.
-4. Refresh the provider remote and the task state before each assignment. A remote-tracking ref and a saved backlog are caches, not proof of current state.
-5. Record a baseline: member list, completed and total counts, timestamp, recent completions, known outside contributors. Keep the denominator, so that a scope change cannot look like delivery.
+4. Record the exact event that permits closure: checked push to the named branch, merge, release or live acceptance. Use the operator's definition. Add no later gate and drop no required one to cut the open count. If the operator changes it, update the item records, briefs and closing step together. Give every live check that follows closure an owner, a trigger and a failure action.
+5. Refresh the provider remote and the task state before each assignment. A remote-tracking ref and a saved backlog are caches, not proof of current state.
+6. Record a baseline: member list, completed and total counts, timestamp, recent completions, known outside contributors. Keep the denominator, so that a scope change cannot look like delivery.
 
 ## Choose work before choosing worker count
 
@@ -16,7 +17,7 @@ The useful pool has four limits: independent tasks, reviewer throughput, integra
 
 - Count running workers, nested descendants and CLI processes from the runtime before each launch. Configured slots, created agents and active workers are three different counts. Resuming a finished worker takes a slot.
 - A runtime can refuse launches silently at a fixed cap. When that happens, check first that concurrency is the real bottleneck. If the host has headroom (load, memory), the setting is supported, and you are authorized, raise the cap. Checkpoint the workers first if the change needs a restart.
-- Start with a small delivery set. Reserve reviewer capacity. Set a WIP limit for each stage: implementation, review, integration, acceptance.
+- Start with a small delivery set. Reserve reviewer capacity. Set a WIP limit for each stage: implementation, review, integration, acceptance. When review saturates, admit no new implementation and move qualified agents to review. An idle slot can be correct.
 - Choose the pool size from observed completion and review times, not from a sample size. Add implementation work only while finished items flow through review and integration without a growing wait.
 - Nesting is not extra capacity. A tree of supervisors that only waits adds delay.
 - When the operator sets a worker target, record each slot's state and next assignment. Query the runtime just before you report; report the number running now and the shortfall.
@@ -27,6 +28,7 @@ The useful pool has four limits: independent tasks, reviewer throughput, integra
 - Rank by expected time to full acceptance and by dependency value, not by code size. A task across three repositories with live acceptance can finish later than a larger local change.
 - Re-check aging and critical-path items, so that easy items do not starve them.
 - When two or more lanes stop on the same gap, open one investigation of that gap and rank it first. It unlocks more closures than any single lane.
+- Before you fan out acceptance runs that share a user path, run one representative case through its prerequisites by the normal entry point. Record the fixture, roles, data, expected artifact and first blocking step. If several runs would stop there, give the blocker one owner and pause only the dependent runs.
 - Give spare agents work that clears the current bottleneck: reproduce a CI failure, check the full scope of an issue, prepare an acceptance fixture, review a ready change. Do not invent work to keep a dashboard busy.
 
 ## Check the host first
@@ -39,8 +41,6 @@ The useful pool has four limits: independent tasks, reviewer throughput, integra
 
 - **More authors produced more patches but fewer closures.** — Review, CI repair and publication were saturated. Rule: limit active delivery items and reserve reviewers. Evidence: closures per hour, review age, rework.
 - **Many "easy" slices left the original tasks open.** — Assignments optimized patch size, not full acceptance. Rule: audit the whole task scope before selection and keep a per-row matrix. Evidence: remaining rows against actual closures.
-- **A worker started an issue that was already closed.** — The assignment used an old backlog snapshot. Rule: refresh state, comments and claims at assignment time. Evidence: no duplicate implementation.
-- **A local branch looked current but omitted a provider-side update.** — A remote-tracking ref was read as live state. Rule: refresh the remote before you call a ref current. Evidence: provider head equals local ref.
 - **A 16-agent campaign had one agent running while the coordinator reported 16.** — Agents were counted after their turns ended. Rule: query live state before each capacity report. Evidence: runtime running count against slot assignments.
 - **Sessions died in the middle of a wave.** — The wave was sized by slots, not by host memory. Rule: size by measured memory; a killed session leaves no completion report, so confirm that a silent worker died and did not finish. Evidence: silent workers that never resume.
 - **Temporary builds filled the filesystem and stopped even cleanup commands.** — Retained compositions had no space budget or owner. Rule: check space before expansion; retire owned builds after you record revisions and evidence. Evidence: free space, free inodes, retained size.

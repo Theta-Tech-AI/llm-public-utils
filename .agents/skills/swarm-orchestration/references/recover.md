@@ -6,6 +6,8 @@ Read at every checkpoint, when a worker goes quiet, when a worker stops, and bef
 
 Choose a check cadence and record it. Apply it between transitions as well as at them. Ask running workers for status. Do not infer progress from silence. Drain completed results at each checkpoint.
 
+Before you expand the pool, verify how a silent stall will reach you: runtime notices plus bounded roster checks when no watcher exists. Enroll each new or resumed worker at once. Record its last checkpoint, expected next event and check deadline. Verify that monitoring survives a restart or handoff. A background job counts as activity only when its owner and expected completion are known.
+
 Keep these states apart, per worker:
 
 | State | Meaning | Action |
@@ -40,11 +42,11 @@ Make repeated non-fatal background failures (checkpointing, auxiliary jobs) rais
 
 Add one lesson at a time: observation, cause, rule, evidence that the rule helped. If you cannot state the evidence, do not add the lesson. Put the first missing fact that would have prevented the waste next to the decision it informs. Do not turn a temporary fault into a permanent workaround, an example pool size into a universal limit, or one campaign into a claimed speedup. Keep generic guidance here and local commands in the owning project. Delete obsolete and tooling-enforced rules.
 
+For a shared skill, find its canonical source and read the consumer's update instructions before you edit an installed copy. Publish the source change under existing authorization. Update the consumer through its supported install path. Verify the pinned revision, lock record, complete package contents, removed files and links to renamed references. Load the installed revision before you claim that the new rules are in use. Record an intentional local patch apart.
+
 ## Failure patterns
 
-- **A worker finished and nobody read its result.** — The coordinator kept working and did not read the roster. Rule: outstanding-result state above. Evidence: completed results left unread.
 - **A worker that stopped was counted as finished.** — A turn ceiling, budget or background job ended the run with partial output that read like a report. Rule: verify the artifact; resume by task id. Evidence: partial output in a status report.
-- **An idle worker never acted on a new message.** — The message did not restart a completed turn. Rule: resume operation plus acknowledgment. Evidence: an active run.
 - **A worker ran out of context while its background test run kept going.** — The turn ended with uncommitted edits and a live job. Rule: stop the old worker, hand off to a new one. Evidence: two workers writing one tree.
 - **A worker was judged finished from an unscoped process listing.** — Silence was read as absence of work. Rule: lifecycle evidence. Evidence: duplicate dispatch of running work.
 - **Every control-plane query failed while the worker kept working.** — A quota or rate limit turned state queries into errors that nobody surfaced. Rule: stop condition above. Evidence: work advanced while state was unreadable.
