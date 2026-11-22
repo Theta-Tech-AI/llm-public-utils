@@ -76,8 +76,11 @@ def ordered(data: ChartInput) -> list[tuple[Slice, str]]:
     ]
 
 
-def label(item: Slice) -> str:
-    return f"{item['group']} · {item['stage']}" if "stage" in item else item["group"]
+def label(item: Slice, one_group: bool) -> str:
+    """One shared group goes to the title, so each bar names only its stage."""
+    if "stage" not in item:
+        return item["group"]
+    return item["stage"] if one_group else f"{item['group']} · {item['stage']}"
 
 
 def checked_rows(data: ChartInput) -> tuple[list[tuple[Slice, str]], int]:
@@ -91,6 +94,7 @@ def checked_rows(data: ChartInput) -> tuple[list[tuple[Slice, str]], int]:
 
 def draw(data: ChartInput, output: Path) -> None:
     rows, total = checked_rows(data)
+    one_group = len({s["group"] for s, _ in rows}) == 1
     import matplotlib
 
     matplotlib.use("Agg")
@@ -108,7 +112,7 @@ def draw(data: ChartInput, output: Path) -> None:
     for (item, _), wedge in zip(rows, wedges):
         share = item["count"] / total
         angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
-        named = share >= NAMED_SHARE
+        named = share >= NAMED_SHARE and not one_group
         radius = 0.6 if named else 0.8
         text = f"{item['group']}\n{item['count']}" if named else str(item["count"])
         pie_ax.text(radius * math.cos(angle), radius * math.sin(angle), text, ha="center", va="center",
@@ -121,7 +125,7 @@ def draw(data: ChartInput, output: Path) -> None:
     limit = max(5.0, staged_max * 1.6)  # a huge non-focus bar must not squash the focus bars
     bar_ax.barh(positions, [min(s["count"], limit) for s, _ in rows], color=[c for _, c in rows])
     bar_ax.set_xlim(0, limit * 1.08)
-    bar_ax.set_yticks(positions, [label(s) for s, _ in rows], color="white", fontsize=9)
+    bar_ax.set_yticks(positions, [label(s, one_group) for s, _ in rows], color="white", fontsize=9)
     for position, (item, _) in zip(positions, rows):
         clipped = item["count"] > limit
         x = limit * 0.97 if clipped else item["count"] + limit * 0.01

@@ -62,8 +62,10 @@ When the operator asks for a chart of open work, send one image that answers "wh
 it next": a pie on the left, and the same slices as horizontal bars on the right. Draw it with
 `scripts/progress_chart.py INPUT.json OUTPUT.png` (the input format is in its header).
 
-- **One slice per (focus milestone × stage); one slice per other milestone.** Every open item sits in exactly one
-  slice, from the item records, never from memory.
+- **Chart the focus set the operator names, plus every open item with no milestone** (one "no milestone" slice, so
+  untriaged work stays visible; name its count in the title even when it is 0). Leave other milestones out unless the
+  operator asks for them; then each is one slice. Every open item in the chart sits in exactly one slice, from the item
+  records, never from memory. With one focus group, the group goes in the title and the bars name only the stage.
 - **Stages follow the order of operations for one item**, and the bars run in that order, top to bottom: waiting on the
   operator or an outside party, scheduled event, ready with no owner, finding the cause, coding, waits a deploy for its
   next step, final checks, in a batch (lands at push), proof running, after the release window. Never draw one big
