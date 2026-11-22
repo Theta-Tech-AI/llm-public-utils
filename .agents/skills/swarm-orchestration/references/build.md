@@ -25,7 +25,8 @@ Read when you start, restart or expand workers, use CLI agents or nested agents,
 - Put a time cap and a memory cap on every heavy or possibly diverging command. Isolate it, so that one runaway test cannot exhaust the host and kill every sibling session.
 - After you replace a runaway with a fix, confirm that the process ended. Editing the file does not stop a running loop.
 - Run broad suites through the project's memory-capped runner, and one at a time when needed. Do not start duplicate builds or live probes for the same evidence.
-- Push each green slice at once, and cap the number of agents that run tests at the same time. A host failure then costs only the work not yet pushed.
+- Cap the agents that run tests at the same time. Record queue wait and elapsed time of heavy checks at each concurrency. Give the next landing's blocking check first access. Lower the concurrency when checks delay it, even when CPU and memory are free. Count suite shards and nested test jobs in the same limit. Bound live probes against shared service quotas.
+- Push each green slice to its own branch ([5](integrate-and-deliver.md)), so that a host failure costs only unpushed work.
 - After review, remove only owned disposable builds whose revisions and evidence are recorded.
 
 ## Stop processes safely
@@ -46,13 +47,11 @@ Ask workers for the specific non-secret fact you need. Never dump credential-hel
 
 ## Failure patterns
 
-- **A worker named after a model did not prove model identity.** — The label was read as runtime metadata. Rule: use a receipt, not self-report. Evidence: runtime receipt.
 - **Nested or CLI workers created hidden load.** — Only direct children were counted. Rule: one budget for descendants, processes, memory and shared environments. Evidence: actual active count and resource use.
 - **A new patch landed in another task's delivery clone.** — Ownership and workspace were implicit. Rule: path, branch, baseline and scope in every assignment. Evidence: the final diff holds only the assigned task.
 - **One unbounded process took down the shared host.** — A runaway test grew until the kernel killed it and every sibling session. Rule: caps above. Evidence: a process that outlives its fix.
 - **A host crash erased uncommitted work in throwaway worktrees.** — Green slices sat unpushed. Rule: push each green slice. Evidence: green work left unpushed.
 - **A gate reported a false pass and a false failure on the same change.** — Concurrent runs shared one hardcoded scratch tree. Rule: unique scratch paths per run. Evidence: results that contradict a clean re-run.
-- **A second worker silently renamed its branch instead of failing.** — One branch can be checked out in one worktree only. Rule: unique names; fail loudly. Evidence: diverted branch names in reports.
 - **Two workers editing one submodule collided despite separate worktrees.** — Submodule objects stay shared. Rule: single-writer resource. Evidence: submodule conflicts.
 - **Concurrent workers sharing one per-user tool profile retargeted each other.** — Active-identity state is global per user, and a switch fails silently. Rule: isolated profile or pinned identity. Evidence: calls under the wrong identity.
 - **A pattern kill matched the coordinator's own shell.** — Workers also tried broad kills that would hit other test runs. Rule: exact PID only. Evidence: unexpected terminations.

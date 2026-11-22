@@ -14,7 +14,7 @@ Read before you push, merge, close, or claim that something is live.
 ## Push and batch
 
 - Push each green slice to its own branch at once.
-- Batch only the merges into a shared integration branch that triggers deploys. If pushes there cancel one another's deploys, leave nothing verified, or hide a slow step, merge in bounded batches (about 30 minutes). Run one combined test run per batch on the composed tree.
+- Before you choose a cadence for a shared integration branch that triggers deploys, read the queue configuration and trace one running and one superseded run. Record what a new push cancels: running work, waiting work, both or neither. If the running run survives and only the newest waiting head remains, push each checked batch at once, and verify that the newest head holds the earlier changes. If pushes cancel running work, merge in bounded batches sized from measured run time. A rehearsal that needs two deployed states reserves both runs. Run one combined test run per batch on the composed tree.
 - Fetch and rebase just before a push. Push with force-with-lease only to your own branch. Exclude agent-owned branches from bulk refresh sweeps. Re-read the head after the base moves.
 - A peer gate session that owns merges keeps them. Never push to its branches. Answer its questions explicitly, and cite the operator's decision where one exists. Move a slow item to the next bump. Do not hold a bump for it.
 - Cancel a queued CI run only when its SHA is superseded by the current head. Keep the current head's required checks.
@@ -37,23 +37,24 @@ A worker may not see deploys. When a task needs live proof, have an authorized o
 
 ## Close on evidence
 
-1. Refresh task state, target branch, required checks and exact head.
-2. Check every acceptance row against the live task and the delivered revision.
-3. Confirm that the hosting service reports the PR or artifact as merged or released.
-4. Close only when each required row has evidence. Post delivery links and evidence in the task record.
+1. Refresh the task state and the exact delivered revision.
+2. Verify the item's recorded closure event ([1](establish.md)) on the branch, the hosting service, the release record or the live environment.
+3. Verify every acceptance row required before that event. Do not substitute a nearby test or an unread artifact.
+4. Close with the revision and evidence. Link the checks that follow closure, with their owners and triggers. Reopen on a failed check when the recorded policy says so.
 5. Refresh the campaign totals.
 
 Partial slices, duplicate housekeeping closures and unrelated contributors do not count as this swarm's completed work.
 
-When the open count stays flat while workers finish, compare opened, closed and reopened counts. If delivered items pile up unclosed, acceptance is the bottleneck. Run a verify-and-close sweep, partitioned across workers. Each worker takes a slice, verifies each item against the integration branch, closes done items with evidence, merges duplicates into one survivor, and leaves a status line on the rest. Tell test workers to search for an existing item and comment on it, not to file a duplicate.
+Deferral is a scope decision, not acceptance. Follow the operator's tracker convention. Unless told otherwise, leave deferred work open, move it to its agreed scope with the reason and a deferral label, and keep the links to finished slices.
+
+When the open count stays flat while workers finish, compare opened, closed, reopened and moved items first. If delivered work waits for closure, run a partitioned verify-and-close sweep. Each worker reads the full task and acceptance record, then checks the delivered revision. For an item that has an active owner, reconcile with the owner's latest findings before you close it. A disagreement leaves the item open with one named next action. Do not waive a row, move scope or defer to improve the count. A duplicate closure names the survivor and keeps its remaining rows. Comment on a remaining item only when the evidence or next action changed. Tell test workers to search for an existing item before they file one.
 
 ## Failure patterns
 
 - **"Merged" appeared in a report while the PR was open.** — Narrative status was trusted. Rule: check the hosting service. Evidence: merge timestamp and revision.
-- **A publication retry used a stale object manifest.** — Requests predated the final amendment. Rule: regenerate from the final revision. Evidence: exact final tree and ref.
 - **Two writers raced on one shared integration branch.** — Rebase-then-push has no per-branch reservation, and each merge invalidates the others. Rule: fetch, rebase, force-with-lease, re-read. Evidence: repeat non-fast-forward rejections.
 - **A merge landed with conflict markers that nobody read.** — Approval checked the source branch and the command's success, not the result. Rule: read the result back. Evidence: merges never read back.
 - **A local pass was reported as live acceptance.** — Implementation, integration, deploy and acceptance were collapsed. Rule: prove each stage. Evidence: deployed revision and a real acceptance artifact.
-- **Pushing after every lane made deploys cancel each other.** — Newest wins in the queue, so nothing was verified, and a slow step stayed hidden. Rule: bounded batches; count only completed, uncancelled runs; re-baseline after a cadence change. Evidence: completed runs per hour.
+- **A cadence was set from an assumed queue policy.** — One run held pushes for a belief that pushes cancel deploys, and the queue did not. Another run pushed every lane into a queue that did cancel. Rule: trace the queue first; count only completed, uncancelled runs; re-baseline after a change. Evidence: completed runs per hour.
 
 Next: [6. Measure](measure.md) · Related: [4. Review](review.md)

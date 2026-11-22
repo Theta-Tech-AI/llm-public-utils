@@ -20,6 +20,7 @@ Read before you accept a handoff, approve a revision, or diagnose a failing chec
 - Run the checks in the same project-wide context as CI: type-check scope, configuration, tool version, dependencies. Single-file inference misses errors. A gate can print type errors and still exit 0; read the diagnostics and the gate contract.
 - Run full base-to-head gates, not only checks for the last commit. Include the cheap early CI checks (policy, documentation links, comments, whitespace) before publication. Keep the manifest and check output with the task record.
 - Test the behavior that the task changes. A page test that mocks the polling hook cannot show polling cadence. A helper test cannot show that production uses the helper. Check real callers, side effects and error paths. For generated artifacts, compare fresh generator output with the shipped artifact.
+- Name the fixture that exercises each required outcome. If it is missing, create an authorized disposable fixture. Do not wait for a rare state to occur. A failure-path run or an empty error log cannot prove a success path. Read the required final artifact before you mark a row demonstrated.
 - Do not widen error baselines, add ignores, or weaken assertions to hide a regression. Fix the cause, or document a demonstrated intentional contract change.
 - After a code change, rerun the affected checks. Reuse evidence only when its source and assumptions still match. A green review does not survive a conflicting merge: rerun on the merged head. Do not rerun expensive suites after a prose edit.
 
@@ -38,20 +39,17 @@ Read before you accept a handoff, approve a revision, or diagnose a failing chec
 - Prefer the narrow correct change. Do not replace a narrow problem with a generic framework or schema translator. Keep tightly coupled contract changes together.
 - If the proposed implementation is obsolete but the outcome already holds, record the current evidence and let the coordinator decide. Ask the operator only for a real product, safety, scope or authorization gap.
 - Fix provider-neutral behavior in its owning source. Consume an upstream revision only when it keeps the ancestry you consume now, or an explicitly justified equivalent. A newer commit can omit deployed fixes. Check ancestry and required content, then test the final composition. A test-only repair on an integration branch may not belong upstream.
+- Before you build an upstream extension, read that project's contribution rules and name the real consumer. Record producer and consumer changes together. For an adoption, list the removed or renamed public symbols and routes, changed signatures, schemas, configuration, generated artifacts and startup requirements, from the final producer diff. Give each consumer adaptation an owner and land coupled changes together. Run the consumer's real startup check on the composed revision.
 - Debris from stress or test scripts can look like a bug or a data leak. Trace the write in the audit trail first. Archive the debris (reversible) and do not edit records. Then check whether it exposes a real missing guard.
 
 ## Failure patterns
 
 - **Validation passed against the wrong source.** — Build directories were stale, or overlays contaminated the mirror. Rule: immutable inputs, a distinct composition per check. Evidence: file hashes, composition manifest.
 - **A "pre-existing" failure disappeared after composition.** — The baseline was an old disposable build. Rule: pristine baseline. Evidence: same failing test, same context.
-- **Local typing passed but CI rejected the same file.** — Scope and settings differed. Rule: match CI; reproduce the known CI failure on the old revision first. Evidence: changed-file diagnostics in the full context.
 - **Focused tests passed but publication failed on cheap repository-wide checks.** — The plan omitted checks outside the module. Rule: read the CI contract early. Evidence: fewer failed publication attempts.
-- **A gate printed PASS despite new type errors.** — Typing was informational inside a broader gate. Rule: read the contract and diagnostics. Evidence: explicit type result.
 - **Tests passed while production bypassed the new abstraction.** — Tests used helpers or mocks. Rule: check production consumers. Evidence: a boundary test on the real path.
-- **Review approved an old revision.** — Amendments were not tied to review records. Rule: one review per exact revision. Evidence: reviewed revision equals delivered revision.
 - **An "independent review" came from the actor that wrote the change.** — Independence was a role label, and one shared identity served every agent. Rule: structured author and reviewer fields. Evidence: a self-reviewed change whose record shows a reviewer.
 - **Every small fix voided an approval and serialized the gate.** — No batching. Rule: batch fixes; cap fix-chains. Evidence: successive approvals on one branch.
-- **A review approved a change whose tests nobody ran.** — The reviewer lacked prerequisites. Rule: prerequisites first; mark the verdict provisional. Evidence: approvals with no execution.
 - **A partially executed run was reported as verified.** — A consent gate blocked one step and the run went on. Rule: explicit unverified-gap section. Evidence: a "verified" claim that covers a step that did not run.
 - **An upstream update dropped previously consumed fixes.** — The candidate was newer but on divergent ancestry. Rule: ancestry plus content. Evidence: composed tests.
 - **A provider refactor kept duplicate selection variables.** — Compatibility tests passed, but acceptance needed one observable value. Rule: record the observable contract before you split work. Evidence: one accepted value and tests for it.
