@@ -4,7 +4,7 @@ Read before dispatch, and again when a stage saturates: choosing the delivery se
 
 ## Choose work before choosing worker count
 
-The useful pool is bounded by independent tasks, reviewer throughput, integration throughput, and shared resources. Count active descendants and CLI processes as well as direct managed children. Runtime limits can apply to the whole tree, and a fixed cap refuses launches silently; when it binds and the host has headroom (load, memory), raise the runtime setting (it may need a restart) rather than queueing work in your head. Nesting is not proof of extra capacity.
+The useful pool is bounded by independent tasks, reviewer throughput, integration throughput, and shared resources. Count active descendants and CLI processes as well as direct managed children. Runtime limits can apply to the whole tree, and a fixed cap refuses launches silently. When it binds, first check that concurrency is the bottleneck; if the host has headroom (load, memory), the setting is supported, and the change is authorized, raise it (checkpoint workers first if it needs a restart) rather than queueing work in your head. Nesting is not proof of extra capacity.
 
 Start with a small delivery set and reserve reviewer capacity. Set explicit WIP limits for implementation, review, integration, and acceptance. Choose the count from observed completion and review times, not a sample pool size. Increase implementation work only while completed items flow through review and integration without a growing wait. A saturated review queue is a reason to stop new implementation intake and reassign available qualified agents to independent review.
 
