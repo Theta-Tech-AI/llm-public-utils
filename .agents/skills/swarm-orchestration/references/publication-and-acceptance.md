@@ -12,7 +12,7 @@ If transport fails, diagnose the tool error before changing the patch. Use anoth
 
 Keep pushing each green slice to its own branch at once; batch only merges into a shared integration branch that triggers deploys. When pushes there are observed to cancel one another's deploys, leave nothing verified, or hide a slow step, merge in bounded batches. Measure only completed, uncancelled runs, and re-baseline speed after changing push cadence. A peer gate session that owns merges keeps them: never push to its branches, answer its questions explicitly (citing the operator decision where one exists), and move a slow item to the next bump rather than holding one.
 
-Workers cannot see deploys. When a task requires live proof, assign it to one owner who has deployment access as a step after the push, and resume that worker with an explicit message naming the live revision with its evidence; otherwise the proof never runs.
+A worker may not see deploys. When a task requires live proof, check what the worker can reach: have an authorized observer supply the live revision with its evidence, then resume the acceptance owner with a message naming that revision and the access its checks need; otherwise the proof never runs.
 
 Repository merge, deployed revision, and live behavior are separate facts. Claim each only with matching evidence. Do not invent deployment or live-acceptance requirements for a task that does not need them. Read-only acceptance checks can proceed under existing authorization; deployment needs its own applicable authorization. An unreachable environment is a blocked acceptance check, not a pass. Keep useful independent work moving while recording the precise blocked step.
 
