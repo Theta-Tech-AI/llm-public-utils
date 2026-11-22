@@ -66,7 +66,9 @@ For a branch or composed tree, use [validation and independent review](reference
 
 Use [measurement](references/measurement.md) for definitions and attribution, and [the GitHub closure-metrics runbook](references/github-closure-metrics.md) for the optional read-only adapter.
 
-Report the measures at campaign start, after each accepted closure, and at regular checkpoints per [measurement](references/measurement.md).
+Report the measures at campaign start, after each accepted closure, and at regular checkpoints per [measurement](references/measurement.md), which also says how to chart the open set.
+
+When closures per hour fall or the operator asks how to go faster, measure the item clock and pull the lever for the stage that holds the most time: [speed](references/speed.md). Accept at the earliest point the owner's definition allows, never block building on a shared deploy, and spend the coordinator on the next landing slice.
 
 ## Leave a recoverable system
 

@@ -61,6 +61,23 @@ Queue: <implementation>, <review>, <integration>, <acceptance>; oldest <age>.
 Bottleneck and scheduling change: <observation → action>.
 ```
 
+## Draw the open set
+
+When the operator asks for a chart of open work, draw one pie that answers "where is every open item, and what moves
+it next":
+
+- **One slice per milestone, and one slice per acceptance stage inside the focus milestone(s).** Stages in pipeline
+  order: lands with the next batch, testing, being built, proof running, scheduled event, waiting on the operator or an
+  outside party. Every open item sits in exactly one slice, from the item records, never from memory.
+- **Labels inside the slices** (name and count), no legend. Merge a slice too small to label with its neighbour into a
+  combined label ("lands in batch 8 / 9") rather than dropping it.
+- **The title carries the totals and the change**: total open, the focus count, and the focus count at the last chart
+  with its time ("release 1.1 = 21, was 52 at 3 PM").
+- **Fixed colours per stage** across charts, so two charts compare at a glance; fixed slice order (focus stages first,
+  other milestones last).
+- **Counts from a live query** at draw time; check that the slice counts add up to the live total before sending.
+- **Follow it with a short table** of the focus slices that names what moves each one next.
+
 ## Report the measures
 
 Report completed/total and percentage from a live task query, completions per hour over a stated UTC window, time between completions, and time since the last completion. Also track review queue age, rework, blocked time, and each stage's WIP. Give these measures at campaign start, after each accepted closure, and at regular checkpoints; separate campaign-attributed outcomes from all repository activity.
