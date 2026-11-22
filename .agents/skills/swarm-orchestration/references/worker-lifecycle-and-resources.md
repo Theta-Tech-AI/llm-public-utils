@@ -10,7 +10,7 @@ Read when starting, restarting, or expanding workers: runtime evidence, workspac
 - Smoke-test one bounded worker before a large expansion: start it, observe a result, verify identity if possible, and confirm cleanup. A smoke test can be a harmless read-only task.
 - A larger configured limit does not establish higher throughput. Observe live capacity and measure delivery after expansion.
 
-The coordinator needs enough context to resolve design and acceptance disputes. Routine implementation and routine review can use the user's preferred worker profile. Escalate difficult diagnosis or review when its measured rework cost justifies another profile. Keep author and reviewer independent regardless of model; model size alone is not a review result.
+The coordinator needs enough context to resolve design and acceptance disputes. Routine implementation and routine review can use the user's preferred worker profile. Escalate difficult diagnosis or review when its measured rework cost justifies another profile. Keep author and reviewer independent regardless of model; model size alone is not a review result. Where the runtime and the operator's choices allow, assign by role: cheaper models build and trial, the strongest model reviews and decides, and a separate one makes the final real run. Give every worker the same written brief (method, checks, report format); change a rule by editing that brief atomically and messaging running workers.
 
 ## Workspace and resource ownership
 
@@ -18,10 +18,10 @@ The coordinator needs enough context to resolve design and acceptance disputes. 
 - Give the coordinator the path and real remote before work starts. A clone made from a local repository may still have that local path as `origin`.
 - Use an ignored repository scratch directory only after checking ignore behavior and write access. Otherwise use an authorized temporary directory. A different path does not bypass a sandbox or a runtime slot limit.
 - Do not switch branches, pop a shared stash, reset another agent's tree, or overwrite its report. Preserve mistaken edits and move the intended patch to its own clean checkout.
-- Give each test composition, browser session, output file, and log a unique owner. Do not rebuild a source tree while another worker tests it.
+- Give each test composition, browser session, output file, and log a unique owner. Do not rebuild a source tree while another worker tests it: run checks that write the same tree one at a time, since a gate that rebuilds a shared folder under a running suite produces failures that look like regressions.
 - Limit expensive suites by memory and environment capacity. Use the project's memory cap and serialize broad suites when needed. Do not start duplicate builds or live probes for the same evidence.
 - Enforce a per-process time and memory cap on every heavy or possibly diverging command, and isolate it so one runaway test cannot exhaust the shared host and kill every sibling session. After replacing a runaway with a fix, confirm the offending process has actually terminated — editing the file does not stop a running loop.
-- Compute overlapping paths across the selected issues before each wave, and serialize or give a single owner to any file two assignments would write; check whether a repair task is still needed before spending a worker on it. An add/add conflict costs two workers and a merge repair.
+- Allocate any sequence-numbered name (a migration number, an id range) before work starts and check the integration branch for collisions at merge; parallel branches all pick the same next free number. Compute overlapping paths across the selected issues before each wave, and serialize or give a single owner to any file two assignments would write; check whether a repair task is still needed before spending a worker on it. An add/add conflict costs two workers and a merge repair.
 - Push each green slice as soon as it is green, and cap the number of concurrently test-running agents, so a host-level failure costs only the work not yet pushed rather than a whole wave.
 - Check free space and inodes on the actual filesystem before cloning or composing. Leave room for tools and cleanup. After review, remove only owned disposable builds whose source revisions and evidence are recorded.
 
@@ -31,7 +31,7 @@ Use CLI workers only when the tool exists, delegation is authorized, and they fi
 
 Record process/session ID, working directory, source revision, model evidence, log path, and result path. Keep the detailed report separate from the CLI's final-output file; otherwise a short final message can overwrite the report. Provide a steering channel the worker actually reads at checkpoints.
 
-Use the runtime's resume/follow-up operation for an idle worker. A queued message can steer a running agent but may not trigger a new turn after completion. Check acknowledgment or state change. Stop only the owned process when cleanup is needed; never use a broad process-name kill that can terminate other agents.
+Use the runtime's resume/follow-up operation for an idle worker. A queued message can steer a running agent but may not trigger a new turn after completion. Check acknowledgment or state change. Stop only the owned process when cleanup is needed, through the runtime's cancellation or the exact PID or process group you started, and confirm its descendants ended; never kill by name or pattern, which can match your own shell or other agents' test runs. Put this in every worker brief.
 
 Bound each assignment so it can finish inside one worker budget, and require a durable report written before or during the work, so a worker that dies mid-task still leaves a recoverable handoff instead of uncommitted half-work the successor must reverse-engineer.
 
@@ -42,6 +42,8 @@ Do not dump credential-helper results or whole process/container environments an
 ## The roster loop
 
 Choose and record a roster-check cadence, and apply it between transitions as well as at them: check in with running workers rather than inferring from silence, and drain completed results at each checkpoint.
+
+A worker that stops while its own background job runs sends an interim hand-back, and a later "finished" notice may carry no new report. Track per worker the last report, any open background job, and the next expected event; message the worker when a notice arrives with nothing new.
 
 A finished worker is not a reporting worker: completed results are not always delivered to the coordinator, so read them back explicitly and treat an assigned child that is neither running nor reported as an outstanding result to resolve now, not as still running.
 

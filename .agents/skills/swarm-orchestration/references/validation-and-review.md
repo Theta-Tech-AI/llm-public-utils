@@ -28,6 +28,8 @@ Audit scope against the exact delivered revision or pin. Compare file hashes for
 
 Do not treat every wrapper, empty package file, or small module as waste. Check dynamic imports, packaging behavior, stable boundaries, and real consumers before deletion. Do not replace a narrow problem with a generic framework or an incomplete schema translator. Keep tightly coupled contract changes together.
 
+Debris from stress or test scripts can look like a bug or a data leak. Trace the write in the audit trail before fixing, and archive the debris (reversible) rather than editing records, but check whether it exposes a real missing guard.
+
 If a task's proposed implementation is obsolete but its outcome already holds, document the current evidence and let the coordinator decide within the existing scope. Do not invent a need for operator approval for routine architecture choices; ask only when a real product, safety, scope, or authorization decision is missing.
 
 For upstream/downstream work, fix provider-neutral behavior in its owning source. Consume a published revision that retains the currently consumed ancestry or an explicitly justified equivalent history; a newer-looking commit can still omit deployed fixes. Verify both ancestry and required content, then test the final composition. A test-only repair on an integration branch may not belong in upstream if those tests do not exist there.
@@ -60,6 +62,10 @@ Verify the claimed revision and tree from the files (`git hash-object` for chang
 ---
 
 Related: [the assignment record](assignment-and-handoff.md) · [publication and acceptance](publication-and-acceptance.md) · [worker lifecycle](worker-lifecycle-and-resources.md)
+
+## Iterate a skill or prompt
+
+Write, get a cold-read critique from a reader with no context, run a trial with a friction log, revise with a new worker, and trial again. Keep the test answer out of the text being tuned; a trial that finds it unaided is the pass signal.
 
 ## Handle an amendment
 

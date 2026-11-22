@@ -4,11 +4,13 @@ Read before dispatch, and again when a stage saturates: choosing the delivery se
 
 ## Choose work before choosing worker count
 
-The useful pool is bounded by independent tasks, reviewer throughput, integration throughput, and shared resources. Count active descendants and CLI processes as well as direct managed children. Runtime limits can apply to the whole tree; nesting is not proof of extra capacity.
+The useful pool is bounded by independent tasks, reviewer throughput, integration throughput, and shared resources. Count active descendants and CLI processes as well as direct managed children. Runtime limits can apply to the whole tree, and a fixed cap refuses launches silently. When it binds, first check that concurrency is the bottleneck; if the host has headroom (load, memory), the setting is supported, and the change is authorized, raise it (checkpoint workers first if it needs a restart) rather than queueing work in your head. Nesting is not proof of extra capacity.
 
 Start with a small delivery set and reserve reviewer capacity. Set explicit WIP limits for implementation, review, integration, and acceptance. Choose the count from observed completion and review times, not a sample pool size. Increase implementation work only while completed items flow through review and integration without a growing wait. A saturated review queue is a reason to stop new implementation intake and reassign available qualified agents to independent review.
 
 Give spare agents work that clears the current bottleneck: reproduce a CI failure, check full issue scope, prepare an acceptance fixture, inspect a dependency, or review a ready change. Do not create speculative work to keep the dashboard busy.
+
+When two or more lanes stop on the same gap, open one investigation of that gap and rank it first; it unlocks more closures than any single lane.
 
 Watch large tasks and the dependency path. Schedule an aging item or a prerequisite when it unlocks more accepted work than another easy closure. A task with three repositories and live acceptance can be slower to finish than a larger local change.
 

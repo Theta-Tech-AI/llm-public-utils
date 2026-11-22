@@ -48,6 +48,8 @@ Current `closed_at` values give a quick snapshot but lose earlier close/reopen c
 
 Do not claim that a larger pool caused a rate change from one closure or two short windows. Difficulty, external contributors, batch closures, CI duration, and work already in progress can explain the difference. Larger samples improve confidence, but a visibly growing review queue is already enough reason to stop adding implementation work.
 
+Report rates per hour from completion timestamps, and group the open set by state (worked, blocked and by whom, epic, waiting) with anything unowned called out, as a table of last reported against now.
+
 A simple status report is sufficient:
 
 ```text
