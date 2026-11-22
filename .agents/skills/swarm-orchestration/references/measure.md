@@ -58,19 +58,23 @@ Bottleneck and scheduling change: <observation → action>.
 
 ## Draw the open set
 
-When the operator asks for a chart of open work, draw one pie that answers "where is every open item, and what moves
-it next":
+When the operator asks for a chart of open work, send one image that answers "where is every open item, and what moves
+it next": a pie on the left, and the same slices as horizontal bars on the right. Draw it with
+`scripts/progress_chart.py INPUT.json OUTPUT.png` (the input format is in its header).
 
-- **One slice per milestone, and one slice per acceptance stage inside the focus milestone(s).** Stages in pipeline
-  order: lands with the next batch, testing, being built, proof running, scheduled event, waiting on the operator or an
-  outside party. Every open item sits in exactly one slice, from the item records, never from memory.
-- **Labels inside the slices** (name and count), no legend. Merge a slice too small to label with its neighbour into a
-  combined label ("lands in batch 8 / 9") rather than dropping it.
-- **The title carries the totals and the change**: total open, the focus count, and the focus count at the last chart
-  with its time ("release 1.1 = 21, was 52 at 3 PM").
-- **Fixed colours per stage** across charts, so two charts compare at a glance; fixed slice order (focus stages first,
-  other milestones last).
-- **Counts from a live query** at draw time; check that the slice counts add up to the live total before sending.
+- **One slice per (focus milestone × stage); one slice per other milestone.** Every open item sits in exactly one
+  slice, from the item records, never from memory.
+- **Stages follow the order of operations for one item**, and the bars run in that order, top to bottom: waiting on the
+  operator or an outside party, scheduled event, ready with no owner, finding the cause, coding, waits a deploy for its
+  next step, final checks, in a batch (lands at push), proof running, after the release window. Never draw one big
+  "being built" slice: split it into finding the cause, coding, waits a deploy and final checks, so the chart shows
+  where work piles up.
+- **Pie and bars share one fixed colour per stage**, the same in every chart, so two charts compare at a glance.
+- **The bars carry the names; the pie carries the counts.** Only a large pie slice also shows its group name; no legend.
+  An outsized non-focus bar is clipped with its true count, so it does not flatten the focus bars.
+- **The title carries the totals and the change**: total open, each focus count, and each focus count at the last
+  chart with its time ("release 1.1 = 20, was 24 at 5:37 PM").
+- **Counts from a live query** at draw time. Give `total`; the script refuses slices that do not add up to it.
 - **Follow it with a short table** of the focus slices that names what moves each one next.
 
 ## GitHub adapter (optional)
