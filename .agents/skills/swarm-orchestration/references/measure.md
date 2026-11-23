@@ -46,45 +46,23 @@ One closure or two short windows cannot show that a larger pool caused a change.
 
 ## Status report
 
-Record the operator's current target by name, item IDs and closure threshold, and keep that identity across reports and handoffs. Do not switch target because another scope has the same count. If a number is ambiguous, ask which named target it means, and continue the established work.
-
-Report rates per hour from completion timestamps. Group the open set by state (worked, blocked and by whom, epic, waiting). Call out anything unowned. Show last reported against now, as a table.
+Generate it from the loop's output ([0](coordinator-loop.md#status-from-the-loop)). Keep the operator's named target, item IDs and closure threshold across reports. Show last reported against now, as a table, with rates from completion timestamps:
 
 ```text
 As of <UTC>: <closed>/<total> (<percent>), scope change <added/removed>.
-Window <start..end>: <events> closures, <unique> issues, <reopens> reopens,
-<rate>/hour; median gap <value/unknown>; last closure <time/unknown>.
-Campaign-attributed: <count> accepted outcomes with linked delivery evidence.
-Queue: <implementation>, <review>, <integration>, <acceptance>; oldest <age>.
+Window <start..end>: <events> closures, <unique> issues, <reopens> reopens, <rate>/hour; last closure <time/unknown>.
+Queue: <implementation>, <review>, <integration>, <acceptance>; oldest <age>; coordinator latency <median>.
 Bottleneck and scheduling change: <observation → action>.
 ```
 
 ## Draw the open set
 
-When the operator asks for a chart of open work, send ONE 300 dpi image, drawn with `scripts/progress_chart.py INPUT.json OUTPUT.png`
-(input in its header: `groups`, each with name, colour and `slices` {label: count}, the focus group first; and `stages`, the
-focus group by step, each with name, n and optional `"always_show": true`, in order of operations):
-- **Left pie, coloured by release group:** one base colour per group; each non-focus group is split into its granular
-  slices in slightly different shades of that colour (light to dark). The focus group is one outlined block.
-- **Right pie:** dashed connectors expand the focus block into a pie by step, in shades of the FOCUS group's colour, so it
-  visibly matches the block it expands (stage colours in the input are ignored). Bars use the same shades.
-- **Group key:** coloured words under the title, no legend box.
-- **Bars below** for both pies; the focus bars run in order of operations (earliest step at the top).
-- **Labels:** sectors carry their own; small ones sit outside, de-overlapped across both pies (a column on each pie's free
-  side, stacks above and below on the side facing the other pie) with leader lines that do not cross other labels. A stage
-  marked `always_show` stays at 0 as a bar (for example "moved in, no worker yet"). Look at the rendered image: no
-  overlapping text.
-- **Each focus item sits at its real step** in the order of operations: queued, investigating, coding, merging, on
-  development with the live check left, proof running, outside party, and so on. Never draw one big "being built" slice.
-- **Count every slice from the tracker at draw time**; never carry a count over from an earlier chart. The focus slices
-  must total the stages; group, slice and stage names must not repeat.
-- **A "waiting on the operator" slice holds only items whose next action is the operator's own.** A third party's action
-  goes in its own stage.
-- **One item per real piece of work.** Do not split one deliverable into two stages or two slices.
-- **The title carries the totals and the change**: total open, the focus count, and the focus count at the last chart
-  with its time.
-- **Counts from one timestamped snapshot.** Start from item IDs, scope and stage. Check that each open item appears exactly once and that every item of the named target is accounted for. Reconcile additions, closures, reopenings and moves against the previous snapshot. Then aggregate. The script's sum check does not prove membership. If the state changes before delivery, regenerate the image and the text together.
-- **Follow it with a short table** of the focus slices that names what moves each one next.
+Draw from the board, never from typed counts: `scripts/progress_chart.py --board BOARD.json --focus-group NAME OUT.png`. Counts typed from memory were wrong three times in one evening. The script counts items by `group`, the focus group by `stage` in the board's order of operations, and the other groups by `area`. It refuses an item with no group, a total that does not add up, and duplicate names. It keeps a stage marked `always_show` at 0. It cuts a bar only when the bar is 5 times the next or more, and keeps the image under 8000 px. A plain counted JSON input still works (`progress_chart.py INPUT.json OUT.png`; format in its header).
+
+- The left pie is coloured by group; the focus group is one outlined block, expanded by step into the right pie in its own shades; bars repeat both.
+- Each focus item sits at its real step. Never draw one big "being built" slice. "Waiting on the operator" holds only the operator's own actions; a third party's action has its own stage.
+- Pass `--title` with the totals and the change since the last chart, with its time.
+- Look at the rendered image before you send it: no overlapping text. Follow it with a short table that names what moves each focus slice next.
 
 ## GitHub adapter (optional)
 

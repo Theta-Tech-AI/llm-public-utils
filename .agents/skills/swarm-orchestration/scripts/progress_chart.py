@@ -17,16 +17,23 @@ The focus group is ``groups[0]``. Every count comes from the tracker at draw tim
 stage total, a duplicate group, slice or stage name, or an empty focus is refused. A stage with 0 items is drawn only
 when it is marked ``"always_show": true`` (as a bar with 0).
 
+With ``--board`` the input is the coordinator board (references/coordinator-loop.md) and every count is computed from
+its items: groups by ``group`` (colours and order from the board's ``groups``), the focus group's steps by ``stage``
+(order and ``always_show`` from the board's ``stages``), the other groups' slices by ``area`` (else ``stage``).
+
 Usage: progress_chart.py INPUT.json OUTPUT.png
+       progress_chart.py --board BOARD.json --focus-group NAME [--title TEXT] OUTPUT.png
 """
 
 from __future__ import annotations
 
+import argparse
 import colorsys
 import json
 import math
 import sys
 import textwrap
+from collections import Counter
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
@@ -53,6 +60,7 @@ BACKGROUND, FOREGROUND, OUTLINE, AXIS, LEADER = "#0f172a", "#e2e8f0", "#facc15",
 MAX_PIXELS = 7900  # the file-sending tool refuses an image of 8000 px or more on either side
 MIN_INSIDE_FONT = 12
 LABEL_GAP = 0.17  # least distance between two outside labels, in pie radii
+CUT_RATIO, CUT_TO = 5, 2.5  # a bar 3x the next still reads; at 5x it would flatten the rest, so draw it 2.5x the next
 
 
 def checked(data: ChartInput) -> tuple[list[Group], list[Stage]]:
@@ -143,7 +151,7 @@ def label_sectors(ax, wedges, items: list[tuple[str, int, str]], total: int, fre
             ax.text(0.6 * math.cos(angle), 0.6 * math.sin(angle), f"{wrap(name, 12)}\n{count}", ha="center", va="center",
                     color=text_color(fill), fontsize=fit, weight="bold")
         else:
-            outside.append((angle, wrap(f"{name}: {count}", 40)))
+            outside.append((angle, f"{wrap(name, 40)}: {count}"))  # the count never sits alone on a line
     planned = plan_outside(outside, free)
     for angle, text, position, align in planned:
         ax.annotate(text, xy=(0.98 * math.cos(angle), 0.98 * math.sin(angle)), xytext=position, ha=align, va="center",
@@ -154,11 +162,16 @@ def label_sectors(ax, wedges, items: list[tuple[str, int, str]], total: int, fre
     ax.set_ylim(bottom, top)
 
 
-def draw_bars(ax, rows: list[tuple[str, int, str]], title: str) -> None:
-    """Horizontal bars, first row at the top; a bar over three times the next is clipped and labelled."""
-    names, values, colors = (list(c) for c in zip(*rows))
+def bar_cap(values: list[int]) -> float | None:
+    """The drawn length of the longest bar when it would dwarf the next by CUT_RATIO or more, else None (drawn in full)."""
     ranked = sorted((v for v in values if v > 0), reverse=True)
-    cap = ranked[1] * 1.6 if len(ranked) > 1 and ranked[0] > 3 * ranked[1] else None
+    return ranked[1] * CUT_TO if len(ranked) > 1 and ranked[0] >= CUT_RATIO * ranked[1] else None
+
+
+def draw_bars(ax, rows: list[tuple[str, int, str]], title: str) -> None:
+    """Horizontal bars, first row at the top; a bar CUT_RATIO times the next or more is cut short and labelled."""
+    names, values, colors = (list(c) for c in zip(*rows))
+    cap = bar_cap(values)
     shown = [min(v, cap) if cap else v for v in values]
     pad = max(max(shown), 1) * 0.01
     ax.barh(range(len(names)), shown, color=colors)
@@ -242,13 +255,67 @@ def draw(data: ChartInput, output: Path) -> None:
     print(f"✅ wrote {output} ({total} items, {focus_total} in {focus['name']})")
 
 
+PALETTE = ["#22c55e", "#38bdf8", "#a855f7", "#f97316", "#f43f5e", "#eab308"]
+
+
+class BoardItem(TypedDict):
+    stage: str
+    group: NotRequired[str]
+    area: NotRequired[str]
+
+
+class Board(TypedDict):
+    updated: str
+    items: list[BoardItem]
+    groups: NotRequired[list[dict[str, str]]]
+    stages: NotRequired[list[Stage]]
+
+
+def from_board(board: Board, focus: str, title: str | None = None) -> ChartInput:
+    """Chart input counted from the board's items, so no count is ever typed by hand; an item with no group is refused."""
+    missing = [str(i.get("id", "?")) for i in board["items"] if not i.get("group")]
+    if missing:
+        raise SystemExit(f"❌ items with no group: {', '.join(missing)}")
+    per_group = Counter(i["group"] for i in board["items"])
+    if focus not in per_group:
+        raise SystemExit(f"❌ no item in focus group {focus!r}; groups are {sorted(per_group)}")
+    colors = {g["name"]: g["color"] for g in board.get("groups", [])}
+    order = [focus] + [g for g in [g["name"] for g in board.get("groups", [])] + list(per_group) if g != focus]
+    names = list(dict.fromkeys(g for g in order if g in per_group))
+    counted = {name: Counter(i.get("area") or i["stage"] for i in board["items"] if i["group"] == name) for name in names}
+    seen = Counter(label for name in names[1:] for label in counted[name]) + Counter(names[:1])
+    groups: list[Group] = []
+    for n, name in enumerate(names):
+        # one slice label in two groups (an area both hold) is named with its group, so every slice stays distinct
+        slices = {name: per_group[name]} if name == focus else {
+            label if seen[label] == 1 else f"{label} ({name})": count for label, count in counted[name].items()}
+        groups.append({"name": name, "color": colors.get(name, PALETTE[n % len(PALETTE)]), "slices": slices})
+    steps = Counter(i["stage"] for i in board["items"] if i["group"] == focus)
+    listed = board.get("stages", [])
+    stages: list[Stage] = [{**s, "n": steps.get(s["name"], 0)} for s in listed]
+    stages += [{"name": s, "n": n} for s, n in steps.items() if s not in {x["name"] for x in listed}]
+    total = sum(per_group.values())
+    return {"title": title or f"All open: {total} at {board['updated']}; {focus}: {per_group[focus]}",
+            "groups": groups, "stages": stages}
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 3:
-        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
-        return 2
-    draw(json.loads(Path(argv[1]).read_text()), Path(argv[2]))
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("paths", nargs="+", type=Path, help="INPUT.json OUTPUT.png, or OUTPUT.png with --board")
+    parser.add_argument("--board", type=Path, help="draw from the coordinator board instead of a counted input")
+    parser.add_argument("--focus-group", help="with --board: the group expanded by step")
+    parser.add_argument("--title", help="with --board: the title (default: totals and the board time)")
+    args = parser.parse_args(argv)
+    if args.board:
+        if len(args.paths) != 1 or not args.focus_group:
+            parser.error("--board needs --focus-group and exactly one OUTPUT.png")
+        draw(from_board(json.loads(args.board.read_text()), args.focus_group, args.title), args.paths[0])
+        return 0
+    if len(args.paths) != 2:
+        parser.error("give INPUT.json OUTPUT.png")
+    draw(json.loads(args.paths[0].read_text()), args.paths[1])
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    raise SystemExit(main(sys.argv[1:]))

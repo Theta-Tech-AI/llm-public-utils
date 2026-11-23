@@ -1,97 +1,114 @@
 # 2. Assign the work
 
-Read when you dispatch, re-rank, brief workers, or decide who owns what.
+Read when you dispatch, choose a model, brief workers, hand a lane over, or route a decision.
 
-## The assignment and result record
+## The assignment record
 
-Keep one record per item in a durable task tracker. Omit fields that do not apply. The owner and reviewer identity fields are required when the work is reviewed. Put results next to the original acceptance criteria, so that a new session can see what remains.
+Keep one record per item in the durable tracker, next to its acceptance criteria. Its board row ([0](coordinator-loop.md)) points to it. Omit fields that do not apply.
 
 ```text
-Task and intended outcome:
-Primary task ID / current stage:
-Acceptance rows, including live/release requirements:
-Owner / independent reviewer / coordinator:
+Task and intended outcome / acceptance rows, including live rows:
+Owner (model) / independent reviewer / coordinator:
 Workspace / real remote / branch / baseline revision:
-Allowed paths or artifact boundary / excluded scope:
-Dependencies / active descendants / shared resources:
-Checkpoint bound and next checkpoint:
+Allowed paths / excluded scope / shared resources:
+Next event and expected time:
 
-Final revision and changed paths:
-Source composition: upstream revision + overlay revision + generated inputs:
-Checks: command, working directory, tool version, result, durable evidence:
-Review: reviewer identity, exact revision, findings, resolution:
-Delivery: PR/artifact link, target, exact head, check state, merge revision:
-Completed acceptance rows / remaining rows:
-Blocker / next action / responsible owner:
-Updated at:
+Final revision and changed paths / composition (upstream + overlay + generated inputs):
+Checks: command, directory, tool version, result, durable evidence:
+Review: reviewer identity, exact revision, findings, resolution, round count:
+Delivery: link, target, exact head, merge revision / remaining rows:
+Blocker / next action / owner / updated at:
 ```
 
-A local path or "tests pass" is not a durable result. Store the summary with an artifact, commit or task record. Keep secrets and sensitive payloads out of reports.
+A local path or "tests pass" is not a durable result.
 
 ## Rules for each assignment
 
-- Give each worker one bounded deliverable that can finish inside one worker budget. Name the outcome, allowed paths, baseline revision, exclusions, acceptance checks, reviewer, and publication authority. Ask for a concrete next checkpoint, not open investigation.
-- Require a durable report before or during the work. A worker that dies then leaves a handoff, not half-done edits.
-- Give each worker its own workspace, and a unique branch and worktree name. Tell the worker to fail loudly, never to rename, when the name is taken.
-- The item owner stays responsible through review, integration and acceptance. Delegate bounded finishing steps, but keep one owner for the rest of the path.
-- Split work by independent concern and by file ownership, not by issue. Keep tightly coupled interfaces under one owner. For two tasks on one contract, decide the contract first, then delegate callers and tests. Use another agent for tests or review, never for a competing implementation.
-- Nested children use the same budget. The parent reconciles before it reports. Do not let nested authors start their own backlogs.
-- Give every worker the same written brief: method, checks, report format, and the kill rule in [3. Build](build.md). To change a rule, edit the brief atomically and message the running workers. Name the repository's shared parallel test runner in the brief; a worker's private serial script cost about three times as long and ran three times.
-- Assign by role where the runtime and the operator allow. Cheaper models build and trial. The strongest model reviews and decides. A separate model does the final real run. Model size alone is not a review result.
-- Before you tell workers to use a helper script, read what evidence it writes. A helper that signs, approves or writes audit evidence is checked by the coordinator first (one once recorded a re-authentication that never happened). When in doubt, the worker stops at the signature and reports; that worker is right.
-- A checkpoint limit ends one assignment attempt, not the user's task. Record the evidence, replan, and continue. Do not retry the same failed approach silently.
+- Give each worker one bounded deliverable that fits one worker budget: outcome, allowed paths, baseline, exclusions, checks, reviewer, publication authority, and the next checkpoint with an expected time.
+- Each worker gets its own workspace and a unique branch name. If the name is taken, the worker fails loudly and does not rename.
+- The item owner stays responsible through review, integration and acceptance.
+- Split by independent concern and by file ownership, not by issue. Keep tightly coupled interfaces under one owner. Use another agent for tests or review, never for a competing implementation.
+- Every worker gets the same brief ([below](#the-brief)). To change a rule, edit the brief and message the running workers.
+- **A helper that signs, approves or writes audit evidence is checked by the coordinator before any worker uses it.** One helper recorded a re-authentication that never happened. When in doubt, the worker stops at the signature and reports. A worker that refuses is right.
+- A checkpoint limit ends one attempt, not the task. Record the evidence, replan, continue.
+
+## The brief
+
+Every brief carries these lines. Adapt the wording; keep each contract.
+
+```text
+Deliverable: <one outcome>; paths <allowed>; baseline <revision>; not in scope: <...>.
+Done when: <checks + evidence>; reviewer: <identity>; you may push to <branch> / hand to <integration owner>.
+Status: at every step change append one JSON line to <status dir>/<your id>.jsonl:
+  {"at", "step", "waiting_on", "expected_end", "last_result", "round", "finding_class"}.
+  If a message to the coordinator fails, write it there as "unsent" and carry on.
+Reply address: <exact address that was tested at dispatch>, or "none: write your status file only".
+Never idle-wait: start long checks (tests, a second-model review) in the background and do the next piece
+  of the lane meanwhile (its live check, docs, a deslop pass on your own diff). Batch findings per round.
+Reversible choices: if <A or B>, take your recommendation, say so in the status line, and continue.
+Stop and report only for: <scope change, spending, production, security, signatures or audit evidence>.
+Same finding class in three review rounds: stop patching; write the invariants (review.md).
+Use the shared test runner <command>. Stop only processes you started, by exact PID.
+```
+
+- **Verify the reply channel at dispatch.** Send the worker a test line and see its answer, or tell it to rely on its status file only. Three workers once tried to answer liveness polls, and the sends failed with "recipient not reachable".
+- **Pre-authorize the recommended option** for reversible choices, so that a worker does not stop to ask. A hand-back that waits on the coordinator costs the whole lane.
+- **Never idle-wait.** One review round takes 10–20 min, and a test run 2–7 min. Run in the foreground over 5–27 rounds, that is hours of idle wall time per lane.
+
+## Choose the model
+
+Follow the operator's model choices. Where you choose:
+
+| Work | Model |
+|---|---|
+| Routine building, fixes with a known cause, sweeps, fixtures | the routine (cheaper) model |
+| Security or compliance design; anything that writes audit or signature evidence | the strongest model from the start |
+| Diagnosis with no known cause | the strongest model from the start |
+| Skill, prompt or process design | the strongest model from the start |
+| Review and the delivery decision | the coordinator, or the strongest available reviewer |
+
+Two review loops of 12 and 27 rounds ran on a mid-tier model, with the same class of finding each round. Escalation rule: [4](review.md#cap-the-review-loop). Handover: [below](#hand-a-lane-over).
+
+## Hand a lane over
+
+Hand over on a model change, a scope change, a review loop past its cap, or an owner that does not answer a liveness poll within one step (about 15 minutes). A compliance lane once sat 65 minutes quiet, after three failed review rounds, before it moved.
+
+1. The old owner pushes its head and writes a state note on the item: every review finding so far, what was tried, what is open. Then it stops. If it does not answer, the coordinator stops it and reads its pushed head and status file.
+2. The coordinator confirms that the old owner and its descendants ended, and reads back its commits and comments.
+3. The new owner starts from the pushed head and the note, nothing else. The board's `owner` changes.
 
 ## Prevent duplicates and collisions
 
-- Before you dispatch item N, run `git log --remotes --oneline --grep "#N"` and read the latest comments for a claim. A hit means message the owner. Never start a second worker. Search commit messages, not branch names.
-- Compute file overlap at dispatch: planned paths and reserved names across assignments, plus `git diff --name-only <base>...<branch>` for every open branch. Compute it again for every integration batch. Give any file that two assignments would write to one owner, or sequence the second assignment after the first lands. Overlapping branches share one batch and one combined test run, or the later one rebases first.
-- Treat a scope or owner change as a handoff. Tell the old owner to stop and reconcile its descendants. Read back its commits, closures and comments. Record the new boundary. The new owner waits for acknowledgment before it changes the same item or paths. With no acknowledgment, stop the old run and verify its side effects. Other items continue.
-- Allocate sequence-numbered names (migration numbers, ports, container names, id ranges) before work starts. Check the integration branch for collisions at merge. When a later number is ready first, swap the numbers. Do not land placeholders.
+- Before you dispatch item N, run `git log --remotes --oneline --grep "#N"` and read the latest comments for a claim. A hit means resume or message the owner. Search commit messages, not branch names: a duplicate once overlapped 18 files of a differently named branch.
+- Compute file overlap at dispatch (`git diff --name-only <base>...<branch>` for every open branch) and again for each integration batch. One owner per file, or sequence the second lane after the first lands.
+- Allocate sequence-numbered names (migration numbers, ports, id ranges) before work starts. Check for collisions at merge.
 
 ## Rank and refill
 
-Rank by remaining effort to full acceptance, with review, repair, integration and live rows included. Estimate each stage separately. The slowest stage controls intake.
+Rank by remaining effort to full acceptance, including review, repair, integration and live rows. The slowest stage controls intake. Order for a free agent, unless aging or a critical dependency says otherwise:
 
-For each free agent, choose in this order, unless aging, severity or a critical dependency says otherwise:
+1. ready work that can pass the final delivery step;
+2. small repairs that release reviewed work;
+3. reviews and acceptance checks;
+4. prerequisites that unblock several items;
+5. new independent implementation.
 
-1. Ready work that can pass the final delivery step.
-2. Small repairs that release reviewed work.
-3. Reviews and acceptance checks for complete implementations.
-4. Prerequisites that unblock several items.
-5. New independent implementation.
-
-Preserve the user's stated priorities.
-
-At each worker completion, before a CI or deploy wait, and before a status reply:
-
-1. Refresh the live roster and the ready work, and re-rank.
-2. Record `running`, `completed` and `idle` separately.
-3. Give each reusable slot its next bounded task, or record its actual limit: a resource, a full downstream WIP stage, or no safe work.
-4. Start the task and check that it is running. A queued message may not restart a finished worker. Use the runtime's resume or spawn operation.
-
-A CI or deploy wait does not block unrelated review, repair or acceptance work. A one-shot status check is a completed task, not an active worker. Saturation rules: [1](establish.md). When the coordinator holds a decision, supply a compact decision packet so it clears fast.
+When a slot frees, the loop's step 9 ([0](coordinator-loop.md)) fills it. Start the next task and confirm that it runs: a queued message may not restart a finished worker. A CI or deploy wait does not block unrelated work.
 
 ## Route decisions
 
-- Before you ask for a decision or call work externally blocked, check the governing requirement, the code, the configuration and the recorded authorization for the non-secret facts you need. Do not turn another party's operating policy into a project requirement.
-- Decide reversible choices within existing authorization in the same turn, and say so. Ask only about unresolved scope, new spending, an uncovered production or security action, irreversible or regulated data, or another choice reserved to the operator. State the exact missing fact. Send the choices as one batched multiple-choice question after all unblocked work is dispatched. Say where a requested input comes from and how the operator can supply it.
-- A permission or policy denial ends that slice. Report the evidence and hand the operator the one command to run. Never retry the denied action. Never pass it to another worker: a peer that runs it is not the operator's consent.
-- Treat worker summaries as claims. "Tests pass", "merged", "available model" and "complete" each need an artifact or live state. Check a claim about running-system state (a stuck queue, a livelock) against logs or data before you relay it.
-- Separate the symptom from its proposed cause. Before you prescribe a repair, ask for the smallest probe that can disprove the cause. Check what counters, timestamps, retries and revision numbers mean at their owner. Give the worker the observation and the competing explanations, not a required diagnosis. When a claim is disproved, correct the task record and every active brief that used it.
+- Before you ask for a decision or call work blocked, check the requirement, the code, the configuration and the recorded authorization. **Verify an item's premise before you ask the operator to re-scope on it.** Two re-scope questions in one evening rested on guesses ("the feature is missing", "the files are scanned"). Ten minutes of reading would have withdrawn them.
+- Decide reversible choices within existing authorization in the same turn, and say so. Ask only about scope, new spending, uncovered production or security actions, irreversible or regulated data, or a choice reserved to the operator. Send one batched multiple-choice question after all unblocked work is dispatched.
+- A permission or policy denial ends that slice. Hand the operator the one command. A peer that runs it is not the operator's consent.
+- Worker summaries are claims. Check a claim about running-system state (a stuck queue, a livelock) against logs or data before you relay it. Give workers the observation and the competing causes, not a required diagnosis. When a claim is disproved, correct every brief that used it.
 
 ## Iterate a skill or prompt
 
-Write it. Get a cold-read critique from a reader with no context. Run a trial with a friction log. Revise with a new worker. Trial again. In a blind trial, keep expected answers, synonyms, answer-shaped examples and earlier findings out of the text, the brief and the inherited context. An evaluator holds the expected cases apart. Record any steering. A disclosed answer voids that case. Judge coverage against independent sources and new findings, not only recovery of the known example. A trial that finds the answer unaided is the pass signal.
+Write it, get a cold-read critique, trial it with a friction log, revise with a new worker, trial again. Keep expected answers and earlier findings out of a blind trial's text and context. A trial that finds the answer unaided is the pass signal.
 
 ## Failure patterns
 
-- **Long acceptance runs were briefed as UI click-throughs while the repository held a driver for the same artifact.** — Nobody searched the drive and test scripts first. Rule: before briefing an end-to-end proof, search the repository for an existing driver or API path to the artifact; use the UI only for what must be seen in the UI. Evidence: hours of clicking for minutes of work.
-- **A second worker rebuilt an issue that was already on another branch.** — The duplicate check searched branch names. Rule: search commit messages and comments. Evidence: overlapping files between the two branches.
-- **Two workers wrote the same file and produced an add/add conflict.** — The wave was planned by issue, so path collisions were invisible. Rule: plan by file ownership. Evidence: repeat collisions and obsolete repairs.
-- **Several ready items waited on the same prerequisite repair.** — Each path treated the shared blocker as separate work. Rule: one owner, one verified revision, reused. Evidence: fewer duplicate investigations.
-- **The coordinator kept planning improvements while ready work waited.** — Process work had no delivery bound. Rule: make one small improvement aimed at the current bottleneck, apply it to the next item, and resume delivery. Evidence: shorter queue age, not more process artifacts.
-- **Workers confidently reported a stuck queue and a livelock that logs disproved.** — The queue was empty, and the revisions came from one global sequence. Rule: check state claims against logs before relaying. Evidence: log lines that match the claim.
-- **Several workers shared one issue queue and the same issue waited.** — Workers pulled from one list. Rule: if the machine has room and the issues are independent, unblocked and own different files, split the queue so each issue has its own worker; review capacity still limits the count. Evidence: issues idle while a peer worked another.
-- **The operator was asked to re-scope on an issue's premise that was false.** — Two premises (a missing feature, a "scanned" file) were guesses in other issues. Rule: grep the code or read one file before you ask. Evidence: two withdrawn questions in one evening.
+- **The coordinator kept planning improvements while ready work waited.** Process work had no bound. Rule: make one improvement aimed at the current bottleneck, apply it, and resume delivery.
+- **Several workers shared one issue queue, and an issue waited.** Rule: when the issues are independent and own different files, give each issue its own worker (the loop's step 9).
 
-Next: [3. Build](build.md) · Related: [recover](recover.md)
+Next: [3. Build](build.md)

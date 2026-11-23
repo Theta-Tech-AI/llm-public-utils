@@ -1,0 +1,375 @@
+#!/usr/bin/env python3
+"""Validate the coordinator board and print what needs the coordinator now (the loop in references/coordinator-loop.md).
+
+Exit 0: nothing needs the coordinator. Exit 1: findings (listed). Exit 2: the board is invalid (fix it first).
+The schema is documented in references/coordinator-loop.md; tests/board_fixture.json is a worked example.
+
+With ``--status-dir DIR`` each worker's status file is ``DIR/<worker id>.jsonl``: one JSON line per step change, as the
+brief in references/assign.md asks (at, step, waiting_on, expected_end, last_result, round, finding_class, unsent). It
+needs no message channel, so it still works when a worker's reply to the coordinator fails; ``unsent`` carries that
+failed reply. A worker is
+late when now is past its expected_end, stuck when neither its step nor its round changed for ``--stall-min``, and
+looping when its last three review rounds returned the same finding class. This is the primary signal.
+
+With ``--activity-dir DIR`` (fallback when a worker writes no status) each worker's activity record is the newest file
+named ``<worker id>`` or ``<worker id>.*`` in DIR. A worker is quiet when that file is older than its ``pace_min``
+(default ``--quiet-min``), and finished without reporting when its tail holds ``--finished-marker`` and the board does
+not mark it ``reported``. Silence is weak evidence: fix the signal, never widen the threshold.
+
+With ``--watch MIN`` the check re-reads the board every MIN minutes and exits at the first finding (so a coordinator
+that waits on it is woken), or with 0 after ``--deadline-min``.
+
+Usage: board_check.py BOARD.json [--status-dir DIR] [--activity-dir DIR] [--quiet-min N] [--stall-min N]
+                      [--stale-min N] [--handback-min N] [--finished-marker TEXT] [--now ISO-8601]
+                      [--watch MIN [--deadline-min N]]
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import statistics
+import sys
+import time
+from collections import Counter, defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import NotRequired, TypedDict
+
+FINISHED_MARKER = '"stop_reason":"end_turn"'  # the end-of-turn record of a common runtime; pass yours with --finished-marker
+PIPELINE_OK = {"success", "running", "queued"}
+
+
+class Item(TypedDict):
+    id: str | int
+    what: str
+    stage: str
+    owner: str | list[str] | None
+    next_event: str
+    expected_by: str
+    group: NotRequired[str]
+    area: NotRequired[str]
+    waits_on: NotRequired[str | None]
+    live_check: NotRequired[str | None]
+    live_check_owner: NotRequired[str | None]
+    blocks: NotRequired[list[str | int]]
+
+
+class Sweep(TypedDict):
+    id: str
+    what: str
+    owner: str | list[str] | None
+    next_event: NotRequired[str]
+    expected_by: NotRequired[str]
+
+
+class Worker(TypedDict):
+    id: str
+    model: str
+    pace_min: NotRequired[int]
+    reported: NotRequired[bool]
+
+
+class Pipeline(TypedDict):
+    name: str
+    result: str
+    checked: str
+    owner: NotRequired[str | None]
+
+
+class Fixture(TypedDict):
+    name: str
+    env: str
+    stage: str
+    used_by: NotRequired[str]
+
+
+class Environment(TypedDict):
+    name: str
+    capacity: int
+    in_use: int
+
+
+class Handback(TypedDict):
+    worker: str
+    what: str
+    at: str
+    answered: NotRequired[str | None]
+
+
+class Status(TypedDict, total=False):
+    at: str
+    step: str
+    waiting_on: str
+    expected_end: str
+    last_result: str
+    round: int
+    finding_class: str
+    unsent: str
+
+
+class Capacity(TypedDict):
+    target: int
+    idle_reason: NotRequired[str]
+
+
+class Board(TypedDict):
+    updated: str
+    items: list[Item]
+    workers: NotRequired[list[Worker]]
+    sweeps: NotRequired[list[Sweep]]
+    pipelines: NotRequired[list[Pipeline]]
+    fixtures: NotRequired[list[Fixture]]
+    environments: NotRequired[list[Environment]]
+    handbacks: NotRequired[list[Handback]]
+    capacity: NotRequired[Capacity]
+    stages: NotRequired[list[dict[str, str | bool]]]
+    groups: NotRequired[list[dict[str, str]]]
+
+
+class Activity(TypedDict):
+    quiet_min: float
+    finished: bool
+
+
+REQUIRED = {"items": ("id", "what", "stage", "next_event", "expected_by"), "sweeps": ("id", "what"),
+            "workers": ("id", "model"), "pipelines": ("name", "result", "checked"), "fixtures": ("name", "env", "stage"),
+            "environments": ("name", "capacity", "in_use"), "handbacks": ("worker", "what", "at")}
+
+
+def when(text: str) -> datetime:
+    """An ISO-8601 time; a time without a zone is UTC."""
+    moment = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+
+
+def owners(owner: str | list[str] | None) -> list[str]:
+    return [owner] if isinstance(owner, str) and owner.strip() else [o for o in owner or [] if o.strip()]
+
+
+def key(thing: str | int) -> str:
+    return " ".join(str(thing).lower().split())
+
+
+def invalid(board: Board) -> list[str]:
+    """Schema errors: a board with any of these cannot be checked."""
+    errors: list[str] = []
+    for section, fields in REQUIRED.items():
+        for n, row in enumerate(board.get(section, [])):
+            errors += [f"{section}[{n}] has no {f}" for f in fields if row.get(f) in (None, "")]
+    for f in ("updated", "items"):
+        if f not in board:
+            errors.append(f"the board has no {f}")
+    ids = [key(i["id"]) for i in board.get("items", [])] + [key(s["id"]) for s in board.get("sweeps", [])]
+    errors += [f"duplicate id {d}" for d, c in Counter(ids).items() if c > 1]
+    listed = [s["name"] for s in board.get("stages", [])]
+    if listed:
+        errors += [f"item {i['id']} has stage {i['stage']!r}, not in stages" for i in board.get("items", []) if i["stage"] not in listed]
+    times = [("board", "updated", board.get("updated"))]
+    times += [(r.get("id"), "expected_by", r.get("expected_by")) for r in board.get("items", []) + board.get("sweeps", [])]
+    times += [(p.get("name"), "checked", p.get("checked")) for p in board.get("pipelines", [])]
+    times += [(h.get("worker"), f, h.get(f)) for h in board.get("handbacks", []) for f in ("at", "answered")]
+    for row, field, value in times:
+        try:
+            if value:
+                when(value)
+        except (ValueError, TypeError):
+            errors.append(f"{row}: {field} {value!r} is not an ISO-8601 time")
+    return errors
+
+
+def activity(directory: Path, worker: str, marker: str, now: datetime) -> Activity | None:
+    """The worker's newest activity record: minutes since it last changed, and whether its tail is an end of turn."""
+    files = [p for p in directory.glob(f"{worker}*") if p.is_file() and (p.name == worker or p.name.startswith(worker + "."))]
+    if not files:
+        return None
+    newest = max(files, key=lambda p: p.stat().st_mtime)
+    quiet = (now.timestamp() - newest.stat().st_mtime) / 60
+    with newest.open("rb") as handle:
+        handle.seek(max(0, newest.stat().st_size - 4000))
+        tail = handle.read().decode("utf-8", "replace")
+    return {"quiet_min": quiet, "finished": marker in tail}
+
+
+def statuses(directory: Path, worker: str) -> list[Status]:
+    """The worker's status lines, oldest first; an unreadable line is skipped (the next step change rewrites the state)."""
+    path = directory / f"{worker}.jsonl"
+    lines: list[Status] = []
+    for line in path.read_text().splitlines() if path.is_file() else []:
+        try:
+            lines.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return lines
+
+
+def minutes(since: str, now: datetime) -> float:
+    return (now - when(since)).total_seconds() / 60
+
+
+def status_findings(history: list[Status], now: datetime, stall_min: float) -> dict[str, str]:
+    """Late, stuck and looping, from one worker's status lines (progress, not liveness)."""
+    last = history[-1]
+    found: dict[str, str] = {}
+    if last.get("unsent"):
+        found["reply to the coordinator failed"] = f"{last['unsent']!r} (read it here; fix the reply address in the brief)"
+    if last.get("expected_end") and when(last["expected_end"]) < now:
+        found["late past its expected end"] = (f"{last.get('step')!r} expected {last['expected_end']} "
+                                               f"({minutes(last['expected_end'], now):.0f} min late)")
+    position = (last.get("step"), last.get("round"))
+    changed = next((h for h in reversed(history) if (h.get("step"), h.get("round")) != position), None)
+    since = history[history.index(changed) + 1] if changed else history[0]
+    if since.get("at") and minutes(since["at"], now) >= stall_min:
+        found["no step change"] = f"{last.get('step')!r} since {since['at']} ({minutes(since['at'], now):.0f} min)"
+    per_round = {h["round"]: h.get("finding_class") for h in history if h.get("round") is not None}
+    rounds = sorted(per_round)[-3:]
+    classes = {per_round[r] for r in rounds}
+    if len(rounds) == 3 and len(classes) == 1 and None not in classes and "" not in classes:
+        found["review loop: same finding class 3 rounds"] = f"{classes.pop()!r} in rounds {rounds} (escalate, see review.md)"
+    return found
+
+
+def findings(board: Board, now: datetime, activity_dir: Path | None = None, quiet_min: float = 30,
+             stale_min: float = 30, marker: str = FINISHED_MARKER, status_dir: Path | None = None,
+             stall_min: float = 60, handback_min: float = 10) -> dict[str, list[str]]:
+    """Each loop question with the rows that fail it; an empty dict means nothing needs the coordinator."""
+    found: dict[str, list[str]] = defaultdict(list)
+    items, sweeps = board["items"], board.get("sweeps", [])
+    workers = {w["id"]: w for w in board.get("workers", [])}
+    age = (now - when(board["updated"])).total_seconds() / 60
+    if age > stale_min:
+        found["board not refreshed"].append(f"updated {age:.0f} min ago (refresh from the tracker first)")
+
+    rows = [(str(i["id"]), i) for i in items] + [(str(s["id"]), s) for s in sweeps]
+    owned = {key(rid): bool(owners(r.get("owner"))) for rid, r in rows}
+    for rid, row in rows:
+        if not owners(row.get("owner")):
+            found["no owner"].append(f"{rid} {row['what']}")
+        elif not row.get("next_event") or not row.get("expected_by"):
+            found["no next event with an expected time"].append(f"{rid} {row['what']}")
+        elif when(row["expected_by"]) < now:
+            late = (now - when(row["expected_by"])).total_seconds() / 60
+            found["late"].append(f"{rid} {row['next_event']!r} expected {row['expected_by']} ({late:.0f} min late)")
+
+    waiting: dict[str, list[str]] = defaultdict(list)
+    for item in items:
+        if item.get("waits_on"):
+            waiting[key(item["waits_on"])].append(str(item["id"]))
+    for thing, waiters in waiting.items():
+        if thing in owned and not owned[thing]:
+            found["blocker item has no owner"].append(f"{thing} (waited on by {', '.join(waiters)})")
+        elif thing not in owned and len(waiters) >= 2:
+            found["shared blocker is not an item"].append(f"{thing!r} waited on by {', '.join(waiters)}")
+    for item in items:
+        for blocked in item.get("blocks", []):
+            if key(blocked) not in owned:
+                found["blocks names an unknown id"].append(f"{item['id']} blocks {blocked}")
+
+    for item in items:
+        if item.get("live_check") and not owners(item.get("live_check_owner")):
+            found["live check has no owner"].append(f"{item['id']} {item['live_check']}")
+
+    for pipe in board.get("pipelines", []):
+        if pipe["result"] not in PIPELINE_OK and not owners(pipe.get("owner")):
+            found["pipeline red with no owner"].append(f"{pipe['name']}: {pipe['result']}")
+        checked = (now - when(pipe["checked"])).total_seconds() / 60
+        if checked > stale_min:
+            found["pipeline not checked"].append(f"{pipe['name']} last read {checked:.0f} min ago")
+
+    busy = {o for _, r in rows for o in owners(r.get("owner"))} | {o for i in items for o in owners(i.get("live_check_owner"))}
+    for wid, worker in workers.items():
+        if wid not in busy:
+            found["worker owns nothing"].append(wid)
+        history = statuses(status_dir, wid) if status_dir else []
+        for question, row in status_findings(history, now, stall_min).items() if history else ():
+            found[question].append(f"{wid} {row}")
+        if status_dir and not history:
+            found["worker writes no status"].append(wid)
+        if activity_dir is None:
+            continue
+        record = activity(activity_dir, wid, marker, now)
+        if record is None:
+            found["worker has no activity record"].append(wid)
+        elif record["finished"] and not worker.get("reported") and record["quiet_min"] >= 3:
+            found["finished without reporting"].append(f"{wid} (last activity {record['quiet_min']:.0f} min ago)")
+        elif not history and record["quiet_min"] >= worker.get("pace_min", quiet_min):
+            found["quiet past its pace"].append(f"{wid} quiet {record['quiet_min']:.0f} min (ask it; check its processes)")
+
+    for env in board.get("environments", []):
+        if env["in_use"] > env["capacity"]:
+            found["environment over capacity"].append(f"{env['name']}: {env['in_use']} runs on {env['capacity']} (cap the proofs)")
+    for back in board.get("handbacks", []):
+        if not back.get("answered") and minutes(back["at"], now) > handback_min:
+            found["hand-back waits on the coordinator"].append(
+                f"{back['worker']} {back['what']} ({minutes(back['at'], now):.0f} min; answer before anything else)")
+
+    capacity = board.get("capacity")
+    if capacity:
+        running = len([w for w in workers if w in busy])
+        if running < capacity["target"] and not capacity.get("idle_reason"):
+            found["idle capacity"].append(f"{running} of {capacity['target']} slots busy: run the idle-work search, "
+                                          "or write capacity.idle_reason")
+    return dict(found)
+
+
+def summary(board: Board) -> list[str]:
+    order = [s["name"] for s in board.get("stages", [])]
+    counts = Counter(i["stage"] for i in board["items"])
+    staged = [s for s in order if s in counts] + [s for s in counts if s not in order]
+    lines = [f"Board {board['updated']}: {len(board['items'])} items, {len(board.get('workers', []))} workers, "
+             f"{len(board.get('sweeps', []))} sweeps, {len(board.get('pipelines', []))} pipelines, "
+             f"{len(board.get('fixtures', []))} fixtures"]
+    lines.append("Stages: " + " · ".join(f"{s} {counts[s]}" for s in staged))
+    waits = [minutes(h["at"], when(h["answered"])) for h in board.get("handbacks", []) if h.get("answered")]
+    if waits:
+        lines.append(f"Coordinator latency: median {statistics.median(waits):.0f} min, max {max(waits):.0f} min "
+                     f"over {len(waits)} answered hand-backs (target under 10)")
+    groups = Counter(i.get("group", "(no group)") for i in board["items"])
+    lines.append("Groups: " + " · ".join(f"{g} {n}" for g, n in groups.items()))
+    return lines
+
+
+def check(args: argparse.Namespace) -> tuple[int, str]:
+    board: Board = json.loads(args.board.read_text())
+    errors = invalid(board)
+    if errors:
+        return 2, "❌ invalid board:\n" + "\n".join(f"  - {e}" for e in errors)
+    now = when(args.now) if args.now else datetime.now(timezone.utc)
+    found = findings(board, now, args.activity_dir, args.quiet_min, args.stale_min, args.finished_marker,
+                     args.status_dir, args.stall_min, args.handback_min)
+    lines = summary(board)
+    for question, rows in found.items():
+        lines.append(f"❌ {question} ({len(rows)}):")
+        lines += [f"  - {r}" for r in rows]
+    lines.append(f"❌ {sum(map(len, found.values()))} findings need the coordinator" if found else "✅ nothing needs the coordinator")
+    return (1 if found else 0), "\n".join(lines)
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[1])
+    parser.add_argument("board", type=Path)
+    parser.add_argument("--status-dir", type=Path, help="per-worker status files <worker id>.jsonl (primary signal)")
+    parser.add_argument("--activity-dir", type=Path, help="per-worker activity records (fallback signal)")
+    parser.add_argument("--quiet-min", type=float, default=30, help="minutes of silence before a worker without status is quiet")
+    parser.add_argument("--stall-min", type=float, default=60, help="minutes without a step or round change before a worker is stuck")
+    parser.add_argument("--stale-min", type=float, default=30, help="minutes before the board or a pipeline read is stale")
+    parser.add_argument("--handback-min", type=float, default=10, help="minutes a hand-back may wait for the coordinator")
+    parser.add_argument("--finished-marker", default=FINISHED_MARKER, help="text that marks an end of turn in an activity record")
+    parser.add_argument("--now", help="check as of this ISO-8601 time (default: now)")
+    parser.add_argument("--watch", type=float, help="re-check every N minutes; exit at the first finding")
+    parser.add_argument("--deadline-min", type=float, default=240, help="with --watch: exit 0 after this many minutes")
+    args = parser.parse_args(argv)
+    deadline = time.monotonic() + args.deadline_min * 60
+    while True:
+        code, report = check(args)
+        if code or not args.watch:
+            print(report)
+            return code
+        if time.monotonic() + args.watch * 60 > deadline:
+            print(report + f"\n✅ watch ended at its {args.deadline_min:.0f} min deadline with no finding")
+            return 0
+        time.sleep(args.watch * 60)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

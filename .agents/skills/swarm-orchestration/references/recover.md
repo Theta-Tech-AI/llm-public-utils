@@ -1,77 +1,60 @@
-# 8. Recover: roster, handoff and durable state
+# 8. Recover: worker states, handoff, durable state and the retro
 
-Read at every checkpoint, when a worker goes quiet, when a worker stops, and before a context handoff.
+Read when a worker goes quiet or stops, before a context handoff, and at the end of each campaign day. The periodic roster check is the loop's step 4 ([0](coordinator-loop.md)).
 
-## The roster loop
-
-Choose a check cadence and record it. Apply it between transitions as well as at them. Ask running workers for status. Do not infer progress from silence. Drain completed results at each checkpoint.
-
-Watch every worker by its own activity record (the runtime's per-task output or event log), not by repository
-changes: a worker that drives a browser or an API has no worktree, so a worktree watcher never sees it. Give each worker
-an expected pace when you dispatch it (the time its next stage should take). Quiet past that pace is a question, not a
-verdict: ask the worker for its stage and wait one bounded reply window; stop and replace it only when no answer comes or
-its own record shows no progress. A long single step writes nothing until it ends. Brief long-running workers to send a
-one-line stage update at each stage, so a long step is never mistaken for a stall. Before you ask or stop, list the
-worker's own processes (by its worktree path): a running test run or review round is evidence of a long step, not proof of
-progress, so keep the bounded status question and its deadline.
-
-Liveness poll that works: send every running worker one line, "what are you doing, what do you wait on, expected end". Where the runtime reports what the send did, read it as a hint, not proof: "moved 1 running tool call to the background" suggests the worker is inside one long command, "moved nothing" suggests it is between steps. A live worker answers within one step. Judge by the answer and the worker's own progress evidence. No answer within the bounded reply window (its recorded expected pace, about 15 minutes by default) is a reason to check its processes, then decide; it is not yet a verdict. A transcript-modified-time watcher said "stalled" for 12 workers that all answered within minutes. A worker waiting for a wall-clock start time is pacing; it names that wait in its reply. While polling, read the process table: orphaned browser daemons from workers an interrupt stopped need an owner, so run the repository's reaper (or kill by a mapped dead worker) and check that it covers daemons; live workers share the same browser binary, so never kill by binary name.
-
-Before you expand the pool, verify how a silent stall will reach you: runtime notices plus bounded roster checks when no watcher exists. Enroll each new or resumed worker at once. Record its last checkpoint, expected next event and check deadline. Verify that monitoring survives a restart or handoff. A background job counts as activity only when its owner and expected completion are known.
-A watcher flags both ends: a worker that went quiet, and a worker that FINISHED without reporting (its last record is an end of turn and nothing follows). An accidental operator interrupt can stop every worker at once, and some runtimes cannot resume a stopped worker. Check whether resume works, and either way keep each worker's state in pushed branches and issue comments, so a fresh worker restarts from them in minutes.
-
+## Worker states
 
 Keep these states apart, per worker:
 
 | State | Meaning | Action |
 |---|---|---|
-| Running | runtime reports it active | check at the cadence |
-| Reported | final report read and verified | accept or reject the artifact |
+| Running | the runtime reports it active | the loop reads its status file |
+| Reported | final report read and verified | accept or reject the artifact; mark `reported` on the board |
 | Interim | stopped while its own background job runs | track the job; message the worker when a "finished" notice has no new report |
-| Outstanding | neither running nor reported | resolve now; read the result back explicitly |
-| Stopped | turn ceiling, exhausted budget or a kill ended the run | verify the artifact or revision; resume by task id |
+| Outstanding | neither running nor reported | resolve now; read the result back |
+| Stopped | turn ceiling, budget or a kill ended the run | verify the pushed revision; resume by task id, or hand over |
 
-A finished worker is not a reporting worker. Completed results are not always delivered, so read them back. A stopped worker is not a finished worker: partial output must not enter campaign state. Confirm completion from authoritative lifecycle evidence, such as the exit status or terminal receipt of the run that launched it. A process listing whose scope you have not established proves nothing: processes are invisible across containers, namespaces and remote hosts.
-
-Use the runtime's resume or follow-up operation for an idle worker. A queued message can steer a running agent. It may not start a new turn after completion. Check for acknowledgment or a state change.
+- **A finished worker is not a reporting worker.** A worker that finished writes nothing more, so quiet-time alone misses it. `board_check.py --activity-dir` flags an end of turn with no report.
+- **A stopped worker is not a finished worker.** Partial output must not enter campaign state. Confirm completion from lifecycle evidence (exit status, terminal receipt). A process listing of unknown scope proves nothing across containers or hosts.
+- **Quiet is a question.** One long tool call (a test run, a review round) writes nothing until it returns. Before you stop a worker, list its own processes (by its worktree path) and read its status file. Stopping two mid-step workers once lost their work.
+- A queued message can steer a running worker. It may not start a new turn after completion. Use the runtime's resume operation and check for a state change.
+- An accidental interrupt can stop every worker at once, and some runtimes cannot resume. Check whether resume works. Either way, keep each worker's state in pushed branches, its status file and tracker comments, so that a fresh worker restarts in minutes.
+- While polling, read the process table for orphaned browser daemons of stopped workers. Run the repository's reaper or kill by a mapped dead worker's PID, never by binary name.
 
 ## Replace a stuck worker
 
-A worker that ran out of context or repeats itself gets replaced. Stop the old worker first, so that the workspace has one owner. Give the new worker a short verified handoff: branch, head, uncommitted files, checks run, decisions made.
+A worker that ran out of context, repeats itself or does not answer is replaced by the handover in [2](assign.md#hand-a-lane-over). Stop the old worker first, so that the workspace has one owner.
 
 ## Stop on control-plane failure
 
-Repeated control-plane failures (an exhausted API quota, a rate-limited or erroring state query) stop the affected assignment. Record the blocker and what establishes recovery. Stop claiming verified progress. Continue only work that does not depend on the unreadable state. Check the quota information the runtime exposes before dispatch. A failed query is unavailable data, never zero activity.
+Repeated control-plane failures (an exhausted quota, an erroring state query) stop the affected assignment. Record the blocker and what shows recovery. Stop claiming verified progress. A failed query is unavailable data, never zero activity. Repeated non-fatal background failures raise a signal by count; a warning nobody owns hides a broken path until you need it.
 
 ## Keep state durable
 
-At each transition and checkpoint, write to the task record: revision, evidence summary, acceptance rows done and remaining, blocker, owner, next action. Write the plan, ownership, decisions and acceptance criteria as they happen. Anything that exists only in the message log is not durable. Temporary paths and local reports do not survive a lost machine.
+At each transition, write to the tracker: revision, evidence, acceptance rows done and remaining, blocker, owner, next action. Anything only in the message log or a temporary path is not durable. Before a context handoff, run the loop and leave the board, the heartbeat command and how to resume each worker.
 
-At a checkpoint, report active workers and descendants, review and integration queue age, pending checks, and the next action. Before a context handoff, refresh the board. Record which agents run, which are idle, and how to resume each.
+## Retro at the end of each day
 
-Make repeated non-fatal background failures (checkpointing, auxiliary jobs) raise a signal by count or threshold. A warning that nobody owns hides a broken recovery path until you need it.
+The skill improves by iteration. At the end of each campaign day:
+
+1. **Coordinator misses first.** List each statement the coordinator made to the operator that a probe would have contradicted ("all moving", "every item has a worker", "nothing is stalled"), with the time and the probe that would have caught it.
+2. **Stall minutes by cause.** For each lane, add up the minutes it did not move, by cause:
+   - serial waiting on its own check;
+   - coordinator latency;
+   - an unowned shared blocker;
+   - no right to land;
+   - fixture setup;
+   - environment quota;
+   - a review loop without a cap;
+   - a failed reply channel.
+
+   Use status files, hand-back times and the board's history, not memory.
+3. **The one rule.** Change the ONE rule or script check that would have saved the most minutes. Write it as observation → cause → rule, and measure it the next day.
 
 ## Improve the skill after a costly failure
 
-Add one lesson at a time: observation, cause, rule, evidence that the rule helped. If you cannot state the evidence, do not add the lesson. Put the first missing fact that would have prevented the waste next to the decision it informs. Do not turn a temporary fault into a permanent workaround, an example pool size into a universal limit, or one campaign into a claimed speedup. Keep generic guidance here and local commands in the owning project. Delete obsolete and tooling-enforced rules.
+Add one lesson at a time: observation, cause, rule, and the evidence that the rule helped. Put the first missing fact that would have prevented the waste next to the decision it informs, in the stage that owns it. Prefer a script check over a written rule, and delete rules that a script now enforces. Keep generic guidance here and local commands in the owning project. Do not turn one campaign's numbers into a universal limit.
 
-For a shared skill, find its canonical source and read the consumer's update instructions before you edit an installed copy. Publish the source change under existing authorization. Update the consumer through its supported install path. Verify the pinned revision, lock record, complete package contents, removed files and links to renamed references. Load the installed revision before you claim that the new rules are in use. Record an intentional local patch apart.
+For a shared skill, edit its canonical source and read the consumer's update instructions. Publish under existing authorization. Update the consumer through its supported install path. Verify the pinned revision, the lock record and the package contents. Load the installed revision before you claim that the new rules are in use.
 
-## Failure patterns
-
-- **A worker that stopped was counted as finished.** — A turn ceiling, budget or background job ended the run with partial output that read like a report. Rule: verify the artifact; resume by task id. Evidence: partial output in a status report.
-- **A worker ran out of context while its background test run kept going.** — The turn ended with uncommitted edits and a live job. Rule: stop the old worker, hand off to a new one. Evidence: two workers writing one tree.
-- **A worker was judged finished from an unscoped process listing.** — Silence was read as absence of work. Rule: lifecycle evidence. Evidence: duplicate dispatch of running work.
-- **Every control-plane query failed while the worker kept working.** — A quota or rate limit turned state queries into errors that nobody surfaced. Rule: stop condition above. Evidence: work advanced while state was unreadable.
-- **A campaign's decisions vanished into repeated compaction.** — State lived in the conversation. Rule: durable artifacts. Evidence: state re-derived after a compaction.
-- **A background subsystem failed thousands of times in silence.** — Warning-level degradation blocked nothing, so nobody acted. Rule: threshold signal. Evidence: the same warning repeating without an owner.
-- **A stall alert fired on a worker that had finished.** — The watcher checked a worktree whose branch had just landed. Rule: drop landed workers from the watch list at each batch; a watcher that ends green means every watched worker committed clean work. Evidence: alerts on worktrees already merged.
-- **Queued runs were never claimed while the test load saturated a shared worker pool.** — Proof runs waited behind dozens of other agents' runs. Rule: check queue depth before declaring a live proof blocked; move the proof to a quiet environment rather than waiting. Evidence: runs queued with no claim line.
-- **Three workers sat 20 minutes without the coordinator noticing, until the operator asked.** — The stall watcher only watched worktrees, and these workers drove a browser with no worktree; nobody had set an expected pace. Rule: watch every worker by its activity record and its expected pace. Evidence: a stall the operator found first.
-- **The coordinator then stopped two workers that were mid-step.** — It read "no output for 20 minutes" as a stall, but one long step writes nothing until it ends. Rule: ask first, with a bounded reply window; stop only on no answer or no progress. Evidence: a stopped worker whose last line shows work in progress.
-- **A worker looked stalled for 38 minutes while its second-model review and test run were running.** — One long tool call writes nothing to the transcript. Rule: check the worker's processes before stopping, and still ask for status with a deadline. Evidence: live processes under its worktree.
-- **Reports survived only in temporary paths.** — The recovery record was incomplete. Rule: durable record. Evidence: a new session resumes without chat or local files.
-- **A worker finished and nobody noticed.** — The watcher flagged only quiet workers. Rule: also flag a last record that is an end of turn with nothing after it. Evidence: a finished branch that waited for the next batch.
-- **One operator interrupt stopped every worker, and none could be resumed.** — State lived in the sessions. Rule: keep state in pushed branches and issue comments. Evidence: fresh workers restarted from them in minutes.
-
-Related: [2. Assign](assign.md) · [3. Build](build.md)
+Related: [0. Coordinator loop](coordinator-loop.md) · [2. Assign](assign.md)

@@ -66,3 +66,21 @@ jobs:
             python3 scripts/swarm_plan.py --repo "$(pwd)/$fx" --target . --out "/tmp/fx-$(basename "$fx")" --budget 6 >/dev/null
             test -s "/tmp/fx-$(basename "$fx")/plan.md"
           done
+
+  swarm-orchestration:
+    name: swarm-orchestration — board check and chart scripts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .agents/skills/swarm-orchestration
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Script tests (the chart tests need matplotlib)
+        run: |
+          pip install matplotlib
+          python3 -m unittest discover -s tests
