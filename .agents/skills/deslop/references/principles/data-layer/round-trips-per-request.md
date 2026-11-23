@@ -10,8 +10,9 @@ description: Deslop principle — Every Request Has a Round-Trip Budget: count t
 
 The index principles make each statement cheap. This one counts the statements. When the application and the
 database run on different hosts, every statement costs one network round trip whatever its plan says: often a few
-milliseconds, more through a pooler or a proxy. A request that sends 40 indexed statements at 8 ms each waits
-320 ms on the network, and no query plan shows it.
+milliseconds, more through a pooler or a proxy. A request that sends 40 indexed statements one after another at 8 ms
+each waits 320 ms on the network, and no query plan shows it. (Pipelined or batched sends overlap the waits: count
+the synchronisation round trips, and check the elapsed time.)
 
 No line of code states the count. It is the sum of what every function in the call tree reads for itself, so it is
 a **design output**: it grows each time a function is added. Two rules follow. **Count the statements of each
@@ -51,7 +52,7 @@ def page_state(conn, project_id, user):
     }
 ```
 
-No statement was tuned. The readers now take the facts, not a connection and an id, and the answers agree: under
+Now the readers take the facts, not a connection and an id, and the answers agree: under
 read committed, five reads of one row can see five versions of it.
 
 **Why tuning each statement cannot see it.** The cost is latency × count: `EXPLAIN` judges one statement, and the
@@ -83,7 +84,9 @@ one statement per fact.
 7. **A counter that reads low**: it sits in the query helper, so transaction control, batch executes and
    statements sent through a raw cursor are not counted.
 
-Report **one finding per route and cause, with one repair at the owner of the read**, never one per reader.
+Report **one finding per route and read owner**: the tells that fire (repeated readers, a discarded check, a context
+per option) are evidence inside it, with one repair at the owner. Open a separate finding only for an independent
+defect, such as a parse that is also wrong.
 
 ## The repair, by what the count shows
 
@@ -100,8 +103,9 @@ Report **one finding per route and cause, with one repair at the owner of the re
   under the readers so that the second call is free. The count falls and the design gets worse. The memo is a
   second owner of the fact inside the request. A reader that runs after the request's own write gets the value
   from before it, and no signature shows which readers those are. Whether a call reaches the database depends on
-  who ran first. The readers still hold a connection, so the next one added reads again. (An explicit loader
-  passed per request fits where the client chooses the reads at run time, as in a GraphQL resolver tree.)
+  who ran first. The readers still hold a connection, so the next one added reads again. (An explicit loader or identity map
+  passed per request, with a declared lifetime and invalidation after writes, fits where the client chooses the reads
+  at run time, as in a GraphQL resolver tree.)
 - **An optional parameter**: `def progress(conn, project_id, facts=None)`. The self-reading path stays alive, and
   the caller that forgets to pass the value pays in silence.
 - **A cache across requests, or parallel threads**, before the request is fixed: both hide the count.
@@ -116,7 +120,7 @@ Report **one finding per route and cause, with one repair at the owner of the re
 
 The aim is one statement per distinct fact, not one statement per request.
 
-- **Independent row sets.** Two child collections of one parent multiply each other in a join. Read each set once.
+- **Independent row sets.** Two child collections of one parent multiply each other in a join; read each once.
 - **A fused statement with a worse plan than its parts.** Confirm with `EXPLAIN`, as for any query.
 - **A read under a lock.** A write that depends on a fact reads it again under its own lock
   ([Complete Mediation](../reliability/complete-mediation.md#the-second-moment-check-then-use)). The facts value is
@@ -147,7 +151,7 @@ The aim is one statement per distinct fact, not one statement per request.
 
 - **The database is in the same process or on the same host** (SQLite, a unix socket): a round trip costs
   microseconds. A repeat still shows a reader that should take a value, but there is no budget to defend.
-- **A job, a migration or an admin page** called a few times a day.
+- **A job, migration or admin page** called a few times a day.
 - **A route already at one statement per distinct fact.** Do not fuse further.
 
 ## Measured
@@ -188,9 +192,9 @@ Planted fixture `fixtures/request-round-trips/`: every query indexed, every func
 readers not told what is planted. Results by arm and round, with the misses and the findings nobody planted:
 [evaluation](../../library/evaluation.md).
 
-**The honest reading:** on a fixture this small the shipped library finds the defect, under a neighbour (a join run
-in the client, or a discarded parse). This file changes the owner: one count per route, the causes joined, the
-repair a required facts value. The control does not show recall at scale.
+**The honest reading:** on a fixture this small the shipped library finds the defect, under a neighbour (a join
+run in the client, or *DRY*). With the file the lens charged the causes here; the small model's whole pass missed
+the discarded check and the poll's sections. The control does not show recall at scale.
 
 ## Prior art
 

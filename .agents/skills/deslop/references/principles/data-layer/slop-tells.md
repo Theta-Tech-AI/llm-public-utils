@@ -31,6 +31,6 @@ lives **between** functions, in the one request that calls them all. Most of the
 - **`SELECT *` as an existence test**: a wide row fetched to learn that it exists, where `EXISTS` answers.
 - **A statement counter in the query helper**: `BEGIN`/`COMMIT`, batch executes and raw-cursor statements are not counted, so every budget built on it is low.
 - **A polled `GET` that performs an `UPDATE`** (a lease renewed on read, a "mark settled" inside a poll): one write per open tab per interval, in a route that claims only to answer ([Command-Query Separation](../architecture/command-query-separation.md)).
-- **`FOR SHARE` or `FOR UPDATE` in a read route**: a row-lock write on every read. Lock where the write is.
+- **`FOR SHARE` or `FOR UPDATE` in a read route**: a row-lock write on every read. Name the invariant the lock protects and its competing writers first: a read-side `FOR SHARE` that keeps a multi-statement read consistent against them is justified; one that protects nothing is not.
 - **A `LIKE` pattern built from a column** (`WHERE path LIKE parent.prefix || '%'`): the pattern is unknown when the statement is planned, so no B-tree serves it ([Know What Defeats an Index](index-defeaters.md)).
 - **A link table indexed on one column**: "the newest run of kind K for this parent" reads every run of the parent. Index the columns the lookup filters and sorts on, in that order ([Match the Index to the Query Shape](index-query-shape.md)).
