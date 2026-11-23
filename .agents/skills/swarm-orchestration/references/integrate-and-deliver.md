@@ -57,4 +57,7 @@ When the open count stays flat while workers finish, compare opened, closed, reo
 - **A local pass was reported as live acceptance.** — Implementation, integration, deploy and acceptance were collapsed. Rule: prove each stage. Evidence: deployed revision and a real acceptance artifact.
 - **A cadence was set from an assumed queue policy.** — One run held pushes for a belief that pushes cancel deploys, and the queue did not. Another run pushed every lane into a queue that did cancel. Rule: trace the queue first; count only completed, uncancelled runs; re-baseline after a change. Evidence: completed runs per hour.
 
+- **Live tests on the shared environment kept being cut by the team's own deploys.** — Twenty batches in an evening each rolled the environment while long end-to-end runs and samplers were in flight. Rule: run long acceptance runs on a quiet promoted environment (a release candidate), and keep the busy integration environment for quick proofs. Evidence: runs restarted or abandoned under update overlays.
+- **One transient answer from the system's own rate limiter failed a deploy.** — A pre-flight probe treated HTTP 429 as final. Rule: a probe retries "slow down" answers like gateway errors; only a real refusal is final. Evidence: a deploy that failed with the application healthy.
+
 Next: [6. Measure](measure.md) · Related: [4. Review](review.md)

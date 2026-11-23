@@ -52,6 +52,8 @@ For a shared skill, find its canonical source and read the consumer's update ins
 - **Every control-plane query failed while the worker kept working.** — A quota or rate limit turned state queries into errors that nobody surfaced. Rule: stop condition above. Evidence: work advanced while state was unreadable.
 - **A campaign's decisions vanished into repeated compaction.** — State lived in the conversation. Rule: durable artifacts. Evidence: state re-derived after a compaction.
 - **A background subsystem failed thousands of times in silence.** — Warning-level degradation blocked nothing, so nobody acted. Rule: threshold signal. Evidence: the same warning repeating without an owner.
+- **A stall alert fired on a worker that had finished.** — The watcher checked a worktree whose branch had just landed. Rule: drop landed workers from the watch list at each batch; a watcher that ends green means every watched worker committed clean work. Evidence: alerts on worktrees already merged.
+- **Queued runs were never claimed while the test load saturated a shared worker pool.** — Proof runs waited behind dozens of other agents' runs. Rule: check queue depth before declaring a live proof blocked; move the proof to a quiet environment rather than waiting. Evidence: runs queued with no claim line.
 - **Reports survived only in temporary paths.** — The recovery record was incomplete. Rule: durable record. Evidence: a new session resumes without chat or local files.
 
 Related: [2. Assign](assign.md) · [3. Build](build.md)
