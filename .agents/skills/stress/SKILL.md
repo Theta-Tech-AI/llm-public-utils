@@ -53,7 +53,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 - **"Break it" / "try to mess it up" / chaos** → mischief (optionally after one comb pass so you know the happy path)
 - **"Review the code for bugs"** → bug hunter
 - **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents in parallel, merged into one list ranked by how many personas each defect hits, then a rerun of the identical panel to prove the fixes
-- **"Hit the API" / contract / concurrency stress / "simulate the flow with API calls" / late stages nobody reaches in the browser** → comb or mischief with an **API-first** drive plan per [api-flows.md](references/api-flows.md); keep at least one browser lane
+- **"Hit the API" / contract / concurrency stress / "simulate the flow with API calls" / late stages nobody reaches in the browser** → comb or mischief with an **API-first** drive plan per [api-flows.md](references/api-flows.md); keep at least one browser lane unless the request is API-only or the target has no UI
 - **"Stress test this" / vague** → the standard run in [process.md](references/process.md): reliability first, then comb, then mischief; bug-hunt ugly code along the way
 
 ## Your job

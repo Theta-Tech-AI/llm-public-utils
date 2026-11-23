@@ -14,7 +14,7 @@ This file is the playbook for that. It does **not** replace the front door: [dri
 A **simulated flow** is the user's path written as the calls the frontend really makes, in the frontend's order — not the calls you think the backend should accept.
 
 1. Read the frontend's API client to learn the calls and their order; read the router for each body. The frontend is the truth for *what a user's session sends*; the router is the truth for *what is legal*.
-2. Write one resumable driver per flow: every step records its ids and timestamps in a state file, so a crashed or replaced worker continues instead of starting again.
+2. Write one resumable driver per flow: every step records its ids and timestamps in a state file, so a crashed or replaced worker continues instead of starting again. For a mutating step, write the intent to the state file **before** sending, use the API's idempotency key where it has one, and after a crash read the server's state to learn whether the step happened before replaying it — a checkpoint written after the call cannot tell a lost reply from a lost request, and a replayed paid run or signature is a second effect.
 3. Log each call as method, path, status and elapsed time. No tokens, no bodies with private text.
 4. Before each stage opens, call the **next** stage's main route once and record the refusal. A gate that lets you through early is a finding; a gate that refuses with the wrong reason is one too.
 
@@ -28,7 +28,7 @@ Each HTTP call is stateless: it carries its own token and the API process keeps 
 2. the **server's own state read** (the state route, the audit records) against the model;
 3. the model itself, updated only by calls that succeeded.
 
-Every disagreement is a finding, and which pair disagrees says where to look: response vs model is a wrong rule or a wrong doc; two of the server's own reads disagreeing with each other is one fact with two owners; a correct response that left the stored state unchanged (or changed it twice) is an atomicity or idempotency defect. Remember two states the model does not see by default: the **API process's hidden state** (in-flight work, single-use tickets, caches, memory) — only repetition, concurrency and long requests reach it — and the **browser's copy** of the state, which no API run reads at all.
+Model the answer to a call that starts background work as *accepted → pending → done / failed*, not as done: compare the state read only after the route's documented completion point, and call it a finding when it never arrives or arrives wrong. Every disagreement that survives that is a finding, and which pair disagrees says where to look: response vs model is a wrong rule or a wrong doc; two of the server's own reads disagreeing with each other is one fact with two owners; a correct response that left the stored state unchanged (or changed it twice) is an atomicity or idempotency defect. Remember two states the model does not see by default: the **API process's hidden state** (in-flight work, single-use tickets, caches, memory) — only repetition, concurrency and long requests reach it — and the **browser's copy** of the state, which no API run reads at all.
 
 The flow map of Step 0 is this model written down once for everyone, instead of living in each lane's head.
 
@@ -70,7 +70,7 @@ High-yield additions once the matrix exists:
 - **Frozen means frozen.** In every state where content must not change, try every writer (text, attachments, upstream locks, settings). A write that succeeds is the most serious thing an API run can find.
 - **The order of refusals.** When several preconditions fail, the refusal must name the first one the docs name. A wrong order sends the user to fix the wrong thing.
 - **Ceremony abuse.** For signed or confirmed steps: replay a spent challenge, use one issued for another action, another user, another object; let it expire; send an ordinary session token in its place.
-- **Races, small and deliberate.** Two to ten threads on one transition: exactly one wins, one record is written, the loser gets a clean conflict.
+- **Races, small and deliberate.** Two to ten threads on one transition: exactly one effect and one record, and every competing request that did not win gets a clean conflict. (Retries that carry the *same* idempotency key may all return the one original result; assert the count of effects, not that every reply differs.)
 - **Time of check vs time of use.** When a code reader says "the role is read at the request edge and the write happens seconds later under a lock", script the change in between (see the hypothesis loop below).
 
 ## Stand on what exists
@@ -81,7 +81,7 @@ Do not pay (in time or in model spend) to rebuild upstream state for every lane.
 - **One exclusive object per lane.** Two lanes on one project produce false alarms that look exactly like races.
 - **Write the protected list down.** Client data, demo data, another team's acceptance fixtures: named, in the brief, read-only.
 - **An old fixture is not a current fixture.** Rules tighten between releases. A step that looks reversible on a seeded object (reopen a form, unlock a stage) can be a one-way door when the object was made under older rules: the way back now demands work the fixture never did. Before a destructive step on a seed, check the way back with a read (the readiness or validation answer) — or do the reversible-cycle tests on a fresh object. When a fixture does strand, that is a finding too: the same door is open to real users with old data.
-- **One fresh end-to-end flow still runs** as the reliability gate ([reliability.md](reliability.md)), in parallel with the lanes that stand on seeds. Measure each stage's wall-clock; a stage that takes hours by API is its own finding.
+- **One fresh end-to-end flow still runs** as the reliability gate ([reliability.md](reliability.md)). Lanes that mutate seeds start only after the gate passes; until then they may read code, read state and prepare drivers. If the gate fails, that is the headline finding and the attack lanes wait. Measure each stage's wall-clock; a stage that takes hours by API is its own finding.
 
 ## Shared tools, proven before any lane starts
 
@@ -101,7 +101,7 @@ A gateway or WAF rate limit is **per client IP**, and every lane on one machine 
 
 **Never retry a slow or timed-out call blindly.** A wrapper that re-sends on a client timeout turns one heavy request into several concurrent ones; the server keeps working on each after the client has left. One lane's retry of an unbounded export took a whole environment down this way — a real finding, and also an outage for every other lane. Catch the timeout, report it, read the server's logs, and decide. Mark the routes that read *everything* as call-once.
 
-A refusal from the gateway is not an app finding — learn its signature (an HTML body, the gateway's name in it) and tell every lane. Also expect the gateway to refuse a default HTTP-library agent string outright: if a plain `curl` gets 200 and your script gets 403, compare the headers before suspecting the app.
+A refusal from the gateway is not an app finding *when the lanes caused it* (throttling) — learn its signature (an HTML body, the gateway's name in it) and tell every lane. A gateway that blocks a legitimate request from a supported client or a normal user action is an infrastructure finding: file it with the request and the rule that fired. Also expect the gateway to refuse a default HTTP-library agent string outright: if a plain `curl` gets 200 and your script gets 403, compare the headers before suspecting the app.
 
 ## Lanes
 
@@ -113,7 +113,7 @@ Split by **part of the app**, not by mode: each lane owns one stage or one cross
 - one lane per early stage;
 - one lane for everything outside the main object (feeds, admin, webhooks) plus the **API hygiene sweep** (malformed JSON, oversize bodies, wrong method, unknown path, CORS from a foreign origin, security headers, error bodies that leak);
 - one **code bug-hunt** lane ([bug-hunter.md](bug-hunter.md));
-- at least one **browser** lane, because none of the above sees a pixel.
+- at least one **browser** lane when browser use is authorised and the target has a UI, because none of the above sees a pixel (an API-only request, a declined browser, or an API-only target skips it; say so in the report).
 
 **Brief from a probe, not from the docs.** Before writing a lane's brief, check its facts against the running system: who can create the lane's objects, who is on each seed's roster, whether the page or route the lane needs is reachable in the seed's current state. Briefs written from reading alone sent lanes to create objects as a role that cannot, and to a page that the seed's state had closed.
 
