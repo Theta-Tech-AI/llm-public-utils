@@ -203,7 +203,7 @@ def draw(data: ChartInput, output: Path) -> None:
     label_sectors(big, wedges[1:], rows, total, -1, 20, 0.12)
     big.add_patch(Wedge((0, 0), 1.0, -half, half, fill=False, edgecolor=OUTLINE, linewidth=5, zorder=5))
     big.text(0.6, 0, f"{wrap(focus['name'], 12)}\n{focus_total}", ha="center", va="center", color=text_color(focus["color"]),
-             fontsize=max(inside_font(focus["name"], 20), MIN_INSIDE_FONT), weight="bold", zorder=6)
+             fontsize=max(inside_font(focus["name"], 20, 16), 8), weight="bold", zorder=6)
     big.set_title(f"All open issues ({total})", color=FOREGROUND, fontsize=22, pad=14)
 
     # Group key: coloured words under the title, centred, no legend box.
@@ -233,8 +233,9 @@ def draw(data: ChartInput, output: Path) -> None:
               f"{focus['name']} by step, top = earliest ({focus_total})")
     # Size cap: tight box in inches decides the dpi so the longer side stays under MAX_PIXELS.
     box = fig.get_tightbbox(fig.canvas.get_renderer())
-    dpi = min(300, MAX_PIXELS / max(box.width, box.height))
-    fig.savefig(output, facecolor=BACKGROUND, bbox_inches="tight", dpi=dpi)
+    pad = 0.1  # inches, savefig's own padding; it is part of the saved size
+    dpi = min(300, MAX_PIXELS / (max(box.width, box.height) + 2 * pad))
+    fig.savefig(output, facecolor=BACKGROUND, bbox_inches="tight", pad_inches=pad, dpi=dpi)
     print(f"✅ wrote {output} ({total} items, {focus_total} in {focus['name']})")
 
 
