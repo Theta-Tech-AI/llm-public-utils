@@ -90,5 +90,7 @@ Write it. Get a cold-read critique from a reader with no context. Run a trial wi
 - **Several ready items waited on the same prerequisite repair.** — Each path treated the shared blocker as separate work. Rule: one owner, one verified revision, reused. Evidence: fewer duplicate investigations.
 - **The coordinator kept planning improvements while ready work waited.** — Process work had no delivery bound. Rule: make one small improvement aimed at the current bottleneck, apply it to the next item, and resume delivery. Evidence: shorter queue age, not more process artifacts.
 - **Workers confidently reported a stuck queue and a livelock that logs disproved.** — The queue was empty, and the revisions came from one global sequence. Rule: check state claims against logs before relaying. Evidence: log lines that match the claim.
+- **Several workers shared one issue queue and the same issue waited.** — Workers pulled from one list. Rule: if the machine has room and the issues are independent, unblocked and own different files, split the queue so each issue has its own worker; review capacity still limits the count. Evidence: issues idle while a peer worked another.
+- **The operator was asked to re-scope on an issue's premise that was false.** — Two premises (a missing feature, a "scanned" file) were guesses in other issues. Rule: grep the code or read one file before you ask. Evidence: two withdrawn questions in one evening.
 
 Next: [3. Build](build.md) · Related: [recover](recover.md)
