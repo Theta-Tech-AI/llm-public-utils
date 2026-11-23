@@ -6,6 +6,13 @@ Read at every checkpoint, when a worker goes quiet, when a worker stops, and bef
 
 Choose a check cadence and record it. Apply it between transitions as well as at them. Ask running workers for status. Do not infer progress from silence. Drain completed results at each checkpoint.
 
+Watch every worker by its own activity record (the runtime's per-task output or event log), not by repository
+changes: a worker that drives a browser or an API has no worktree, so a worktree watcher never sees it. Give each worker
+an expected pace when you dispatch it (the time its next stage should take). Quiet past that pace is a question, not a
+verdict: ask the worker for its stage and wait one bounded reply window; stop and replace it only when no answer comes or
+its own record shows no progress. A long single step writes nothing until it ends. Brief long-running workers to send a
+one-line stage update at each stage, so a long step is never mistaken for a stall.
+
 Before you expand the pool, verify how a silent stall will reach you: runtime notices plus bounded roster checks when no watcher exists. Enroll each new or resumed worker at once. Record its last checkpoint, expected next event and check deadline. Verify that monitoring survives a restart or handoff. A background job counts as activity only when its owner and expected completion are known.
 
 Keep these states apart, per worker:
@@ -54,6 +61,8 @@ For a shared skill, find its canonical source and read the consumer's update ins
 - **A background subsystem failed thousands of times in silence.** — Warning-level degradation blocked nothing, so nobody acted. Rule: threshold signal. Evidence: the same warning repeating without an owner.
 - **A stall alert fired on a worker that had finished.** — The watcher checked a worktree whose branch had just landed. Rule: drop landed workers from the watch list at each batch; a watcher that ends green means every watched worker committed clean work. Evidence: alerts on worktrees already merged.
 - **Queued runs were never claimed while the test load saturated a shared worker pool.** — Proof runs waited behind dozens of other agents' runs. Rule: check queue depth before declaring a live proof blocked; move the proof to a quiet environment rather than waiting. Evidence: runs queued with no claim line.
+- **Three workers sat 20 minutes without the coordinator noticing, until the operator asked.** — The stall watcher only watched worktrees, and these workers drove a browser with no worktree; nobody had set an expected pace. Rule: watch every worker by its activity record and its expected pace. Evidence: a stall the operator found first.
+- **The coordinator then stopped two workers that were mid-step.** — It read "no output for 20 minutes" as a stall, but one long step writes nothing until it ends. Rule: ask first, with a bounded reply window; stop only on no answer or no progress. Evidence: a stopped worker whose last line shows work in progress.
 - **Reports survived only in temporary paths.** — The recovery record was incomplete. Rule: durable record. Evidence: a new session resumes without chat or local files.
 
 Related: [2. Assign](assign.md) · [3. Build](build.md)

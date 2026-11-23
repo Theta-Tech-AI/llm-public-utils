@@ -60,4 +60,6 @@ When the open count stays flat while workers finish, compare opened, closed, reo
 - **Live tests on the shared environment kept being cut by the team's own deploys.** — Twenty batches in an evening each rolled the environment while long end-to-end runs and samplers were in flight. Rule: run long acceptance runs on a quiet promoted environment (a release candidate), and keep the busy integration environment for quick proofs. Evidence: runs restarted or abandoned under update overlays.
 - **One transient answer from the system's own rate limiter failed a deploy.** — A pre-flight probe treated HTTP 429 as final. Rule: a probe retries "slow down" answers like gateway errors; only a real refusal is final. Evidence: a deploy that failed with the application healthy.
 
+- **A change went out on a red gate because the push script did not run the gate itself.** — The gate failed on the environment (an uninitialised submodule), and the push went ahead. Rule: never push on a red gate, whatever its reason; fix the environment and rerun; push scripts call the gate. Evidence: a push after a red gate.
+
 Next: [6. Measure](measure.md) · Related: [4. Review](review.md)

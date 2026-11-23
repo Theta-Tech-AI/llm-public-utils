@@ -84,6 +84,7 @@ Write it. Get a cold-read critique from a reader with no context. Run a trial wi
 
 ## Failure patterns
 
+- **Long acceptance runs were briefed as UI click-throughs while the repository held a driver for the same artifact.** — Nobody searched the drive and test scripts first. Rule: before briefing an end-to-end proof, search the repository for an existing driver or API path to the artifact; use the UI only for what must be seen in the UI. Evidence: hours of clicking for minutes of work.
 - **A second worker rebuilt an issue that was already on another branch.** — The duplicate check searched branch names. Rule: search commit messages and comments. Evidence: overlapping files between the two branches.
 - **Two workers wrote the same file and produced an add/add conflict.** — The wave was planned by issue, so path collisions were invisible. Rule: plan by file ownership. Evidence: repeat collisions and obsolete repairs.
 - **Several ready items waited on the same prerequisite repair.** — Each path treated the shared blocker as separate work. Rule: one owner, one verified revision, reused. Evidence: fewer duplicate investigations.
