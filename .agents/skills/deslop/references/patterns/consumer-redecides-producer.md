@@ -19,6 +19,7 @@ The decision was made in the right place and then thrown away, so later code has
 - A settings loader checks that a mode is one of three allowed words, then returns the plain string.
 - A function reads settings into a typed object and keeps the raw environment variables next to it, and later code reads the raw ones.
 - A check runs, its result is ignored, and the same check runs again two calls later.
+- An access check reads a row to decide, returns nothing, and the handler reads that row again. With a database, each repeat is a round trip: [Every Request Has a Round-Trip Budget](../principles/data-layer/round-trips-per-request.md).
 
 Look for a function that checks its input and returns it unchanged, or a typed value turned back into text when it is passed on. Return the checked value in its own type and make the next function require that type. The repeated checks further along can then be deleted.
 

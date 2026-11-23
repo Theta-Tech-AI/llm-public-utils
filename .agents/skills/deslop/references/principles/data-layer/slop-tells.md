@@ -1,6 +1,6 @@
 ---
 name: deslop-data-layer-slop-tells
-description: Deslop principle — The Common Slop Tells: grep-able schema smells, each mapped to the principle that owns it.
+description: Deslop principle — The Common Slop Tells: grep-able schema and call-site smells, each mapped to the principle that owns it.
 ---
 
 # The Common Slop Tells
@@ -17,3 +17,20 @@ description: Deslop principle — The Common Slop Tells: grep-able schema smells
 - **A multi-statement cascade in application code** — several `DELETE`s in a loop standing in for the `ON DELETE CASCADE` the schema never declared.
 - **An "append-only" table with no block-mutation trigger** — immutability as a convention, not an enforced rule; and its dangerous cousin, a trigger guarded by `IF pg_trigger_depth() = 0` (never true inside a trigger body — a silent no-op that *looks* installed).
 - **A foreign key with no index** — Postgres indexes primary keys and unique constraints, not FKs; the parent delete and every join quietly go sequential.
+
+## At the call site
+
+The same generator, one function at a time: each function reads what it needs and looks complete alone. The cost
+lives **between** functions, in the one request that calls them all. Most of these belong to
+[Every Request Has a Round-Trip Budget](round-trips-per-request.md); the others name their owner.
+
+- **A reader `def f(conn, some_id)` called beside others of the same shape**: each loads the row it needs, so one request reads that row several times.
+- **A check that reads a row and returns `None` or a `bool`**: the handler's next line reads the row again ([the check discards its answer](../architecture/parse-dont-validate.md)).
+- **A context object built inside a loop over options**: every fact is read again for each candidate move.
+- **One statement per section of a polled page, or a statement inside a loop over rows**: `UNION ALL`, a join, `= ANY(%s)`.
+- **`SELECT *` as an existence test**: a wide row fetched to learn that it exists, where `EXISTS` answers.
+- **A statement counter in the query helper**: `BEGIN`/`COMMIT`, batch executes and raw-cursor statements are not counted, so every budget built on it is low.
+- **A polled `GET` that performs an `UPDATE`** (a lease renewed on read, a "mark settled" inside a poll): one write per open tab per interval, in a route that claims only to answer ([Command-Query Separation](../architecture/command-query-separation.md)).
+- **`FOR SHARE` or `FOR UPDATE` in a read route**: a row-lock write on every read. Lock where the write is.
+- **A `LIKE` pattern built from a column** (`WHERE path LIKE parent.prefix || '%'`): the pattern is unknown when the statement is planned, so no B-tree serves it ([Know What Defeats an Index](index-defeaters.md)).
+- **A link table indexed on one column**: "the newest run of kind K for this parent" reads every run of the parent. Index the columns the lookup filters and sorts on, in that order ([Match the Index to the Query Shape](index-query-shape.md)).

@@ -196,14 +196,15 @@
       ]
     },
     "query-access-paths": {
-      "stance": "How does each query actually reach its rows \u2014 access paths, index shape, joins, and what defeats them?",
+      "stance": "How does each query reach its rows (access paths, index shape, joins, defeaters), and how many statements does one request send?",
       "files": [
         "principles/data-layer/index-access-columns.md",
         "principles/data-layer/index-defeaters.md",
         "principles/data-layer/index-foreign-keys.md",
         "principles/data-layer/index-query-shape.md",
         "principles/data-layer/join-access-paths.md",
-        "principles/data-layer/unused-indexes.md"
+        "principles/data-layer/unused-indexes.md",
+        "principles/data-layer/round-trips-per-request.md"
       ],
       "indexes": [
         "principles/data-layer.md"

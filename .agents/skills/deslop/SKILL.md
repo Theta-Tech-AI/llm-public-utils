@@ -1,11 +1,11 @@
 ---
 name: deslop
-description: "Library of 62 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
+description: "Library of 63 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
 ---
 
 # Deslop: code quality analysis
 
-`/deslop [file-or-directory]` (or `$deslop`;) reads your code against the principles in [references/](references/) and suggests fixes with before/after examples.
+`/deslop [file-or-directory]` (or `$deslop`) reads your code against the principles in [references/](references/) and suggests fixes with before/after examples.
 
 **Coverage pass by default.** Any target that is not a diff or PR (a file, directory, module, package, subsystem or whole repository) gets a **coverage pass**: one reading per principle group in [references/lenses.json](references/lenses.json) (all nine today), each reading its group's index and then every principle file in that group, in full. Only a diff or PR review, or an explicit request for a quick or narrow look, gets a **scoped pass**, and its report names the groups it did not read. Pass shapes: [references/stages/recipes.md](references/stages/recipes.md). When the ask is a **campaign** ("massive simplification", "across the board", "minimum 30% LOC", "break up the god files", "get it all done, no excuses, present me a PR") follow [references/modes/campaign.md](references/modes/campaign.md) and measure with [references/library/measuring.md](references/library/measuring.md).
 
@@ -34,7 +34,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 10. **Delete before you add.** No feature for later, no special case without a missing mechanism, no patch over a decision; leave touched code better, and relax a rule when applying it makes worse code. *Why:* every line is a liability that must be read, tested and kept true, so the best change often removes lines.
    [yagni](references/principles/clean-code/yagni.md), [special-cases](references/principles/clean-code/special-cases.md), [patchwork](references/principles/clean-code/patchwork.md), [when-to-relax](references/readings/when-to-relax.md)
 
-**What the library provides:** 62 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting stages, campaigns with honest before/after measurement, and a procedure to [extend the library](references/library/extending-the-library.md).
+**What the library provides:** 63 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting stages, measured campaigns, and a procedure to [extend the library](references/library/extending-the-library.md).
 
 ## The library at a glance
 
@@ -119,9 +119,9 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Foreign Keys Are Not Optional — Every reference column gets REFERENCES + an explicit ON DELETE
 - Enforce Invariants with Constraints, Not Application Code — Rules live where writes happen, not where the app calls
 - Normalize to a Single Source of Truth — Each fact lives in one column; the DB owns derivations
-- The Common Slop Tells — grep-able schema smells, each mapped to the principle that owns it
+- The Common Slop Tells — grep-able schema and call-site smells
 
-**query-access-paths** — How does each query actually reach its rows — access paths, index shape, joins, and what defeats them?
+**query-access-paths** — How does each query reach its rows (access paths, index shape, joins, defeaters), and how many statements does one request send?
 
 - Index What You Filter, Join, and Sort On — Index the queries the table actually serves
 - Know What Defeats an Index — Leading wildcards, functions on columns, type mismatches
@@ -129,6 +129,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Match the Index to the Query Shape — Composite order, partial, covering, the right index type
 - Every Join Needs an Access Path on the Side Being Probed — an index on the driver's key is not enough
 - Every Index Is Used or It's Dropped — An index no query uses is pure loss
+- Every Request Has a Round-Trip Budget — count the statements one request sends
 
 **patterns** — recurring shapes that span principles; never charged by themselves, each instance is filed under the owning principle
 
@@ -145,7 +146,6 @@ One idea under the library: **a reader can trust what the code appears to say.**
 <!-- principle-map:end -->
 
 ## Where to read what
-
 
 One row per file, in the order a pass meets them. CI fails on a markdown that no row here and no index links.
 
@@ -166,11 +166,11 @@ One row per file, in the order a pass meets them. CI fails on a markdown that no
 | [references/library/what-the-principles-buy.md](references/library/what-the-principles-buy.md) | **Explaining why a pass is worth doing, choosing which principles lead for a kind of code, or briefing parallel fixers** — families of broken trust, the bug class each predicts, honest costs, a plain worker brief |
 | [references/library/extending-the-library.md](references/library/extending-the-library.md) | **Adding a principle** (a *gap*, not a pass over code) — discovery against existing principles, research, house format, both indexes, publish path |
 | [references/library/detecting-slop.md](references/library/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
-| [references/principles/data-layer.md](references/principles/data-layer.md) | The target has a database (schema, SQL, migrations, keys, constraints, **indexes and join access paths beside the queries that use them**). The schema is a slice of its own: it often sits outside the target, and no index finding is provable from the DDL alone |
+| [references/principles/data-layer.md](references/principles/data-layer.md) | The target has a database (schema, SQL, migrations, keys, constraints, **indexes and join access paths beside the queries that use them**). The schema is its own slice: it often sits outside the target, and no index finding is provable from DDL alone |
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example: an LLM agent fleet collapsed into one agent |
-| [references/library/further-reading.md](references/library/further-reading.md) | Bibliography and attribution (not needed mid-audit) |
-| [references/lenses.json](references/lenses.json) | The default partition of 62 principles into 9 reading stances; regroup it freely |
+| [references/library/further-reading.md](references/library/further-reading.md) | Bibliography and attribution |
+| [references/lenses.json](references/lenses.json) | The default partition of 63 principles into 9 reading stances; regroup it freely |
 
 ## Layout and checks
 
@@ -181,11 +181,11 @@ One row per file, in the order a pass meets them. CI fails on a markdown that no
 ```bash
 python3 scripts/check_reachability.py     # every markdown reachable by links from this file
 python3 scripts/swarm_lenses.py --check   # every principle in exactly one group
-python3 scripts/skill_summary.py --check  # map matches the references; description <= 1024 chars; links resolve; size <= 24 KB
+python3 scripts/skill_summary.py --check  # map current; description <= 1024 chars; links resolve; size <= 24 KB
 python3 -m py_compile scripts/*.py
 ```
 
-Edit a `description:` line, then run `python3 scripts/skill_summary.py` to regenerate the map. The library is code too: [deslop it](references/library/extending-the-library.md#the-library-is-code-too-deslop-it). Moving files: `scripts/taxonomy_move.py`.
+After editing a `description:` line, run `python3 scripts/skill_summary.py`. The library is code too: [deslop it](references/library/extending-the-library.md#the-library-is-code-too-deslop-it). Moving files: `scripts/taxonomy_move.py`.
 
 ## Plan the pass before you audit
 

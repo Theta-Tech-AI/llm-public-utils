@@ -18,3 +18,4 @@ In relation to other principles, single source of truth:
 | [**DRY**](dry.md) | DRY targets duplicated logic; SSoT targets duplicated data storage |
 | [**Normalize to a Single Source of Truth**](../data-layer/normalization.md) | SSoT applied to schema |
 | [**Immutability**](immutability.md) | Derived copies are safe only when deliberately unsynced, never hand-maintained |
+| [**Every Request Has a Round-Trip Budget**](../data-layer/round-trips-per-request.md) | One owner is not one read: when every function asks the owner for itself, one request reads the same row many times |
