@@ -153,7 +153,8 @@
       ]
     },
     "guarantees": {
-      "stance": "What does this code promise, who claims the promise, and what happens when it is broken? State, lifetime, cancellation, privilege, and telling the truth when it fails.",
+      "stance": "What does this code promise, who claims the promise, and what happens when it is broken? State, lifetime, cancellation, privilege, a rule every member must pass, and telling the truth when it fails.",
+      "owes_population_census": true,
       "files": [
         "principles/clean-code/unclaimed-guarantee.md",
         "principles/architecture/immutability.md",
@@ -162,7 +163,8 @@
         "principles/reliability/resilience.md",
         "principles/reliability/least-privilege.md",
         "principles/reliability/boy-scout-rule.md",
-        "principles/reliability/errors-at-the-boundary.md"
+        "principles/reliability/errors-at-the-boundary.md",
+        "principles/reliability/complete-mediation.md"
       ],
       "indexes": [
         "principles/architecture.md",

@@ -200,13 +200,25 @@ SIGHTINGS`, and anything in your lens you could not decide (say what would decid
 
 
 CENSUS = """
-## 4. The input census you owe
+## The input census you owe
 
 If the target has a write boundary (a save route, a queue consumer, a webhook, a tool-call argument, an import job),
 write the input census table of `references/readings/auditing.md` to `{out_census}`: one row per external input the
 boundary accepts, with its owner or `none` and its count of independent re-interpretations (a call to the owner's
 parser is not one). Each `none` row, and each row with more than one re-interpretation, is also a finding in the JSONL. No write boundary: write one line saying so. A missing
 census file is a failed reading, like a missing manifest.
+"""
+
+
+POPULATION = """
+## The population census you owe
+
+If the target has a class of members that one rule covers (authorization, a lock or lease, audit, tenancy,
+idempotency, rate limit, validation), write the population census table of
+`references/readings/auditing.md` to `{out_census}`: build the member list from the route table or registry, never
+from the enforcing calls; one row per member with where it enforces the rule or `none`, then the counts (members,
+members per enforcing function, empty cells). Each empty cell, and each rule with two or more enforcing functions, is
+also a finding in the JSONL. No such population: write one line saying so. A missing census file is a failed reading.
 """
 
 
@@ -252,9 +264,15 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
             out_jsonl=out_jsonl,
             out_manifest=out_manifest,
         ) + scope_note
+        owed = []
         if spec.get("owes_input_census"):
-            body += CENSUS.format(out_census=str(outdir / f"census-{stem}.md"))
-            (outdir / f"owes-{stem}.txt").write_text(f"census-{stem}.md\n")
+            owed.append(f"census-{stem}.md")
+            body += CENSUS.format(out_census=str(outdir / owed[-1]))
+        if spec.get("owes_population_census"):
+            owed.append(f"population-{stem}.md")
+            body += POPULATION.format(out_census=str(outdir / owed[-1]))
+        if owed:
+            (outdir / f"owes-{stem}.txt").write_text("".join(f"{name}\n" for name in owed))
         if spec.get("skip_when"):
             body += f"\nScope note: {spec['skip_when']}.\n"
         (outdir / f"lens-{stem}.md").write_text(body)

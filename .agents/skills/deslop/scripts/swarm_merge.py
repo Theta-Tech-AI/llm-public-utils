@@ -145,7 +145,7 @@ def main() -> int:
         owed_problems, owed_texts = owed_outputs([Path(p) for p in a.findings], Path(a.assignments) if a.assignments else None)
         problems += owed_problems
         if owed_texts:
-            census = "# Deslop swarm — no findings\n\n## Input census\n\n" + "\n".join(owed_texts)
+            census = "# Deslop swarm — no findings\n\n## Censuses owed\n\n" + "\n".join(owed_texts)
             print(census)
             if a.out:
                 Path(a.out).write_text(census)
@@ -217,7 +217,7 @@ def main() -> int:
         L.extend(manifest_report)
         L.append("")
     if owed_texts:
-        L.append("## Input census\n")
+        L.append("## Censuses owed\n")
         L.extend(owed_texts)
     L.append("## Findings per lens\n")
     for lens, n in sorted(by_lens.items(), key=lambda kv: -kv[1]):

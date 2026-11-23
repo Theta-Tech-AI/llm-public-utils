@@ -1,11 +1,11 @@
 ---
 name: deslop
-description: "Library of 61 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
+description: "Library of 62 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
 ---
 
 # Deslop: code quality analysis
 
-`/deslop [file-or-directory]` (or `$deslop`;) reads your code against a library of coding principles in [references/](references/) and suggests specific fixes with before/after examples.
+`/deslop [file-or-directory]` (or `$deslop`;) reads your code against the principles in [references/](references/) and suggests fixes with before/after examples.
 
 **Coverage pass by default.** Any target that is not a diff or PR (a file, directory, module, package, subsystem or whole repository) gets a **coverage pass**: one reading per principle group in [references/lenses.json](references/lenses.json) (all nine today), each reading its group's index and then every principle file in that group, in full. Only a diff or PR review, or an explicit request for a quick or narrow look, gets a **scoped pass**, and its report names the groups it did not read. Pass shapes: [references/stages/recipes.md](references/stages/recipes.md). When the ask is a **campaign** ("massive simplification", "across the board", "minimum 30% LOC", "break up the god files", "get it all done, no excuses, present me a PR") follow [references/modes/campaign.md](references/modes/campaign.md) and measure with [references/library/measuring.md](references/library/measuring.md).
 
@@ -34,7 +34,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 10. **Delete before you add.** No feature for later, no special case without a missing mechanism, no patch over a decision; leave touched code better, and relax a rule when applying it makes worse code. *Why:* every line is a liability that must be read, tested and kept true, so the best change often removes lines.
    [yagni](references/principles/clean-code/yagni.md), [special-cases](references/principles/clean-code/special-cases.md), [patchwork](references/principles/clean-code/patchwork.md), [when-to-relax](references/readings/when-to-relax.md)
 
-**What the library provides:** 61 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting stages, campaigns with honest before/after measurement, and a procedure to [extend the library](references/library/extending-the-library.md).
+**What the library provides:** 62 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting stages, campaigns with honest before/after measurement, and a procedure to [extend the library](references/library/extending-the-library.md).
 
 ## The library at a glance
 
@@ -99,7 +99,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - A Special Case Is a Requirement the Design Never Accounted For — a branch that exists for one situation is evidence of a missing…
 - Decide, Don't Cope — Decide types once at the boundary
 
-**guarantees** — What does this code promise, who claims the promise, and what happens when it is broken? State, lifetime, cancellation, privilege, and telling the truth when it fails.
+**guarantees** — What does this code promise, who claims the promise, and what happens when it is broken? State, lifetime, cancellation, privilege, a rule every member must pass, and telling the truth when it fails.
 
 - An Unclaimed Guarantee — machinery promising a capability no caller claims
 - Immutability — values fixed after creation; never mutate caller data
@@ -109,6 +109,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Principle of Least Privilege — minimum permissions per component, so a flaw has a small blast radius
 - Boy Scout Rule — leave code better than you found it, scoped to what you touch
 - Errors at the Boundary — validate where untrusted input enters
+- Complete Mediation — a rule every member of a population must obey (every write route…
 
 **data-integrity** — What does the schema promise and enforce — keys, references, constraints, one home per fact?
 
@@ -150,7 +151,7 @@ One row per file, in the order a pass meets them. CI fails on a markdown that no
 
 | File | When |
 |------|------|
-| [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, the mode question, the autonomy rule, report format, and the **input census** (per external input: who owns turning it into a decision, how many places re-interpret it; zero owners or several is a finding, reported even when it ranks last) |
+| [references/readings/auditing.md](references/readings/auditing.md) | **Always** — the audit itself: persona, mode question, autonomy rule, report format, and the censuses, reported even when they rank last: **inputs** (per external input, who owns turning it into a decision; zero owners or several re-interpretations is a finding), reasons to change, and **populations** (every member one rule covers, against where it enforces it; an empty cell is a finding) |
 | [references/readings/when-to-relax.md](references/readings/when-to-relax.md) | **With every reading** — the guardrail: where a principle is over-applied; a violation worth "fixing" into worse code is not a violation |
 | [references/patterns.md](references/patterns.md) | **In each reading, for the patterns of its lens** (`lenses.json`), after the principles; **at consolidation** as the axis that themes cross concerns. A *pattern* is a recurring diagnostic shape, never charged by itself; a *principle* is one mechanism with one owner |
 | [references/stages/recipes.md](references/stages/recipes.md) | **At the start of any pass** — the shapes: **coverage pass** (default for any non-diff target), scoped pass (diff, PR, quick look), directed cell, campaign, library extension, second round |
@@ -158,18 +159,18 @@ One row per file, in the order a pass meets them. CI fails on a markdown that no
 | [references/stages/aggregation.md](references/stages/aggregation.md) | **When more than one reading has reported** — merge on locus + principle (corroborated / single / disputed); a cell quoting nothing failed |
 | [references/stages/consolidation.md](references/stages/consolidation.md) | **After aggregation, before reporting or filing** — verify, apply the guardrail, bucket now / next / wait-or-drop, one issue per concern |
 | [references/stages/reporting.md](references/stages/reporting.md) | **Just before you speak to the asker** — answer first, bucketed work, short |
-| [references/modes/campaign.md](references/modes/campaign.md) | **Whole-codebase campaigns** ("massive simplification", "minimum 30% LOC", "present me a PR") — five sweeps, target discipline, scale, delivery |
-| [references/modes/loop-until-dry.md](references/modes/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a full scan finds nothing actionable |
+| [references/modes/campaign.md](references/modes/campaign.md) | **Whole-codebase campaigns** (the asks above) — five sweeps, target discipline, scale, delivery |
+| [references/modes/loop-until-dry.md](references/modes/loop-until-dry.md) | Thorough passes ("keep going") — iterate until a scan finds nothing actionable |
 | [references/library/evaluation.md](references/library/evaluation.md) | **Before claiming a pass proved anything**, and after any control run — the recorded controls, their numbers, and how to add one |
 | [references/library/measuring.md](references/library/measuring.md) | **Any pass that will claim a number** — the harnesses, the unbiased task corpus, the metrics that carry the story, the honest before/after skeleton |
 | [references/library/what-the-principles-buy.md](references/library/what-the-principles-buy.md) | **Explaining why a pass is worth doing, choosing which principles lead for a kind of code, or briefing parallel fixers** — families of broken trust, the bug class each predicts, honest costs, a plain worker brief |
 | [references/library/extending-the-library.md](references/library/extending-the-library.md) | **Adding a principle** (a *gap*, not a pass over code) — discovery against existing principles, research, house format, both indexes, publish path |
 | [references/library/detecting-slop.md](references/library/detecting-slop.md) | Building or questioning a detector — what the tools cannot see, and the control a detector script must pass to earn its lines |
-| [references/principles/data-layer.md](references/principles/data-layer.md) | The target has a database (schema, SQL, migrations, keys, constraints, **indexes and join access paths beside the queries that use them**). Treat the schema as a slice of its own: it usually sits outside the audited directory, and no index finding is provable from the DDL alone |
-| [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep — hunting duplication beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
-| [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example — a real pass that collapsed an LLM agent fleet into one agent |
-| [references/library/further-reading.md](references/library/further-reading.md) | Background bibliography and concept attribution (not needed mid-audit) |
-| [references/lenses.json](references/lenses.json) | The default partition of 61 principles into 9 reading stances ; regroup it for different stances |
+| [references/principles/data-layer.md](references/principles/data-layer.md) | The target has a database (schema, SQL, migrations, keys, constraints, **indexes and join access paths beside the queries that use them**). The schema is a slice of its own: it often sits outside the target, and no index finding is provable from the DDL alone |
+| [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
+| [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example: an LLM agent fleet collapsed into one agent |
+| [references/library/further-reading.md](references/library/further-reading.md) | Bibliography and attribution (not needed mid-audit) |
+| [references/lenses.json](references/lenses.json) | The default partition of 62 principles into 9 reading stances; regroup it freely |
 
 ## Layout and checks
 
@@ -195,7 +196,7 @@ python3 scripts/swarm_lenses.py --emit /tmp/cells --repo <root> --target <dir>  
 python3 scripts/swarm_plan.py --repo <root> --target <dir> --out /tmp/plan --budget 24 [--ledger <jsonl> --round N]
 ```
 
-For a **specific ask** (*"look at separation of concerns in the provider adapters"*) skip the plan and read one cell: emit that group against that module, or open its principle files and read the module whole.
+For a **specific ask** (*"separation of concerns in the adapters"*) skip the plan: read one cell, that group against that module, whole.
 
 ## Scope bounds the code, not the principles
 
