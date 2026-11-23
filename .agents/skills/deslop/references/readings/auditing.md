@@ -53,7 +53,9 @@ For each violation list:
 - **Location:** File path and line number.
 - **Violation:** Coding principle violated and why.
 - **Summary:** One sentence description of the violation.
-- **Improvement:** Suggest a less sloppy way.
+- **Improvement:** Suggest a less sloppy way. For a population finding (one rule, many members), the improvement names
+  the **one shared enforcement point** every member passes and its mechanism for that rule kind (see the population
+  census below), never a check added at each member.
 
 For a thorough pass, iterate per [loop-until-dry.md](../modes/loop-until-dry.md).
 
@@ -123,27 +125,46 @@ them), and it is reported even when it ranks last.
 
 ### The population census
 
-A population is a class of members that one rule covers: every route that changes state, every handler of a queue,
-every state change, every query of a shared table, every job that spends money. When the target has one, the report
-carries this table after the violation list, one block per rule. Build it from the list of members (the router's
-route table, the handler registry, the writers of a table), not from the enforcing calls: a list built from the
-calls cannot show the member that has none.
+The census detects; it is never the repair. A check added to each empty cell, or the table kept as a standing
+registry, repeats the opt-in design that made the holes. A population is a class of members that one rule covers:
+every route that changes state, every handler of a queue, every state change, every query of a shared table, every
+job that spends money. When the target has one, the report carries this table after the violation list, one block
+per rule. Build it from the list of members (the router's route table, the handler registry, the writers of a
+table), not from the enforcing calls: a list built from the calls cannot show the member that has none.
+
+- **Who is a member:** every operation the rule applies to, listed from the registry, whatever role performs it:
+  for a write rule, the operations that change the protected thing; for a read rule (tenancy on reads), the queries
+  that read it. An editor's write, a reviewer's move and an admin's move are all members of a write rule; a member
+  that needs a different authority is a different **rule**, in its own block, not an exemption. Inside the block of a
+  write rule only, an operation that writes nothing (a read sent as `POST`, a stub that always refuses) is listed and
+  marked `writes nothing`; it is not an empty cell there, and it may still be a member of a read rule.
+- **What a written exemption is:** a named entry point or declaration in code that a reviewer can list, such as the
+  door's own narrow operation for a release. A comment is not one; a member exempted only by a comment is listed with
+  the comment and counted apart.
+- **Follow each member's calls** as far as the state change; a member covered by a callee is covered, and the cell
+  names the callee.
 
 | Rule (one sentence) and population | Member | Enforced at (`file:line` and the function), or `none` | Confirmed under the write lock? |
 |---|---|---|---|
 | every change to a project holds its edit lease; 12 write routes | `POST /documents/{id}/lock` | `none` | — |
 | | `PUT /sections/{id}` | `require_lease` at `file:line` | no: checked before `row_lock` |
+| | `POST /projects/{id}/search` | `writes nothing` | — |
+| **Repair for the whole block** | | the project store checks the lease under its row lock and returns the only handle that writes; the per-route calls are deleted | |
 
-Then the counts: members, members per enforcing function, empty cells. **An empty cell is a finding. Two or more
-independent decisions of one rule with different meanings, or a path that bypasses the check, are a finding.**
-Several functions that delegate to one decision are a lead to read, not a finding. Charge each finding to the owner
-of its rule kind: the authority to act (a permission, a lock or lease, its freshness) to
+Then the counts: members, members per enforcing function, empty cells. **Empty cells that share a rule kind are one
+finding, with one repair at the one shared enforcement point every member passes**, by rule kind: for the authority to
+act, the door that checks under its own lock and returns the only handle that writes; for tenancy on reads, the scoped
+query builder or row-level security; for validation, the parser at the boundary; for an audit record, the
+transaction that writes it with its change; for repeated requests, the idempotency key at the entry point. A lock is
+required only for authority findings that need serialization. Never a check added at each member: the census file lists every member, and the findings file carries the rule
+once, with its count of empty cells and two or three example loci. Two or more independent decisions of one rule
+with different meanings, or a path that bypasses the check, are a finding (also one per rule). Several functions that
+delegate to one decision are a lead to read, not a finding. Charge each finding to the owner of its rule kind: the
+authority to act (a permission, a lock or lease, its freshness) to
 [complete-mediation](../principles/reliability/complete-mediation.md), whose repair is a door that checks under its
 own lock and returns the only writing handle; tenancy on reads to
 [least-privilege](../principles/reliability/least-privilege.md) or a scoped query in the data layer; an audit record
 that must commit with its change to the transaction that writes both; validation to
 [parse-dont-validate](../principles/architecture/parse-dont-validate.md); repeated requests to
 [idempotency](../principles/architecture/idempotency.md). The table is a detector and a one-time proof during a
-migration; adding a check to each empty cell, or keeping the table as a standing registry, repeats the opt-in design. A member with a written exemption is not an
-empty cell; an exemption that only a comment states is listed with the reason and counted apart. Follow each
-member's calls as far as the state change; a member covered by a callee is covered, and the cell names the callee.
+migration.

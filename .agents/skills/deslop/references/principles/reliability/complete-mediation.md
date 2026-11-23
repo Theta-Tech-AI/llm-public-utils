@@ -81,7 +81,8 @@ def lock_document(project_id, doc, user):
 Each `EditSession` method resolves its child (the document, the section) with the session's own project id and
 writes it in the same call, and `_open()` refuses once the session is closed. A handle must not return child objects
 that another handle accepts: a document fetched through one session and passed to another would write under the
-wrong lease. The exemption is a separate operation on the store, not a second way to get an `EditSession`.
+wrong lease. The exemption is a separate operation on the store, not a second way to get an `EditSession`. Only that
+list of the door's exemptions lets a census tell a legitimate different path from a missing check.
 
 **The limit, plainly:** Python cannot stop code in the same process from reaching `store._db` or building an
 `EditSession` by hand. The construction makes the honest path the only short one; the database backstop is what
