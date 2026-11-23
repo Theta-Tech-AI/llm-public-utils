@@ -13,9 +13,9 @@ This file is the playbook for that. It does **not** replace the front door: [dri
 
 A **simulated flow** is the user's path written as the calls the frontend really makes, in the frontend's order — not the calls you think the backend should accept.
 
-1. Read the frontend's API client to learn the calls and their order; read the router for each body. The frontend is the truth for *what a user's session sends*; the router is the truth for *what is legal*.
+1. Read the frontend's API client to learn the calls and their order; read the router for each body. The frontend is the truth for *what a user's session sends*; the router is the truth for *what the server does*, not for *what should be legal* — take intended rules from the product docs or requirements, and report every place the code and the intent disagree (a missing gate is invisible if the code is also your oracle).
 2. Write one resumable driver per flow: every step records its ids and timestamps in a state file, so a crashed or replaced worker continues instead of starting again. For a mutating step, write the intent to the state file **before** sending, use the API's idempotency key where it has one, and after a crash read the server's state to learn whether the step happened before replaying it — a checkpoint written after the call cannot tell a lost reply from a lost request, and a replayed paid run or signature is a second effect.
-3. Log each call as method, path, status and elapsed time. No tokens, no bodies with private text.
+3. Log each call as method, path, status and elapsed time, plus the actor class (anonymous, role, administrator), a test-case id and whether the request was well-formed on purpose. No tokens, no bodies with private text.
 4. Before each stage opens, call the **next** stage's main route once and record the refusal. A gate that lets you through early is a finding; a gate that refuses with the wrong reason is one too.
 
 **Verify every endpoint against the code at the deployed commit before you call it.** Drivers from an earlier run drift; lock and signature payloads drift most. If the deployed app serves no API description page, the route list *is* the code: grep the router decorators in a read-only tree checked out at the exact deployed commit.
@@ -70,7 +70,7 @@ High-yield additions once the matrix exists:
 - **Frozen means frozen.** In every state where content must not change, try every writer (text, attachments, upstream locks, settings). A write that succeeds is the most serious thing an API run can find.
 - **The order of refusals.** When several preconditions fail, the refusal must name the first one the docs name. A wrong order sends the user to fix the wrong thing.
 - **Ceremony abuse.** For signed or confirmed steps: replay a spent challenge, use one issued for another action, another user, another object; let it expire; send an ordinary session token in its place.
-- **Races, small and deliberate.** Two to ten threads on one transition: exactly one effect and one record, and every competing request that did not win gets a clean conflict. (Retries that carry the *same* idempotency key may all return the one original result; assert the count of effects, not that every reply differs.)
+- **Races, small and deliberate.** Two to ten threads on one transition: exactly one effect and one transition record; losers get the refusal the route's contract documents (usually a clean conflict, with a refusal record if the docs promise one). A transition that is idempotent by design, or retries sharing one idempotency key, may return success to every caller: assert the count of effects and records, not that every reply differs.
 - **Time of check vs time of use.** When a code reader says "the role is read at the request edge and the write happens seconds later under a lock", script the change in between (see the hypothesis loop below).
 
 ## Stand on what exists
