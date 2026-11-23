@@ -20,6 +20,18 @@ A **simulated flow** is the user's path written as the calls the frontend really
 
 **Verify every endpoint against the code at the deployed commit before you call it.** Drivers from an earlier run drift; lock and signature payloads drift most. If the deployed app serves no API description page, the route list *is* the code: grep the router decorators in a read-only tree checked out at the exact deployed commit.
 
+## The tester is a model of the system
+
+Each HTTP call is stateless: it carries its own token and the API process keeps no session. The **system** is not: rows in the database, stored files, a search index, queued background runs, leases and an audit trail all persist between calls. So an API tester is a small state machine of its own. It holds a model of the object ("round 4, in write, I hold the lease, the form is locked"), predicts the answer to the next call from that model, and after the call compares three things:
+
+1. the **response** against the prediction (status, error code, the fields that matter);
+2. the **server's own state read** (the state route, the audit records) against the model;
+3. the model itself, updated only by calls that succeeded.
+
+Every disagreement is a finding, and which pair disagrees says where to look: response vs model is a wrong rule or a wrong doc; two of the server's own reads disagreeing with each other is one fact with two owners; a correct response that left the stored state unchanged (or changed it twice) is an atomicity or idempotency defect. Remember two states the model does not see by default: the **API process's hidden state** (in-flight work, single-use tickets, caches, memory) — only repetition, concurrency and long requests reach it — and the **browser's copy** of the state, which no API run reads at all.
+
+The flow map of Step 0 is this model written down once for everyone, instead of living in each lane's head.
+
 ## Step 0 — build the flow map (generated, never hand-kept)
 
 Before the first lane starts, build one artifact that answers: *what are the user flows, which calls does the frontend make in which order, which call is refused until which other call happened, and which routes has nobody exercised?* A hand-written map is stale in a week, so **generate it from the code at the deployed commit** and regenerate it at the start of every run. Keep hand-written input to one small overlay file for facts the code cannot give (which runs cost money, typical durations), each with its reason.
