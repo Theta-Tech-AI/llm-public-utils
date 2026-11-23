@@ -175,7 +175,7 @@ Read the code in whole files, not snippets — a lens applied to fragments produ
 report every violation **of your assigned principles** that you can substantiate by quoting the code.
 
 Rules that bind you:
-- READ-ONLY **with respect to the repository**. Do not modify, create, move or delete anything inside it, and do not run state-changing git commands. Your one permitted write is the findings file at the absolute path above, which lives outside the repo.
+- READ-ONLY **with respect to the repository**. Do not modify, create, move or delete anything inside it, and do not run state-changing git commands. Your permitted writes are the output files this prompt names (manifest, findings, and any census below), all outside the repo.
 - Judge against your principles only. If you see something outside your lens, do not argue it — list it under \
 `CROSS-LENS SIGHTINGS` in prose, one line each, so nothing is lost and nothing is double-counted.
 - One instance is enough to report. Do not wait for a second copy to prove a point, and do not downgrade a \
@@ -204,8 +204,8 @@ CENSUS = """
 
 If the target has a write boundary (a save route, a queue consumer, a webhook, a tool-call argument, an import job),
 write the input census table of `references/readings/auditing.md` to `{out_census}`: one row per external input the
-boundary accepts, with its owner or `none` and its re-interpretation count. Each `none` row, and each row with more
-than one re-interpretation, is also a finding in the JSONL. No write boundary: write one line saying so. A missing
+boundary accepts, with its owner or `none` and its count of independent re-interpretations (a call to the owner's
+parser is not one). Each `none` row, and each row with more than one re-interpretation, is also a finding in the JSONL. No write boundary: write one line saying so. A missing
 census file is a failed reading, like a missing manifest.
 """
 
@@ -254,6 +254,7 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
         ) + scope_note
         if spec.get("owes_input_census"):
             body += CENSUS.format(out_census=str(outdir / f"census-{stem}.md"))
+            (outdir / f"owes-{stem}.txt").write_text(f"census-{stem}.md\n")
         if spec.get("skip_when"):
             body += f"\nScope note: {spec['skip_when']}.\n"
         (outdir / f"lens-{stem}.md").write_text(body)

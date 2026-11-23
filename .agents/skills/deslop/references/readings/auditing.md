@@ -108,7 +108,8 @@ report of such a target without it is incomplete, even when it has no findings:
 | `<body.field>` | `file:line` | `Email` at `file:line`, or `none` | `3`: `file:line`, `file:line`, `file:line` | owned, or the finding |
 
 A check that returns only a verdict (`None`, `bool`, a complaint) is not an owner: it parses nothing, so its row reads
-`none`. **Zero owners, or more than one re-interpretation, is a finding** under
-[parse-dont-validate](../principles/architecture/parse-dont-validate.md), and it is reported even when it ranks last.
-Count re-interpretations with that file's tell 3; a reader that repairs the value (trims it, folds its case, removes
-duplicates, fills a default) is one.
+`none`. A re-interpretation is an **independent** decision about the value outside its owner: a reader that trims it,
+folds its case, removes duplicates or fills a default on its own. A call to the owner's parser is not one, including
+a parse on read of rows stored before the parser existed. **Zero owners, or more than one re-interpretation, is a
+finding** under [parse-dont-validate](../principles/architecture/parse-dont-validate.md) (search 3 there counts
+them), and it is reported even when it ranks last.

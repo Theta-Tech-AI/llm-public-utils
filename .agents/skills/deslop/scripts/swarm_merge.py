@@ -96,6 +96,20 @@ def cluster(rows: list[dict], window: int) -> list[dict]:
     return groups
 
 
+def owed_outputs(adir: Path) -> tuple[list[str], list[str]]:
+    """Outputs a cell owes besides its findings (owes-<stem>.txt names them): (problems, the owed texts)."""
+    problems, texts = [], []
+    for owes in sorted(adir.glob("owes-*.txt")):
+        stem = owes.stem.replace("owes-", "")
+        for name in (l.strip() for l in owes.read_text().splitlines() if l.strip()):
+            out = adir / name
+            if not out.exists() or not out.read_text().strip():
+                problems.append(f"{stem}: owed {name} is missing or empty — failed reading")
+            else:
+                texts.append(f"### {stem}\n\n{out.read_text().strip()}\n")
+    return problems, texts
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("findings", nargs="+")
@@ -123,6 +137,7 @@ def main() -> int:
                 missing = sorted(expected - declared)
                 if missing:
                     problems.append(f"{stem}: {len(expected)-len(missing)}/{len(expected)} read, missing " + ", ".join(missing))
+            problems += owed_outputs(adir)[0]
         print("no findings parsed — a clean pass", file=sys.stderr)
         for p_ in problems:
             print("  " + p_, file=sys.stderr)
@@ -168,6 +183,9 @@ def main() -> int:
             else:
                 manifest_report.append(f"- **{stem}** — {len(expected)}/{len(expected)} read")
 
+    owed_problems, owed_texts = owed_outputs(Path(a.assignments)) if a.assignments else ([], [])
+    manifest_report += [f"- **{p_}**" for p_ in owed_problems]
+
     by_lens = defaultdict(int)
     by_principle = defaultdict(int)
     for r in rows:
@@ -187,6 +205,9 @@ def main() -> int:
         L.append("## Read manifests\n")
         L.extend(manifest_report)
         L.append("")
+    if owed_texts:
+        L.append("## Input census\n")
+        L.extend(owed_texts)
     L.append("## Findings per lens\n")
     for lens, n in sorted(by_lens.items(), key=lambda kv: -kv[1]):
         L.append(f"- **{lens}** — {n}")

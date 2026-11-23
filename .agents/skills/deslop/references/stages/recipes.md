@@ -19,13 +19,14 @@ Pick the shape from the ask, then read only what that shape needs. A target that
 
 ## A scoped pass follows a repair to its writer
 
-A diff is not the whole defect when it adds a **repair to a value it reads**: a new trim, case fold, de-duplication,
-type coercion or default applied to a field that another module stored or sent (`row["email"].strip()`,
-`int(payload["count"])`, `set(answer)`). The repair means the value reached this reader unparsed. Before reporting,
-open the **writer** of that value (the save path, producer or boundary that stored it, found from the field name), apply
-the tells of [parse-dont-validate](../principles/architecture/parse-dont-validate.md) there, and charge the writer when it
-keeps the raw value. The reader's line is the evidence, not the finding. This holds even when the writer is outside the
-diff; name both loci.
+A diff is not the whole defect when it adds a **repair to a value this system already stored or passed**: a new
+trim, case fold, de-duplication, coercion or default applied to a field that another module of the same codebase
+wrote (`row["email"].strip()`, `set(saved["tags"])`). Such a repair means the writer kept a value in more than one
+form. Before reporting, open the **writer** (the save path that stored the field, found from the field name), apply
+the searches of [parse-dont-validate](../principles/architecture/parse-dont-validate.md) there, and charge the writer
+when it keeps the raw value; name both loci, even when the writer is outside the diff. The rule does not apply when
+the reader is itself the receiving boundary for another producer's format (decoding a wire payload or model output
+into a type once), or when it formats a canonical value for display.
 
 ## The default: a coverage pass
 

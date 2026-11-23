@@ -65,33 +65,38 @@ def parse_email(raw: object) -> Email:
     return Email(text)
 ```
 
-Three tells, each with a primitive to find it. One instance of any of them is a finding:
+**The criterion:** the value a boundary keeps or passes on is not the value it checked, so a later reader must
+decide again what it is. One instance is enough. The three searches below are **sighting aids**, not the criterion:
+each hit is confirmed by reading the code, and a hit that fails the criterion is declined.
 
-1. **A checker that returns only a verdict, and a caller that stores its argument.** Find functions whose return
-   type is `-> None`, `-> bool` or `-> str | None` (a complaint) and that take the value they judge
-   (`grep -nE 'def \w+\(.*\) -> (None|bool|str \| None|Optional\[str\])' <src>`). For each, read its callers: when
-   the caller writes the same argument it passed in (`store.put(body)`, `INSERT ... VALUES (%s)`, `session.add(x)`)
-   rather than something the check returned, the check is a validator at a save boundary.
-2. **A normalisation inside a check, applied to a local copy.** Inside the checkers from tell 1, look for a
-   normalising call bound to a local name (`grep -nE '^\s+\w+ = .*\.(strip|lower|casefold|upper)\(\)|= (int|float|Decimal)\(' <checker files>`):
-   `text = value.strip()`, `n = int(raw)`, `key = raw.casefold()`, `items = set(values)`. The check proved the
-   normalised value is good and returned nothing, so the stored value was never normalised.
-3. **One stored value normalised again by more than one reader.** Grep the normalising calls across the tree, group
-   the hits by the value they apply to (the same key, column or field), and count readers per value
-   (`grep -rnE '\.(strip|lower|casefold|upper)\(\)|\bset\(|\b(int|float)\(' <src>`, then group by the field each hit reads). Two readers
-   repairing one value is a finding against its **writer**, not against the readers: open the writer and apply
-   tells 1 and 2 there.
+1. **A checker that returns only a verdict, and a caller that stores its argument.** Find functions that return
+   `None`, `bool` or a complaint (`str | None`)
+   (`grep -rnE --include='*.py' 'def \w+\(.*\) -> (None|bool|str \| None|Optional\[str\])' <src>`). Read the
+   callers. It meets the criterion when the caller then writes the raw argument it passed in (`store.put(body)`,
+   `INSERT ... VALUES (%s)`) and no parser ran before the check. A check run on a value that is already parsed
+   (`check_deliverable(postcode)` after `parse_postcode`) is declined.
+2. **A normalisation inside a check, applied to a local copy.** Inside the checkers from search 1, find a
+   normalising call bound to a local name
+   (`grep -nE '^\s+\w+ = (.*\.(strip|lower|casefold|upper)\(\)|(int|float|Decimal|set|frozenset)\()' <checker files>`):
+   `text = value.strip()`, `n = int(raw)`, `items = set(values)`. This is the strongest evidence: the check judged
+   the normalised value and the caller kept the other one.
+3. **One stored value normalised again by more than one reader.** Find the normalising calls
+   (`grep -rnE --include='*.py' '\.(strip|lower|casefold|upper)\(\)|\b(set|int|float)\(' <src>`), group the hits
+   by the field each one reads, and count readers per field. Count only **independent** repairs: a reader that calls
+   the owner's parser (including on legacy rows stored before the parser existed) is not one. Two independent
+   repairs of one stored value point at its **writer**, not at the readers: open the writer and apply searches 1
+   and 2 there.
 
-Not a finding: a parser that returns the normalised value which its caller stores; a single normalisation where the
-value enters from its own producer (model output trimmed once into a typed result); a reader that formats a
-canonical value for display (a postcode split into two groups for a label). The test is whether the stored or
-passed value is already in its one form.
+Declined: a parser that returns the normalised value which its caller stores; a reader that is itself the receiving
+boundary for another producer's format and turns it into a type once (model output trimmed into a typed result, a
+wire count decoded with `int()`); a reader that formats a canonical value for display (a postcode split into two
+groups for a label).
 
 **How to fix it**
 
 1. Write one parser per input kind at the boundary, returning the canonical value or refusing (`parse_email(raw) -> Email`).
 2. Make the writer store what the parser returned, and answer it back to the caller, so the client sees what was kept.
-3. Delete the readers' repairs one by one; the count from tell 3 is the measure, and it falls to zero.
+3. Delete the readers' repairs one by one; the count from search 3 is the measure, and it falls to zero.
 4. For rows already stored raw, parse on read with the same function; do not add a second normaliser.
 
 ---
