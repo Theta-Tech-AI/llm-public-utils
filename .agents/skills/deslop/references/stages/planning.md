@@ -197,6 +197,10 @@ What must hold regardless of mechanism:
 
 - **One cell, one reading.** A reading covering three groups at once degrades into a survey.
 - **Whole files, not snippets.** A group applied to fragments produces confident nonsense.
+- **A reading list one reader can finish.** In one recorded run, a reader given a lens of 18 files and about 96 KB
+  read two in full, seven in part and skipped nine, and said so in its manifest. That is one data point, not a limit.
+  When a lens's list is that large, split its principle files across two readers along the stance (related
+  principles stay together, both get the shared protocols), rather than trusting one reader to finish it.
 - **Read-only**, and fresh state where possible. A reader that may write becomes a refactorer, and the next cell
   reports the wreckage.
 - **Prompts are not paraphrased.** If a prompt carries the assigned principle files and the report contract,

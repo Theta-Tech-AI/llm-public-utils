@@ -154,6 +154,8 @@ theirs. Your value is depth inside your lens, not breadth outside it.
 
 ## 1. Read first, in full, before you look at any code
 
+Your stance, in one line: {stance}
+
 Read each file below completely — the whole file, not the index row. The first is your category index: read it
 for the stance and the tells, then read every principle file in full. They are your lens, and your findings must
 be expressed in their terms. The pattern files at the end (if any) are tells to read with, not extra principles:
@@ -161,12 +163,14 @@ you never charge a finding to a pattern, only to the principle that owns the mec
 
 {reading_list}
 
+If you cannot read every file in full, read in this order: `references/readings/auditing.md` (its census sections
+first when this prompt owes a census), then the principle files of your lens, then the indexes, then the patterns.
+
 Then write `{out_manifest}` — the read manifest, one absolute-or-reference-relative path per line, naming every
-file you actually opened. It is checked against your assignment: a file you did not read cannot be claimed by you,
+file you actually opened, marking any file read only in part, and naming each assigned file you did not open on a
+line that starts `NOT OPENED:`. It is checked against your assignment: a file you did not read cannot be claimed by you,
 and a manifest missing a line is reported as a failed reading rather than a clean pass. This is the only
 verification the protocol has that a lens read what it was given.
-
-Your stance, in one line: {stance}
 
 ## 2. Then scan
 
@@ -192,7 +196,9 @@ Write JSON Lines to `{out_jsonl}` — one object per finding, no prose around it
 {{"file": "path/from/repo/root.py", "line": 191, "symbol": "function-or-class", "principle": "library-slug", "severity": "high|medium|low", "what": "quoted code and why it violates the principle", "repair": "the concrete change, one or two sentences, owner-first"}}
 
 `principle` is the file slug of the principle you are charging, e.g. `separation-of-concerns`. Quote real \
-lines and real numbers; an unlocatable finding is worthless to the merge step.
+lines and real numbers; an unlocatable finding is worthless to the merge step. For a population finding (one rule, \
+many members), `repair` names the door every member passes and what it checks under its lock, never a check \
+added at each member.
 
 Then, in your final message, give: the files you read, the count of findings by principle, the `CROSS-LENS \
 SIGHTINGS`, and anything in your lens you could not decide (say what would decide it).
@@ -215,15 +221,20 @@ POPULATION = """
 
 If the target has a class of members that one rule covers (authorization, a lock or lease, audit, tenancy,
 idempotency, rate limit, validation), write the population census table of
-`references/readings/auditing.md` to `{out_census}`: build the member list from the route table or registry, never
-from the enforcing calls; one row per member with where it enforces the rule or `none`, then the counts (members,
-members per enforcing function, empty cells). Keep every row in the census file. An empty cell, or a rule decided
-independently with different meanings or with a bypassable path, is a finding in the JSONL only when its rule kind is
-owned by one of your assigned principles; when another principle owns it (validation, idempotency, tenancy on reads),
+`references/readings/auditing.md` to `{out_census}` (an absolute path in the emit folder, outside the repository):
+build the member list from the route table or registry, never from the enforcing calls. Members are every operation
+that changes the protected thing, whatever role performs it; a member needing a different authority is another rule
+in its own block; an operation that writes nothing is marked `writes nothing`, not an empty cell; an exemption is a
+named entry point in code, and a comment-only exemption is counted apart. One row per member with where it enforces
+the rule or `none`, then the counts (members, members per enforcing function, empty cells), then one line with the
+repair for the whole block. Keep every row in the census file. Empty cells that share a rule kind are ONE finding in
+the JSONL, with the count of empty cells and two or three example loci, and its repair is the door, not a check per
+member. That finding, or a rule decided independently with different meanings or with a bypassable path, goes in
+the JSONL only when its rule kind is owned by one of your assigned principles; when a principle outside your lens owns it (for example validation, owned by parse-dont-validate),
 do not argue it: list it under `CROSS-LENS SIGHTINGS` in prose, one line each, for the owning reader. Several functions
 that delegate to one decision are only a lead. The census detects and is never the repair: charge each finding to the owner of its rule kind as
 `readings/auditing.md` lists (the authority to act to complete-mediation; validation, idempotency and tenancy on reads
-to their own principles). No such population: write one line saying so. A missing census file is a failed reading.
+to their own principles, whichever lens holds them). No such population: write one line saying so. A missing census file is a failed reading.
 """
 
 
@@ -235,6 +246,7 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
         for p in problems:
             print("  - " + p, file=sys.stderr)
         return 1
+    outdir = outdir.resolve()
     outdir.mkdir(parents=True, exist_ok=True)
     lenses = m["lenses"]
     names = [only] if only else list(lenses)
