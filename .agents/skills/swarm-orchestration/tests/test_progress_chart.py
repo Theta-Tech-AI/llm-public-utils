@@ -27,6 +27,12 @@ class ProgressChartTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             MODULE.checked(chart({}, {"Later": 3}))
 
+    def test_a_wrong_total_or_a_duplicate_stage_is_refused(self) -> None:
+        with self.assertRaises(SystemExit):
+            MODULE.checked({**chart({"Coding": 2}, {}), "total": 5})
+        with self.assertRaises(SystemExit):
+            MODULE.checked({**chart({"Coding": 2}, {}), "stages": STAGES + STAGES[:1]})
+
     def test_outside_labels_on_one_side_never_overlap(self) -> None:
         placed = MODULE.spread([(0.1, 0.1, "a"), (0.12, 0.11, "b"), (0.2, 0.12, "c")])
         ys = sorted(y for _, y, _ in placed)

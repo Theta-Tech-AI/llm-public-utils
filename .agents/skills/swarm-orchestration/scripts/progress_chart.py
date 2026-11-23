@@ -6,7 +6,8 @@ dashed lines expand them into a smaller pie on the right. Under each pie the sam
 operations (first stage at the top). Sectors carry their own labels (outside with a leader line when small); there
 is no legend. Input is JSON; the order and colours of ``stages`` are the order of operations::
 
-    {"title": "All open: 66, release 1.1: 14 (was 18 at 5:37 PM)",
+    {"title": "All open: 64, release 1.1: 8 (was 18 at 5:37 PM)",
+     "total": 64,
      "focus_group": "Release 1.1",
      "stages": [{"name": "Waiting on the operator", "color": "#f97316"},
                 {"name": "Coding", "color": "#22c55e"},
@@ -14,7 +15,8 @@ is no legend. Input is JSON; the order and colours of ``stages`` are the order o
      "focus_items": {"Coding": 8},
      "rest_items": {"Waiting on the operator": 1, "Planned for a later release": 55}}
 
-Every count comes from the tracker at draw time. A stage name outside ``stages`` or a focus group with no items is refused.
+Every count comes from the tracker at draw time. A duplicate or unknown stage name, a focus group with no items, or
+counts that do not add up to the optional ``total`` are refused.
 
 Usage: progress_chart.py INPUT.json OUTPUT.png
 """
@@ -26,7 +28,7 @@ import math
 import sys
 import textwrap
 from pathlib import Path
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class Stage(TypedDict):
@@ -40,6 +42,7 @@ class ChartInput(TypedDict):
     stages: list[Stage]
     focus_items: dict[str, int]
     rest_items: dict[str, int]
+    total: NotRequired[int]
 
 
 BACKGROUND, FOREGROUND, OUTLINE, AXIS = "#0f172a", "#e2e8f0", "#facc15", "#475569"
@@ -50,6 +53,8 @@ LABEL_GAP = 0.2  # least vertical distance between two outside labels on one sid
 def checked(data: ChartInput) -> tuple[list[str], dict[str, str], dict[str, int], dict[str, int]]:
     """Stage order, colours and the two count maps without empty stages; unknown stages and an empty focus fail loud."""
     names = [s["name"] for s in data["stages"]]
+    if len(set(names)) != len(names):
+        raise SystemExit(f"❌ duplicate stage names in {names}")
     unknown = sorted((data["focus_items"].keys() | data["rest_items"].keys()) - set(names))
     if unknown:
         raise SystemExit(f"❌ unknown stage(s): {unknown}; known: {names}")
@@ -57,6 +62,9 @@ def checked(data: ChartInput) -> tuple[list[str], dict[str, str], dict[str, int]
     rest = {k: v for k, v in data["rest_items"].items() if v > 0}
     if not focus:
         raise SystemExit(f"❌ focus group {data['focus_group']!r} has no items")
+    counted = sum(focus.values()) + sum(rest.values())
+    if "total" in data and data["total"] != counted:
+        raise SystemExit(f"❌ counts add up to {counted}, not the stated total {data['total']}")
     return names, {s["name"]: s["color"] for s in data["stages"]}, focus, rest
 
 
@@ -132,7 +140,7 @@ def draw(data: ChartInput, output: Path) -> None:
     from matplotlib.patches import ConnectionPatch, Wedge
 
     fig = plt.figure(figsize=(24, 19), dpi=300, facecolor=BACKGROUND)
-    grid = fig.add_gridspec(2, 2, height_ratios=[1.25, 1], width_ratios=[1.35, 1], hspace=0.18, wspace=0.42)
+    grid = fig.add_gridspec(2, 2, height_ratios=[1.25, 1], width_ratios=[1.35, 1], hspace=0.18, wspace=0.75)
     big, small = fig.add_subplot(grid[0, 0]), fig.add_subplot(grid[0, 1])
     fig.suptitle(data["title"], color=FOREGROUND, fontsize=26, y=0.985)
 
