@@ -65,8 +65,9 @@ def parse_email(raw: object) -> Email:
     return Email(text)
 ```
 
-**The criterion:** the value a boundary keeps or passes on is not the value it checked, so a later reader must
-decide again what it is. One instance is enough. The three searches below are **sighting aids**, not the criterion:
+**The criterion:** a boundary learned something about a value and kept or passed on a form that does not carry it,
+so a later reader must decide again. The value may travel as the same raw type (the non-empty list above), or a
+different value from the one the check judged may be kept (the trimmed email). One instance is enough. The three searches below are **sighting aids**, not the criterion:
 each hit is confirmed by reading the code, and a hit that fails the criterion is declined.
 
 1. **A checker that returns only a verdict, and a caller that stores its argument.** Find functions that return

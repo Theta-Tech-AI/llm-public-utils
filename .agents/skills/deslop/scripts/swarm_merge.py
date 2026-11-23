@@ -119,6 +119,11 @@ def main() -> int:
                     help="directory holding assignment-<stem>.txt and files-read-<stem>.txt, to check that each "
                          "reading actually opened the files it was given")
     a = ap.parse_args()
+    if not a.assignments:
+        # owed outputs are checked even when the flag is left off: the emitted cell folder holds the obligations
+        parents = {Path(p).resolve().parent for p in a.findings}
+        if len(parents) == 1 and any(next(iter(parents)).glob("owes-*.txt")):
+            a.assignments = str(next(iter(parents)))
 
     rows, bad = load([Path(p) for p in a.findings])
     if not rows:
@@ -137,7 +142,13 @@ def main() -> int:
                 missing = sorted(expected - declared)
                 if missing:
                     problems.append(f"{stem}: {len(expected)-len(missing)}/{len(expected)} read, missing " + ", ".join(missing))
-            problems += owed_outputs(adir)[0]
+            owed_problems, owed_texts = owed_outputs(adir)
+            problems += owed_problems
+            if owed_texts:
+                census = "# Deslop swarm — no findings\n\n## Input census\n\n" + "\n".join(owed_texts)
+                print(census)
+                if a.out:
+                    Path(a.out).write_text(census)
         print("no findings parsed — a clean pass", file=sys.stderr)
         for p_ in problems:
             print("  " + p_, file=sys.stderr)
@@ -262,7 +273,9 @@ def main() -> int:
         print(f"\nwritten: {a.out}", file=sys.stderr)
     else:
         print(out)
-    return 0
+    for p_ in owed_problems:
+        print("  " + p_, file=sys.stderr)
+    return 1 if owed_problems else 0
 
 
 if __name__ == "__main__":
