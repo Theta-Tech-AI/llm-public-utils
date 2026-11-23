@@ -203,9 +203,10 @@ def draw(data: ChartInput, output: Path) -> None:
     label_sectors(big, wedges[1:], rows, total, -1, 20, 0.12)
     big.add_patch(Wedge((0, 0), 1.0, -half, half, fill=False, edgecolor=OUTLINE, linewidth=5, zorder=5))
     # a name whose longest word will not fit the block at a readable size stays in the key, titles and bars; the block keeps the count
-    fits = inside_font(focus["name"], 20) >= MIN_INSIDE_FONT
+    fit = inside_font(focus["name"], 20)
+    fits = fit >= MIN_INSIDE_FONT
     big.text(0.6, 0, f"{wrap(focus['name'], 12)}\n{focus_total}" if fits else str(focus_total), ha="center", va="center",
-             color=text_color(focus["color"]), fontsize=20, weight="bold", zorder=6)
+             color=text_color(focus["color"]), fontsize=fit if fits else 20, weight="bold", zorder=6)
     big.set_title(f"All open issues ({total})", color=FOREGROUND, fontsize=22, pad=14)
 
     # Group key: coloured words under the title, centred, no legend box.
