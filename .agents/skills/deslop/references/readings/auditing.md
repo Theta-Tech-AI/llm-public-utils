@@ -89,6 +89,8 @@ principles while designing is cheaper than consolidating a fork that has callers
   one and nothing in the file that forgot it. So for each rule the target states or implies for a class of things
   (authorization, a lock or lease, audit, tenancy, idempotency, rate limit, validation), list every member of the
   class and where each one enforces the rule: the table is in [the population census](#the-population-census) below.
+  The census detects holes in code built opt-in; the repair is the construction in
+  [complete-mediation](../principles/reliability/complete-mediation.md), never a standing list or one more check per member.
   Like the other two censuses, it outranks nothing else in the pass, and it is reported even when it ranks last.
 
 ### The census of reasons to change is a required section of the report
@@ -129,12 +131,13 @@ calls cannot show the member that has none.
 
 | Rule (one sentence) and population | Member | Enforced at (`file:line` and the function), or `none` | Confirmed under the write lock? |
 |---|---|---|---|
-| every route that changes a project holds its edit lease; 12 write routes | `POST /documents/{id}/lock` | `none` | — |
+| every change to a project holds its edit lease; 12 write routes | `POST /documents/{id}/lock` | `none` | — |
 | | `PUT /sections/{id}` | `require_lease` at `file:line` | no: checked before `row_lock` |
 
 Then the counts: members, members per enforcing function, empty cells. **An empty cell is a finding. Two or more
-different enforcing functions for one rule are a finding. An enforcement point that not every member passes is the
-cause**, and the repair moves the rule there. Charge them under
-[complete-mediation](../principles/reliability/complete-mediation.md). A member with a written exemption is not an
+different enforcing functions for one rule are a finding. A write door that accepts a caller with no proof of the
+right is the cause.** Charge them under [complete-mediation](../principles/reliability/complete-mediation.md), and
+propose its repair: the right as a value the door demands. The table is a detector and a one-time proof during that
+migration; adding a check to each empty cell, or keeping the table as a standing registry, repeats the opt-in design. A member with a written exemption is not an
 empty cell; an exemption that only a comment states is listed with the reason and counted apart. Follow each
 member's calls as far as the state change; a member covered by a callee is covered, and the cell names the callee.

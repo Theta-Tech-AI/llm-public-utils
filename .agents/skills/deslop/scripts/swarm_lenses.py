@@ -218,7 +218,9 @@ idempotency, rate limit, validation), write the population census table of
 `references/readings/auditing.md` to `{out_census}`: build the member list from the route table or registry, never
 from the enforcing calls; one row per member with where it enforces the rule or `none`, then the counts (members,
 members per enforcing function, empty cells). Each empty cell, and each rule with two or more enforcing functions, is
-also a finding in the JSONL. No such population: write one line saying so. A missing census file is a failed reading.
+also a finding in the JSONL. The census detects; each finding's repair is the construction in complete-mediation (the right
+as a value the write door demands), never a check added per member or a standing list. No such population: write one
+line saying so. A missing census file is a failed reading.
 """
 
 
