@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import random
 import tempfile
 import unittest
 from pathlib import Path
@@ -170,6 +171,29 @@ class BoardCheckTest(unittest.TestCase):
             Path(directory, "w1.jsonl").write_text("\n".join(map(json.dumps, clean)))
             self.assertNotIn("review loop: same finding class 3 rounds", MODULE.findings(board(item("a")), NOW, status_dir=Path(directory)))
 
+    def test_a_round_with_several_classes_still_counts_and_null_pace_is_invalid(self) -> None:
+        lines = [{"at": f"2026-11-23T05:{r}0Z", "step": "review", "round": r, "finding_class": c}
+                 for r in (1, 2, 3) for c in ("boundary parsing", f"other {r}")]
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "w1.jsonl").write_text("\n".join(map(json.dumps, lines)))
+            found = MODULE.findings(board(item("a")), NOW, status_dir=Path(directory))
+        self.assertEqual(len(found["review loop: same finding class 3 rounds"]), 1)
+        self.assertTrue(any("pace_min" in e for e in MODULE.invalid({**board(item("a")), "workers": [{"id": "w1", "model": "m", "pace_min": None}]})))
+
+    def test_an_earlier_end_of_turn_or_newer_status_is_not_finished(self) -> None:
+        with tempfile.TemporaryDirectory() as status, tempfile.TemporaryDirectory() as activity:
+            record = Path(activity, "w1.output")
+            record.write_text('{"stop_reason":"end_turn"}\n{"type":"tool_use"}\n')
+            stamp = NOW.timestamp() - 600
+            os.utime(record, (stamp, stamp))
+            self.assertNotIn("finished without reporting", MODULE.findings(board(item("a")), NOW, activity_dir=Path(activity)))
+            record.write_text('{"type":"tool_use"}\n{"stop_reason":"end_turn"}\n')
+            os.utime(record, (stamp, stamp))
+            self.assertIn("finished without reporting", MODULE.findings(board(item("a")), NOW, activity_dir=Path(activity)))
+            Path(status, "w1.jsonl").write_text(json.dumps({"at": "2026-11-23T05:15Z", "step": "build", "expected_end": "2026-11-23T06:00Z"}))
+            self.assertNotIn("finished without reporting",
+                             MODULE.findings(board(item("a")), NOW, activity_dir=Path(activity), status_dir=Path(status)))
+
     def test_wrongly_typed_fields_are_invalid(self) -> None:
         bad = {**board(item("a", stage=["Coding"]), item("b", blocks=None)),
                "workers": [{"id": ["w1"], "model": "routine"}],
@@ -206,6 +230,31 @@ class BoardCheckTest(unittest.TestCase):
                 MODULE.time.monotonic, MODULE.time.sleep = original
         self.assertEqual(code, 0)
         self.assertEqual(sleeps, [600, 600, 300])
+
+    def test_property_any_accepted_board_and_any_status_line_never_crash_the_check(self) -> None:
+        """Invariant from three review rounds of crash findings: invalid() never raises, and a board it accepts,
+        with any status lines and activity records, never makes findings() raise."""
+        rng = random.Random(9)
+        values = [None, [], {}, "", "x", 0, -1, 2.5, True, ["w1"], [1, None], {"a": 1}, "2026-11-23T05:00Z", "tomorrow"]
+        sections = ["items", "sweeps", "workers", "pipelines", "environments", "handbacks", "fixtures"]
+        with tempfile.TemporaryDirectory() as status, tempfile.TemporaryDirectory() as activity:
+            for case in range(400):
+                mutant = copy.deepcopy(FIXTURE)
+                for _ in range(rng.randint(1, 4)):
+                    section = rng.choice(sections + ["updated", "capacity", "stages"])
+                    if section in sections and mutant.get(section):
+                        row = rng.choice(mutant[section])
+                        row[rng.choice(list(row) + ["blocks", "pace_min", "read_until", "answered"])] = rng.choice(values)
+                    else:
+                        mutant[section] = rng.choice(values)
+                line = {k: rng.choice(values) for k in ("at", "step", "expected_end", "round", "finding_class", "unsent")}
+                Path(status, "w-acadd5.jsonl").write_text(json.dumps(line) + "\n" + json.dumps({**line, "at": "2026-11-23T05:00Z", "step": "s"}))
+                Path(activity, "w-acadd5.output").write_text(rng.choice(['{"stop_reason":"end_turn"}', "x", ""]))
+                try:
+                    if not MODULE.invalid(mutant):
+                        MODULE.findings(mutant, NOW, Path(activity), status_dir=Path(status))
+                except Exception as error:  # noqa: BLE001 - the property is "no exception of any kind"
+                    self.fail(f"case {case} raised {error!r}")
 
     def test_worked_example_board_is_valid_and_needs_the_coordinator(self) -> None:
         self.assertEqual(MODULE.invalid(copy.deepcopy(FIXTURE)), [])

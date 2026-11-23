@@ -131,6 +131,7 @@ class Board(TypedDict):
 class Activity(TypedDict):
     quiet_min: float
     finished: bool
+    changed: float
 
 
 REQUIRED = {"items": ("id", "what", "stage", "next_event", "expected_by"), "sweeps": ("id", "what"),
@@ -168,11 +169,11 @@ TYPES: dict[str, dict[str, tuple[type, ...] | str]] = {
 
 
 def well_typed(value: object, kind: tuple[type, ...] | str) -> bool:
-    """A value of the field's type; None is allowed here (required fields are checked apart)."""
-    if value is None:
-        return True
+    """A value of the field's type; None is allowed for text and names (required fields are checked apart), never for a number."""
     if kind == "int":
         return type(value) is int
+    if value is None:
+        return kind != (bool,)
     if kind == "names":
         return isinstance(value, str) or (isinstance(value, list) and all(isinstance(o, str) for o in value))
     if kind == "ids":
@@ -239,7 +240,9 @@ def activity(directory: Path, worker: str, marker: str, now: datetime) -> Activi
     with newest.open("rb") as handle:
         handle.seek(max(0, newest.stat().st_size - 4000))
         tail = handle.read().decode("utf-8", "replace")
-    return {"quiet_min": quiet, "finished": marker in tail}
+    last = next((line for line in reversed(tail.splitlines()) if line.strip()), "")
+    # only the final record says whether the run ended; a marker from an earlier turn is history
+    return {"quiet_min": quiet, "finished": marker in last, "changed": newest.stat().st_mtime}
 
 
 def statuses(directory: Path, worker: str) -> tuple[list[Status], int]:
@@ -287,12 +290,15 @@ def status_findings(history: list[Status], now: datetime, stall_min: float, read
     since = history[changed + 1] if changed is not None else history[0]
     if minutes(since["at"], now) >= stall_min:
         found["no step change"].append(f"{last['step']!r} since {since['at']} ({minutes(since['at'], now):.0f} min)")
-    # a review outcome is a line that names a finding class; work steps inside the round leave it empty and change nothing
-    per_round = {h["round"]: h["finding_class"] for h in history if h.get("round") is not None and h.get("finding_class")}
+    # a review outcome is a line that names a finding class; a round can name several; work steps leave it empty
+    per_round: dict[int, set[str]] = defaultdict(set)
+    for line in history:
+        if line.get("round") is not None and line.get("finding_class"):
+            per_round[line["round"]].add(line["finding_class"])
     rounds = sorted(per_round)[-3:]
-    classes = {per_round[r] for r in rounds}
-    if len(rounds) == 3 and len(classes) == 1 and "none" not in classes:
-        found["review loop: same finding class 3 rounds"].append(f"{classes.pop()!r} in rounds {rounds} (escalate, see review.md)")
+    recurring = set.intersection(*(per_round[r] for r in rounds)) - {"none"} if len(rounds) == 3 else set()
+    for finding_class in sorted(recurring):
+        found["review loop: same finding class 3 rounds"].append(f"{finding_class!r} in rounds {rounds} (escalate, see review.md)")
     return found
 
 
@@ -361,7 +367,8 @@ def findings(board: Board, now: datetime, activity_dir: Path | None = None, quie
         if record is None:
             if not history:
                 found["worker has no activity record"].append(wid)
-        elif record["finished"] and not worker.get("reported") and record["quiet_min"] >= 3:
+        elif (record["finished"] and not worker.get("reported") and record["quiet_min"] >= 3
+              and not (history and when(history[-1]["at"]).timestamp() > record["changed"])):
             found["finished without reporting"].append(f"{wid} (last activity {record['quiet_min']:.0f} min ago)")
         elif not history and record["quiet_min"] >= worker.get("pace_min", quiet_min):
             found["quiet past its pace"].append(f"{wid} quiet {record['quiet_min']:.0f} min (ask it; check its processes)")
