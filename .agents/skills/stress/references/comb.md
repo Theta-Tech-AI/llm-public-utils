@@ -64,6 +64,10 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran.
 
+12. **Refusal sweep.** Collect the 4xx body of every route (empty body, wrong type, wrong role, unknown id, wrong state). Assert one envelope (a code and a message), a message that is not the code, that names what is missing, who can fix it and the next action, and a field name on validation errors ("String should have at most 500 characters" with no field is a miss). Fixing the client to avoid the refusal does not close the class: re-run the sweep against the API after each such fix.
+
+13. **Browser-only layout classes.** Add to the width-and-state matrix, in a headed browser: overlap or clipping at half width, layout shift on tab or device switch, control style drift between sibling panels, a URL that loses its state on Back, and copy that names a stage with no page.
+
 ## Sweep surface-by-surface, not path-by-path
 
 The passes above describe walking the happy path repeatedly. That is the right

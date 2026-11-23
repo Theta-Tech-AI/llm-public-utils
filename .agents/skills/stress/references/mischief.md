@@ -77,6 +77,9 @@ seq 1 10 | xargs -P 10 -I{} curl -sS -o /dev/null -w "%{http_code}\n" -X POST \
   "$BASE/api/projects/$SCRATCH/submit" -H "authorization: Bearer $USER_TOKEN"
 ```
 
+
+**Typed-input fuzz per route.** For each route that takes an id, enum, free text or typed answer, send: (a) a well-formed id that does not exist, to every route taking that id kind (all must answer in the same status class, never 200 with invented data); (b) the wrong JSON type; (c) a value outside the option list; (d) gateway-sensitive text (`>=`, `; select`, quoted phrases, `<script>`); (e) 501 and 20 000 characters (a gateway may answer an HTML error above its URL limit); (f) a null byte. Then read back: what was stored equals what was sent, and derived counters agree with the stored values. A refused input must queue no paid job.
+
 ## Field-proven state-contradiction classes (bugs users hit first)
 
 These classes repeatedly reach a human before a sweep catches them, because they only surface when you drive the *live UI* into a specific real state — code review and API probes miss them. Each is a mischief target with a concrete check. Drive every staged/wizard/multi-step flow against all of them.
@@ -92,6 +95,14 @@ These classes repeatedly reach a human before a sweep catches them, because they
 5. **Flash of a control that then disappears.** On first load a page briefly shows a "trigger / generate" control, then auto-starts and hides it. Pick one behavior and commit — either auto-start (and never show the manual trigger) or require the click. A control that appears then vanishes reads as a missed click and a flicker.
 
 6. **Return-to-in-flight-job orphaning.** Start a long-running job on a page, navigate away, then return (or refresh) while it's still running. The page must re-attach to the in-flight run and keep reporting progress (or offer cancel) — not silently orphan the run, prompt a conflicting "re-run" that could double-fire, or leave the user unsure whether work is happening in the background. Test every page that launches an async job this way.
+
+7. **Role x route x state matrix.** For every mutating route, call it as owner, editor, reviewer, non-member and a disabled account, once per project state (open, in review, approved, signed, archived), with an empty or bogus body so nothing real changes. Expect 403 before any 404/422/423, a body naming the state when the state is the cause, and never two roles told to be each other. Diff the route table's declared capability against what the membership endpoint says the role holds and against the controls the UI shows for that role: a control with no capability is a bug, and so is a capability with no control (a dead end).
+
+8. **Upstream-edit ladder.** After each upstream unlock, edit and re-lock, read every view of readiness (the workflow state, the stage's own latest endpoint, the gate text of each downstream mutation) and require them to agree and to name a reachable next action. Then call each downstream sign, lock or start while the upstream is unlocked: the refusal must be the one the read endpoint states, and no start route may bypass it.
+
+9. **Two writers, one record.** Send every write route twice at once (same body, then two users with different bodies) and once with a stale version token. Expect one winner, the loser refused and told who won, and a read-back showing one body in full. Where a 200 carries a success boolean (`released`, `ok`, `accepted`), force the false path and demand a reason.
+
+10. **Stuck runs.** List every run and job collection and flag any `queued`/`running` row older than its stage budget, any terminal row with no reason, and any project whose active-run flag disagrees with the live job the release guard finds.
 
 These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
 
