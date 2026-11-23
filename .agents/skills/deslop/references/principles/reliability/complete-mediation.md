@@ -40,8 +40,8 @@ def lock_document(project_id, doc, user):            # forgot: any editor locks 
 ```
 
 Read any one file and it looks right. The handler that forgot has nothing to read. Adding `require_lease` to
-`lock_document` closes one route. (The authors once saw a fix that added the call to four routes of one router
-leave two more open on the same build, one in another file; this is their observation, not a published case.)
+`lock_document` closes one route. A fix of this kind typically closes the routes that were found and leaves the
+ones nobody listed open.
 
 ```python
 # ✅ the door checks under its own lock and returns the only handle that writes
@@ -60,14 +60,20 @@ class ProjectStore:
 
     def release_lease(self, project_id, user) -> None: ...      # the one exemption: its own operation, no session
 
+class EditSession:
+    def lock_document(self, doc_id, by) -> None:
+        tx = self._open()                                        # raises once close() has run
+        tx.update("documents", where={"id": doc_id, "project_id": self._row.id}, locked_by=by.id)  # 0 rows: refused
+
 def lock_document(project_id, doc, user):
     with projects.edit(project_id, user) as s:
-        s.lock(s.document(doc), by=user)                         # the document resolves through the session
+        s.lock_document(doc, by=user)
 ```
 
-`EditSession` writes only through the transaction it holds. Its methods refuse once it is closed, and
-`s.document(doc)` selects the document **with** the session's project id, so a document of another project is not
-found. The exemption is a separate operation on the store, not a second way to get an `EditSession`.
+Each `EditSession` method resolves its child (the document, the section) with the session's own project id and
+writes it in the same call, and `_open()` refuses once the session is closed. A handle must not return child objects
+that another handle accepts: a document fetched through one session and passed to another would write under the
+wrong lease. The exemption is a separate operation on the store, not a second way to get an `EditSession`.
 
 **The limit, plainly:** Python cannot stop code in the same process from reaching `store._db` or building an
 `EditSession` by hand. The construction makes the honest path the only short one; the database backstop is what
@@ -102,17 +108,22 @@ Structural, never lexical: they hold whatever the helpers are called.
 A check and the write it guards are two moments. CWE-367 names the gap: "the resource's state can change between the
 check and the use in a way that invalidates the results of the check", and its fix: "ensure that locking occurs before
 the check". The door above reads the lease under the row lock its write holds, and the session dies with the
-transaction, so for the lease they are one moment. That holds only for authority that **takes the same lock**: a
-lease handoff, a reviewer removal or an archive must lock the same row, or be re-read under it. Time-based expiry is
-checked at each write, not only at the start.
+transaction, so for the lease they are one moment. That holds only when **every change of an authority input takes
+a conflicting lock** on that authority state, held through the write: the same row, or the policy's own rows locked
+with `SELECT ... FOR SHARE` (or `FOR UPDATE`) by the check, as the PostgreSQL row-security page shows. A lease
+handoff, a reviewer removal or an archive that changes its rows without that lock races the write; reading them again
+under an unrelated lock closes nothing. Another serialization mechanism works only if it is named and justified, for
+example serializable isolation with retry. Time-based expiry is checked at each write, not only at the start.
 
 ## The repair
 
 1. **Name the door.** "Every change to a project goes through the project store." If no single door exists, make
    one first.
-2. **Move the check into the door**, under the lock its write takes, and return the only handle that can write
+2. **Move the check into the door**, under the lock its write takes (and a conflicting lock on every authority
+   input the check reads), and return the only handle that can write
    (the open transaction or a session over it). Close it on exit; a closed handle refuses.
-3. **Resolve child resources through the handle**, so the handle's scope bounds what it can touch.
+3. **Resolve and write child resources in one handle call**, so the handle's scope bounds what it can touch; never
+   return a child object another handle accepts.
 4. **Give each exemption its own narrow operation** on the door, never the general handle. The door's entry points
    are the closed list a reviewer reads.
 5. **Delete the per-site calls and the extra helpers in the same change.** Their disappearance is the measure.
@@ -175,6 +186,6 @@ detects and the door that repairs.
 
 1. **A cross-cutting rule each call site must remember is missing at the site that forgot.** Adding it there is a patch.
 2. **Move the check into the one door every change passes**, under its lock, and return the only handle that writes.
-3. **Bind the handle**: it closes with the transaction, resolves child resources through itself, and an exemption is its own narrow operation.
+3. **Bind the handle**: it closes with the transaction, resolves and writes each child in one call, and an exemption is its own narrow operation; every authority input takes a conflicting lock.
 4. **Name the limit**: this removes forgetting by honest authors; database privileges stop the dishonest path.
 5. **The population census finds the holes in code built opt-in; it is never the repair.**

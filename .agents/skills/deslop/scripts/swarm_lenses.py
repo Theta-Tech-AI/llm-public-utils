@@ -217,9 +217,11 @@ If the target has a class of members that one rule covers (authorization, a lock
 idempotency, rate limit, validation), write the population census table of
 `references/readings/auditing.md` to `{out_census}`: build the member list from the route table or registry, never
 from the enforcing calls; one row per member with where it enforces the rule or `none`, then the counts (members,
-members per enforcing function, empty cells). Each empty cell, and each rule decided independently with different
-meanings or with a bypassable path, is also a finding in the JSONL; several functions that delegate to one decision are
-only a lead. The census detects and is never the repair: charge each finding to the owner of its rule kind as
+members per enforcing function, empty cells). Keep every row in the census file. An empty cell, or a rule decided
+independently with different meanings or with a bypassable path, is a finding in the JSONL only when its rule kind is
+owned by one of your assigned principles; when another principle owns it (validation, idempotency, tenancy on reads),
+do not argue it: list it under `CROSS-LENS SIGHTINGS` in prose, one line each, for the owning reader. Several functions
+that delegate to one decision are only a lead. The census detects and is never the repair: charge each finding to the owner of its rule kind as
 `readings/auditing.md` lists (the authority to act to complete-mediation; validation, idempotency and tenancy on reads
 to their own principles). No such population: write one line saying so. A missing census file is a failed reading.
 """
