@@ -102,10 +102,10 @@ def owed_outputs(findings: list[Path], adir: Path | None) -> tuple[list[str], li
     problems, texts = [], []
     for path in sorted(findings):
         stem = re.sub(r"^findings-", "", path.stem)
-        folder = adir or path.parent
-        owes = folder / f"owes-{stem}.txt"
-        if not owes.exists():
+        owes = next((f / f"owes-{stem}.txt" for f in (path.parent, adir) if f and (f / f"owes-{stem}.txt").exists()), None)
+        if owes is None:
             continue
+        folder = owes.parent
         for name in (l.strip() for l in owes.read_text().splitlines() if l.strip()):
             out = folder / name
             if not out.exists() or not out.read_text().strip():
