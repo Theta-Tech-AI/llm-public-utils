@@ -33,6 +33,8 @@ Time the shared lanes (integration check run, deploy run, each step) from the CI
 
 ## Failure patterns
 
+- **The coordinator explained a slow stage before it was measured, and was wrong.** — It inferred from a long input list that script edits re-ran the whole infrastructure apply; the measurement showed the apply already skipped itself and most runs had real template changes. Rule: answer "why is it slow" with the measured table, or say "measuring" and send the worker first. Evidence: a retracted explanation.
+
 - **The open count stayed high while every branch was green.** — Closure waited for a deploy that the owner's definition did not require. Lever 1. Evidence: items closed at push against at deploy, minutes saved per item.
 - **Two deploys in a row failed and three batches waited behind them.** — A deliberately breaking rehearsal ran in the shared lane, and the next batch carried the same setting. Lever 6. Evidence: failed runs and queue age behind them.
 
