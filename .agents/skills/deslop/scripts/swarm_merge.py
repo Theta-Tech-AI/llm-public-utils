@@ -96,6 +96,25 @@ def cluster(rows: list[dict], window: int) -> list[dict]:
     return groups
 
 
+def owed_outputs(findings: list[Path], adir: Path | None) -> tuple[list[str], list[str]]:
+    """Outputs the selected cells owe besides findings (owes-<stem>.txt beside each cell names them):
+    (problems, the owed texts). Only the cells being merged are checked, so another run in the folder cannot leak in."""
+    problems, texts = [], []
+    for path in sorted(findings):
+        stem = re.sub(r"^findings-", "", path.stem)
+        owes = next((f / f"owes-{stem}.txt" for f in (path.parent, adir) if f and (f / f"owes-{stem}.txt").exists()), None)
+        if owes is None:
+            continue
+        folder = owes.parent
+        for name in (l.strip() for l in owes.read_text().splitlines() if l.strip()):
+            out = folder / name
+            if not out.exists() or not out.read_text().strip():
+                problems.append(f"{stem}: owed {name} is missing or empty — failed reading")
+            else:
+                texts.append(f"### {stem}\n\n{out.read_text().strip()}\n")
+    return problems, texts
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("findings", nargs="+")
@@ -123,6 +142,13 @@ def main() -> int:
                 missing = sorted(expected - declared)
                 if missing:
                     problems.append(f"{stem}: {len(expected)-len(missing)}/{len(expected)} read, missing " + ", ".join(missing))
+        owed_problems, owed_texts = owed_outputs([Path(p) for p in a.findings], Path(a.assignments) if a.assignments else None)
+        problems += owed_problems
+        if owed_texts:
+            census = "# Deslop swarm — no findings\n\n## Input census\n\n" + "\n".join(owed_texts)
+            print(census)
+            if a.out:
+                Path(a.out).write_text(census)
         print("no findings parsed — a clean pass", file=sys.stderr)
         for p_ in problems:
             print("  " + p_, file=sys.stderr)
@@ -168,6 +194,9 @@ def main() -> int:
             else:
                 manifest_report.append(f"- **{stem}** — {len(expected)}/{len(expected)} read")
 
+    owed_problems, owed_texts = owed_outputs([Path(p) for p in a.findings], Path(a.assignments) if a.assignments else None)
+    manifest_report += [f"- **{p_}**" for p_ in owed_problems]
+
     by_lens = defaultdict(int)
     by_principle = defaultdict(int)
     for r in rows:
@@ -187,6 +216,9 @@ def main() -> int:
         L.append("## Read manifests\n")
         L.extend(manifest_report)
         L.append("")
+    if owed_texts:
+        L.append("## Input census\n")
+        L.extend(owed_texts)
     L.append("## Findings per lens\n")
     for lens, n in sorted(by_lens.items(), key=lambda kv: -kv[1]):
         L.append(f"- **{lens}** — {n}")
@@ -241,7 +273,9 @@ def main() -> int:
         print(f"\nwritten: {a.out}", file=sys.stderr)
     else:
         print(out)
-    return 0
+    for p_ in owed_problems:
+        print("  " + p_, file=sys.stderr)
+    return 1 if owed_problems else 0
 
 
 if __name__ == "__main__":

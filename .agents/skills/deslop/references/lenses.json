@@ -95,6 +95,7 @@
     },
     "parsing": {
       "stance": "Where does an external value enter, and which single component turns it into a decision? Follow each input from the edge to every place that re-interprets it.",
+      "owes_input_census": true,
       "files": [
         "principles/architecture/parse-dont-validate.md",
         "principles/architecture/helper-is-an-architecture-finding.md",

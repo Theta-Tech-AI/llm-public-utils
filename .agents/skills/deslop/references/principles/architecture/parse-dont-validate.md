@@ -36,6 +36,70 @@ The opposite is "shotgun parsing" — the same `if not user_id` check scattered 
 
 Choose the parsing depth to fit: `NewType` for a zero-overhead marker, a frozen dataclass for richer invariants, Pydantic when you want full coercion and validation at the edge. For quick scripts, prototypes, and simple CRUD, not every field needs its own type.
 
+## The tells: a check that does not hand back the value
+
+A save route checks each field of a request body and then stores the body. The email check trims the text before
+it matches it. The check passes, and the untrimmed text is what gets stored, so every reader of that row trims it
+again, and the one reader that forgets shows the padded text.
+
+```python
+# ❌ the check knows the clean value and throws it away; the raw body is stored
+def field_problem(name: str, value: object) -> str | None:
+    text = value.strip()                                  # the normalised copy lives only here
+    return None if EMAIL.match(text) else "must be an email"
+
+def save(body: dict[str, object]) -> None:
+    for name, value in body.items():
+        if problem := field_problem(name, value):
+            raise Rejected(problem)
+    store.put(body)                                       # the padded text, as sent
+
+to = profile["email"].strip()                             # reader 1 repairs it
+email = profile["email"].strip().lower()                  # reader 2 repairs it differently
+
+# ✅ the boundary returns the value it checked; that value is stored and read as is
+def parse_email(raw: object) -> Email:
+    text = raw.strip().lower() if isinstance(raw, str) else ""
+    if not EMAIL.match(text):
+        raise Rejected("must be an email")
+    return Email(text)
+```
+
+**The criterion:** a boundary learned something about a value and kept or passed on a form that does not carry it,
+so a later reader must decide again. The value may travel as the same raw type (the non-empty list above), or a
+different value from the one the check judged may be kept (the trimmed email). One instance is enough. The three searches below are **sighting aids**, not the criterion:
+each hit is confirmed by reading the code, and a hit that fails the criterion is declined.
+
+1. **A checker that returns only a verdict, and a caller that stores its argument.** Find functions that return
+   `None`, `bool` or a complaint (`str | None`)
+   (`grep -rnE --include='*.py' 'def \w+\(.*\) -> (None|bool|str \| None|Optional\[str\])' <src>`). Read the
+   callers. It meets the criterion when the caller then writes the raw argument it passed in (`store.put(body)`,
+   `INSERT ... VALUES (%s)`) and no parser ran before the check. A check run on a value that is already parsed
+   (`check_deliverable(postcode)` after `parse_postcode`) is declined.
+2. **A normalisation inside a check, applied to a local copy.** Inside the checkers from search 1, find a
+   normalising call bound to a local name
+   (`grep -nE '^\s+\w+ = (.*\.(strip|lower|casefold|upper)\(\)|(int|float|Decimal|set|frozenset)\()' <checker files>`):
+   `text = value.strip()`, `n = int(raw)`, `items = set(values)`. This is the strongest evidence: the check judged
+   the normalised value and the caller kept the other one.
+3. **One stored value normalised again by more than one reader.** Find the normalising calls
+   (`grep -rnE --include='*.py' '\.(strip|lower|casefold|upper)\(\)|\b(set|int|float)\(' <src>`), group the hits
+   by the field each one reads, and count readers per field. Count only **independent** repairs: a reader that calls
+   the owner's parser (including on legacy rows stored before the parser existed) is not one. Two independent
+   repairs of one stored value point at its **writer**, not at the readers: open the writer and apply searches 1
+   and 2 there.
+
+Declined: a parser that returns the normalised value which its caller stores; a reader that is itself the receiving
+boundary for another producer's format and turns it into a type once (model output trimmed into a typed result, a
+wire count decoded with `int()`); a reader that formats a canonical value for display (a postcode split into two
+groups for a label).
+
+**How to fix it**
+
+1. Write one parser per input kind at the boundary, returning the canonical value or refusing (`parse_email(raw) -> Email`).
+2. Make the writer store what the parser returned, and answer it back to the caller, so the client sees what was kept.
+3. Delete the readers' repairs one by one; the count from search 3 is the measure, and it falls to zero.
+4. For rows already stored raw, parse on read with the same function; do not add a second normaliser.
+
 ---
 
 In relation to other principles, parse, don't validate:
