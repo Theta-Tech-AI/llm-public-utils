@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import math
+import textwrap
 import sys
 from pathlib import Path
 from typing import NotRequired, TypedDict
@@ -54,6 +55,7 @@ DEFAULT_STAGES: list[Stage] = [
     {"name": "In a batch (lands at push)", "color": "#3b82f6"},
     {"name": "Proof running", "color": "#14b8a6"},
     {"name": "After the release window", "color": "#b45309"},
+    {"name": "Planned for a later release", "color": "#a855f7"},
 ]
 OTHER_COLORS = ["#a855f7", "#7e22ce", "#c084fc", "#6b21a8"]
 BACKGROUND = "#0f172a"
@@ -112,17 +114,22 @@ def draw(data: ChartInput, output: Path) -> None:
     for (item, _), wedge in zip(rows, wedges):
         share = item["count"] / total
         angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
-        named = share >= NAMED_SHARE and not one_group
-        radius = 0.6 if named else 0.8
-        text = f"{item['group']}\n{item['count']}" if named else str(item["count"])
+        # The sector carries its own name, wrapped short; no legend. Many groups name the group, one group the stage.
+        name = item.get("stage", item["group"]) if one_group else item["group"]
+        named = share >= NAMED_SHARE or one_group
+        radius = 0.6 if share > 0.2 else 0.72
+        text = f"{chr(10).join(textwrap.wrap(name, 14))}\n{item['count']}" if named else str(item["count"])
         pie_ax.text(radius * math.cos(angle), radius * math.sin(angle), text, ha="center", va="center",
-                    color="white", fontsize=12 if named else 9, fontweight="bold", linespacing=1.0)
+                    color="white", fontsize=(11 if share > 0.2 else 8.5) if named else 9, fontweight="bold", linespacing=1.0)
     pie_ax.set_aspect("equal")
 
     bar_ax.set_facecolor(BACKGROUND)
     positions = list(range(len(rows)))[::-1]  # first stage at the top
-    staged_max = max((s["count"] for s, _ in rows if "stage" in s), default=1)
-    limit = max(5.0, staged_max * 1.6)  # a huge non-focus bar must not squash the focus bars
+    counts = sorted((s["count"] for s, _ in rows), reverse=True)
+    # One outsized bar (a whole later milestone, a parked backlog) must not flatten the rest: clip it when it is more
+    # than three times the next one, and print its true count.
+    runner_up = counts[1] if len(counts) > 1 else counts[0]
+    limit = max(5.0, runner_up * 1.6) if counts[0] > 3 * runner_up else counts[0] * 1.05
     bar_ax.barh(positions, [min(s["count"], limit) for s, _ in rows], color=[c for _, c in rows])
     bar_ax.set_xlim(0, limit * 1.08)
     bar_ax.set_yticks(positions, [label(s, one_group) for s, _ in rows], color="white", fontsize=9)
@@ -133,6 +140,7 @@ def draw(data: ChartInput, output: Path) -> None:
         bar_ax.text(x, position, text, va="center", ha="right" if clipped else "left", color="white",
                     fontsize=9, fontweight="bold" if clipped else "normal")
     bar_ax.tick_params(axis="x", colors="#94a3b8")
+    bar_ax.xaxis.get_major_locator().set_params(integer=True)  # item counts are whole numbers
     for side in ("top", "right"):
         bar_ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):

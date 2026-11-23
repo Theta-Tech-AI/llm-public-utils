@@ -61,22 +61,25 @@ Bottleneck and scheduling change: <observation → action>.
 
 ## Draw the open set
 
-When the operator asks for a chart of open work, send one image that answers "where is every open item, and what moves
-it next": a pie on the left, and the same slices as horizontal bars on the right. Draw it with
-`scripts/progress_chart.py INPUT.json OUTPUT.png` (the input format is in its header).
+When the operator asks for a chart of open work, send two images, each a pie on the left and the same slices as
+horizontal bars on the right, drawn with `scripts/progress_chart.py INPUT.json OUTPUT.png` (input format in its header):
+1. **The focus milestone only**, by stage.
+2. **Literally all open items**, every milestone, by stage only (no milestone grouping). Items parked for a later
+   release take the last stage, "Planned for a later release"; later-milestone items with live work take their real
+   stage.
 
-- **Chart the focus set the operator names, plus every open item with no milestone** (one "no milestone" slice, so
-  untriaged work stays visible; name its count in the title even when it is 0). Leave other milestones out unless the
-  operator asks for them; then each is one slice. Every open item in the chart sits in exactly one slice, from the item
-  records, never from memory. With one focus group, the group goes in the title and the bars name only the stage.
+- **Name the no-milestone count in a title even when it is 0**, so untriaged work stays visible. Every open item sits
+  in exactly one slice, from the item records, never from memory. With one group, the group goes in the title and the
+  bars and sectors name only the stage.
 - **Stages follow the order of operations for one item**, and the bars run in that order, top to bottom: waiting on the
   operator or an outside party, scheduled event, ready with no owner, finding the cause, coding, waits a deploy for its
-  next step, final checks, in a batch (lands at push), proof running, after the release window. Never draw one big
+  next step, final checks, in a batch (lands at push), proof running, after the release window, planned for a later release. Never draw one big
   "being built" slice: split it into finding the cause, coding, waits a deploy and final checks, so the chart shows
   where work piles up.
 - **Pie and bars share one fixed colour per stage**, the same in every chart, so two charts compare at a glance.
-- **The bars carry the names; the pie carries the counts.** Only a large pie slice also shows its group name; no legend.
-  An outsized non-focus bar is clipped with its true count, so it does not flatten the focus bars.
+- **Labels sit on the sectors and bars; no legend.** With one group every sector shows its stage and count; with
+  several, small sectors show only the count and the bars name them. One bar more than three times the next is clipped
+  with its true count, so it does not flatten the rest.
 - **The title carries the totals and the change**: total open, each focus count, and each focus count at the last
   chart with its time ("release 1.1 = 20, was 24 at 5:37 PM").
 - **Counts from one timestamped snapshot.** Start from item IDs, scope and stage. Check that each open item appears exactly once and that every item of the named target is accounted for. Reconcile additions, closures, reopenings and moves against the previous snapshot. Then aggregate and give `total`. The script's sum check does not prove membership. If the state changes before delivery, regenerate the image and the text together.
