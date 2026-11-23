@@ -7,7 +7,7 @@ The schema is documented in references/coordinator-loop.md; tests/board_fixture.
 With ``--status-dir DIR`` each worker's status file is ``DIR/<worker id>.jsonl``: one JSON line per step change, as the
 brief in references/assign.md asks (at, step, waiting_on, expected_end, last_result, round, finding_class, unsent). It
 needs no message channel, so it still works when a worker's reply to the coordinator fails; ``unsent`` carries that
-failed reply. A worker is
+failed reply, and it stays a finding until the board's ``workers[].read_until`` reaches it. A worker is
 late when now is past its expected_end, stuck when neither its step nor its round changed for ``--stall-min``, and
 looping when its last three review rounds returned the same finding class. This is the primary signal.
 
@@ -68,6 +68,7 @@ class Worker(TypedDict):
     model: str
     pace_min: NotRequired[int]
     reported: NotRequired[bool]
+    read_until: NotRequired[str]
 
 
 class Pipeline(TypedDict):
@@ -151,30 +152,59 @@ def key(thing: str | int) -> str:
     return " ".join(str(thing).lower().split())
 
 
-def invalid(board: Board) -> list[str]:
-    """Schema errors: a board with any of these cannot be checked."""
+TIME_FIELDS = {"items": ("expected_by",), "sweeps": ("expected_by",), "pipelines": ("checked",), "handbacks": ("at", "answered"),
+               "workers": ("read_until",)}
+INT_FIELDS = {"environments": ("capacity", "in_use"), "workers": ("pace_min",)}
+
+
+def is_time(value: object) -> bool:
+    try:
+        when(value)  # type: ignore[arg-type]
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def invalid(board: object) -> list[str]:
+    """Schema errors, checked before any field is read: a board with any of these cannot be checked."""
+    if not isinstance(board, dict):
+        return ["the board is not a JSON object"]
     errors: list[str] = []
+    if not isinstance(board.get("updated"), str) or not is_time(board["updated"]):
+        errors.append(f"updated {board.get('updated')!r} is not an ISO-8601 time")
+    if not isinstance(board.get("items"), list):
+        errors.append("items is not a list")
+    rows: dict[str, list[dict]] = {}
     for section, fields in REQUIRED.items():
-        for n, row in enumerate(board.get(section, [])):
+        value = board.get(section, [])
+        if not isinstance(value, list):
+            errors.append(f"{section} is not a list")
+            continue
+        rows[section] = [r for r in value if isinstance(r, dict)]
+        errors += [f"{section}[{n}] is not an object" for n, r in enumerate(value) if not isinstance(r, dict)]
+        for n, row in enumerate(rows[section]):
             errors += [f"{section}[{n}] has no {f}" for f in fields if row.get(f) in (None, "")]
-    for f in ("updated", "items"):
-        if f not in board:
-            errors.append(f"the board has no {f}")
-    ids = [key(i["id"]) for i in board.get("items", [])] + [key(s["id"]) for s in board.get("sweeps", [])]
+            errors += [f"{section}[{n}].{f} {row[f]!r} is not an ISO-8601 time"
+                       for f in TIME_FIELDS.get(section, ()) if row.get(f) not in (None, "") and not is_time(row[f])]
+            errors += [f"{section}[{n}].{f} {row[f]!r} is not a whole number"
+                       for f in INT_FIELDS.get(section, ()) if f in row and (type(row[f]) is not int)]
+            for f in ("owner", "live_check_owner"):
+                value = row.get(f)
+                if not (value is None or isinstance(value, str) or (isinstance(value, list) and all(isinstance(o, str) for o in value))):
+                    errors.append(f"{section}[{n}].{f} {value!r} is not a name or a list of names")
+    capacity = board.get("capacity")
+    if capacity is not None and not (isinstance(capacity, dict) and type(capacity.get("target")) is int):
+        errors.append("capacity.target is not a whole number")
+    stages = board.get("stages", [])
+    if not isinstance(stages, list) or not all(isinstance(s, dict) and isinstance(s.get("name"), str) for s in stages):
+        errors.append("stages is not a list of objects with a name")
+    if errors:
+        return errors
+    ids = [key(r["id"]) for r in rows["items"] + rows["sweeps"]]
     errors += [f"duplicate id {d}" for d, c in Counter(ids).items() if c > 1]
-    listed = [s["name"] for s in board.get("stages", [])]
+    listed = [s["name"] for s in stages]
     if listed:
-        errors += [f"item {i['id']} has stage {i['stage']!r}, not in stages" for i in board.get("items", []) if i["stage"] not in listed]
-    times = [("board", "updated", board.get("updated"))]
-    times += [(r.get("id"), "expected_by", r.get("expected_by")) for r in board.get("items", []) + board.get("sweeps", [])]
-    times += [(p.get("name"), "checked", p.get("checked")) for p in board.get("pipelines", [])]
-    times += [(h.get("worker"), f, h.get(f)) for h in board.get("handbacks", []) for f in ("at", "answered")]
-    for row, field, value in times:
-        try:
-            if value:
-                when(value)
-        except (ValueError, TypeError):
-            errors.append(f"{row}: {field} {value!r} is not an ISO-8601 time")
+        errors += [f"item {i['id']} has stage {i['stage']!r}, not in stages" for i in rows["items"] if i["stage"] not in listed]
     return errors
 
 
@@ -191,41 +221,53 @@ def activity(directory: Path, worker: str, marker: str, now: datetime) -> Activi
     return {"quiet_min": quiet, "finished": marker in tail}
 
 
-def statuses(directory: Path, worker: str) -> list[Status]:
-    """The worker's status lines, oldest first; an unreadable line is skipped (the next step change rewrites the state)."""
+def statuses(directory: Path, worker: str) -> tuple[list[Status], int]:
+    """The worker's usable status lines, oldest first, and the count of unusable ones (not JSON, no step, no valid time)."""
     path = directory / f"{worker}.jsonl"
     lines: list[Status] = []
+    unusable = 0
     for line in path.read_text().splitlines() if path.is_file() else []:
         try:
-            lines.append(json.loads(line))
+            record = json.loads(line)
         except json.JSONDecodeError:
-            continue
-    return lines
+            record = None
+        usable = (isinstance(record, dict) and isinstance(record.get("step"), str) and is_time(record.get("at"))
+                  and (record.get("expected_end") in (None, "") or is_time(record["expected_end"])))
+        if usable:
+            lines.append(record)
+        elif line.strip():
+            unusable += 1
+    return lines, unusable
 
 
 def minutes(since: str, now: datetime) -> float:
     return (now - when(since)).total_seconds() / 60
 
 
-def status_findings(history: list[Status], now: datetime, stall_min: float) -> dict[str, str]:
-    """Late, stuck and looping, from one worker's status lines (progress, not liveness)."""
+def status_findings(history: list[Status], now: datetime, stall_min: float, read_until: str | None = None) -> dict[str, list[str]]:
+    """Failed replies, late, stuck and looping, from one worker's status lines (progress, not liveness).
+
+    A failed reply stays a finding until the coordinator records ``read_until`` at or after it on the board, so the
+    worker's next ordinary step does not hide it."""
     last = history[-1]
-    found: dict[str, str] = {}
-    if last.get("unsent"):
-        found["reply to the coordinator failed"] = f"{last['unsent']!r} (read it here; fix the reply address in the brief)"
+    found: dict[str, list[str]] = defaultdict(list)
+    for line in history:
+        if line.get("unsent") and (not read_until or when(line["at"]) > when(read_until)):
+            found["reply to the coordinator failed"].append(
+                f"{line['unsent']!r} at {line['at']} (read it, then set read_until; fix the reply address in the brief)")
     if last.get("expected_end") and when(last["expected_end"]) < now:
-        found["late past its expected end"] = (f"{last.get('step')!r} expected {last['expected_end']} "
-                                               f"({minutes(last['expected_end'], now):.0f} min late)")
-    position = (last.get("step"), last.get("round"))
-    changed = next((h for h in reversed(history) if (h.get("step"), h.get("round")) != position), None)
-    since = history[history.index(changed) + 1] if changed else history[0]
-    if since.get("at") and minutes(since["at"], now) >= stall_min:
-        found["no step change"] = f"{last.get('step')!r} since {since['at']} ({minutes(since['at'], now):.0f} min)"
+        found["late past its expected end"].append(f"{last['step']!r} expected {last['expected_end']} "
+                                                   f"({minutes(last['expected_end'], now):.0f} min late)")
+    position = (last["step"], last.get("round"))
+    changed = next((n for n in range(len(history) - 1, -1, -1) if (history[n]["step"], history[n].get("round")) != position), None)
+    since = history[changed + 1] if changed is not None else history[0]
+    if minutes(since["at"], now) >= stall_min:
+        found["no step change"].append(f"{last['step']!r} since {since['at']} ({minutes(since['at'], now):.0f} min)")
     per_round = {h["round"]: h.get("finding_class") for h in history if h.get("round") is not None}
     rounds = sorted(per_round)[-3:]
     classes = {per_round[r] for r in rounds}
     if len(rounds) == 3 and len(classes) == 1 and None not in classes and "" not in classes:
-        found["review loop: same finding class 3 rounds"] = f"{classes.pop()!r} in rounds {rounds} (escalate, see review.md)"
+        found["review loop: same finding class 3 rounds"].append(f"{classes.pop()!r} in rounds {rounds} (escalate, see review.md)")
     return found
 
 
@@ -276,13 +318,16 @@ def findings(board: Board, now: datetime, activity_dir: Path | None = None, quie
         if checked > stale_min:
             found["pipeline not checked"].append(f"{pipe['name']} last read {checked:.0f} min ago")
 
-    busy = {o for _, r in rows for o in owners(r.get("owner"))} | {o for i in items for o in owners(i.get("live_check_owner"))}
+    busy = ({o for _, r in rows for o in owners(r.get("owner"))} | {o for i in items for o in owners(i.get("live_check_owner"))}
+            | {o for p in board.get("pipelines", []) for o in owners(p.get("owner"))})
     for wid, worker in workers.items():
         if wid not in busy:
             found["worker owns nothing"].append(wid)
-        history = statuses(status_dir, wid) if status_dir else []
-        for question, row in status_findings(history, now, stall_min).items() if history else ():
-            found[question].append(f"{wid} {row}")
+        history, unusable = statuses(status_dir, wid) if status_dir else ([], 0)
+        if unusable:
+            found["unusable status lines"].append(f"{wid}: {unusable} (each needs at, step and valid times)")
+        for question, rows_ in (status_findings(history, now, stall_min, worker.get("read_until")).items() if history else ()):
+            found[question] += [f"{wid} {r}" for r in rows_]
         if status_dir and not history:
             found["worker writes no status"].append(wid)
         if activity_dir is None:
@@ -330,7 +375,10 @@ def summary(board: Board) -> list[str]:
 
 
 def check(args: argparse.Namespace) -> tuple[int, str]:
-    board: Board = json.loads(args.board.read_text())
+    try:
+        board = json.loads(args.board.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        return 2, f"❌ invalid board: cannot read {args.board}: {error}"
     errors = invalid(board)
     if errors:
         return 2, "❌ invalid board:\n" + "\n".join(f"  - {e}" for e in errors)
@@ -362,14 +410,13 @@ def main(argv: list[str]) -> int:
     deadline = time.monotonic() + args.deadline_min * 60
     while True:
         code, report = check(args)
-        if code or not args.watch:
+        remaining = deadline - time.monotonic()
+        if code or not args.watch or remaining <= 0:
+            if args.watch and not code:
+                report += f"\n✅ watch ended at its {args.deadline_min:g} min deadline with no finding"
             print(report)
             return code
-        if time.monotonic() + args.watch * 60 > deadline:
-            print(report + f"\n✅ watch ended at its {args.deadline_min:.0f} min deadline with no finding")
-            return 0
-        time.sleep(args.watch * 60)
-
+        time.sleep(min(args.watch * 60, remaining))  # the last sleep ends at the deadline, and one more check runs there
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))

@@ -118,14 +118,64 @@ class BoardCheckTest(unittest.TestCase):
         self.assertEqual(code, 1)
 
     def test_invalid_board_is_refused(self) -> None:
-        bad = board(item("a", stage="Nowhere"), item("a"), {"id": "x", "what": "x", "stage": "Coding"},
-                    stages=[{"name": "Coding"}])
-        bad["items"][1]["expected_by"] = "tomorrow"
+        bad = board(item("a", stage="Nowhere"), item("a"), stages=[{"name": "Coding"}])
         errors = MODULE.invalid(bad)
         self.assertTrue(any("not in stages" in e for e in errors))
         self.assertTrue(any("duplicate id a" in e for e in errors))
-        self.assertTrue(any("items[2] has no next_event" in e for e in errors))
-        self.assertTrue(any("not an ISO-8601 time" in e for e in errors))
+        shape = board(item("a", expected_by="tomorrow"), {"what": "x", "stage": "Coding"}, "not a row",
+                      environments=[{"name": "e", "capacity": "2", "in_use": 1}])
+        errors = MODULE.invalid(shape)
+        for expected in ("not an ISO-8601 time", "items[1] has no id", "items[2] is not an object", "not a whole number"):
+            self.assertTrue(any(expected in e for e in errors), expected)
+
+    def test_malformed_boards_exit_2_without_a_crash(self) -> None:
+        cases = [{"updated": None, "items": []}, {"updated": "2026-11-23T05:00Z", "items": None}, [],
+                 {"updated": "2026-11-23T05:00Z", "items": [{"what": "no id", "stage": "s", "next_event": "e", "expected_by": "2026-11-23T06:00Z"}]}]
+        with tempfile.TemporaryDirectory() as directory:
+            for n, case in enumerate(cases + ["{not json"]):
+                path = Path(directory, f"b{n}.json")
+                path.write_text(case if isinstance(case, str) else json.dumps(case))
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(MODULE.main([str(path)]), 2, case)
+
+    def test_a_failed_reply_stays_until_read_and_bad_status_lines_are_reported(self) -> None:
+        workers = [{"id": "w1", "model": "routine"}]
+        lines = [{"at": "2026-11-23T05:00Z", "step": "tests", "expected_end": "2026-11-23T06:00Z", "unsent": "ready to land"},
+                 {"at": "2026-11-23T05:10Z", "step": "docs", "expected_end": "2026-11-23T06:00Z"}]
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "w1.jsonl").write_text("\n".join([*map(json.dumps, lines), "{}", "null", json.dumps({"at": "x", "step": "s"})]))
+            found = MODULE.findings({**board(item("a")), "workers": workers}, NOW, status_dir=Path(directory))
+            self.assertEqual(len(found["reply to the coordinator failed"]), 1)
+            self.assertEqual(found["unusable status lines"], ["w1: 3 (each needs at, step and valid times)"])
+            read = MODULE.findings({**board(item("a")), "workers": [{**workers[0], "read_until": "2026-11-23T05:00Z"}]},
+                                   NOW, status_dir=Path(directory))
+            self.assertNotIn("reply to the coordinator failed", read)
+            Path(directory, "w1.jsonl").write_text("{}\n")
+            only_bad = MODULE.findings({**board(item("a")), "workers": workers}, NOW, status_dir=Path(directory))
+        self.assertEqual(only_bad["worker writes no status"], ["w1"])
+
+    def test_a_pipeline_owner_is_busy(self) -> None:
+        found = MODULE.findings(board(item("a", owner="coordinator"), capacity={"target": 1},
+                                      pipelines=[{"name": "p", "result": "failure", "checked": "2026-11-23T05:15Z", "owner": "w1"}]), NOW)
+        self.assertEqual(found, {})
+
+    def test_watch_runs_its_last_check_at_the_deadline(self) -> None:
+        clock = [0.0]
+        sleeps: list[float] = []
+        healthy = board(item("a"))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "b.json")
+            path.write_text(json.dumps(healthy))
+            original = (MODULE.time.monotonic, MODULE.time.sleep)
+            MODULE.time.monotonic = lambda: clock[0]
+            MODULE.time.sleep = lambda seconds: (sleeps.append(seconds), clock.__setitem__(0, clock[0] + seconds))
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    code = MODULE.main(["--watch", "10", "--deadline-min", "25", "--now", "2026-11-23T05:20Z", str(path)])
+            finally:
+                MODULE.time.monotonic, MODULE.time.sleep = original
+        self.assertEqual(code, 0)
+        self.assertEqual(sleeps, [600, 600, 300])
 
     def test_worked_example_board_is_valid_and_needs_the_coordinator(self) -> None:
         self.assertEqual(MODULE.invalid(copy.deepcopy(FIXTURE)), [])

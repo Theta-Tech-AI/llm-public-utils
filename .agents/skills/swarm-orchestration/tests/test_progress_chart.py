@@ -62,6 +62,16 @@ class ProgressChartTest(unittest.TestCase):
         self.assertEqual(sum(s["n"] for s in stages), 15)
         self.assertNotIn("Waiting on an outside party", [s["name"] for s in stages])
 
+    def test_board_slice_labels_never_merge_and_duplicate_groups_are_refused(self) -> None:
+        items = [{"id": 1, "stage": "s", "group": "F"}, {"id": 2, "stage": "s", "group": "A", "area": "x"},
+                 {"id": 3, "stage": "s", "group": "A", "area": "x (A)"}, {"id": 4, "stage": "s", "group": "B", "area": "x"}]
+        data = MODULE.from_board({"updated": "t", "items": items}, "F")
+        self.assertEqual(sum(sum(g["slices"].values()) for g in data["groups"]), 4)
+        MODULE.checked(data)
+        with self.assertRaises(SystemExit):
+            MODULE.from_board({"updated": "t", "items": items, "groups": [{"name": "A", "color": "#111111"},
+                                                                       {"name": "A", "color": "#222222"}]}, "F")
+
     def test_board_refuses_an_item_without_a_group_or_an_unknown_focus(self) -> None:
         with self.assertRaises(SystemExit):
             MODULE.from_board({"updated": "t", "items": [{"id": 1, "stage": "Coding"}]}, "g")

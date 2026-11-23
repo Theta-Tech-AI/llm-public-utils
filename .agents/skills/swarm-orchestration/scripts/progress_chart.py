@@ -279,17 +279,28 @@ def from_board(board: Board, focus: str, title: str | None = None) -> ChartInput
     per_group = Counter(i["group"] for i in board["items"])
     if focus not in per_group:
         raise SystemExit(f"❌ no item in focus group {focus!r}; groups are {sorted(per_group)}")
+    declared = [g["name"] for g in board.get("groups", [])]
+    if len(set(declared)) != len(declared):
+        raise SystemExit(f"❌ duplicate group names in the board's groups: {declared}")
     colors = {g["name"]: g["color"] for g in board.get("groups", [])}
-    order = [focus] + [g for g in [g["name"] for g in board.get("groups", [])] + list(per_group) if g != focus]
-    names = list(dict.fromkeys(g for g in order if g in per_group))
-    counted = {name: Counter(i.get("area") or i["stage"] for i in board["items"] if i["group"] == name) for name in names}
-    seen = Counter(label for name in names[1:] for label in counted[name]) + Counter(names[:1])
-    groups: list[Group] = []
-    for n, name in enumerate(names):
-        # one slice label in two groups (an area both hold) is named with its group, so every slice stays distinct
-        slices = {name: per_group[name]} if name == focus else {
-            label if seen[label] == 1 else f"{label} ({name})": count for label, count in counted[name].items()}
+    names = list(dict.fromkeys(g for g in [focus, *declared, *per_group] if g in per_group))
+    # aggregate by (group, area) first; display labels are made unique afterwards, so no two keys can merge
+    counted = {name: Counter(i.get("area") or i["stage"] for i in board["items"] if i["group"] == name) for name in names[1:]}
+    shared = Counter(area for areas in counted.values() for area in areas)
+    used = {focus}
+    groups: list[Group] = [{"name": focus, "color": colors.get(focus, PALETTE[0]), "slices": {focus: per_group[focus]}}]
+    for n, name in enumerate(names[1:], start=1):
+        slices: dict[str, int] = {}
+        for area, count in counted[name].items():
+            label = area if shared[area] == 1 and area not in used else f"{area} ({name})"
+            suffix = 2
+            while label in used:
+                label, suffix = f"{area} ({name}, {suffix})", suffix + 1
+            used.add(label)
+            slices[label] = count
         groups.append({"name": name, "color": colors.get(name, PALETTE[n % len(PALETTE)]), "slices": slices})
+    if sum(sum(g["slices"].values()) for g in groups) != len(board["items"]):
+        raise SystemExit("❌ the chart's slices do not add up to the board's items")
     steps = Counter(i["stage"] for i in board["items"] if i["group"] == focus)
     listed = board.get("stages", [])
     stages: list[Stage] = [{**s, "n": steps.get(s["name"], 0)} for s in listed]
