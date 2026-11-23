@@ -40,6 +40,8 @@ Read [driving.md](driving.md). Short version for comb:
 
 The calmest, highest-value comb pass is to *read every user-facing string and the generated output itself*, as a real user would. These knots reach users first because a flow-only pass (does the button work?) never stops to read what's on screen:
 
+*When the project has a written design standard (a design-principles document: copy, loading and empty states, hide vs disable, sibling consistency), these checks enforce it — cite its rule in the finding.*
+
 1. **Leaked internal representation.** A surface shows an internal value instead of a human one: a raw UUID/id instead of a name, a raw enum/status constant, an internal project code or jargon (ticket/spec/phase identifiers meant for the team, not the user), an ISO/UTC timestamp instead of localized time, or a raw ratio/counter. Walk every badge, toast, header, status line, and label — each raw internal value is a knot. **Special case — flash of raw value:** a field shows the raw id for a fraction of a second, then swaps to the resolved name once a lookup returns. Resolve first, render once; never paint the placeholder id. (Also grep-able — see [bug-hunter.md](bug-hunter.md).)
 
 2. **Copy that isn't written for the reader.** Trigger each error, warning, and empty state and read it cold. Flag: jargon the user can't act on; a warning that doesn't say *which* entity, *why*, or *what to do*; the wrong term for a concept (e.g. an "admin" vs "superuser" mismatch); and the same condition worded differently in different places. Good status/error copy states what happened, why, and the next action — in plain language, naming the specific entities involved.

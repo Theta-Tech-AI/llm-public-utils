@@ -197,6 +197,8 @@ Always include both:
 
 Good justification names the failure mode: data integrity, authz hole, user-blocking workflow, incorrect clinical/business output, security, silent wrong answer, accessibility trap, etc.
 
+**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. Before writing the suggestion, ask where the value or rule first enters the system, how many places re-derive or repair it (count them — the count is evidence), and how many readers decide the same fact. Name the class, list its sibling symptoms, and give one live check for the class. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
+
 Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.se_complete` is false and match API", "add regression test X".
 
 ---

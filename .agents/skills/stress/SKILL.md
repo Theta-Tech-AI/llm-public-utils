@@ -29,6 +29,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 | [references/process.md](references/process.md) | **The standard run** — deployment lay of the land, then 1-3 reliability → 1-3 comb → 1-3 mischief passes |
 | [references/driving.md](references/driving.md) | Choosing **browser vs API vs hybrid** — different surfaces catch different bugs |
 | [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix) |
+| [references/api-flows.md](references/api-flows.md) | **API-first runs** — the generated flow map (stages, call order, dependency edges, routes nobody has called), simulated user flows from HTTP calls, the move × state × actor matrix, many lanes on one environment, the shared tools and the pacing gate |
 
 ## Mode references (read the ones you will use)
 
@@ -52,7 +53,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 - **"Break it" / "try to mess it up" / chaos** → mischief (optionally after one comb pass so you know the happy path)
 - **"Review the code for bugs"** → bug hunter
 - **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents in parallel, merged into one list ranked by how many personas each defect hits, then a rerun of the identical panel to prove the fixes
-- **"Hit the API" / contract / concurrency stress** → comb or mischief with an **API-first** drive plan
+- **"Hit the API" / contract / concurrency stress / "simulate the flow with API calls" / late stages nobody reaches in the browser** → comb or mischief with an **API-first** drive plan per [api-flows.md](references/api-flows.md); keep at least one browser lane unless the request is API-only or the target has no UI
 - **"Stress test this" / vague** → the standard run in [process.md](references/process.md): reliability first, then comb, then mischief; bug-hunt ugly code along the way
 
 ## Your job
