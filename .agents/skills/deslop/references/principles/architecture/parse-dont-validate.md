@@ -112,3 +112,4 @@ In relation to other principles, parse, don't validate:
 | [**Immutability**](immutability.md) | Parsed domain types are best made immutable |
 | [**Make Illegal States Unrepresentable**](illegal-states-unrepresentable.md) | The data-model half: this file parses at the entry, that one forbids the combination |
 | [**Errors at the Boundary**](../reliability/errors-at-the-boundary.md) | Parsing is the detection moment; translation and the decision belong further in |
+| [**Every Request Has a Round-Trip Budget**](../data-layer/round-trips-per-request.md) | A check that reads a row and returns only a verdict makes its caller read the row again; that file counts the price |

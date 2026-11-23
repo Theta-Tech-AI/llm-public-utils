@@ -1,11 +1,11 @@
 ---
 name: deslop-data-layer
-description: Deslop principles — The Data Layer: schema integrity (FKs, normalization), pushing logic into the database, indexing and join access paths, and the common slop tells.
+description: Deslop principles — The Data Layer: schema integrity (FKs, normalization), pushing logic into the database, indexing and join access paths, round trips per request, and the common slop tells.
 ---
 
 # The Data Layer
 
-> *Slop in the schema is the most expensive kind. Application code is rewritten, ported between languages, and bypassed by migrations, scripts, and the next service — but the database outlives all of them and is the one place an invariant can be made true for every writer at once. These principles govern integrity, where logic lives, and how rows are reached.*
+> *Slop in the schema is the most expensive kind. Application code is rewritten, ported between languages, and bypassed by migrations, scripts, and the next service — but the database outlives all of them and is the one place an invariant can be made true for every writer at once. These principles govern integrity, where logic lives, how rows are reached, and how many statements one request sends.*
 
 Each principle is a self-contained file — open it when a finding implicates that principle.
 
@@ -40,8 +40,16 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Know What Defeats an Index](data-layer/index-defeaters.md) | Leading wildcards, functions on columns, type mismatches |
 | [Every Index Is Used or It's Dropped](data-layer/unused-indexes.md) | An index no query uses is pure loss |
 
+## Round Trips
+
+> *The principles above make one statement cheap. A request is many statements, and with the database on another host each one sent and awaited in turn costs a network round trip whatever its plan says (pipelined statements can share a wait, so count synchronization waits as well as statements). No line of code states the count: it is the sum of what every function in the call tree reads for itself, and it is found by counting one request, never by reading one query.*
+
+| Principle | What it says |
+|-------------|----------------|
+| [Every Request Has a Round-Trip Budget](data-layer/round-trips-per-request.md) | Count the statements each route sends against a budget; read each fact once at its owner and pass the value |
+
 ## The Common Slop Tells
 
 | Principle | What it says |
 |-------------|----------------|
-| [The Common Slop Tells](data-layer/slop-tells.md) | Grep-able schema smells, each mapping to a principle above |
+| [The Common Slop Tells](data-layer/slop-tells.md) | Grep-able schema and call-site smells, each mapping to a principle above |

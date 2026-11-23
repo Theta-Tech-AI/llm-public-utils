@@ -170,6 +170,7 @@ layer; an audit record that must commit with its change to the transaction that 
 | [**Implicit Coupling**](../architecture/implicit-coupling.md) | Each site must know to call the check: an unstated agreement. |
 | [**Enforce Invariants with Constraints**](../data-layer/invariant-constraints.md) | The schema-side backstop, under the conditions in step 6. |
 | [**Patchwork**](../clean-code/patchwork.md) | One more check per forgetting site is patchwork; the repair changes the door. |
+| [**Every Request Has a Round-Trip Budget**](../data-layer/round-trips-per-request.md) | The read under the write's lock is a required statement. A check that hands back what it read saves the handler's second read of it. |
 
 ## Prior art
 

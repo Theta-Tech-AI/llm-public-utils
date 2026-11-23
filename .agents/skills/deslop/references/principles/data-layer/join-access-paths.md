@@ -41,7 +41,10 @@ SELECT d.* FROM project p JOIN document d ON d.project_id = p.id
 **The N+1 in application code is the same defect.** An ORM that fetches children per parent row has implemented a
 nested-loop join in the client, paying network latency on top of the missing index — and it is usually invisible
 in review because every individual query looks reasonable. The tell is a loop in application code over rows whose
-children are then loaded one at a time, or an ORM lazy relationship touched inside a serialisation loop.
+children are then loaded one at a time, or an ORM lazy relationship touched inside a serialisation loop. The index
+and the join repair this loop. The statement count of the whole request, including the repeats that no join removes
+(each reader loading the same row for itself), belongs to
+[Every Request Has a Round-Trip Budget](round-trips-per-request.md).
 
 **Verify with the plan, not the intent.** `EXPLAIN (ANALYZE, BUFFERS)` on the real query, against a table with
 production-scale row counts: an `Index Scan`/`Index Only Scan` on the probed side is the pass; a `Seq Scan` on a
@@ -70,6 +73,7 @@ In relation to other principles, join access paths:
 | [**Every Index Is Used or It's Dropped**](unused-indexes.md) | The converse smell — an index built for no query |
 | [**Enforce Invariants with Constraints, Not Application Code**](invariant-constraints.md) | Referential integrity belongs to the database; materialising it in a loop does not make it one |
 | [**Normalize to a Single Source of Truth**](normalization.md) | Joins are the cost normalization accepts; the access path is how you pay it |
+| [**Every Request Has a Round-Trip Budget**](round-trips-per-request.md) | This file makes one join cheap; that one counts every statement a request sends |
 
 ## Control
 

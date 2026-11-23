@@ -20,3 +20,4 @@ In relation to other principles, observability:
 | [**Resilience & Graceful Degradation**](resilience.md) | Fallbacks must be visible to be trusted |
 | [**Principle of Least Privilege**](least-privilege.md) | The one active danger — logging secrets |
 | [**Self-Documenting Code**](../clean-code/self-documenting-code.md) | Structured logs document runtime behavior |
+| [**Every Request Has a Round-Trip Budget**](../data-layer/round-trips-per-request.md) | Two fields a request's line owes: its statement count, and a remainder so that the timed parts sum to the total |

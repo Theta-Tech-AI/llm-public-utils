@@ -73,7 +73,7 @@ principle applies to all of it. Useful families, roughly in order of how often t
 | **One rule across its whole population** | every member one rule covers — every write route against the lease, every state change against the audit record, every query against the tenant filter — listed from the route table or registry, not from the enforcing calls | the member that forgot the rule has no line to read; only the full list shows its empty cell. The slice detects; each finding goes to the owner of its rule kind (the authority to act: [complete-mediation](../principles/reliability/complete-mediation.md)), never a per-member check |
 | **Module** | one directory or package | enough context to judge cohesion and coupling inside a boundary |
 | **Role archetype** | a module read as the role it plays — adapter, handler, worker, scheduler, repository, migration | roles have signature defects: an adapter parses and reaches, a writer forgets idempotency, a repo re-derives a schema |
-| **Flow** | one path end to end: request → handler → service → persistence → response | shows where a value is re-interpreted at every hop, including hops in different directories |
+| **Flow** | one path end to end: request → handler → service → persistence → response | shows where a value is re-interpreted at every hop, including hops in different directories, and how many statements the request sends ([round trips](../principles/data-layer/round-trips-per-request.md)) |
 | **Contract surface** | every caller of one function, interface or endpoint | exposes wrappers that exist only to cope, and call sites that duplicate a decision |
 | **Diff / change set** | what a PR or the last N commits touched | the pragmatic slice for review rather than audit |
 
@@ -101,7 +101,7 @@ same code. Boundary ownership belongs with Modularity and One Logical Unit One H
 with A Helper That Must Exist and No Silent Defaults; shape with KISS and Guard Clauses; guarantees (state,
 lifetime, cancellation, privilege) together; the data layer together.
 
-The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 62 principle files — and
+The library ships a default grouping in [lenses.json](../lenses.json) — nine groups over 63 principle files — and
 you may regroup it. Two constraints:
 
 - **Related principles must sit together.** Splitting DRY from Single Source of Truth, or Parse Don't Validate
@@ -127,7 +127,7 @@ audits *reachability* of every markdown in the library. Each file must sit in ex
 An index file is **not** a substitute for the principle files (it carries one-line essences; a finding needs the
 full text), and a principle file is not a substitute for the index (the index is what tells a reader what a
 violated boundary even looks like). Read both, index first. `--check` fails on any file reachable by none of these
-paths and prints the tally — on this library: `93/93 files reachable — lens 62, lens-index 4, lens-protocol 3,
+paths and prints the tally — on this library: `94/94 files reachable — lens 63, lens-index 4, lens-protocol 3,
 library 7, mode 2, pattern 9, pattern-index 1, stage 5`.
 
 That is a guarantee of **reachability**, not of reading. No harness can prove an agent opened a file, but a

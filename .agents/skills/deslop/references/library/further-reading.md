@@ -67,7 +67,7 @@ Origins of specific principles referenced in this document.
 
 ## The data layer
 
-The principles under [data-layer/](data-layer/) rest on four sources, and each file cites the one it leans on:
+The principles under [data-layer/](data-layer/) rest on these sources, and each file cites the one it leans on:
 
 - **PostgreSQL manual** — [*Constraints*](https://www.postgresql.org/docs/current/ddl-constraints.html) (§5.5,
   including `NOT VALID` / `VALIDATE CONSTRAINT`), [*Indexes*](https://www.postgresql.org/docs/current/indexes.html)
@@ -84,3 +84,29 @@ The principles under [data-layer/](data-layer/) rest on four sources, and each f
   the Data Base Relational Model* (1971), summarized at
   <https://en.wikipedia.org/wiki/Database_normalization> — the normal forms and the insert / update / delete
   anomalies they prevent.
+- **Round trips per request** (each page opened and read for
+  [Every Request Has a Round-Trip Budget](../principles/data-layer/round-trips-per-request.md)):
+  - Azure Architecture Center, [*Chatty I/O antipattern*](https://learn.microsoft.com/en-us/azure/architecture/antipatterns/chatty-io/)
+    and its opposite, [*Extraneous Fetching*](https://learn.microsoft.com/en-us/azure/architecture/antipatterns/extraneous-fetching/)
+    ("often a result of overcompensating for the Chatty I/O antipattern").
+  - Markus Winand, [*Nested Loops, ORMs and the N+1 Problem*](https://use-the-index-luke.com/sql/join/nested-loops-join-n1-problem);
+    SQLAlchemy, [*Relationship Loading Techniques*](https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html)
+    (`selectinload`, `joinedload`, `raiseload`); Django,
+    [*Database access optimization*](https://docs.djangoproject.com/en/5.2/topics/db/optimization/) ("Retrieve
+    everything at once if you know you will need it").
+  - Martin Fowler, [*Microservices and the First Law of Distributed Objects*](https://martinfowler.com/articles/distributed-objects-microservices.html)
+    (2014: remote calls are "orders of magnitude slower") and
+    [*Remote Facade*](https://martinfowler.com/eaaCatalog/remoteFacade.html) ("a coarse-grained facade on
+    fine-grained objects to improve efficiency over a network").
+  - [DataLoader](https://github.com/graphql/dataloader): batching plus "a memoization cache for all loads which
+    occur in a single request"; "Typically instances are created per request".
+  - Query counts in tests and at run time: Django
+    [`assertNumQueries`](https://docs.djangoproject.com/en/5.2/topics/testing/tools/); Rails
+    [`strict_loading`](https://guides.rubyonrails.org/active_record_querying.html); the
+    [Bullet](https://github.com/flyerhzm/bullet) gem ("reducing the number of queries it makes").
+  - W3C, [*Server Timing*](https://www.w3.org/TR/server-timing/) (Working Draft); MDN,
+    [`Server-Timing`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Server-Timing): the
+    header "may expose potentially sensitive application and infrastructure information".
+  - PostgreSQL, [*Pipeline Mode*](https://www.postgresql.org/docs/current/libpq-pipeline-mode.html): "A
+    100-statement operation run on a server 300 ms round-trip-time away would take 30 seconds in network latency
+    alone"; not useful "when information from one operation is required by the client to produce the next".
