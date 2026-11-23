@@ -9,34 +9,34 @@ if SPEC is None or SPEC.loader is None:
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
-STAGES = [{"name": "Waiting", "color": "#f97316"}, {"name": "Coding", "color": "#22c55e"}, {"name": "Later", "color": "#a855f7"}]
 
-
-def chart(focus: dict[str, int], rest: dict[str, int]) -> dict:
-    return {"title": "t", "focus_group": "g", "stages": STAGES, "focus_items": focus, "rest_items": rest}
+def chart(focus: dict[str, int], stages: list[dict]) -> dict:
+    return {"title": "t", "groups": [{"name": "g", "color": "#22c55e", "slices": focus},
+                                      {"name": "h", "color": "#a855f7", "slices": {"x": 3, "y": 0}}], "stages": stages}
 
 
 class ProgressChartTest(unittest.TestCase):
-    def test_empty_stages_are_dropped_and_counts_kept(self) -> None:
-        order, _, focus, rest = MODULE.checked(chart({"Coding": 2, "Waiting": 0}, {"Later": 9}))
-        self.assertEqual((order, focus, rest), (["Waiting", "Coding", "Later"], {"Coding": 2}, {"Later": 9}))
+    def test_zero_stage_is_kept_only_when_always_show(self) -> None:
+        stages = [{"name": "New", "n": 0, "always_show": True}, {"name": "Gone", "n": 0}, {"name": "Coding", "n": 2}]
+        groups, kept = MODULE.checked(chart({"g": 2}, stages))
+        self.assertEqual([s["name"] for s in kept], ["New", "Coding"])
+        self.assertEqual(groups[1]["slices"], {"x": 3})
 
-    def test_an_unknown_stage_or_an_empty_focus_is_refused(self) -> None:
+    def test_mismatch_duplicate_and_empty_focus_are_refused(self) -> None:
         with self.assertRaises(SystemExit):
-            MODULE.checked(chart({"Being built": 2}, {}))
+            MODULE.checked(chart({"g": 3}, [{"name": "Coding", "n": 2}]))
         with self.assertRaises(SystemExit):
-            MODULE.checked(chart({}, {"Later": 3}))
+            MODULE.checked(chart({"g": 2}, [{"name": "Coding", "n": 1}, {"name": "Coding", "n": 1}]))
+        with self.assertRaises(SystemExit):
+            MODULE.checked(chart({}, []))
 
-    def test_a_wrong_total_or_a_duplicate_stage_is_refused(self) -> None:
-        with self.assertRaises(SystemExit):
-            MODULE.checked({**chart({"Coding": 2}, {}), "total": 5})
-        with self.assertRaises(SystemExit):
-            MODULE.checked({**chart({"Coding": 2}, {}), "stages": STAGES + STAGES[:1]})
-
-    def test_outside_labels_on_one_side_never_overlap(self) -> None:
-        placed = MODULE.spread([(0.1, 0.1, "a"), (0.12, 0.11, "b"), (0.2, 0.12, "c")])
-        ys = sorted(y for _, y, _ in placed)
+    def test_outside_labels_never_overlap(self) -> None:
+        ys = MODULE.spread([0.1, 0.11, 0.12])
         self.assertTrue(all(b - a >= MODULE.LABEL_GAP - 1e-9 for a, b in zip(ys, ys[1:])))
+
+    def test_shades_of_one_colour_run_light_to_dark(self) -> None:
+        light, *_, dark = MODULE.shades("#22c55e", 4)
+        self.assertGreater(sum(int(light[i:i + 2], 16) for i in (1, 3, 5)), sum(int(dark[i:i + 2], 16) for i in (1, 3, 5)))
 
 
 if __name__ == "__main__":

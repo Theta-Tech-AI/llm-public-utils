@@ -16,6 +16,8 @@ worker's own processes (by its worktree path): a running test run or review roun
 progress, so keep the bounded status question and its deadline.
 
 Before you expand the pool, verify how a silent stall will reach you: runtime notices plus bounded roster checks when no watcher exists. Enroll each new or resumed worker at once. Record its last checkpoint, expected next event and check deadline. Verify that monitoring survives a restart or handoff. A background job counts as activity only when its owner and expected completion are known.
+A watcher flags both ends: a worker that went quiet, and a worker that FINISHED without reporting (its last record is an end of turn and nothing follows). An accidental operator interrupt can stop every worker at once, and stopped workers cannot be resumed. Keep each worker's state in pushed branches and issue comments, so a fresh worker restarts from them in minutes.
+
 
 Keep these states apart, per worker:
 
@@ -67,5 +69,7 @@ For a shared skill, find its canonical source and read the consumer's update ins
 - **The coordinator then stopped two workers that were mid-step.** — It read "no output for 20 minutes" as a stall, but one long step writes nothing until it ends. Rule: ask first, with a bounded reply window; stop only on no answer or no progress. Evidence: a stopped worker whose last line shows work in progress.
 - **A worker looked stalled for 38 minutes while its second-model review and test run were running.** — One long tool call writes nothing to the transcript. Rule: check the worker's processes before stopping, and still ask for status with a deadline. Evidence: live processes under its worktree.
 - **Reports survived only in temporary paths.** — The recovery record was incomplete. Rule: durable record. Evidence: a new session resumes without chat or local files.
+- **A worker finished and nobody noticed.** — The watcher flagged only quiet workers. Rule: also flag a last record that is an end of turn with nothing after it. Evidence: a finished branch that waited for the next batch.
+- **One operator interrupt stopped every worker, and none could be resumed.** — State lived in the sessions. Rule: keep state in pushed branches and issue comments. Evidence: fresh workers restarted from them in minutes.
 
 Related: [2. Assign](assign.md) · [3. Build](build.md)
