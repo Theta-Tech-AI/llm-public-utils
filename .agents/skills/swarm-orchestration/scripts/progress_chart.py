@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw the open set as one 300 dpi image: a pie by release group, the focus group expanded by step, bars below.
+"""Draw the open set as one image (300 dpi, lowered so the longer side stays under 8000 px): a pie by release group, the focus group expanded by step, bars below.
 
 The left pie holds every open item, one colour per release group; each non-focus group is split into its own slices in
 shades of that colour. The focus group is one outlined block; dashed lines expand it into a right pie by step, drawn in
@@ -50,6 +50,8 @@ class ChartInput(TypedDict):
 
 
 BACKGROUND, FOREGROUND, OUTLINE, AXIS, LEADER = "#0f172a", "#e2e8f0", "#facc15", "#475569", "#94a3b8"
+MAX_PIXELS = 7900  # the file-sending tool refuses an image of 8000 px or more on either side
+MIN_INSIDE_FONT = 12
 LABEL_GAP = 0.17  # least distance between two outside labels, in pie radii
 
 
@@ -95,7 +97,13 @@ def text_color(fill: str) -> str:
 
 
 def wrap(text: str, width: int = 16) -> str:
-    return "\n".join(textwrap.wrap(text, width))
+    return "\n".join(textwrap.wrap(text, width, break_long_words=False, break_on_hyphens=False))
+
+
+def inside_font(name: str, size: int, width: int = 12) -> float:
+    """Font size at which the longest word of ``name`` fits one wrapped line; below MIN_INSIDE_FONT the label goes outside."""
+    longest = max((len(w) for w in name.split()), default=1)
+    return size * min(1.0, width / longest)
 
 
 def spread(wanted: list[float], lines: list[int] | None = None) -> list[float]:
@@ -130,9 +138,10 @@ def label_sectors(ax, wedges, items: list[tuple[str, int, str]], total: int, fre
     outside: list[tuple[float, str]] = []
     for (name, count, fill), wedge in zip(items, wedges):
         angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
-        if count / total >= inside_min:
+        fit = inside_font(name, size)
+        if count / total >= inside_min and fit >= MIN_INSIDE_FONT:
             ax.text(0.6 * math.cos(angle), 0.6 * math.sin(angle), f"{wrap(name, 12)}\n{count}", ha="center", va="center",
-                    color=text_color(fill), fontsize=size, weight="bold")
+                    color=text_color(fill), fontsize=fit, weight="bold")
         else:
             outside.append((angle, wrap(f"{name}: {count}", 40)))
     planned = plan_outside(outside, free)
@@ -193,8 +202,11 @@ def draw(data: ChartInput, output: Path) -> None:
                         startangle=-half, counterclock=True, wedgeprops={"edgecolor": BACKGROUND, "linewidth": 2.5})
     label_sectors(big, wedges[1:], rows, total, -1, 20, 0.12)
     big.add_patch(Wedge((0, 0), 1.0, -half, half, fill=False, edgecolor=OUTLINE, linewidth=5, zorder=5))
-    big.text(0.6, 0, f"{wrap(focus['name'], 12)}\n{focus_total}", ha="center", va="center", color=text_color(focus["color"]),
-             fontsize=20, weight="bold", zorder=6)
+    # a name whose longest word will not fit the block at a readable size stays in the key, titles and bars; the block keeps the count
+    fit = inside_font(focus["name"], 20)
+    fits = fit >= MIN_INSIDE_FONT
+    big.text(0.6, 0, f"{wrap(focus['name'], 12)}\n{focus_total}" if fits else str(focus_total), ha="center", va="center",
+             color=text_color(focus["color"]), fontsize=fit if fits else 20, weight="bold", zorder=6)
     big.set_title(f"All open issues ({total})", color=FOREGROUND, fontsize=22, pad=14)
 
     # Group key: coloured words under the title, centred, no legend box.
@@ -222,7 +234,11 @@ def draw(data: ChartInput, output: Path) -> None:
               + [(s, n, c) for s, n, c in rows], f"All open issues by group ({total})")
     draw_bars(fig.add_subplot(grid[1, 1]), [(s["name"], s["n"], step_colors[s["name"]]) for s in stages],
               f"{focus['name']} by step, top = earliest ({focus_total})")
-    fig.savefig(output, facecolor=BACKGROUND, bbox_inches="tight")
+    # Size cap: tight box in inches decides the dpi so the longer side stays under MAX_PIXELS.
+    box = fig.get_tightbbox(fig.canvas.get_renderer())
+    pad = 0.1  # inches, savefig's own padding; it is part of the saved size
+    dpi = min(300, MAX_PIXELS / (max(box.width, box.height) + 2 * pad))
+    fig.savefig(output, facecolor=BACKGROUND, bbox_inches="tight", pad_inches=pad, dpi=dpi)
     print(f"✅ wrote {output} ({total} items, {focus_total} in {focus['name']})")
 
 

@@ -34,6 +34,10 @@ class ProgressChartTest(unittest.TestCase):
         ys = MODULE.spread([0.1, 0.11, 0.12])
         self.assertTrue(all(b - a >= MODULE.LABEL_GAP - 1e-9 for a, b in zip(ys, ys[1:])))
 
+    def test_labels_wrap_on_word_boundaries_only(self) -> None:
+        self.assertEqual(MODULE.wrap("Investigating now", 12), "Investigating\nnow")
+        self.assertLess(MODULE.inside_font("Investigating", 20), 20)
+
     def test_shades_of_one_colour_run_light_to_dark(self) -> None:
         light, *_, dark = MODULE.shades("#22c55e", 4)
         self.assertGreater(sum(int(light[i:i + 2], 16) for i in (1, 3, 5)), sum(int(dark[i:i + 2], 16) for i in (1, 3, 5)))
