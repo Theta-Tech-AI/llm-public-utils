@@ -81,7 +81,7 @@ Two obligations decide whether a pass was worth running:
   of helper names is not this sweep** — it fires only on the spellings you thought of and misses the next
   instance by construction; the question above is the instrument, and
   [architecture/helper-is-an-architecture-finding.md](../principles/architecture/helper-is-an-architecture-finding.md) is where
-  the finding goes.
+  the finding goes. When the target has a write boundary, the census is a required table (the last section below).
 And the library applies **before** the code exists, not only to what already does: re-reading the applicable
 principles while designing is cheaper than consolidating a fork that has callers.
 - **Census the reasons to change for the units the pass reads in full.** Scope: every unit the pass reads in full, plus any unit with three or more collaborators. Scripts under 100 lines are exempt, as [When to Relax](when-to-relax.md) states. For each unit in scope, list the independent reasons it could change, read from what the code does: what triggers it, which external system it reads or writes, what transformation it applies, what it persists, and how it copes with failure. Each reason to change cites a line. Two or more reasons to change nominate the unit; the degree test in [orthogonality.md](../principles/architecture/orthogonality.md) decides whether it is a finding. Like the input census, this outranks nothing else in the pass, and it is reported even when it ranks last.
@@ -95,3 +95,20 @@ Every report carries this table, placed after the violation list. A report witho
 | `<unit>` | trigger `file:line`; external read `file:line`; transformation `file:line`; … | `<contract>` at `file:line`, or none | `core` or `collaborator: <which>`, for each seam | welded, seamed or exempt, with the reason |
 
 A seam whose crossing data is a collaborator's representation is recorded as **nominal** in the seams column, and the unit's verdict is **welded**. A private helper function is never a seam by itself. A **welded** verdict cites the two probe results from the degree test: each touch point and the reasons to change it spans. Keep the table structural: unit names come from the code, and reasons to change come from what the code does.
+
+### The input census is a required section when the target has a write boundary
+
+A write boundary is a place where outside data is accepted and kept or acted on: a save route, a queue consumer, a
+webhook, a tool-call argument, an import job. When the target contains one, the report carries this table after the
+violation list, one row per external input that boundary accepts (a field of a request body counts as an input). A
+report of such a target without it is incomplete, even when it has no findings:
+
+| Input | Enters at | Parsed into (the type and the line that returns it), or `none` | Re-interpreted at (count, then each `file:line`) | Verdict |
+|---|---|---|---|---|
+| `<body.field>` | `file:line` | `Email` at `file:line`, or `none` | `3`: `file:line`, `file:line`, `file:line` | owned, or the finding |
+
+A check that returns only a verdict (`None`, `bool`, a complaint) is not an owner: it parses nothing, so its row reads
+`none`. **Zero owners, or more than one re-interpretation, is a finding** under
+[parse-dont-validate](../principles/architecture/parse-dont-validate.md), and it is reported even when it ranks last.
+Count re-interpretations with that file's tell 3; a reader that repairs the value (trims it, folds its case, removes
+duplicates, fills a default) is one.

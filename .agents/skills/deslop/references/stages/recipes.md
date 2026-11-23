@@ -11,11 +11,21 @@ Pick the shape from the ask, then read only what that shape needs. A target that
 | The ask sounds like | Shape | What to read, in order | What you owe the end |
 |---|---|---|---|
 | "deslop this directory", "review this module", "we keep missing things", or any file, package, subsystem or repository that is not a diff | **coverage pass** (the default) | `readings/auditing.md`, `readings/when-to-relax.md`, then **every group** in `lenses.json`: its index, then every principle file in it, in full (see *The default*) → `stages/aggregation.md` → `stages/consolidation.md` → `stages/reporting.md` | the bucketed list and the **coverage receipt**: each group read or not read, with a files-read manifest per cell. A pass that did not read every group is **partial coverage** |
-| "review this PR", "is this diff sloppy?", or an explicit "quick look" / "narrow look" | **scoped pass** | `readings/auditing.md`, `readings/when-to-relax.md`, `patterns.md` and the pattern files of those groups, then the **one or two groups** the code is (a boundary question → `boundaries`; a parser → `parsing`), in full | a short findings list, verified at the line, and the groups it did not read |
+| "review this PR", "is this diff sloppy?", or an explicit "quick look" / "narrow look" | **scoped pass** | `readings/auditing.md`, `readings/when-to-relax.md`, `patterns.md` and the pattern files of those groups, then the **one or two groups** the code is (a boundary question → `boundaries`; a parser → `parsing`), in full | a short findings list, verified at the line, the groups it did not read, and the input census (`readings/auditing.md`) when the diff touches a write boundary |
 | "look at X specifically" — separation of concerns, coupling, duplication | **directed cell** | that group's index, then every file in the group, then the module whole | findings in that group's terms, with the declinations |
 | "massive simplification", "30% LOC", "get it all done" | **campaign** | `modes/campaign.md` (which names `library/measuring.md` before you start) | a PR or PR set with a measured before/after |
 | "this rule is wrong / we need a principle for X" | **library extension** | `library/extending-the-library.md`, then `readings/detecting-slop.md` for the control | a new principle that fires, merged upstream |
 | "we keep finding new slop in the same code" | **second round** | `stages/planning.md` §8 — the next round is the complement of the last | the unread groups, named |
+
+## A scoped pass follows a repair to its writer
+
+A diff is not the whole defect when it adds a **repair to a value it reads**: a new trim, case fold, de-duplication,
+type coercion or default applied to a field that another module stored or sent (`row["email"].strip()`,
+`int(payload["count"])`, `set(answer)`). The repair means the value reached this reader unparsed. Before reporting,
+open the **writer** of that value (the save path, producer or boundary that stored it, found from the field name), apply
+the tells of [parse-dont-validate](../principles/architecture/parse-dont-validate.md) there, and charge the writer when it
+keeps the raw value. The reader's line is the evidence, not the finding. This holds even when the writer is outside the
+diff; name both loci.
 
 ## The default: a coverage pass
 

@@ -199,6 +199,17 @@ SIGHTINGS`, and anything in your lens you could not decide (say what would decid
 """
 
 
+CENSUS = """
+## 4. The input census you owe
+
+If the target has a write boundary (a save route, a queue consumer, a webhook, a tool-call argument, an import job),
+write the input census table of `references/readings/auditing.md` to `{out_census}`: one row per external input the
+boundary accepts, with its owner or `none` and its re-interpretation count. Each `none` row, and each row with more
+than one re-interpretation, is also a finding in the JSONL. No write boundary: write one line saying so. A missing
+census file is a failed reading, like a missing manifest.
+"""
+
+
 def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | None,
          label: str = "", file_list: str | None = None) -> int:
     problems, _, _ = audit(m)
@@ -241,6 +252,8 @@ def emit(m: dict, outdir: Path, target: str, repo: str, run: int, only: str | No
             out_jsonl=out_jsonl,
             out_manifest=out_manifest,
         ) + scope_note
+        if spec.get("owes_input_census"):
+            body += CENSUS.format(out_census=str(outdir / f"census-{stem}.md"))
         if spec.get("skip_when"):
             body += f"\nScope note: {spec['skip_when']}.\n"
         (outdir / f"lens-{stem}.md").write_text(body)
