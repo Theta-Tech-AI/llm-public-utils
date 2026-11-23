@@ -197,8 +197,8 @@ Write JSON Lines to `{out_jsonl}` — one object per finding, no prose around it
 
 `principle` is the file slug of the principle you are charging, e.g. `separation-of-concerns`. Quote real \
 lines and real numbers; an unlocatable finding is worthless to the merge step. For a population finding (one rule, \
-many members), `repair` names the door every member passes and what it checks under its lock, never a check \
-added at each member.
+many members), `repair` names the one shared enforcement point every member passes and its mechanism for that rule \
+kind (`references/readings/auditing.md`, population census), never a check added at each member.
 
 Then, in your final message, give: the files you read, the count of findings by principle, the `CROSS-LENS \
 SIGHTINGS`, and anything in your lens you could not decide (say what would decide it).
@@ -223,13 +223,16 @@ If the target has a class of members that one rule covers (authorization, a lock
 idempotency, rate limit, validation), write the population census table of
 `references/readings/auditing.md` to `{out_census}` (an absolute path in the emit folder, outside the repository):
 build the member list from the route table or registry, never from the enforcing calls. Members are every operation
-that changes the protected thing, whatever role performs it; a member needing a different authority is another rule
-in its own block; an operation that writes nothing is marked `writes nothing`, not an empty cell; an exemption is a
-named entry point in code, and a comment-only exemption is counted apart. One row per member with where it enforces
-the rule or `none`, then the counts (members, members per enforcing function, empty cells), then one line with the
-repair for the whole block. Keep every row in the census file. Empty cells that share a rule kind are ONE finding in
-the JSONL, with the count of empty cells and two or three example loci, and its repair is the door, not a check per
-member. That finding, or a rule decided independently with different meanings or with a bypassable path, goes in
+the rule applies to, whatever role performs it (for a write rule the operations that change the protected thing, for
+a read rule the queries that read it); a member needing a different authority is another rule in its own block; only
+inside a write rule's block is an operation that writes nothing marked `writes nothing` instead of an empty cell; an
+exemption is a named entry point in code, and a comment-only exemption is counted apart. One row per member with where
+it enforces the rule or `none`, then the counts (members, members per enforcing function, empty cells), then one line:
+for a block whose rule kind one of your assigned principles owns, the repair for the whole block; for any other block,
+`owner: <principle>`. Keep every row in the census file. Empty cells that share a rule kind are ONE finding, with the
+count of empty cells and two or three example loci, and its repair is the one shared enforcement point every member
+passes, with the mechanism `references/readings/auditing.md` gives for that rule kind (a lock only for authority that
+needs serialization), not a check per member. That finding, or a rule decided independently with different meanings or with a bypassable path, goes in
 the JSONL only when its rule kind is owned by one of your assigned principles; when a principle outside your lens owns it (for example validation, owned by parse-dont-validate),
 do not argue it: list it under `CROSS-LENS SIGHTINGS` in prose, one line each, for the owning reader. Several functions
 that delegate to one decision are only a lead. The census detects and is never the repair: charge each finding to the owner of its rule kind as
