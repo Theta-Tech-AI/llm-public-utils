@@ -16,7 +16,7 @@ def lock_document(project_id: str, doc: str, user: User) -> dict:
     return {"ok": True}
 
 
-@route("POST", "/projects/{id}/documents/{doc}/accept-stale", role="edit")
-def accept_stale(project_id: str, doc: str, user: User) -> dict:
+@route("POST", "/projects/{id}/documents/{doc}/sign-off", role="edit")
+def sign_off(project_id: str, doc: str, user: User) -> dict:
     db.ROWS.setdefault(doc, {})["stale_accepted_by"] = user.id
     return {"ok": True}

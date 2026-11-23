@@ -8,7 +8,7 @@ the caller to hold that project's edit lease**. Packages: `projects/` (the lease
 **PLANTED**
 
 - Three edit routes change state with no lease check, and nothing fails: `documents/routes.py`
-  `lock_document` and `accept_stale`, and `jobs/routes.py` `start_summary` (a paid job).
+  `lock_document` and `sign_off`, and `jobs/routes.py` `start_summary` (a paid job).
 - Three enforcing helpers with two meanings: `lease.require_lease` (refuse unless held), `lease.take_lease`
   (take if free) and `documents/session.py` `editing_session` (a third copy, written for one more group of routes).
   The rule is enforced by a call each route must remember; the router, which every route passes, does not know it.
