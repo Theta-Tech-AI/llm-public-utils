@@ -10,9 +10,9 @@ description: Deslop principle — Every Request Has a Round-Trip Budget: count t
 
 The index principles make each statement cheap. This one counts the statements. When the application and the
 database run on different hosts, every statement costs one network round trip whatever its plan says: often a few
-milliseconds, more through a pooler or a proxy. A request that sends 40 indexed statements one after another at 8 ms
-each waits 320 ms on the network, and no query plan shows it. (Pipelined or batched sends overlap the waits: count
-the synchronisation round trips, and check the elapsed time.)
+milliseconds. A request that sends 40 indexed statements one after another at 8 ms
+each waits 320 ms on the network, and no query plan shows it. (Pipelined sends overlap the waits: count the
+synchronisation round trips.)
 
 No line of code states the count. It is the sum of what every function in the call tree reads for itself, so it is
 a **design output**: it grows each time a function is added. Two rules follow. **Count the statements of each
@@ -53,7 +53,7 @@ def page_state(conn, project_id, user):
 ```
 
 Now the readers take the facts, not a connection and an id, and the answers agree: under
-read committed, five reads of one row can see five versions of it.
+read committed, five reads of one row can see five versions.
 
 **Why tuning each statement cannot see it.** The cost is latency × count: `EXPLAIN` judges one statement, and the
 slow-query log is empty because no statement is slow. Every function is correct alone: asking the one owner for the
@@ -69,8 +69,8 @@ each read an independent collection that must stay separate (see the end). Sever
 share one measured round trip are not that: five statements for five same-shaped sections are still a finding.
 
 1. **A reader that takes a connection and an id, called beside others of the same shape.**
-   `grep -rnE 'def \w+\((conn|db|session|cur)\w*, \w+_id' <src>`. One such function is fine. The tell is the
-   composition: a handler calls five, and each loads the same row.
+   `grep -rnE 'def \w+\((conn|db|session|cur)\w*, \w+_id' <src>`. One such function is fine. The tell is a handler
+   that calls five, each loading the same row.
 2. **The same owner reached from two layers of one request**: the route computes a state, and the service it
    calls computes it again.
 3. **A context built inside a loop over options**: `for move in MOVES: build_context(conn, project_id)`. The
@@ -111,8 +111,9 @@ defect, such as a parse that is also wrong.
 - **A value reused after a fact it depends on changed.** A compliance or permission check that used to read its
   facts again after the slow step or after the request's own write now judges stale ones. Refresh the facts that a
   write affects or that carry a freshness requirement: build a new facts value after it, or keep the check's own
-  read. Keep a value read under `FOR UPDATE` and used after the write, and a transaction snapshot that is meant to
-  stay valid across a wait: those are not stale.
+  read. A value read under `FOR UPDATE` stays valid only while what it depends on is unchanged, or when used as the
+  intended before-value; after a write that changes it (a decremented `seats_left`), refresh it with `RETURNING` or a
+  re-read. A transaction snapshot meant to stay valid across a wait is not stale.
 - **One statement that fetches everything a page might need.** A fact that one rare branch needs is read there.
 
 ## When separate statements are right
@@ -139,8 +140,7 @@ defect, such as a parse that is also wrong.
 4. **Know the floor**: what authentication and the access check cost before the handler runs. It can be one
    statement. Everything above it belongs to the route's design.
 5. **Make the timing line sum.** Print the database, handler, serialisation and wait times, and the remainder as
-   its own field: a line that leaves a third of the time unnamed hides a third of the cost. Statement time summed
-   over parallel reads can exceed the wall time; say which one the field is.
+   its own field: a line that leaves a third of the time unnamed hides a third of the cost.
 6. **Rank by round trips × calls**, not by the slowest request. A few routes usually pay most of the total.
 
 ## When to relax
@@ -148,7 +148,7 @@ defect, such as a parse that is also wrong.
 - **The database is in the same process or on the same host** (SQLite, a unix socket): a round trip costs
   microseconds. A repeat still shows a reader that should take a value, but there is no budget to defend.
 - **A job, migration or admin page** called a few times a day.
-- **A route already at one statement per distinct fact.** Do not fuse further.
+- **A route whose result sets must stay separate, one statement each.** Do not fuse those; compatible sections that could share one round trip are still a finding.
 
 ## Measured
 
@@ -165,8 +165,6 @@ routes paid 80% of the round trips; the floor was one statement.
 
 **What the page-state row teaches.** The estimate made by reading the code was wrong in both directions. Only the
 counter on the real route is evidence: count first, fix, count again, and let the remainder name the next concern.
-
-<!-- MEASURED-RESULTS: more rows to be added by the coordinator -->
 
 ---
 
@@ -202,9 +200,7 @@ process boundary is Martin Fowler's: "batch all that into a single call"
 ([First Law of Distributed Objects](https://martinfowler.com/articles/distributed-objects-microservices.html)).
 The explicit per-request loader is [DataLoader](https://github.com/graphql/dataloader). A count asserted in a
 test is Django's [`assertNumQueries`](https://docs.djangoproject.com/en/5.2/topics/testing/tools/). The header is
-W3C [Server Timing](https://www.w3.org/TR/server-timing/). The other sources read for this file (extraneous
-fetching, ORM eager loading, Rails strict loading, PostgreSQL pipeline mode) are in
-[further reading](../../library/further-reading.md#the-data-layer).
+W3C [Server Timing](https://www.w3.org/TR/server-timing/). Further sources: [further reading](../../library/further-reading.md#the-data-layer).
 
 **This library's own:** the count as a design output with a committed budget per route; the causes that are not
 loops (each reader loading its own facts, a check that discards its answer, a context per option); the required
@@ -214,4 +210,4 @@ facts value as the repair, with the hidden memo and the optional parameter named
 
 1. **A request's statement count is a design output.** Count it at the driver, per route, against a budget.
 2. **Read each fact once per request, at its owner, and pass the value** as a required parameter, never through a hidden memo.
-3. **One statement per distinct fact is the aim.** A read under a lock, another transaction or an independent row set stays separate.
+3. **One statement per distinct fact is the aim.** A read under a lock, another transaction or an independent row set stays separate; compatible sections share one statement.
