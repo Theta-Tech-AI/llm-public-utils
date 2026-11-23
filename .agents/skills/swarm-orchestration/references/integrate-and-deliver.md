@@ -33,6 +33,8 @@ Diagnose the tool error before you change the patch. Use another publication rou
 
 Claim each one only with its own evidence. Read-only acceptance checks run under existing authorization. A deploy needs its own authorization. An unreachable environment is a blocked check, not a pass. Keep independent work moving, and record the precise blocked step.
 
+Merged upstream is not live: a fix reaches the product only after the dependency pin bump. Track "merged upstream, waits pin bump" as its own stage. Give the pin bump an owner when the first upstream merge lands; otherwise each worker assumes another session owns it and merges wait.
+
 A worker may not see deploys. When a task needs live proof, have an authorized observer give the live revision with its evidence. Then resume the acceptance owner with a message that names the revision and the access its checks need. Without that message the proof never runs.
 
 ## Close on evidence

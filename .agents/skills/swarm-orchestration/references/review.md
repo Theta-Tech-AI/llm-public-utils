@@ -21,6 +21,7 @@ Read before you accept a handoff, approve a revision, or diagnose a failing chec
 - Run full base-to-head gates, not only checks for the last commit. Include the cheap early CI checks (policy, documentation links, comments, whitespace) before publication. Keep the manifest and check output with the task record.
 - Test the behavior that the task changes. A page test that mocks the polling hook cannot show polling cadence. A helper test cannot show that production uses the helper. Check real callers, side effects and error paths. For generated artifacts, compare fresh generator output with the shipped artifact.
 - Name the fixture that exercises each required outcome. If it is missing, create an authorized disposable fixture. Do not wait for a rare state to occur. A failure-path run or an empty error log cannot prove a success path. Read the required final artifact before you mark a row demonstrated.
+- Test and demo inputs come from the ground truth, or the worker stops and asks. Never fill blanks with guessed defaults; they cause review findings.
 - Do not widen error baselines, add ignores, or weaken assertions to hide a regression. Fix the cause, or document a demonstrated intentional contract change.
 - After a code change, rerun the affected checks. Reuse evidence only when its source and assumptions still match. A green review does not survive a conflicting merge: rerun on the merged head. Do not rerun expensive suites after a prose edit.
 
