@@ -326,7 +326,7 @@ def findings(board: Board, now: datetime, activity_dir: Path | None = None, quie
 
     waiting: dict[str, list[str]] = defaultdict(list)
     for item in items:
-        if item.get("waits_on"):
+        if item.get("waits_on") not in (None, ""):  # an item id can be 0
             waiting[key(item["waits_on"])].append(str(item["id"]))
     for thing, waiters in waiting.items():
         if thing in owned and not owned[thing]:

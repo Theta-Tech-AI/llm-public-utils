@@ -208,6 +208,10 @@ class BoardCheckTest(unittest.TestCase):
             found = MODULE.findings(board(item("a")), NOW, activity_dir=Path(activity), status_dir=Path(status))
         self.assertEqual(found, {})
 
+    def test_a_zero_id_is_a_real_blocker(self) -> None:
+        found = MODULE.findings(board(item("a", waits_on=0), item("b", waits_on=0)), NOW)
+        self.assertEqual(found["shared blocker is not an item"], ["'0' waited on by a, b"])
+
     def test_a_pipeline_owner_is_busy(self) -> None:
         found = MODULE.findings(board(item("a", owner="coordinator"), capacity={"target": 1},
                                       pipelines=[{"name": "p", "result": "failure", "checked": "2026-11-23T05:15Z", "owner": "w1"}]), NOW)
