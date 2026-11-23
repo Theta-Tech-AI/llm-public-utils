@@ -6,7 +6,7 @@ shades of that colour. The focus group is one outlined block; dashed lines expan
 shades of the focus colour so it visibly matches the block. The group key is coloured words under the title. Bars below
 repeat both pies with the same shades. Input is JSON; ``stages`` are the focus group by step, in order of operations::
 
-    {"title": "All open: 68 at 9:27 PM EST (was 70)",
+    {"title": "All open: 48 at 9:27 PM EST (was 50)",
      "groups": [{"name": "1.1 staging", "color": "#22c55e", "slices": {"1.1 staging": 14}},
                 {"name": "1.2+", "color": "#a855f7", "slices": {"Simulator": 29, "Ops & infra": 5}}],
      "stages": [{"name": "Moved in, no worker yet", "n": 0, "always_show": true},
@@ -68,6 +68,8 @@ def checked(data: ChartInput) -> tuple[list[Group], list[Stage]]:
         raise SystemExit(f"❌ duplicate stage names in {stage_names}")
     if not groups or not groups[0]["slices"]:
         raise SystemExit("❌ the focus group (the first) has no items")
+    if any(s["n"] < 0 for s in data["stages"]):
+        raise SystemExit("❌ a stage has a negative count")
     stages = [s for s in data["stages"] if s["n"] > 0 or s.get("always_show")]
     focus_total, stage_total = sum(groups[0]["slices"].values()), sum(s["n"] for s in stages)
     if focus_total != stage_total:
@@ -96,11 +98,12 @@ def wrap(text: str, width: int = 16) -> str:
     return "\n".join(textwrap.wrap(text, width))
 
 
-def spread(wanted: list[float]) -> list[float]:
-    """Push wanted positions apart so neighbours are at least LABEL_GAP apart; the order is kept."""
+def spread(wanted: list[float], lines: list[int] | None = None) -> list[float]:
+    """Push wanted positions (ascending) apart so neighbours clear each other; a label of n lines is n times as tall."""
+    lines = lines or [1] * len(wanted)
     placed: list[float] = []
-    for value in sorted(wanted):
-        placed.append(max(value, placed[-1] + LABEL_GAP) if placed else value)
+    for value, count, before in zip(sorted(wanted), lines, [1] + lines):
+        placed.append(max(value, placed[-1] + LABEL_GAP * (count + before) / 2) if placed else value)
     return placed
 
 
@@ -112,13 +115,13 @@ def plan_outside(angles_labels: list[tuple[float, str]], free: int) -> list[tupl
     pie, the one nearest the blocked side lowest and its text running toward that side, so a leader never runs through a neighbour's text."""
     planned: list[tuple[float, str, tuple[float, float], str]] = []
     column = sorted((al for al in angles_labels if math.cos(al[0]) * free >= 0), key=lambda al: math.sin(al[0]))
-    for (angle, text), y in zip(column, spread([1.15 * math.sin(a) for a, _ in column])):
+    for (angle, text), y in zip(column, spread([1.15 * math.sin(a) for a, _ in column], [t.count("\n") + 1 for _, t in column])):
         planned.append((angle, text, (free * 1.4, y), "left" if free > 0 else "right"))
     for up in (1, -1):
         stack = [al for al in angles_labels if math.cos(al[0]) * free < 0 and math.sin(al[0]) * up > 0]
         stack.sort(key=lambda al: free * math.cos(al[0]))  # nearest the blocked side first = lowest
-        for rank, (angle, text) in enumerate(stack):
-            planned.append((angle, text, (math.cos(angle), up * (1.3 + rank * LABEL_GAP)), "right" if free > 0 else "left"))
+        for (angle, text), height in zip(stack, spread([1.3] * len(stack), [t.count("\n") + 1 for _, t in stack])):
+            planned.append((angle, text, (math.cos(angle), up * height), "right" if free > 0 else "left"))
     return planned
 
 
@@ -145,7 +148,7 @@ def label_sectors(ax, wedges, items: list[tuple[str, int, str]], total: int, fre
 def draw_bars(ax, rows: list[tuple[str, int, str]], title: str) -> None:
     """Horizontal bars, first row at the top; a bar over three times the next is clipped and labelled."""
     names, values, colors = (list(c) for c in zip(*rows))
-    ranked = sorted(values, reverse=True)
+    ranked = sorted((v for v in values if v > 0), reverse=True)
     cap = ranked[1] * 1.6 if len(ranked) > 1 and ranked[0] > 3 * ranked[1] else None
     shown = [min(v, cap) if cap else v for v in values]
     pad = max(max(shown), 1) * 0.01

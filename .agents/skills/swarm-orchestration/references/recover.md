@@ -16,7 +16,7 @@ worker's own processes (by its worktree path): a running test run or review roun
 progress, so keep the bounded status question and its deadline.
 
 Before you expand the pool, verify how a silent stall will reach you: runtime notices plus bounded roster checks when no watcher exists. Enroll each new or resumed worker at once. Record its last checkpoint, expected next event and check deadline. Verify that monitoring survives a restart or handoff. A background job counts as activity only when its owner and expected completion are known.
-A watcher flags both ends: a worker that went quiet, and a worker that FINISHED without reporting (its last record is an end of turn and nothing follows). An accidental operator interrupt can stop every worker at once, and stopped workers cannot be resumed. Keep each worker's state in pushed branches and issue comments, so a fresh worker restarts from them in minutes.
+A watcher flags both ends: a worker that went quiet, and a worker that FINISHED without reporting (its last record is an end of turn and nothing follows). An accidental operator interrupt can stop every worker at once, and some runtimes cannot resume a stopped worker. Check whether resume works, and either way keep each worker's state in pushed branches and issue comments, so a fresh worker restarts from them in minutes.
 
 
 Keep these states apart, per worker:
