@@ -42,7 +42,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 
 ## Round Trips
 
-> *The principles above make one statement cheap. A request is many statements, and with the database on another host each one costs a network round trip whatever its plan says. No line of code states the count: it is the sum of what every function in the call tree reads for itself, and it is found by counting one request, never by reading one query.*
+> *The principles above make one statement cheap. A request is many statements, and with the database on another host each one sent and awaited in turn costs a network round trip whatever its plan says (pipelined statements can share a wait, so count synchronization waits as well as statements). No line of code states the count: it is the sum of what every function in the call tree reads for itself, and it is found by counting one request, never by reading one query.*
 
 | Principle | What it says |
 |-------------|----------------|

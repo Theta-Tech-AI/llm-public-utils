@@ -19,7 +19,7 @@ with a stub connection, `GET /courses/{course_id}/overview` sends **57 statement
   (`inbox/sources.py`), then loops over the completed enrolments with a `SELECT *` on `certificate` (a row that
   holds a PDF) only to learn that it exists.
 
-**Expected repair** — one finding per route and cause, repaired at the owner of the read. For the course page: the
+**Expected repair** — one finding per route and read owner (the repeated readers, the discarded check and the repeated context are evidence inside it), repaired at the owner of the read. For the course page: the
 access check returns what it read, and one immutable facts value (enrolment, course, lessons, results) is read once
 at the top of `overview` and handed to `completion`, `eligibility`, `next_lesson` and the action rules as a required
 parameter: 3 or 4 statements. For the inbox: one `UNION ALL` over the four sections and an `EXISTS` (or a join) for

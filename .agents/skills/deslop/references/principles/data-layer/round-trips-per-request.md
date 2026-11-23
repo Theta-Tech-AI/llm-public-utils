@@ -58,14 +58,15 @@ read committed, five reads of one row can see five versions of it.
 **Why tuning each statement cannot see it.** The cost is latency × count: `EXPLAIN` judges one statement, and the
 slow-query log is empty because no statement is slow. Every function is correct alone: asking the one owner for the
 row it needs is what [Single Source of Truth](../architecture/single-source-of-truth.md) asks for. The repeat
-exists only in the request, and no file shows a request.
+exists only in the request.
 
 ## The tells
 
 Each is a lead. Confirm it by counting the route's statements: with the counter below, or in a read-only pass by
 walking the route from its handler and writing one line per statement (reader, table, key). Start with the routes
-called most: a polled route, the read every page makes. Decline a route that is called rarely or already sends
-one statement per fact.
+called most: a polled route, the read every page makes. Decline a route that is called rarely, or whose statements
+each read an independent collection that must stay separate (see the end). Several compatible sections that could
+share one measured round trip are not that: five statements for five same-shaped sections are still a finding.
 
 1. **A reader that takes a connection and an id, called beside others of the same shape.**
    `grep -rnE 'def \w+\((conn|db|session|cur)\w*, \w+_id' <src>`. One such function is fine. The tell is the
@@ -94,38 +95,33 @@ defect, such as a parse that is also wrong.
 |---|---|
 | the same rows read by several readers | one immutable **facts value per concern**, read once at the top of the request by its owner and handed down as a **required** parameter; the readers become plain functions of it, and their own reads are deleted in the same change |
 | an access check whose answer is thrown away | the check returns what it read (role, lock state, archive state) and the handler takes that value |
-| a verdict computed per option, or once per layer | compute it once and pass it; build the context outside the loop |
+| a context built per option, or once per layer | build the shared context once outside the loop and pass it; evaluate each option's rule separately on it; reuse a verdict only for identical decision inputs (one option may be allowed while another is refused) |
 | a statement per section or per item | one statement per result set: `UNION ALL` for sections of one shape, a join or `LATERAL` for a parent with its newest child, `= ANY(%s)` for a list of keys, `EXISTS` for "is there one", one multi-row `INSERT … SELECT … FROM unnest(%s)`; a view or a database function when the composite is a stable unit |
 
 **What is not the repair:**
 
 - **A hidden per-request cache**: `@lru_cache`, or a memo in a context variable or on the request object, put
-  under the readers so that the second call is free. The count falls and the design gets worse. The memo is a
+  under the readers so that the second call is free. The memo is a
   second owner of the fact inside the request. A reader that runs after the request's own write gets the value
-  from before it, and no signature shows which readers those are. Whether a call reaches the database depends on
-  who ran first. The readers still hold a connection, so the next one added reads again. (An explicit loader or identity map
+  from before it, and no signature shows which readers those are. (An explicit loader or identity map
   passed per request, with a declared lifetime and invalidation after writes, fits where the client chooses the reads
   at run time, as in a GraphQL resolver tree.)
 - **An optional parameter**: `def progress(conn, project_id, facts=None)`. The self-reading path stays alive, and
   the caller that forgets to pass the value pays in silence.
-- **A cache across requests, or parallel threads**, before the request is fixed: both hide the count.
-- **A value read once and reused across a write or a slow external call.** A compliance or permission check that
-  used to read its facts again after the slow step or after the request's own write now judges stale ones. Fewer
-  round trips never justify reusing a value across a write or a slow call: build a new facts value after it, or
-  keep the check's own read.
-- **One statement that fetches everything a page might need.** A facts value holds what its route's readers use;
-  a fact that one rare branch needs is read in that branch.
+- **A value reused after a fact it depends on changed.** A compliance or permission check that used to read its
+  facts again after the slow step or after the request's own write now judges stale ones. Refresh the facts that a
+  write affects or that carry a freshness requirement: build a new facts value after it, or keep the check's own
+  read. Keep a value read under `FOR UPDATE` and used after the write, and a transaction snapshot that is meant to
+  stay valid across a wait: those are not stale.
+- **One statement that fetches everything a page might need.** A fact that one rare branch needs is read there.
 
 ## When separate statements are right
-
-The aim is one statement per distinct fact, not one statement per request.
 
 - **Independent row sets.** Two child collections of one parent multiply each other in a join; read each once.
 - **A fused statement with a worse plan than its parts.** Confirm with `EXPLAIN`, as for any query.
 - **A read under a lock.** A write that depends on a fact reads it again under its own lock
   ([Complete Mediation](../reliability/complete-mediation.md#the-second-moment-check-then-use)). The facts value is
-  a snapshot from the top of the request and is never the basis of a check-then-write. Keep a row lock on the row
-  it protects; do not widen it into a join.
+  a snapshot from the top of the request and is never the basis of a check-then-write. Do not widen a row lock into a join.
 - **Different transactions**: a record that must survive the rollback of the work it describes.
 - **A read that must see the request's own write**, when `RETURNING` cannot give it, or a read after a long wait
   (a lock, a job, a stream). Build a new facts value; never patch the old one.
