@@ -1,4 +1,5 @@
 check:
 	cd .agents/skills/deslop && python3 scripts/check_reachability.py && python3 scripts/swarm_lenses.py --check && python3 scripts/skill_summary.py --check && python3 scripts/check_principle_template.py && python3 -m py_compile scripts/*.py
+	cd .agents/skills/swarm-orchestration && python3 -m unittest discover -s tests
 
 .PHONY: check

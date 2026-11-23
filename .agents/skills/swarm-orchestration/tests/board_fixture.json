@@ -1,0 +1,80 @@
+{
+  "about": "Worked example: one release campaign, 18 open items, read by board_check.py and progress_chart.py --board. Every count in a status or a chart comes from this file; it is refreshed from the tracker before each report.",
+  "updated": "2026-11-23T04:50Z",
+  "capacity": {"target": 12},
+  "groups": [
+    {"name": "Release staging", "color": "#22c55e"},
+    {"name": "Release production", "color": "#38bdf8"},
+    {"name": "Later", "color": "#a855f7"}
+  ],
+  "stages": [
+    {"name": "Moved in, no worker yet", "always_show": true},
+    {"name": "Investigating"},
+    {"name": "Coding"},
+    {"name": "In upstream review"},
+    {"name": "Merged upstream, waits dependency bump"},
+    {"name": "On integration branch, live check left"},
+    {"name": "Proof waits on a fix"},
+    {"name": "Waiting on the operator"},
+    {"name": "Waiting on an outside party"}
+  ],
+  "workers": [
+    {"id": "w-acadd5", "model": "strongest"},
+    {"id": "w-a2ce71", "model": "strongest", "pace_min": 45},
+    {"id": "w-ab4587", "model": "strongest"},
+    {"id": "w-a5f212", "model": "routine"},
+    {"id": "w-a2eab4", "model": "routine"},
+    {"id": "w-ab02e4", "model": "routine"},
+    {"id": "w-a08502", "model": "routine"},
+    {"id": "w-a419b1", "model": "routine"},
+    {"id": "w-acc81f", "model": "routine"},
+    {"id": "w-a98566", "model": "routine"},
+    {"id": "w-aadeaa", "model": "routine"}
+  ],
+  "items": [
+    {"id": 101, "what": "Re-authentication evidence in the audit chain and the database", "group": "Release staging", "area": "Audit", "stage": "Coding", "owner": "w-acadd5", "waits_on": null, "next_event": "first push: evidence + derived flag", "expected_by": "2026-11-23T05:40Z"},
+    {"id": "signing-helper", "what": "Honest re-authenticated signature for test users", "group": "Release staging", "area": "Audit", "stage": "Investigating", "owner": "w-a2ce71", "waits_on": null, "next_event": "first gate signed honestly", "expected_by": "2026-11-23T06:00Z", "blocks": [104, 111, 112]},
+    {"id": 103, "what": "Large PDF: tabular text collapses", "group": "Release staging", "area": "Ingest", "stage": "In upstream review", "owner": "w-ab4587", "waits_on": null, "next_event": "upstream review verdict on the redesign", "expected_by": "2026-11-23T06:30Z"},
+    {"id": 104, "what": "One tool call per submit turn", "group": "Release staging", "area": "Agents", "stage": "Merged upstream, waits dependency bump", "owner": "coordinator", "waits_on": "dependency bump", "next_event": "bump lands on the integration branch", "expected_by": "2026-11-23T05:30Z"},
+    {"id": 105, "what": "Error tracker: dashboards and alerts as a deploy step", "group": "Release staging", "area": "Ops", "stage": "Coding", "owner": "w-a5f212", "waits_on": "dependency bump", "next_event": "read-back of the created dashboards", "expected_by": "2026-11-23T06:15Z"},
+    {"id": 106, "what": "Letter addressee from the agency's division list", "group": "Release staging", "area": "Export", "stage": "On integration branch, live check left", "owner": "w-a2eab4", "next_event": "0 findings on the addressee block", "expected_by": "2026-11-23T05:30Z", "live_check": "addressee block on a deployed project"},
+    {"id": 107, "what": "Form reading refuses stated values", "group": "Release staging", "area": "Intake", "stage": "On integration branch, live check left", "owner": "w-ab02e4", "next_event": "pre-fill count before and after", "expected_by": "2026-11-23T05:45Z", "live_check": "pre-fill count on a deployed project", "live_check_owner": "w-ab02e4"},
+    {"id": 108, "what": "Panel defects (one lane)", "group": "Release staging", "area": "UI", "stage": "Coding", "owner": "w-a08502", "next_event": "branch with review PASS", "expected_by": "2026-11-23T05:50Z"},
+    {"id": 109, "what": "Form reading takes 20-28 min", "group": "Release staging", "area": "Intake", "stage": "Investigating", "owner": "w-a419b1", "next_event": "measured stage table", "expected_by": "2026-11-23T04:30Z"},
+    {"id": 110, "what": "Advisory test job red on the runner", "group": "Release staging", "area": "Ops", "stage": "Waiting on the operator", "owner": "operator", "waits_on": "operator go to recreate the runner pool", "next_event": "green test job", "expected_by": "2026-11-23T07:00Z"},
+    {"id": 111, "what": "Fast-draft test from the knowledge base", "group": "Release staging", "area": "Agents", "stage": "Proof waits on a fix", "owner": null, "waits_on": "signing-helper", "next_event": "lock signed, then the draft", "expected_by": "2026-11-23T07:00Z"},
+    {"id": 112, "what": "Three exports for the client", "group": "Release staging", "area": "Export", "stage": "Proof waits on a fix", "owner": "coordinator", "waits_on": "promotion", "next_event": "re-sign, redraft, approve, export", "expected_by": "2026-11-23T08:00Z"},
+    {"id": 113, "what": "Ground-truth fixture driver to each pipeline stage", "group": "Release staging", "area": "Proof", "stage": "Coding", "owner": "w-acc81f", "next_event": "3 demo sets locked from ground truth", "expected_by": "2026-11-23T06:00Z"},
+    {"id": 114, "what": "Deslop pass over the last 24 h of merges", "group": "Release staging", "area": "Proof", "stage": "Moved in, no worker yet", "owner": null, "next_event": "a worker starts", "expected_by": "2026-11-23T05:20Z"},
+    {"id": 115, "what": "Panel run snags", "group": "Release staging", "area": "UI", "stage": "On integration branch, live check left", "owner": "w-a98566", "next_event": "PASS/FAIL per snag", "expected_by": "2026-11-23T06:00Z", "live_check": "UI sweep on the deployed build", "live_check_owner": "w-a98566"},
+    {"id": 116, "what": "First-time-user panel", "group": "Release production", "area": "Proof", "stage": "Proof waits on a fix", "owner": "coordinator", "waits_on": "promotion", "next_event": "rerun on the promoted build", "expected_by": "2026-11-23T08:00Z"},
+    {"id": 117, "what": "Storage provider rate limits", "group": "Later", "area": "Outside party", "stage": "Waiting on an outside party", "owner": "outside party", "waits_on": "provider activation", "next_event": "quota header test", "expected_by": "2026-11-25T15:00Z"},
+    {"id": 118, "what": "Client written acceptance", "group": "Release production", "area": "Outside party", "stage": "Waiting on an outside party", "owner": "outside party", "waits_on": "the three exports + email", "next_event": "acceptance email", "expected_by": "2026-11-24T15:00Z"}
+  ],
+  "sweeps": [
+    {"id": "live-ui", "what": "Live checks on the integration environment: UI", "owner": "w-a98566", "next_event": "sweep report", "expected_by": "2026-11-23T06:00Z"},
+    {"id": "live-logs", "what": "Live checks: logs, error tracker, deploy timings", "owner": "w-aadeaa", "next_event": "sweep report", "expected_by": "2026-11-23T06:00Z"},
+    {"id": "promotion", "what": "Promotion of the verified integration head", "owner": "coordinator", "next_event": "promoted environment healthy", "expected_by": "2026-11-23T06:30Z"}
+  ],
+  "pipelines": [
+    {"name": "deploy (integration)", "result": "success", "checked": "2026-11-23T04:50Z"},
+    {"name": "advisory tests", "result": "failure", "checked": "2026-11-23T04:50Z", "owner": "operator"},
+    {"name": "dashboards apply", "result": "failure", "checked": "2026-11-23T04:50Z"}
+  ],
+  "environments": [
+    {"name": "integration environment: proof runs", "capacity": 6, "in_use": 9},
+    {"name": "model quota: concurrent agent runs", "capacity": 20, "in_use": 14},
+    {"name": "signing path for test users", "capacity": 1, "in_use": 0}
+  ],
+  "handbacks": [
+    {"worker": "w-ab02e4", "what": "107 ready to merge", "at": "2026-11-23T04:10Z", "answered": "2026-11-23T04:52Z"},
+    {"worker": "w-a2eab4", "what": "106 choose wording A or B", "at": "2026-11-23T04:40Z", "answered": "2026-11-23T04:46Z"},
+    {"worker": "w-acc81f", "what": "113 fixture set 1 ready for review", "at": "2026-11-23T05:02Z"}
+  ],
+  "fixtures": [
+    {"name": "Demo project A (drafted 13/16)", "env": "integration", "stage": "drafted; gates signed by script, listed on 101", "used_by": "UI live checks; 106"},
+    {"name": "Demo project B (form locked)", "env": "integration", "stage": "form locked; no gates", "used_by": "signing-helper proof"},
+    {"name": "Demo project C (predicate picked)", "env": "integration", "stage": "predicate picked, not signed", "used_by": "signing-helper proof, then 111"},
+    {"name": "Client set 1", "env": "release candidate", "stage": "review recalled, 0 findings; needs addressee + honest signatures"}
+  ]
+}

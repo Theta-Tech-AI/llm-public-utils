@@ -1,0 +1,2 @@
+{"at": "2026-11-23T03:50Z", "step": "tests (foreground)", "expected_end": "2026-11-23T05:50Z"}
+{"at": "2026-11-23T05:14Z", "step": "tests (foreground)", "expected_end": "2026-11-23T05:50Z", "unsent": "could not reach coordinator: inside test run 2 of 3, ends 05:50"}
