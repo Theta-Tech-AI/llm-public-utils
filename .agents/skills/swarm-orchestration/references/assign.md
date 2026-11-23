@@ -41,6 +41,7 @@ Deliverable: <one outcome>; paths <allowed>; baseline <revision>; not in scope: 
 Done when: <checks + evidence>; reviewer: <identity>; you may push to <branch> / hand to <integration owner>.
 Status: at every step change append one JSON line to <status dir>/<your id>.jsonl:
   {"at", "step", "waiting_on", "expected_end", "last_result", "round", "finding_class"}.
+  When a review round returns, write its finding_class on that line ("none" for a clean round).
   If a message to the coordinator fails, write it there as "unsent" and carry on.
 Reply address: <exact address that was tested at dispatch>, or "none: write your status file only".
 Never idle-wait: start long checks (tests, a second-model review) in the background and do the next piece

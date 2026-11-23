@@ -9,7 +9,7 @@ brief in references/assign.md asks (at, step, waiting_on, expected_end, last_res
 needs no message channel, so it still works when a worker's reply to the coordinator fails; ``unsent`` carries that
 failed reply, and it stays a finding until the board's ``workers[].read_until`` reaches it. A worker is
 late when now is past its expected_end, stuck when neither its step nor its round changed for ``--stall-min``, and
-looping when its last three review rounds returned the same finding class. This is the primary signal.
+looping when its last three review outcomes (lines that name a finding class; "none" for a clean round) share one class. This is the primary signal.
 
 With ``--activity-dir DIR`` (fallback when a worker writes no status) each worker's activity record is the newest file
 named ``<worker id>`` or ``<worker id>.*`` in DIR. A worker is quiet when that file is older than its ``pace_min``
@@ -154,7 +154,30 @@ def key(thing: str | int) -> str:
 
 TIME_FIELDS = {"items": ("expected_by",), "sweeps": ("expected_by",), "pipelines": ("checked",), "handbacks": ("at", "answered"),
                "workers": ("read_until",)}
-INT_FIELDS = {"environments": ("capacity", "in_use"), "workers": ("pace_min",)}
+TEXT, ID, NAMES = (str,), (str, int), "names"
+TYPES: dict[str, dict[str, tuple[type, ...] | str]] = {
+    "items": {"id": ID, "what": TEXT, "stage": TEXT, "next_event": TEXT, "expected_by": TEXT, "group": TEXT, "area": TEXT,
+              "waits_on": ID, "live_check": TEXT, "owner": NAMES, "live_check_owner": NAMES, "blocks": "ids"},
+    "sweeps": {"id": ID, "what": TEXT, "owner": NAMES, "next_event": TEXT, "expected_by": TEXT},
+    "workers": {"id": TEXT, "model": TEXT, "pace_min": "int", "reported": (bool,), "read_until": TEXT},
+    "pipelines": {"name": TEXT, "result": TEXT, "checked": TEXT, "owner": NAMES},
+    "fixtures": {"name": TEXT, "env": TEXT, "stage": TEXT, "used_by": TEXT},
+    "environments": {"name": TEXT, "capacity": "int", "in_use": "int"},
+    "handbacks": {"worker": TEXT, "what": TEXT, "at": TEXT, "answered": TEXT},
+}
+
+
+def well_typed(value: object, kind: tuple[type, ...] | str) -> bool:
+    """A value of the field's type; None is allowed here (required fields are checked apart)."""
+    if value is None:
+        return True
+    if kind == "int":
+        return type(value) is int
+    if kind == "names":
+        return isinstance(value, str) or (isinstance(value, list) and all(isinstance(o, str) for o in value))
+    if kind == "ids":
+        return isinstance(value, list) and all(type(o) in (str, int) for o in value)
+    return type(value) in kind  # type: ignore[operator]
 
 
 def is_time(value: object) -> bool:
@@ -186,12 +209,10 @@ def invalid(board: object) -> list[str]:
             errors += [f"{section}[{n}] has no {f}" for f in fields if row.get(f) in (None, "")]
             errors += [f"{section}[{n}].{f} {row[f]!r} is not an ISO-8601 time"
                        for f in TIME_FIELDS.get(section, ()) if row.get(f) not in (None, "") and not is_time(row[f])]
-            errors += [f"{section}[{n}].{f} {row[f]!r} is not a whole number"
-                       for f in INT_FIELDS.get(section, ()) if f in row and (type(row[f]) is not int)]
-            for f in ("owner", "live_check_owner"):
-                value = row.get(f)
-                if not (value is None or isinstance(value, str) or (isinstance(value, list) and all(isinstance(o, str) for o in value))):
-                    errors.append(f"{section}[{n}].{f} {value!r} is not a name or a list of names")
+            errors += [f"{section}[{n}].{f} {row[f]!r} has the wrong type"
+                       for f, kind in TYPES[section].items() if f in row and not well_typed(row[f], kind)]
+            if section == "items" and "blocks" in row and row["blocks"] is None:
+                errors.append(f"items[{n}].blocks is null (leave it out or give a list)")
     capacity = board.get("capacity")
     if capacity is not None and not (isinstance(capacity, dict) and type(capacity.get("target")) is int):
         errors.append("capacity.target is not a whole number")
@@ -232,7 +253,10 @@ def statuses(directory: Path, worker: str) -> tuple[list[Status], int]:
         except json.JSONDecodeError:
             record = None
         usable = (isinstance(record, dict) and isinstance(record.get("step"), str) and is_time(record.get("at"))
-                  and (record.get("expected_end") in (None, "") or is_time(record["expected_end"])))
+                  and (record.get("expected_end") in (None, "") or is_time(record["expected_end"]))
+                  and (record.get("round") is None or type(record["round"]) is int)
+                  and all(record.get(f) is None or isinstance(record[f], str)
+                          for f in ("finding_class", "unsent", "waiting_on", "last_result")))
         if usable:
             lines.append(record)
         elif line.strip():
@@ -263,10 +287,11 @@ def status_findings(history: list[Status], now: datetime, stall_min: float, read
     since = history[changed + 1] if changed is not None else history[0]
     if minutes(since["at"], now) >= stall_min:
         found["no step change"].append(f"{last['step']!r} since {since['at']} ({minutes(since['at'], now):.0f} min)")
-    per_round = {h["round"]: h.get("finding_class") for h in history if h.get("round") is not None}
+    # a review outcome is a line that names a finding class; work steps inside the round leave it empty and change nothing
+    per_round = {h["round"]: h["finding_class"] for h in history if h.get("round") is not None and h.get("finding_class")}
     rounds = sorted(per_round)[-3:]
     classes = {per_round[r] for r in rounds}
-    if len(rounds) == 3 and len(classes) == 1 and None not in classes and "" not in classes:
+    if len(rounds) == 3 and len(classes) == 1 and "none" not in classes:
         found["review loop: same finding class 3 rounds"].append(f"{classes.pop()!r} in rounds {rounds} (escalate, see review.md)")
     return found
 
@@ -334,7 +359,8 @@ def findings(board: Board, now: datetime, activity_dir: Path | None = None, quie
             continue
         record = activity(activity_dir, wid, marker, now)
         if record is None:
-            found["worker has no activity record"].append(wid)
+            if not history:
+                found["worker has no activity record"].append(wid)
         elif record["finished"] and not worker.get("reported") and record["quiet_min"] >= 3:
             found["finished without reporting"].append(f"{wid} (last activity {record['quiet_min']:.0f} min ago)")
         elif not history and record["quiet_min"] >= worker.get("pace_min", quiet_min):

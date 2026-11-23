@@ -125,7 +125,7 @@ class BoardCheckTest(unittest.TestCase):
         shape = board(item("a", expected_by="tomorrow"), {"what": "x", "stage": "Coding"}, "not a row",
                       environments=[{"name": "e", "capacity": "2", "in_use": 1}])
         errors = MODULE.invalid(shape)
-        for expected in ("not an ISO-8601 time", "items[1] has no id", "items[2] is not an object", "not a whole number"):
+        for expected in ("not an ISO-8601 time", "items[1] has no id", "items[2] is not an object", "environments[0].capacity"):
             self.assertTrue(any(expected in e for e in errors), expected)
 
     def test_malformed_boards_exit_2_without_a_crash(self) -> None:
@@ -153,6 +153,36 @@ class BoardCheckTest(unittest.TestCase):
             Path(directory, "w1.jsonl").write_text("{}\n")
             only_bad = MODULE.findings({**board(item("a")), "workers": workers}, NOW, status_dir=Path(directory))
         self.assertEqual(only_bad["worker writes no status"], ["w1"])
+
+    def test_repair_steps_do_not_erase_review_outcomes_and_bad_fields_are_unusable(self) -> None:
+        lines = []
+        for r, minute in ((1, 0), (2, 2), (3, 4)):
+            lines.append({"at": f"2026-11-23T05:{minute}0Z", "step": "review", "round": r, "finding_class": "ordering"})
+            lines.append({"at": f"2026-11-23T05:{minute}5Z", "step": "repair", "round": r, "finding_class": ""})
+        lines += [{"at": "2026-11-23T05:50Z", "step": "s", "round": []}, {"at": "2026-11-23T05:50Z", "step": "s", "finding_class": []},
+                  {"at": "2026-11-23T05:50Z", "step": "s", "round": "4"}]
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "w1.jsonl").write_text("\n".join(map(json.dumps, lines)))
+            found = MODULE.findings(board(item("a")), NOW, status_dir=Path(directory))
+            self.assertEqual(len(found["review loop: same finding class 3 rounds"]), 1)
+            self.assertEqual(found["unusable status lines"], ["w1: 3 (each needs at, step and valid times)"])
+            clean = lines[:6] + [{"at": "2026-11-23T05:15Z", "step": "review", "round": 4, "finding_class": "none"}]
+            Path(directory, "w1.jsonl").write_text("\n".join(map(json.dumps, clean)))
+            self.assertNotIn("review loop: same finding class 3 rounds", MODULE.findings(board(item("a")), NOW, status_dir=Path(directory)))
+
+    def test_wrongly_typed_fields_are_invalid(self) -> None:
+        bad = {**board(item("a", stage=["Coding"]), item("b", blocks=None)),
+               "workers": [{"id": ["w1"], "model": "routine"}],
+               "pipelines": [{"name": "p", "result": ["failure"], "checked": "2026-11-23T05:00Z"}]}
+        errors = MODULE.invalid(bad)
+        for expected in ("items[0].stage", "items[1].blocks is null", "workers[0].id", "pipelines[0].result"):
+            self.assertTrue(any(expected in e for e in errors), expected)
+
+    def test_fresh_status_needs_no_activity_record(self) -> None:
+        with tempfile.TemporaryDirectory() as status, tempfile.TemporaryDirectory() as activity:
+            Path(status, "w1.jsonl").write_text(json.dumps({"at": "2026-11-23T05:15Z", "step": "build", "expected_end": "2026-11-23T06:00Z"}))
+            found = MODULE.findings(board(item("a")), NOW, activity_dir=Path(activity), status_dir=Path(status))
+        self.assertEqual(found, {})
 
     def test_a_pipeline_owner_is_busy(self) -> None:
         found = MODULE.findings(board(item("a", owner="coordinator"), capacity={"target": 1},
