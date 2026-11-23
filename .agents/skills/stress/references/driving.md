@@ -124,7 +124,7 @@ Driving the UI well is a skill, not a screenshot. A whole class of real bugs exi
 
 8. **Stress navigation.** Back/forward/reload at each step; paste every route's deep-link URL directly (not only via the nav); move between stages in illegal orders. Confirm the page rebuilds correct state from a cold URL and that gates hold on direct entry as well as via the nav control.
 
-9. **Keyboard.** Tab order, Enter-to-submit, Escape-to-close. A form you can't complete or a modal you can't dismiss from the keyboard is broken for many users.
+9. **Keyboard** (cite the project's written design standard when it has one). Tab order, Enter-to-submit, Escape-to-close. A form you can't complete or a modal you can't dismiss from the keyboard is broken for many users.
 
 10. **Feel the latency.** Time frequent, simple actions (lock, toggle, save). A multi-second wait on something that should feel instant, with no immediate feedback, reads as broken even when it eventually succeeds — file it as a perceived-performance bug, and consider optimistic feedback.
 
@@ -194,6 +194,7 @@ Record repros as **method + path + headers (secrets redacted) + body + expected 
 - Auth is easier via tokens than full IdP UI
 - Bug is behind the UI (worker, DB invariant, permission check)
 - Surface is API-native (CLI, mobile, partner integrations)
+- A late stage of a gated flow that browser runs reach last and least — stand on an existing object and attack the stage alone ([api-flows.md](api-flows.md))
 
 ---
 
@@ -238,4 +239,4 @@ Code review and API probes systematically miss an entire population of bugs that
 
 ## See also
 
-- [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md) · [findings.md](findings.md)
+- [api-flows.md](api-flows.md) · [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md) · [findings.md](findings.md)
