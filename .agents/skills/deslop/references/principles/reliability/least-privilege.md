@@ -29,7 +29,7 @@ In relation to other principles, least privilege:
 
 | Principle | Relationship |
 |-----------|--------------|
-| [**Complete Mediation**](complete-mediation.md) | Owns the code-level mechanism for "no authority until a check grants it": the right as a value the write door demands |
+| [**Complete Mediation**](complete-mediation.md) | Owns the code-level mechanism for "no authority until a check grants it": the door checks under its own lock and returns the only writing handle |
 | [**Encapsulation**](../architecture/encapsulation.md) | Minimal exposed surface, minimal granted power |
 | [**Fail-Fast**](fail-fast.md) | Default-deny fails fast on overreach |
 | [**Postel's Law**](postels-law.md) | Security boundaries are where liberal acceptance ends |

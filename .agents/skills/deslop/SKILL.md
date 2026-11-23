@@ -109,7 +109,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Principle of Least Privilege — minimum permissions per component, so a flaw has a small blast radius
 - Boy Scout Rule — leave code better than you found it, scoped to what you touch
 - Errors at the Boundary — validate where untrusted input enters
-- Complete Mediation — a cross-cutting rule that each call site must remember to apply is…
+- Complete Mediation — the authority to act (a permission, a lock or lease) checked by a…
 
 **data-integrity** — What does the schema promise and enforce — keys, references, constraints, one home per fact?
 

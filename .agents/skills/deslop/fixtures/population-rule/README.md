@@ -15,8 +15,9 @@ the caller to hold that project's edit lease**. Packages: `projects/` (the lease
 - `sections/routes.py` `save_section` checks the lease before it takes the row lock and does not confirm it
   under the lock: the lease can move between the check and the write.
 
-**Expected repair** — the right to write as a value: a grant only the lease module builds, under the row lock, that
-every store write demands, with the lease release as a second named constructor. A repair that adds a lease call to
+**Expected repair** — the store becomes the one door: it checks the lease under the row lock its write takes and
+returns the only handle that writes (closed on exit, resolving documents and sections through itself); the lease
+release is its own narrow operation. A repair that adds a lease call to
 each route, or a route flag checked at start-up, is the patch and does not pass.
 
 **LEGITIMATE — must be declined** — `add_comment` (a comment role; a reading may list it as an undeclared
