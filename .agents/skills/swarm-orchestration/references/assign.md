@@ -36,7 +36,7 @@ A local path or "tests pass" is not a durable result. Store the summary with an 
 - The item owner stays responsible through review, integration and acceptance. Delegate bounded finishing steps, but keep one owner for the rest of the path.
 - Split work by independent concern and by file ownership, not by issue. Keep tightly coupled interfaces under one owner. For two tasks on one contract, decide the contract first, then delegate callers and tests. Use another agent for tests or review, never for a competing implementation.
 - Nested children use the same budget. The parent reconciles before it reports. Do not let nested authors start their own backlogs.
-- Give every worker the same written brief: method, checks, report format, and the kill rule in [3. Build](build.md). To change a rule, edit the brief atomically and message the running workers.
+- Give every worker the same written brief: method, checks, report format, and the kill rule in [3. Build](build.md). To change a rule, edit the brief atomically and message the running workers. Name the repository's shared parallel test runner in the brief; a worker's private serial script cost about three times as long and ran three times.
 - Assign by role where the runtime and the operator allow. Cheaper models build and trial. The strongest model reviews and decides. A separate model does the final real run. Model size alone is not a review result.
 - A checkpoint limit ends one assignment attempt, not the user's task. Record the evidence, replan, and continue. Do not retry the same failed approach silently.
 

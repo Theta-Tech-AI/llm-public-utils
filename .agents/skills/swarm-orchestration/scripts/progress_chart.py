@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Draw the open set as one image: a pie on the left, the same slices as horizontal bars on the right.
+"""Draw the open set as one 300 dpi image: a pie of all open items, the focus group expanded beside it, bars below.
 
-The bars run in the order of operations for an item (waiting → building → checks → batch → proof), so the reader
-sees where work piles up. Pie and bars share one colour per stage. Input is JSON::
+The left pie holds every open item by stage. The focus group's sectors sit together and carry a yellow outline;
+dashed lines expand them into a smaller pie on the right. Under each pie the same items are bars in the order of
+operations (first stage at the top). Sectors carry their own labels (outside with a leader line when small); there
+is no legend. Input is JSON; the order and colours of ``stages`` are the order of operations::
 
-    {"title": "79 open · release 1.1 = 20 (was 24 at 5:37 PM)",
-     "total": 79,
-     "slices": [{"group": "release 1.1", "stage": "Coding", "count": 3},
-                {"group": "release 1.2", "count": 51}]}
+    {"title": "All open: 66, release 1.1: 14 (was 18 at 5:37 PM)",
+     "focus_group": "Release 1.1",
+     "stages": [{"name": "Waiting on the operator", "color": "#f97316"},
+                {"name": "Coding", "color": "#22c55e"},
+                {"name": "Planned for a later release", "color": "#a855f7"}],
+     "focus_items": {"Coding": 8},
+     "rest_items": {"Waiting on the operator": 1, "Planned for a later release": 55}}
 
-A slice without a stage is a whole milestone outside the focus; it sorts last. ``stages`` may replace the default
-order and colours: ``[{"name": "...", "color": "#rrggbb"}]``. When ``total`` is given, the slices must add up to it.
+Every count comes from the tracker at draw time. A stage name outside ``stages`` or a focus group with no items is refused.
 
 Usage: progress_chart.py INPUT.json OUTPUT.png
 """
@@ -19,10 +23,10 @@ from __future__ import annotations
 
 import json
 import math
-import textwrap
 import sys
+import textwrap
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import TypedDict
 
 
 class Stage(TypedDict):
@@ -30,127 +34,135 @@ class Stage(TypedDict):
     color: str
 
 
-class Slice(TypedDict):
-    group: str
-    count: int
-    stage: NotRequired[str]
-
-
 class ChartInput(TypedDict):
     title: str
-    slices: list[Slice]
-    total: NotRequired[int]
-    stages: NotRequired[list[Stage]]
+    focus_group: str
+    stages: list[Stage]
+    focus_items: dict[str, int]
+    rest_items: dict[str, int]
 
 
-# Order of operations for one item; blocked states first, delivery last.
-DEFAULT_STAGES: list[Stage] = [
-    {"name": "Waiting on the operator or an outside party", "color": "#f97316"},
-    {"name": "Scheduled event", "color": "#0ea5e9"},
-    {"name": "Ready, no owner", "color": "#ef4444"},
-    {"name": "Finding the cause", "color": "#84cc16"},
-    {"name": "Coding", "color": "#22c55e"},
-    {"name": "Waits a deploy for its next step", "color": "#eab308"},
-    {"name": "Final checks", "color": "#6366f1"},
-    {"name": "In a batch (lands at push)", "color": "#3b82f6"},
-    {"name": "Proof running", "color": "#14b8a6"},
-    {"name": "After the release window", "color": "#b45309"},
-    {"name": "Planned for a later release", "color": "#a855f7"},
-]
-OTHER_COLORS = ["#a855f7", "#7e22ce", "#c084fc", "#6b21a8"]
-BACKGROUND = "#0f172a"
-NAMED_SHARE = 0.10  # pie slices at least this big carry their group name; the bars name every slice
+BACKGROUND, FOREGROUND, OUTLINE, AXIS = "#0f172a", "#e2e8f0", "#facc15", "#475569"
+INSIDE_SHARE = 0.10  # a sector this big holds its own label; a smaller one gets a leader line
+LABEL_GAP = 0.2  # least vertical distance between two outside labels on one side
 
 
-def ordered(data: ChartInput) -> list[tuple[Slice, str]]:
-    """Slices in order of operations, each with its colour; unknown stages fail loud."""
-    stages = data.get("stages", DEFAULT_STAGES)
-    index = {stage["name"]: position for position, stage in enumerate(stages)}
-    colors = {stage["name"]: stage["color"] for stage in stages}
-    staged = [s for s in data["slices"] if "stage" in s]
-    unknown = sorted({s["stage"] for s in staged} - index.keys())
+def checked(data: ChartInput) -> tuple[list[str], dict[str, str], dict[str, int], dict[str, int]]:
+    """Stage order, colours and the two count maps without empty stages; unknown stages and an empty focus fail loud."""
+    names = [s["name"] for s in data["stages"]]
+    unknown = sorted((data["focus_items"].keys() | data["rest_items"].keys()) - set(names))
     if unknown:
-        raise SystemExit(f"❌ unknown stage(s): {unknown}; known: {list(index)}")
-    staged.sort(key=lambda s: (index[s["stage"]], s["group"]))
-    others = [s for s in data["slices"] if "stage" not in s]
-    return [(s, colors[s["stage"]]) for s in staged] + [
-        (s, OTHER_COLORS[i % len(OTHER_COLORS)]) for i, s in enumerate(others)
-    ]
+        raise SystemExit(f"❌ unknown stage(s): {unknown}; known: {names}")
+    focus = {k: v for k, v in data["focus_items"].items() if v > 0}
+    rest = {k: v for k, v in data["rest_items"].items() if v > 0}
+    if not focus:
+        raise SystemExit(f"❌ focus group {data['focus_group']!r} has no items")
+    return names, {s["name"]: s["color"] for s in data["stages"]}, focus, rest
 
 
-def label(item: Slice, one_group: bool) -> str:
-    """One shared group goes to the title, so each bar names only its stage."""
-    if "stage" not in item:
-        return item["group"]
-    return item["stage"] if one_group else f"{item['group']} · {item['stage']}"
+def wrap(text: str, width: int = 16) -> str:
+    return "\n".join(textwrap.wrap(text, width))
 
 
-def checked_rows(data: ChartInput) -> tuple[list[tuple[Slice, str]], int]:
-    """The non-empty slices in drawing order, refused when they do not add up to the stated total."""
-    rows = [(s, c) for s, c in ordered(data) if s["count"] > 0]
-    total = sum(s["count"] for s, _ in rows)
-    if "total" in data and data["total"] != total:
-        raise SystemExit(f"❌ slices add up to {total}, not the stated total {data['total']}")
-    return rows, total
+def spread(labels: list[tuple[float, float, str]]) -> list[tuple[float, float, str]]:
+    """Outside labels as (angle, y, text); push each side's labels apart so none overlap."""
+    placed: list[tuple[float, float, str]] = []
+    for right in (True, False):
+        side = sorted((l for l in labels if (math.cos(l[0]) >= 0) == right), key=lambda l: l[1])
+        last = -9.0
+        for angle, y, text in side:
+            last = max(y, last + LABEL_GAP)
+            placed.append((angle, last, text))
+    return placed
+
+
+def label_sectors(ax, wedges, items: list[tuple[str, int]], total: int, inside_min: float, reach: float, size: int) -> None:
+    """Name each sector inside when big enough, else outside on a leader line."""
+    outside = []
+    for (name, count), wedge in zip(items, wedges):
+        angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
+        if count / total >= inside_min:
+            ax.text(0.6 * math.cos(angle), 0.6 * math.sin(angle), f"{wrap(name)}\n{count}", ha="center", va="center",
+                    color="white", fontsize=size, weight="bold")
+        else:
+            outside.append((angle, reach * math.sin(angle), f"{name}: {count}"))
+    for angle, y, text in spread(outside):
+        side = 1 if math.cos(angle) >= 0 else -1
+        ax.annotate(text, xy=(0.98 * math.cos(angle), 0.98 * math.sin(angle)), xytext=(side * (reach + 0.1), y),
+                    ha="left" if side > 0 else "right", va="center", color=FOREGROUND, fontsize=size - 4,
+                    arrowprops={"arrowstyle": "-", "color": FOREGROUND, "lw": 1.2})
+
+
+def draw_bars(ax, order: list[str], colors: dict[str, str], counts: dict[str, int], title: str) -> None:
+    """Horizontal bars in order of operations; one bar over three times the next is clipped and labelled."""
+    stages = [s for s in order if counts.get(s)]
+    values = [counts[s] for s in stages]
+    ranked = sorted(values, reverse=True)
+    cap = ranked[1] * 1.6 if len(ranked) > 1 and ranked[0] > 3 * ranked[1] else None
+    shown = [min(v, cap) if cap else v for v in values]
+    pad = max(shown) * 0.01
+    ax.barh(range(len(stages)), shown, color=[colors[s] for s in stages])
+    ax.invert_yaxis()
+    ax.set_yticks(range(len(stages)), stages, color=FOREGROUND, fontsize=16)
+    for i, (value, bar) in enumerate(zip(values, shown)):
+        clipped = cap is not None and value > cap
+        ax.text(bar - pad if clipped else bar + pad, i, f"{value} ▸ bar cut short" if clipped else str(value), va="center",
+                ha="right" if clipped else "left", color="white" if clipped else FOREGROUND, fontsize=16,
+                weight="bold" if clipped else "normal")
+    ax.set_facecolor(BACKGROUND)
+    ax.tick_params(colors=FOREGROUND, labelsize=14)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(AXIS)
+    ax.xaxis.get_major_locator().set_params(integer=True)
+    ax.set_title(title, color=FOREGROUND, fontsize=20)
+    ax.set_xlabel("open items, top = earliest in order of operations", color="#94a3b8", fontsize=14)
 
 
 def draw(data: ChartInput, output: Path) -> None:
-    rows, total = checked_rows(data)
-    one_group = len({s["group"] for s, _ in rows}) == 1
+    order, colors, focus, rest = checked(data)
+    focus_total, rest_total = sum(focus.values()), sum(rest.values())
+    total = focus_total + rest_total
+    group = data["focus_group"]
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.patches import ConnectionPatch, Wedge
 
-    fig, (pie_ax, bar_ax) = plt.subplots(1, 2, figsize=(17, 8.5), dpi=150, gridspec_kw={"width_ratios": [1, 1.1]})
-    fig.patch.set_facecolor(BACKGROUND)
-    wedges, _ = pie_ax.pie(
-        [s["count"] for s, _ in rows],
-        colors=[c for _, c in rows],
-        startangle=90,
-        counterclock=False,
-        wedgeprops={"edgecolor": BACKGROUND, "linewidth": 2},
-    )
-    for (item, _), wedge in zip(rows, wedges):
-        share = item["count"] / total
-        angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
-        # The sector carries its own name, wrapped short; no legend. Many groups name the group, one group the stage.
-        name = item.get("stage", item["group"]) if one_group else item["group"]
-        named = share >= NAMED_SHARE or one_group
-        radius = 0.6 if share > 0.2 else 0.72
-        text = f"{chr(10).join(textwrap.wrap(name, 14))}\n{item['count']}" if named else str(item["count"])
-        pie_ax.text(radius * math.cos(angle), radius * math.sin(angle), text, ha="center", va="center",
-                    color="white", fontsize=(11 if share > 0.2 else 8.5) if named else 9, fontweight="bold", linespacing=1.0)
-    pie_ax.set_aspect("equal")
+    fig = plt.figure(figsize=(24, 19), dpi=300, facecolor=BACKGROUND)
+    grid = fig.add_gridspec(2, 2, height_ratios=[1.25, 1], width_ratios=[1.35, 1], hspace=0.18, wspace=0.42)
+    big, small = fig.add_subplot(grid[0, 0]), fig.add_subplot(grid[0, 1])
+    fig.suptitle(data["title"], color=FOREGROUND, fontsize=26, y=0.985)
 
-    bar_ax.set_facecolor(BACKGROUND)
-    positions = list(range(len(rows)))[::-1]  # first stage at the top
-    counts = sorted((s["count"] for s, _ in rows), reverse=True)
-    # One outsized bar (a whole later milestone, a parked backlog) must not flatten the rest: clip it when it is more
-    # than three times the next one, and print its true count.
-    runner_up = counts[1] if len(counts) > 1 else counts[0]
-    limit = max(5.0, runner_up * 1.6) if counts[0] > 3 * runner_up else counts[0] * 1.05
-    bar_ax.barh(positions, [min(s["count"], limit) for s, _ in rows], color=[c for _, c in rows])
-    bar_ax.set_xlim(0, limit * 1.08)
-    bar_ax.set_yticks(positions, [label(s, one_group) for s, _ in rows], color="white", fontsize=9)
-    for position, (item, _) in zip(positions, rows):
-        clipped = item["count"] > limit
-        x = limit * 0.97 if clipped else item["count"] + limit * 0.01
-        text = f"{item['count']} ▸" if clipped else str(item["count"])
-        bar_ax.text(x, position, text, va="center", ha="right" if clipped else "left", color="white",
-                    fontsize=9, fontweight="bold" if clipped else "normal")
-    bar_ax.tick_params(axis="x", colors="#94a3b8")
-    bar_ax.xaxis.get_major_locator().set_params(integer=True)  # item counts are whole numbers
-    for side in ("top", "right"):
-        bar_ax.spines[side].set_visible(False)
-    for side in ("left", "bottom"):
-        bar_ax.spines[side].set_color("#475569")
-    bar_ax.set_xlabel("open items, in order of operations (top = earliest)", color="#94a3b8")
+    # Big pie: the focus sectors first, centred on the right so they face the small pie.
+    half = 180 * focus_total / total
+    sectors = [(s, n, True) for s in order if (n := focus.get(s))] + [(s, n, False) for s in order if (n := rest.get(s))]
+    wedges, _ = big.pie([n for _, n, _ in sectors], colors=[colors[s] for s, _, _ in sectors], startangle=-half,
+                        counterclock=True, wedgeprops={"edgecolor": BACKGROUND, "linewidth": 2})
+    others = [(i, s, n) for i, (s, n, is_focus) in enumerate(sectors) if not is_focus]
+    label_sectors(big, [wedges[i] for i, _, _ in others], [(s, n) for _, s, n in others], total, INSIDE_SHARE, 1.5, 20)
+    big.add_patch(Wedge((0, 0), 1.0, -half, half, fill=False, edgecolor=OUTLINE, linewidth=5, zorder=5))
+    big.text(0.58, 0, f"{wrap(group, 9)}\n{focus_total}", ha="center", va="center", color="white", fontsize=17, weight="bold", zorder=6)
+    big.text(0, -1.22, f"All open items ({total})", ha="center", va="top", color=FOREGROUND, fontsize=22)
 
-    fig.suptitle(data["title"], color="white", fontsize=14)
-    fig.tight_layout()
+    # Small pie: the focus sectors expanded, joined to the big pie by dashed lines from the wedge's two edges.
+    small_wedges, _ = small.pie(list(focus.values()), colors=[colors[s] for s in focus], startangle=90, counterclock=False,
+                                wedgeprops={"edgecolor": BACKGROUND, "linewidth": 2})
+    label_sectors(small, small_wedges, list(focus.items()), focus_total, 0.18, 1.2, 17)
+    small.add_patch(plt.Circle((0, 0), 1.0, fill=False, edgecolor=OUTLINE, linewidth=5, zorder=5))
+    small.text(0, -1.22, f"{group} ({focus_total})", ha="center", va="top", color=FOREGROUND, fontsize=22)
+    for angle, y in ((half, 1), (-half, -1)):
+        radians = math.radians(angle)
+        fig.add_artist(ConnectionPatch(xyA=(math.cos(radians), math.sin(radians)), coordsA=big.transData, xyB=(0, y),
+                                       coordsB=small.transData, color=OUTLINE, linewidth=3, linestyle="--"))
+
+    draw_bars(fig.add_subplot(grid[1, 0]), order, colors, {s: focus.get(s, 0) + rest.get(s, 0) for s in order},
+              f"All open items by stage ({total})")
+    draw_bars(fig.add_subplot(grid[1, 1]), order, colors, focus, f"{group} by stage ({focus_total})")
     fig.savefig(output, facecolor=BACKGROUND, bbox_inches="tight")
-    print(f"✅ wrote {output} ({len(rows)} slices, {total} items)")
+    print(f"✅ wrote {output} ({total} items, {focus_total} in {group})")
 
 
 def main(argv: list[str]) -> int:

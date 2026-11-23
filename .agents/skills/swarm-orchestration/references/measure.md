@@ -61,27 +61,25 @@ Bottleneck and scheduling change: <observation → action>.
 
 ## Draw the open set
 
-When the operator asks for a chart of open work, send two images, each a pie on the left and the same slices as
-horizontal bars on the right, drawn with `scripts/progress_chart.py INPUT.json OUTPUT.png` (input format in its header):
-1. **The focus milestone only**, by stage.
-2. **Literally all open items**, every milestone, by stage only (no milestone grouping). Items parked for a later
-   release take the last stage, "Planned for a later release"; later-milestone items with live work take their real
-   stage.
-
-- **Name the no-milestone count in a title even when it is 0**, so untriaged work stays visible. Every open item sits
-  in exactly one slice, from the item records, never from memory. With one group, the group goes in the title and the
-  bars and sectors name only the stage.
-- **Stages follow the order of operations for one item**, and the bars run in that order, top to bottom: waiting on the
-  operator or an outside party, scheduled event, ready with no owner, finding the cause, coding, waits a deploy for its
-  next step, final checks, in a batch (lands at push), proof running, after the release window, planned for a later release. Never draw one big
-  "being built" slice: split it into finding the cause, coding, waits a deploy and final checks, so the chart shows
-  where work piles up.
-- **Pie and bars share one fixed colour per stage**, the same in every chart, so two charts compare at a glance.
-- **Labels sit on the sectors and bars; no legend.** With one group every sector shows its stage and count; with
-  several, small sectors show only the count and the bars name them. One bar more than three times the next is clipped
-  with its true count, so it does not flatten the rest.
-- **The title carries the totals and the change**: total open, each focus count, and each focus count at the last
-  chart with its time ("release 1.1 = 20, was 24 at 5:37 PM").
+When the operator asks for a chart of open work, send ONE 300 dpi image, drawn with `scripts/progress_chart.py INPUT.json OUTPUT.png`
+(input format in its header: title, ordered stages with colours, focus group name, items per stage for the focus group and
+for the rest):
+- **Top:** a pie of all open items on the left. The focus group's sectors sit together with a yellow outline, and dashed
+  lines expand them into a smaller pie on the right.
+- **Bottom:** bars for both, in the same left-to-right arrangement, in order of operations (earliest stage at the top).
+- **Labels sit on the sectors; a small sector gets a leader line outside; no legend.** One bar more than three times the
+  next is clipped, with its true count printed and marked "bar cut short". Look at the rendered image: no overlapping labels.
+- **Stages follow the order of operations for one item**: waiting on the operator, waiting on a third party, scheduled
+  event, ready with no owner, finding the cause, coding, waits a deploy, final checks, in a batch, proof running, after
+  the release window, planned for a later release. Never draw one big "being built" slice. Fix one colour per stage and
+  reuse it in every chart.
+- **Count every slice from the tracker at draw time**; never carry a count over from an earlier chart. Name the
+  no-milestone count in the title even when it is 0.
+- **"Waiting on the operator" holds only items whose next action is the operator's own.** A third party's action (a
+  client's accounts, an outside team) goes in its own stage.
+- **One item per real piece of work.** Do not split one deliverable into two stages or two slices.
+- **The title carries the totals and the change**: total open, the focus count, and the focus count at the last chart
+  with its time.
 - **Counts from one timestamped snapshot.** Start from item IDs, scope and stage. Check that each open item appears exactly once and that every item of the named target is accounted for. Reconcile additions, closures, reopenings and moves against the previous snapshot. Then aggregate and give `total`. The script's sum check does not prove membership. If the state changes before delivery, regenerate the image and the text together.
 - **Follow it with a short table** of the focus slices that names what moves each one next.
 
