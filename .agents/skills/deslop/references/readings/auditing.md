@@ -81,10 +81,17 @@ Two obligations decide whether a pass was worth running:
   of helper names is not this sweep** — it fires only on the spellings you thought of and misses the next
   instance by construction; the question above is the instrument, and
   [architecture/helper-is-an-architecture-finding.md](../principles/architecture/helper-is-an-architecture-finding.md) is where
-  the finding goes. When the target has a write boundary, the census is a required table (the last section below).
+  the finding goes. When the target has a write boundary, the census is a required table (its section below).
 And the library applies **before** the code exists, not only to what already does: re-reading the applicable
 principles while designing is cheaper than consolidating a fork that has callers.
 - **Census the reasons to change for the units the pass reads in full.** Scope: every unit the pass reads in full, plus any unit with three or more collaborators. Scripts under 100 lines are exempt, as [When to Relax](when-to-relax.md) states. For each unit in scope, list the independent reasons it could change, read from what the code does: what triggers it, which external system it reads or writes, what transformation it applies, what it persists, and how it copes with failure. Each reason to change cites a line. Two or more reasons to change nominate the unit; the degree test in [orthogonality.md](../principles/architecture/orthogonality.md) decides whether it is a finding. Like the input census, this outranks nothing else in the pass, and it is reported even when it ranks last.
+- **Census each population against its rule.** A file-by-file reading sees a correct check in every file that has
+  one and nothing in the file that forgot it. So for each rule the target states or implies for a class of things
+  (authorization, a lock or lease, audit, tenancy, idempotency, rate limit, validation), list every member of the
+  class and where each one enforces the rule: the table is in [the population census](#the-population-census) below.
+  The census detects holes in code built opt-in; it is never the repair. Each finding goes to the owner of its rule
+  kind (see the section below).
+  Like the other two censuses, it outranks nothing else in the pass, and it is reported even when it ranks last.
 
 ### The census of reasons to change is a required section of the report
 
@@ -113,3 +120,30 @@ folds its case, removes duplicates or fills a default on its own. A call to the 
 a parse on read of rows stored before the parser existed. **Zero owners, or more than one re-interpretation, is a
 finding** under [parse-dont-validate](../principles/architecture/parse-dont-validate.md) (search 3 there counts
 them), and it is reported even when it ranks last.
+
+### The population census
+
+A population is a class of members that one rule covers: every route that changes state, every handler of a queue,
+every state change, every query of a shared table, every job that spends money. When the target has one, the report
+carries this table after the violation list, one block per rule. Build it from the list of members (the router's
+route table, the handler registry, the writers of a table), not from the enforcing calls: a list built from the
+calls cannot show the member that has none.
+
+| Rule (one sentence) and population | Member | Enforced at (`file:line` and the function), or `none` | Confirmed under the write lock? |
+|---|---|---|---|
+| every change to a project holds its edit lease; 12 write routes | `POST /documents/{id}/lock` | `none` | — |
+| | `PUT /sections/{id}` | `require_lease` at `file:line` | no: checked before `row_lock` |
+
+Then the counts: members, members per enforcing function, empty cells. **An empty cell is a finding. Two or more
+independent decisions of one rule with different meanings, or a path that bypasses the check, are a finding.**
+Several functions that delegate to one decision are a lead to read, not a finding. Charge each finding to the owner
+of its rule kind: the authority to act (a permission, a lock or lease, its freshness) to
+[complete-mediation](../principles/reliability/complete-mediation.md), whose repair is a door that checks under its
+own lock and returns the only writing handle; tenancy on reads to
+[least-privilege](../principles/reliability/least-privilege.md) or a scoped query in the data layer; an audit record
+that must commit with its change to the transaction that writes both; validation to
+[parse-dont-validate](../principles/architecture/parse-dont-validate.md); repeated requests to
+[idempotency](../principles/architecture/idempotency.md). The table is a detector and a one-time proof during a
+migration; adding a check to each empty cell, or keeping the table as a standing registry, repeats the opt-in design. A member with a written exemption is not an
+empty cell; an exemption that only a comment states is listed with the reason and counted apart. Follow each
+member's calls as far as the state change; a member covered by a callee is covered, and the cell names the callee.

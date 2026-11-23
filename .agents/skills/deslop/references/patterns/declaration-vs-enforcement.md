@@ -21,7 +21,7 @@ The rule is enforced, but only on the path its author was working on. The same d
 - A database guard runs on insert and update, and not on delete.
 - Of two login checkers, one checks the token type and the other does not.
 
-This is easy to miss because a search for the check finds it, so the code looks correct. List every path the protected thing can take and look at each one. Put the check at the one place all paths go through.
+This is easy to miss because a search for the check finds it, so the code looks correct. List every path the protected thing can take and look at each one. Put the check at the one place all paths go through. When the paths are many members under one **authority** rule (a permission, a lock or lease), the mechanism is [complete-mediation](../principles/reliability/complete-mediation.md): the one door checks and returns the only writing handle. Other rules a population must obey (validation, idempotency, an audit record with its change) go to the owners the [population census](../readings/auditing.md#the-population-census) names.
 
 ## Why it arises
 
@@ -38,6 +38,7 @@ Make the code carry the promise — a type, a guard inside the handler's own dep
 | [unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md) | a promise nobody enforces | the mechanism; this pattern is its most common form |
 | [design-by-contract](../principles/reliability/design-by-contract.md) | pre/postconditions that are checked | what an enforced promise looks like |
 | [least-surprise](../principles/clean-code/least-surprise.md) | names that match behaviour | the reader's side of a false name |
+| [complete-mediation](../principles/reliability/complete-mediation.md) | the one door checks under its lock and returns the only writing handle | the *kept on some routes* variant, when a population of members carries an authority rule (permission, lock or lease) |
 | [documentation-discipline](../principles/clean-code/documentation-discipline.md) | what a comment may claim | the comment half; does not decide whether code or claim goes |
 
 ## Caught by
