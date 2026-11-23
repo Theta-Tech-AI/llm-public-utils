@@ -96,13 +96,18 @@ def cluster(rows: list[dict], window: int) -> list[dict]:
     return groups
 
 
-def owed_outputs(adir: Path) -> tuple[list[str], list[str]]:
-    """Outputs a cell owes besides its findings (owes-<stem>.txt names them): (problems, the owed texts)."""
+def owed_outputs(findings: list[Path], adir: Path | None) -> tuple[list[str], list[str]]:
+    """Outputs the selected cells owe besides findings (owes-<stem>.txt beside each cell names them):
+    (problems, the owed texts). Only the cells being merged are checked, so another run in the folder cannot leak in."""
     problems, texts = [], []
-    for owes in sorted(adir.glob("owes-*.txt")):
-        stem = owes.stem.replace("owes-", "")
+    for path in sorted(findings):
+        stem = re.sub(r"^findings-", "", path.stem)
+        folder = adir or path.parent
+        owes = folder / f"owes-{stem}.txt"
+        if not owes.exists():
+            continue
         for name in (l.strip() for l in owes.read_text().splitlines() if l.strip()):
-            out = adir / name
+            out = folder / name
             if not out.exists() or not out.read_text().strip():
                 problems.append(f"{stem}: owed {name} is missing or empty — failed reading")
             else:
@@ -119,11 +124,6 @@ def main() -> int:
                     help="directory holding assignment-<stem>.txt and files-read-<stem>.txt, to check that each "
                          "reading actually opened the files it was given")
     a = ap.parse_args()
-    if not a.assignments:
-        # owed outputs are checked even when the flag is left off: the emitted cell folder holds the obligations
-        parents = {Path(p).resolve().parent for p in a.findings}
-        if len(parents) == 1 and any(next(iter(parents)).glob("owes-*.txt")):
-            a.assignments = str(next(iter(parents)))
 
     rows, bad = load([Path(p) for p in a.findings])
     if not rows:
@@ -142,13 +142,13 @@ def main() -> int:
                 missing = sorted(expected - declared)
                 if missing:
                     problems.append(f"{stem}: {len(expected)-len(missing)}/{len(expected)} read, missing " + ", ".join(missing))
-            owed_problems, owed_texts = owed_outputs(adir)
-            problems += owed_problems
-            if owed_texts:
-                census = "# Deslop swarm — no findings\n\n## Input census\n\n" + "\n".join(owed_texts)
-                print(census)
-                if a.out:
-                    Path(a.out).write_text(census)
+        owed_problems, owed_texts = owed_outputs([Path(p) for p in a.findings], Path(a.assignments) if a.assignments else None)
+        problems += owed_problems
+        if owed_texts:
+            census = "# Deslop swarm — no findings\n\n## Input census\n\n" + "\n".join(owed_texts)
+            print(census)
+            if a.out:
+                Path(a.out).write_text(census)
         print("no findings parsed — a clean pass", file=sys.stderr)
         for p_ in problems:
             print("  " + p_, file=sys.stderr)
@@ -194,7 +194,7 @@ def main() -> int:
             else:
                 manifest_report.append(f"- **{stem}** — {len(expected)}/{len(expected)} read")
 
-    owed_problems, owed_texts = owed_outputs(Path(a.assignments)) if a.assignments else ([], [])
+    owed_problems, owed_texts = owed_outputs([Path(p) for p in a.findings], Path(a.assignments) if a.assignments else None)
     manifest_report += [f"- **{p_}**" for p_ in owed_problems]
 
     by_lens = defaultdict(int)
