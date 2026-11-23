@@ -20,6 +20,26 @@ A **simulated flow** is the user's path written as the calls the frontend really
 
 **Verify every endpoint against the code at the deployed commit before you call it.** Drivers from an earlier run drift; lock and signature payloads drift most. If the deployed app serves no API description page, the route list *is* the code: grep the router decorators in a read-only tree checked out at the exact deployed commit.
 
+## Step 0 — build the flow map (generated, never hand-kept)
+
+Before the first lane starts, build one artifact that answers: *what are the user flows, which calls does the frontend make in which order, which call is refused until which other call happened, and which routes has nobody exercised?* A hand-written map is stale in a week, so **generate it from the code at the deployed commit** and regenerate it at the start of every run. Keep hand-written input to one small overlay file for facts the code cannot give (which runs cost money, typical durations), each with its reason.
+
+Derive each section from the code's own owner of that fact:
+
+| Section | Derive from |
+|---------|-------------|
+| **Stage graph** — the stages and what unlocks each | the server's gate table (the function the "is this stage open" read uses) and the frontend's nav-gating module |
+| **State machines** — each multi-actor workflow (review, approval, lock) | the code's table of legal moves and of each move's requirements, with the refusal code per requirement |
+| **Route table per stage** — method, path, required capability, mutating?, signed?, starts a paid run? | the router decorators and their access dependencies; the mount list (drop routes the app removes) |
+| **Frontend call order per page** — calls on load and on each main action | the frontend's API client and the hooks that call it; say what static extraction could not resolve rather than inventing calls |
+| **Happy path as an ordered call list** | the frontend order plus a real call log of one complete flow |
+| **Dependency edges** — "B is refused until A", with B's refusal code | the gates above; one small graph per stage, not one giant graph |
+| **Coverage overlay** — per route: which lanes called it, which statuses were seen | the lanes' call logs, with ids in paths normalised |
+
+The overlay turns the map into a work list: **"routes no lane has called with an authenticated, well-formed request"** and **"mutating routes never seen to succeed"**. Hand each lane the map and its slice of that list; hand the next wave whatever is still on it. Diff the map of two environments or two commits and you get the list of gates and routes that changed — the first place to look after a release.
+
+Render the graphs in a text format that lives next to the code (Mermaid in Markdown), keep the long tables in a machine-readable file beside it, and have every statement carry its source (file and line, overlay entry, or call log). The map also feeds the cheapest mischief there is: a walker that takes random legal and illegal steps along the edges and checks after each one that the state read still agrees with the map.
+
 ## The matrix is the deliverable
 
 A browser pass yields anecdotes. An API pass should yield a table that someone can re-run:
@@ -58,7 +78,7 @@ A lane that discovers a broken helper wastes its whole budget. The coordinator b
 | Tool | Why |
 |------|-----|
 | **Client** — one function: user, method, path, body → status, body. Never raises on an HTTP status. | Every lane asserts on refusals; a client that throws on 4xx hides the data. |
-| **Token source** — per-user file, refreshed under a per-user lock, expiry checked before each call. | Lanes run longer than a token lives; two lanes minting one user at once break each other. |
+| **Token source** — per-user file, refreshed under a per-user lock, expiry checked before each call. Prefer a grant that needs no browser at all for throwaway test accounts (try the identity provider's token endpoint before scripting its sign-in page); keep the scripted sign-in only for steps that truly need it, such as a re-authentication bound to a challenge. | Lanes run longer than a token lives; two lanes minting one user at once break each other; a browser per token refresh is the last browser an API run should need. |
 | **Signed-step helper** — whatever the app needs for a re-authenticated or confirmed step. | The most valuable late-stage tests need it; each lane re-deriving it is hours lost. |
 | **Logs helper** — one command that reads the server and worker logs of the target environment. | The second layer for every finding (see [findings.md](findings.md)). |
 | **Code tree at the deployed commit**, read-only. | Route list, bodies, and the code pointer every issue needs. |
@@ -66,6 +86,8 @@ A lane that discovers a broken helper wastes its whole budget. The coordinator b
 ### One pacing gate for the whole box
 
 A gateway or WAF rate limit is **per client IP**, and every lane on one machine shares that IP. Ten lanes that each pace themselves politely still add up to a burst. Put the gate in the shared client: one lock file, a minimum interval between any two calls box-wide, and an explicit opt-out flag for a deliberate race of a few calls. Find the real limit in the infrastructure code before choosing the interval.
+
+**Never retry a slow or timed-out call blindly.** A wrapper that re-sends on a client timeout turns one heavy request into several concurrent ones; the server keeps working on each after the client has left. One lane's retry of an unbounded export took a whole environment down this way — a real finding, and also an outage for every other lane. Catch the timeout, report it, read the server's logs, and decide. Mark the routes that read *everything* as call-once.
 
 A refusal from the gateway is not an app finding — learn its signature (an HTML body, the gateway's name in it) and tell every lane. Also expect the gateway to refuse a default HTTP-library agent string outright: if a plain `curl` gets 200 and your script gets 403, compare the headers before suspecting the app.
 
@@ -80,6 +102,8 @@ Split by **part of the app**, not by mode: each lane owns one stage or one cross
 - one lane for everything outside the main object (feeds, admin, webhooks) plus the **API hygiene sweep** (malformed JSON, oversize bodies, wrong method, unknown path, CORS from a foreign origin, security headers, error bodies that leak);
 - one **code bug-hunt** lane ([bug-hunter.md](bug-hunter.md));
 - at least one **browser** lane, because none of the above sees a pixel.
+
+**Brief from a probe, not from the docs.** Before writing a lane's brief, check its facts against the running system: who can create the lane's objects, who is on each seed's roster, whether the page or route the lane needs is reachable in the seed's current state. Briefs written from reading alone sent lanes to create objects as a role that cannot, and to a page that the seed's state had closed.
 
 Each lane brief names: its part, its objects, its spend budget for paid or model-backed runs, the issues already known for that part (so it does not re-file them), and the model label for its issues. Everything common — tools, rules, findings policy, report format — lives in **one shared brief file** every lane reads first; the per-lane prompt stays short.
 
@@ -98,6 +122,8 @@ Give a code lane a **reading list and a floor**, not only a time box: "read thes
 ### The coordinator watches the logs
 
 Lanes see responses. They do not see what the server and its background workers log while they work. While the lanes run, the coordinator reads the environment's error lines on a cadence and classifies them: pre-existing class, caused by a lane, or new. Faults that live only there — a background job whose configuration differs from the API's, an alarm that fires while its queue is draining, a traceback logged for an ordinary validation refusal — never reach a lane's matrix.
+
+**Verify a lane's high-severity finding yourself before you pass it on** — one call is usually enough — and try it on the next environment down: a defect that also reproduces there is a code defect, not environment data. Use the real clock in every record (`date -u`), never an estimate; lanes and coordinator will disagree on times otherwise.
 
 Also before the first lane starts: confirm no deploy is in flight on the target, and that the API and every background worker run the same build. A roll in the middle of a run turns into a page of false findings.
 
