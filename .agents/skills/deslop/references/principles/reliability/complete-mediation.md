@@ -61,8 +61,16 @@ class ProjectStore:
     def release_lease(self, project_id, user) -> None: ...      # the one exemption: its own operation, no session
 
 class EditSession:
+    def close(self) -> None:
+        self._tx = None                                          # the handle forgets its transaction
+
+    def _open(self):
+        if self._tx is None:
+            raise RuntimeError("this edit session is closed")
+        return self._tx
+
     def lock_document(self, doc_id, by) -> None:
-        tx = self._open()                                        # raises once close() has run
+        tx = self._open()
         tx.update("documents", where={"id": doc_id, "project_id": self._row.id}, locked_by=by.id)  # 0 rows: refused
 
 def lock_document(project_id, doc, user):
