@@ -70,6 +70,8 @@ These classes have each burned a real user, and each is catchable statically or 
 
 8. **A refused action leaves no audit record.** A 403 for a role, a non-member or an anonymous caller writes nothing, so the trail cannot show who tried what. After each refused call, read the scoped audit trail (not a whole-trail export) and require one record with actor, action and outcome.
 
+9. **Failure reason is an exception class.** Grep the run and job failure writers for `type(exc).__name__` or a bare class stored as the reason. For each run kind, list the failed runs and read the run record, the stage's own status route and the log: a person-readable cause and a correlation id (run, request or trace id) must be reachable from the run record. Compare stage and run statuses by their documented meanings: a stage `idle` (no active work) beside a failed latest run can be right when the failure stays visible.
+
 ## Bugs
 
 Handle per [findings.md](findings.md). Default: one GitHub issue per distinct bug with repro or reasoning; summarize with links and ask what to fix now.
