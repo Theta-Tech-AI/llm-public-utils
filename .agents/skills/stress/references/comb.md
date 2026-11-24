@@ -68,6 +68,12 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 13. **Browser-only layout classes.** Add to the width-and-state matrix, in a headed browser: overlap or clipping at half width, layout shift on tab or device switch, control style drift between sibling panels, a URL that loses its state on Back, and copy that names a stage with no page.
 
+14. **Generic link, not the item.** Walk every url, source or href the API returns (retrieval cards, guidance, references, news, download tickets) and classify each: a bare endpoint, a site root, a hub page, or one URL shared by many different titles is a knot. A link must identify the specific record (its code or id). Also read the card's own text: it often prints the same generic link.
+
+15. **Default view drowned in machine rows.** Open every list as its default view and count what share of the first page is machine-made (trigger rows, a `system` actor, digests, test sentinel names). Read the first screen as the person who filed the bug: they must find their own action without applying a filter.
+
+16. **Zero results say why.** For every list or search route, force zero results (a filter that matches nothing, an empty container) and check that the body or screen says that nothing matched, why, and what to do next. A blank list is a knot.
+
 ## Sweep surface-by-surface, not path-by-path
 
 The passes above describe walking the happy path repeatedly. That is the right

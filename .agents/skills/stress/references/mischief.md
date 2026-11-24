@@ -100,9 +100,15 @@ These classes repeatedly reach a human before a sweep catches them, because they
 
 8. **Upstream-edit ladder.** After each upstream unlock, edit and re-lock, read every view of readiness (the workflow state, the stage's own latest endpoint, the gate text of each downstream mutation) and require them to agree and to name a reachable next action. Then call each downstream sign, lock or start while the upstream is unlocked: the refusal must be the one the read endpoint states, and no start route may bypass it.
 
-9. **Two writers, one record.** Send every write route twice at once (same body, then two users with different bodies) and once with a stale version token. Expect one winner, the loser refused and told who won, and a read-back showing one body in full. Where a 200 carries a success boolean (`released`, `ok`, `accepted`), force the false path and demand a reason.
+9. **Two writers, one record.** Send every write route twice at once (same body, then two users with different bodies) and once with a stale version token. Expect one winner, the loser refused and told who won, and a read-back showing one body in full. Where a 200 carries a success boolean (`released`, `ok`, `accepted`), force the false path and demand a reason. Two owners picking the same exclusive resource (a folder, a lease, a unique name) must not both be accepted, with the refusal arriving later and naming no holder.
 
 10. **Stuck runs.** List every run and job collection and flag any `queued`/`running` row older than its stage budget, any terminal row with no reason, and any project whose active-run flag disagrees with the live job the release guard finds.
+
+11. **Warning accepted by the next step.** For every stage that reports problems (conflicts, readiness blockers, gate messages), read the problem list, then call the next step's route with the problem standing. Record whether each problem carries a severity and a message in the API, and whether the next route's acceptance agrees with the severity shown. A problem list with no severity field is a finding even when the next step is allowed by design.
+
+12. **Success that changed nothing.** After every job that reports `succeeded`, read the thing it should have changed (a link run, then the bound state; an import, then the rows). A succeeded run beside an unchanged state, with the cause only in another field or a warning log, is a finding.
+
+13. **Replaced source still cited.** After replacing a source file, read every citation and evidence reader (source lists, stale-source flags, evidence search, section citations, consistency checks): none may return the old version except as an explicit "replaced" notice. This needs a real replace; with no replaced data present the sweep sees nothing, so create one first.
 
 These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
 

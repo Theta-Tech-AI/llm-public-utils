@@ -235,6 +235,7 @@ Code review and API probes systematically miss an entire population of bugs that
 - Prefer throwaway accounts/data for destructive probes.
 - Don't conclude "missing/broken" from a tool miss (undriveable widget, gzipped asset grep, flaky headless). Confirm with a second surface.
 - Infra CLIs and logs (`gh run`, cloud logs, worker tails) are a third surface for deploy/roll false alarms — see [findings.md](findings.md).
+- Sweep hygiene: time-ordered ids share a long common prefix, so never key sweep results by a short prefix. A 503 "updating" mid-sweep voids that sweep: retry with a deadline before concluding anything. A route that "exists but returns empty" may need a query parameter (search routes): read the route code before calling it a gap.
 - Reporting policy (issues vs fix vs artifacts) lives in [findings.md](findings.md).
 
 ## See also
