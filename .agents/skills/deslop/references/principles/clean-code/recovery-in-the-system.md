@@ -22,7 +22,7 @@ Put the classification in one place (the run, the job, the state machine), not i
 
 | Case | Examples | What the system does |
 |------|----------|----------------------|
-| **Transient** | rate limit, outage, deploy or restart, timeout, lock | Bounded automatic recovery with a visible waiting state ("retrying at 14:05"). Never a button. After the bound, move to the next row. |
+| **Transient** | rate limit, outage, deploy or restart, timeout, lock | Bounded automatic recovery with a visible waiting state ("retrying at 14:05"). Never a button. When the bound runs out, the failure is no longer the person's to fix: it escalates to the owners like an unexpected error, and the screen says so ("unavailable; we are on it"). |
 | **Needs a person** | missing input, refused content, a permission | Name the cause in plain words and offer the one action that fixes it. The control is labelled by that action ("Add the missing file"), not by "Retry". |
 | **A decision** | regenerate signed or approved work, spend money, discard someone's edit | A decision control, labelled as the decision ("Replace the signed table"), with its cost shown. Never styled as a fallback. |
 | **Unexpected** | an unclassified exception, a bug in our own code | Stop safely (no half-written result; the last good state stays), fail loud (full diagnostics with a correlation id, an alert to the owners), tell the person plainly that the fault is ours and their work is safe, and re-queue the stopped work by itself once a build with the fix is live. Then classify the error into one of the rows above, so it does not stay unknown: a rising count here means the classification is missing a row. A Retry button on a bug repeats the bug and its cost. |
@@ -46,17 +46,17 @@ def is_current(table: Table) -> bool:
     return table.drafted_from == table.inputs_hash      # the only owner of the question
 
 def run_draft(table_id: str) -> None:
-    table = load(table_id)
-    if is_current(table):
-        return
-    try:
+    try:                                                # one boundary: loading and the freshness test included
+        table = load(table_id)
+        if is_current(table):
+            return
         save(draft(table))
     except TransientError as err:                       # rate limit, outage, restart, timeout
         attempts = record_attempt(table_id)             # persisted, so a restart keeps the count
         if attempts < MAX_ATTEMPTS:
             defer(table_id, retry_at=backoff(attempts), reason=str(err))     # shows "retrying at ..."
         else:
-            block(table_id, cause="still unavailable after several tries", action=None)  # the next row
+            escalate(table_id, cause=str(err))          # the owners are alerted; the screen says "unavailable"
     except NeedsPerson as err:                          # missing input, refused content
         block(table_id, cause=err.plain_words, action=err.fix)               # one named action
     except Exception:                                   # unexpected: a bug or an unclassified error
@@ -64,7 +64,7 @@ def run_draft(table_id: str) -> None:
         raise
 ```
 
-On the screen the same split holds. The ❌ shows a "Draft again" button next to every table, always enabled. The ✅ shows nothing on a current table, "retrying at 14:05" on a deferred one, the cause with its one fix on a blocked one, "our error, reported (ref …); your table is unchanged" on a stopped one, and "Replace the signed table" only where a person decides.
+On the screen the same split holds. The ❌ shows a "Draft again" button next to every table, always enabled. The ✅ shows nothing on a current table, "retrying at 14:05" on a deferred one, the cause with its one fix on a blocked one, "our error, reported (ref …); your table is unchanged" on a stopped one, "unavailable; we are on it" on an escalated one, and "Replace the signed table" only where a person decides.
 
 ## Worked example (anonymized)
 
