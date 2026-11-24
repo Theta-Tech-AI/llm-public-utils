@@ -20,8 +20,8 @@ Two instruments, used together on every iteration:
 |---|------|-----|-----------|
 | 0 | 🌐 **Research** current mobile practice on the web ([research.md](references/research.md)) | coordinator, then every page agent for its own pattern | the brief carries cited take-aways; each report has a "🌐 Research" section |
 | 1 | 📋 **Inventory** every page the app serves, from a tree at the branch the agents will use ([fan-out.md](references/fan-out.md)) | coordinator | every route maps to an owner, a redirect, or dead code; every page has a record with real data |
-| 2 | 🔧 **Harness**: one private local preview per agent, hot reload, proxied to the shared local backend ([harness.md](references/harness.md)) | coordinator | one page renders signed in at 390 px with real data, and an edit shows on screen in about a second |
-| 3 | 🧱 **Shell first**: the frame every page shares (top bar, page header, side margin, drawer, shared primitives) | shell agent | the frame passes on three pages; then the page agents start |
+| 2 | 🔧 **Harness**: one private local preview per agent, hot reload, proxied to the shared local backend, and a local stack **seeded with a rich record by one command** ([harness.md](references/harness.md)) | coordinator | one page renders signed in at 390 px with real data, and an edit shows on screen in about a second |
+| 3 | 🧱 **Frame first, designed once**: the frame every page shares (header, drawer, margins) is designed as ONE component with one phone layout, and the base rules (containment, one breakpoint) are in place | frame owner | the frame passes on three pages; then the page agents start |
 | 4 | 👥 **One agent per page** runs [the loop](references/loop.md): shoot → probe → critique → fix → re-shoot | page agents | the happy test below |
 | 5 | 📸 **Show the user** every screenshot as it lands, in the chat, as images ([loop.md § show](references/loop.md#-show-the-user)) | coordinator | the user has seen each page's before, each iteration, and its after |
 | 6 | 🔗 **Integrate** on localhost: merge, typecheck, re-probe every page | coordinator | one table, every page, every count, before → after |
@@ -30,7 +30,9 @@ Two instruments, used together on every iteration:
 
 **Localhost is where the work happens; the cloud only confirms.** The loop needs the time from edit to screenshot to be milliseconds, at worst a few seconds: a hot-reload dev server on the same machine. A deploy takes minutes to an hour, so it is never part of the loop; it is the last step, to prove the deployed app looks the same.
 
-**Why shell first:** in the first campaign every page agent reported the same four frame faults (header row, side margin, back-link target, `100vh`), and pages that are only a title plus a shared panel had nothing of their own to fix. Run the shell agent's first round before the page agents, or tell page agents to report frame faults and never fix them.
+**Why frame first, designed once:** in the first campaign every page agent reported the same four frame faults (header row, side margin, back-link target, `100vh`), and the header was then fixed symptom by symptom (a gap, a wrap, an icon size, an overflow menu) while another team redesigned it. Design the phone frame as one component with one grid and one row rule before page work; page agents report frame faults and never fix them.
+
+**When a fault class repeats, fix the class:** a fault seen on three pages (text running past its box, a target under 44 px) gets a base rule at the owner of all of them and a probe check, and the instance fixes are deleted. Five spot fixes for spilled text in the first campaign were one missing rule ([checklist.md M12](references/checklist.md)).
 
 ## 🎯 When is an agent happy?
 

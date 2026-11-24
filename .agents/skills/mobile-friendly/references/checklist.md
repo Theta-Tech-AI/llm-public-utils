@@ -28,6 +28,10 @@ Phone layout = below the app's tablet/desktop breakpoint (often 768 px). The com
 
 **M11. 🌀 Reflow and motion.** At 320 px nothing is clipped and nothing scrolls sideways except a named two-dimensional region. Never hide a fault with `overflow-x: hidden` on `html`/`body`: find the wide element and fix it. Drawers and sheets appear without sliding under `prefers-reduced-motion`. Hover is never the only way to reach something. 📏 `overflow` (the outermost wide element is the cause). — [WCAG 1.4.10], [WCAG 2.3.3]
 
+**M12. 📦 Text never escapes its box.** Correct code never lets content run past its container, at any width. One base rule, written once for the whole app: text containers break long tokens (`overflow-wrap: anywhere`; not on code or inputs), and grid and flex columns that hold text may shrink below their longest word (`minmax(0, 1fr)`, `min-width: 0`). A grid track and a flex item default to the min-content width, so a file name, id, hash or URL without break points otherwise widens the column past its card. 📏 `escapes`, `overflow`. — [MDN: overflow-wrap](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-wrap), [CSS Grid: min-content tracks](https://developer.mozilla.org/en-US/docs/Web/CSS/minmax)
+
+**One named breakpoint.** The phone/desktop line has one owner: a named alias (a utility-framework screen such as `phone:`, one constant for scripts) and a lint that flags raw widths and the wrong prefix. Mixed prefixes (`sm:` at 640 px against a 768 px line) leaked phone fixes onto desktop three times in the first campaign.
+
 ## 🔍 Critique questions
 
 Answer each in writing, per width, before you call a page done. The expected answer is in brackets; any other answer is a fault.
@@ -44,6 +48,7 @@ Answer each in writing, per width, before you call a page done. The expected ans
 10. 🌗 Does the page hold in both themes, and does the render at the breakpoint switch to the desktop layout? [yes]
 11. 🧭 With the drawer open on this page, is the current place visible and marked? [yes]
 12. 💬 With each popover, menu and dialog open, does it fit inside the screen? [yes]
+13. 📦 At every width, including desktop, does any text run past its card or cell? [no]
 
 ## Sources
 

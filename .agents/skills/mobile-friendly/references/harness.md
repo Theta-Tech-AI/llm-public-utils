@@ -24,6 +24,8 @@ agent worktree ──(sync)──▶ private app tree ──▶ dev server :53NN
 
 ## Borrow data, never move the loop
 
+Make it one command: `seed-rich-project` (or the project's equivalent) that is idempotent (an existing borrowed record is reused and its sign-in printed), so a fresh stack is ready for every state before the first agent starts.
+
 A state the local stack cannot show (an editor in edit mode, rows that need a finished pipeline, a chart that needs history) is a tooling gap, not a reason to check on the cloud. Copy one record from a deployed environment onto localhost and keep the loop local:
 
 - **Capture through the app's own read APIs**, one named record at a time, paced for the gateway; never a raw database dump. Downloads through the app may write audit records on the source environment.
