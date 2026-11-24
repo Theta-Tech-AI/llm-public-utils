@@ -5,7 +5,7 @@ description: Deslop pattern — One-Sided Contract: one end of an agreement exis
 
 # One-sided contract
 
-**Why this is slop:** one end of an agreement exists and the other never did, so the client retries an error code the server never emits and the promise is fiction by construction.
+**Why this is slop:** An idempotency key the server ignores gives the client no protection against duplicate effects when it retries.
 
 ## The structural tell
 

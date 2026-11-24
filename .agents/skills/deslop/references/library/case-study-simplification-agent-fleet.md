@@ -1,6 +1,6 @@
 # Case study: simplifying an LLM writing-agent subsystem
 
-**Why this is slop:** the subsystem worked and was slop anyway — five agents, fourteen stages and a retry ladder for a document one pass could draft — because slop is not code that fails, it is structure nobody needed.
+**Why this is slop:** Separate agent lifecycles and an independent edit prompt multiply maintenance work and let improvements to the writer miss the editor.
 
 A real deslop pass (2026-07, anonymized) on a production RAG document-authoring
 product. The subsystem drafted a multi-section regulatory document with LLM

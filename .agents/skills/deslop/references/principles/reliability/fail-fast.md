@@ -5,7 +5,7 @@ description: Deslop principle — Fail-Fast & Defensive Programming: Detect and 
 
 # Fail-Fast & Defensive Programming
 
-**Why this is slop:** invalid state that propagates turns one cheap check at the entry point into an expensive diagnosis three layers down, where the cause is no longer visible.
+**Why this is slop:** Invalid state that propagates turns one cheap check at the entry point into an expensive diagnosis three layers down, where the cause is no longer visible.
 
 > "The best debugging is the debugging you never have to do because you found the problem immediately."
 > — Jim Shore

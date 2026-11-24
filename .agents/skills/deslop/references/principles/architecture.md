@@ -5,7 +5,7 @@ description: Deslop principles — Architecture: DRY, Single Source of Truth, Se
 
 # Architecture
 
-**Why this is slop:** structure that was never decided returns as the same defect in every module — knowledge with two owners, a barrier the next import crosses — which is why this category is read by boundary first.
+**Why this is slop:** Leaking responsibilities and knowledge across module boundaries makes a local requirement change disturb code that should be independent.
 
 > *Structuring and designing systems. These principles govern how code is organized, how components relate, and how systems are designed for change.*
 

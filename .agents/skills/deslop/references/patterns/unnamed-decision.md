@@ -5,7 +5,7 @@ description: Deslop pattern — Unnamed Decision: a question never asked, answer
 
 # The decision nobody named
 
-**Why this is slop:** nobody wrote down what should happen in the situation nobody planned for, so each programmer answered it locally and the answers do not match.
+**Why this is slop:** Nobody wrote down what should happen in the situation nobody planned for, so each programmer answered it locally and the answers do not match.
 
 The code has to handle a situation nobody planned for. Nobody wrote down what should happen, so each programmer who ran into it made up an answer on the spot. The answers do not match.
 

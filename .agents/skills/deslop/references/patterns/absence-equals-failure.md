@@ -5,7 +5,7 @@ description: Deslop pattern — Absence Equals Failure: one value answers both "
 
 # Absence and failure share one value
 
-**Why this is slop:** one value answers both "nothing is saved" and "the read failed", so absence is promoted to success and the caller can no longer choose what to do about it.
+**Why this is slop:** Returning the same empty value for a missing record and a failed read hides outages from callers that need to handle them differently.
 
 ## The structural tell
 

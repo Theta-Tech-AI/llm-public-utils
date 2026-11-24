@@ -1,6 +1,6 @@
 # Fixture — implicit state machine
 
-**Why this is slop:** a status field whose legal moves live only in scattered conditions is slop by the package, so the fixture smears one state machine across six packages and asks a reading to recover the graph nobody wrote down.
+**Why this is slop:** Scattered shipment transitions let the reconciler mark an undispatched shipment delivered and let administrators void it from any state.
 
 A shipment service used to control *A State Machine Nobody Wrote Down*. Packages: `logistics/` (records
 and picking), `api/` (HTTP handlers), `jobs/` (nightly jobs), `admin/` (operator tools), `billing/`

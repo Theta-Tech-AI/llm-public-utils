@@ -5,7 +5,7 @@ description: Deslop principle — Metadata Beside Content: what is true about co
 
 # Metadata Beside Content, Never Inside It
 
-**Why this is slop:** metadata written inside the content forces every reader to find and parse it again, so one field ends up with as many parsers as there are readers and they disagree.
+**Why this is slop:** After approval changes the workflow state, an embedded "not yet confirmed" sentence still tells the document's reader the old status.
 
 > In-band signalling let the network's control tones travel in the same channel as the caller's voice, so anyone who could whistle 2600 Hz could seize a trunk line. The fix was to move signalling out of band.
 > — the history of telephone signalling, paraphrased

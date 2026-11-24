@@ -1,6 +1,6 @@
 # Fixture — every query is cheap and the request is not
 
-**Why this is slop:** every statement is cheap and the request is not, which is how a chatty handler hides behind perfect indexes — planted beside queries that are already correct.
+**Why this is slop:** Repeated reads and a fresh context for each action make the course page pay network latency for 57 statements to obtain four facts.
 
 A small course site, used to control *Every Request Has a Round-Trip Budget*. The database runs on its own host
 behind a pooler (`web/db.py`). Every table has the indexes its queries use (`schema.sql`), every statement is

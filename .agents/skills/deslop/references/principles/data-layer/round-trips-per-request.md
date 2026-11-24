@@ -5,7 +5,7 @@ description: Deslop principle — Every Request Has a Round-Trip Budget: count t
 
 # Every Request Has a Round-Trip Budget
 
-**Why this is slop:** a page's cost is the sum of statements no single function owns, so each one looks cheap.
+**Why this is slop:** Repeated remote reads make a request wait on the network for facts it already has, even when each query is fast.
 
 > "…the number of database round trips is more important for the response time than the amount of data transferred."
 > — Markus Winand, *Use The Index, Luke*
@@ -169,8 +169,6 @@ routes paid 80% of the round trips; the floor was one statement.
 counter on the real route is evidence: count first, fix, count again, and let the remainder name the next concern.
 
 ---
-
-In relation to other principles, the round-trip budget:
 
 | Principle | Relationship |
 |-----------|--------------|

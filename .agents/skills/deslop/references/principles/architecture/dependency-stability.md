@@ -5,7 +5,7 @@ description: Deslop principle — Depend in the Direction of Stability: a rarely
 
 # Depend in the Direction of Stability
 
-**Why this is slop:** an import edge pointing from the rarely-changing unit to the weekly-changing one means a volatile edit forces work in stable code — a change-rate failure that no layer diagram shows.
+**Why this is slop:** An import edge pointing from the rarely-changing unit to the weekly-changing one means a volatile edit forces work in stable code — a change-rate failure that no layer diagram shows.
 
 A dependency is a promise to be disturbed. The question worth asking of every import edge is not only
 *which layer* it points to but **how often the far end moves**: a unit that changes yearly and depends on

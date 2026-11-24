@@ -5,7 +5,7 @@ description: Deslop pattern — Consumer Re-Decides the Producer: a client or la
 
 # Consumer re-decides the producer's decision
 
-**Why this is slop:** the client re-derives what the producer already decided, so the rule has two owners and the second one is the copy that will drift.
+**Why this is slop:** Two sides of one rule now age separately, so the same input can get different answers from producer and consumer.
 
 ## The structural tell
 

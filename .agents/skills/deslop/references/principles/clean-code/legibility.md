@@ -5,7 +5,7 @@ description: Deslop principle — Legibility: a navigable codebase where the pat
 
 # Legibility
 
-**Why this is slop:** a codebase nobody can navigate is slop even when every function is clean, because the cost has moved from reading a unit to finding it at all.
+**Why this is slop:** A codebase nobody can navigate is slop even when every function is clean, because the cost has moved from reading a unit to finding it at all.
 
 > "Any fool can write code that a computer can understand. Good programmers write code that humans
 > can understand."

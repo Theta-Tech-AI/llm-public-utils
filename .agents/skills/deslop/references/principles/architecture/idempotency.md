@@ -5,7 +5,7 @@ description: Deslop principle — Idempotency: repeating an operation changes no
 
 # Idempotency
 
-**Why this is slop:** retries are inevitable, so an operation that is not safe to repeat turns every duplicate request into a second effect nobody asked for.
+**Why this is slop:** Retries are inevitable, so an operation that is not safe to repeat turns every duplicate request into a second effect nobody asked for.
 
 > "An operation is idempotent if performing it multiple times has the same effect as performing it once."
 

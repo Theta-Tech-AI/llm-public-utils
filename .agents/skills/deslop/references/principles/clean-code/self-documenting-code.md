@@ -5,7 +5,7 @@ description: Deslop principle — Self-Documenting Code: Names and structure ove
 
 # Self-Documenting Code
 
-**Why this is slop:** a name that hides its intent makes every reader run the body to learn what the line was for, and the body is exactly where the answer rots.
+**Why this is slop:** Opaque names and magic values force maintainers to reconstruct a line's purpose from implementation details before changing it.
 
 > "Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
 > — Martin Fowler

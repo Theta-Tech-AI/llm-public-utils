@@ -5,7 +5,7 @@ description: Deslop principle — Foreign Keys Are Not Optional: Every reference
 
 # Foreign Keys Are Not Optional
 
-**Why this is slop:** an identity column with no reference constraint is an agreement nobody enforces, so orphan rows appear the first time a delete runs against a table the application forgot to check.
+**Why this is slop:** Deleting only a parent row leaves orphaned children when their reference columns carry no foreign key.
 
 > "A foreign key is a promise the database keeps; a naming convention is a promise you hope everyone remembers."
 

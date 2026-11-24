@@ -5,7 +5,7 @@ description: Deslop principle — Illegal States Unrepresentable: a field valid 
 
 # Make Illegal States Unrepresentable
 
-**Why this is slop:** a type that admits a field meaningful in one mode only hands every consumer a state it has to remember is impossible, and one of them will forget.
+**Why this is slop:** A model that permits contradictory field combinations makes consumers defend against values the domain forbids.
 
 > "Make illegal states unrepresentable."
 > — Yaron Minsky, *Effective ML Revisited* (Jane Street, 2011)

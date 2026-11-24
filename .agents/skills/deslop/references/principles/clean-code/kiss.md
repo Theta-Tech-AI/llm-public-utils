@@ -5,7 +5,7 @@ description: Deslop principle — KISS: Keep It Simple, Stupid: Simplest suffici
 
 # KISS: Keep It Simple, Stupid
 
-**Why this is slop:** complexity the problem never required is paid for by every reader for the life of the file, and simple is not the same as easy to write.
+**Why this is slop:** Complexity the problem never required is paid for by every reader for the life of the file, and simple is not the same as easy to write.
 
 > Worked example: [case-study-simplification-agent-fleet.md](../../library/case-study-simplification-agent-fleet.md) — a production deslop pass that collapsed a per-section LLM agent fleet, a duplicated prompt fragment, and a prose-policing regex into one agent, one preamble, and zero regexes.
 

@@ -5,7 +5,7 @@ description: Review every repair one level deeper than the bug — six questions
 
 # One Level Deeper: Review the Repair, Not Only the Bug
 
-**Why this is slop:** a repair that stops at the symptom ships the bug one level deeper, so the diff looks fixed while the shape that produced it survives and the next instance is already on its way.
+**Why this is slop:** A symptom-only patch leaves the design gap that caused the incident, so the next case needs another guard.
 
 *A bug is evidence of a decision the design never made. A repair that makes the symptom go away without making that decision is a patch, and the next incident in the same place adds another.*
 

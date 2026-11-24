@@ -5,7 +5,7 @@ description: Deslop principle — Documentation Discipline: docs live next to wh
 
 # Documentation Discipline
 
-**Why this is slop:** a comment that restates the code rots against it, and the missing comment that explained why leaves the next change to guess the reason.
+**Why this is slop:** A comment that restates the code rots against it, and the missing comment that explained why leaves the next change to guess the reason.
 
 > "Code tells you how, comments tell you why."
 > — Jeff Atwood, Stack Overflow co-founder

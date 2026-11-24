@@ -1,6 +1,6 @@
 # Fixture: change-rate edges and special cases
 
-**Why this is slop:** an import edge pointing at the fastest-moving end of the system, and a special case bolted on where the design had no shape for it — planted here so a reading has to find them and still decline the clean controls.
+**Why this is slop:** A vendor upgrade forces edits to stable pricing rules, while customer branches and timing patches make unrelated changes collide in shared code.
 
 A planted corpus for two principles — **Depend in the Direction of Stability** and **A Special Case Is a
 Requirement the Design Never Accounted For** — plus the two rules folded into their owners

@@ -5,7 +5,7 @@ description: Deslop principle — Every Join Needs an Access Path on the Side Be
 
 # Every Join Needs an Access Path on the Side Being Probed
 
-**Why this is slop:** a normalized schema with a reference and no access path on the probed side is perfectly correct and quadratic, and the shape stays invisible until the table grows.
+**Why this is slop:** A nested-loop join that scans the inner table for each outer row repeats work in proportion to both row counts.
 
 A join is not a property of the schema; it is a property of the **pair** — a driving row set, and a probe into
 the other table for each row it produces. A schema can be perfectly normalized, every foreign key declared, and

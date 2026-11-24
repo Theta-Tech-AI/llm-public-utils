@@ -5,7 +5,7 @@ description: How to add a principle to this library — discovery, research, dra
 
 # Extending the Library
 
-**Why this is slop:** the next piece of slop resembles nothing already in the library, so a closed rulebook hardens into a vocabulary that detects only its own past.
+**Why this is slop:** Adding a principle that restates a sibling gives auditors two rules for the same defect and no clear place to file it.
 
 > "The library is only as good as the gap it just closed."
 

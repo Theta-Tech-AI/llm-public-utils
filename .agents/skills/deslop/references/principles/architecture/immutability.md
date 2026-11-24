@@ -5,7 +5,7 @@ description: Deslop principle — Immutability: values fixed after creation; nev
 
 # Immutability
 
-**Why this is slop:** shared mutable state lets one holder's change reach every other holder by surprise, which is how aliasing bugs surface far from the line that caused them.
+**Why this is slop:** Shared mutable state lets one holder's change reach every other holder by surprise, which is how aliasing bugs surface far from the line that caused them.
 
 > "Immutable types are safer from bugs, easier to understand, and more ready for change."
 > — MIT 6.005 Software Construction

@@ -5,7 +5,7 @@ description: Deslop principle — Patchwork: compensating code you cannot simpli
 
 # Patchwork
 
-**Why this is slop:** every line answers a real incident and still nothing can be deleted, so the debt is in the design that needed each patch rather than in any one branch.
+**Why this is slop:** Removing one compensating guard brings an old incident back because later guards depend on it, making local cleanup unsafe.
 
 > "There's no way this is the cleanest way to simply achieve the goal. This is patchwork upon patchwork."
 > — the report that motivated this principle, from a reader who could not name a single wrong line

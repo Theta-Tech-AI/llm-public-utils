@@ -5,7 +5,7 @@ description: Deslop principle — Postel's Law (Robustness Principle): Strict ou
 
 # Postel's Law (Robustness Principle)
 
-**Why this is slop:** tolerance is not free: accepting non-conformant input pushes the ambiguity downstream, where every reader copes with a shape the sender should have refused.
+**Why this is slop:** A receiver that rejects harmless new fields turns an otherwise compatible server change into a client failure.
 
 > "Be conservative in what you send, be liberal in what you accept."
 > — Jon Postel, RFC 793 (1981)

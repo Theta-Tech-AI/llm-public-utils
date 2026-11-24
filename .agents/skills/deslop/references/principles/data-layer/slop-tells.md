@@ -5,7 +5,7 @@ description: Deslop principle — The Common Slop Tells: grep-able schema and ca
 
 # The Common Slop Tells
 
-**Why this is slop:** each function reads what it needs and looks complete alone, so the cost lives between functions, in the single request that calls them all.
+**Why this is slop:** Reading schemas and callers in isolation misses unenforced relationships, conflicting copies and repeated reads whose costs appear only when the pieces interact.
 
 > *These are the patterns a generator emitting one `CREATE TABLE` at a time produces by default. Each table looks complete in isolation — but integrity lives **between** tables (a foreign key is a relationship, a normalized fact has one home, an invariant spans rows), and a per-table view never sees it. So the very things that make a schema trustworthy are what get dropped first. Grep for these; each maps to a principle above.*
 

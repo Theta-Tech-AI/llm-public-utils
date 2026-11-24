@@ -5,7 +5,7 @@ description: "Library of 65 coding principles and 9 diagnostic patterns for find
 
 # Deslop: code quality analysis
 
-**Why this is slop:** a reader can no longer trust what the code says — the truth sits in a second copy, an error is swallowed, an assumption is unwritten.
+**Why this is slop:** A reader can no longer trust what the code says — the truth sits in a second copy, an error is swallowed, an assumption is unwritten.
 
 `/deslop [file-or-directory]` (or `$deslop`) reads your code against the principles in [references/](references/) and suggests fixes with before/after examples.
 

@@ -5,7 +5,7 @@ description: Deslop pattern — Declaration vs Enforcement: a name, docstring, r
 
 # Declaration vs enforcement
 
-**Why this is slop:** a name, comment, route or config key promises what no line keeps, and nothing couples the promise to the code, so the reader's trust is spent on something untrue.
+**Why this is slop:** An admin-only declaration with no enforcing check lets a caller perform the protected operation despite the advertised restriction.
 
 The declaration was written once and the code changed under it; nothing couples the two.
 

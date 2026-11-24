@@ -5,7 +5,7 @@ description: Deslop pattern — Grammar Without an Owner: one input format (an i
 
 # Grammar without an owner
 
-**Why this is slop:** one identifier format is taken apart by several regexes that disagree on its parts, so the grammar lives nowhere and every parse is a guess that happens to pass today.
+**Why this is slop:** Consumers extract different parts from the same identifier because each local parser defines its own version of the format.
 
 ## The structural tell
 

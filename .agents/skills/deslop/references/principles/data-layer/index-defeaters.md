@@ -5,7 +5,7 @@ description: Deslop principle — Know What Defeats an Index: Leading wildcards,
 
 # Know What Defeats an Index
 
-**Why this is slop:** the index exists and the predicate is written so it cannot be used, and the query plan charges the cost to nobody in particular.
+**Why this is slop:** The database reads rows the index was meant to skip whenever a predicate defeats it.
 
 Most "why is this slow" is a predicate written so the index *can't* be used. The recurring ones:
 

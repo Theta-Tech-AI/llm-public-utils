@@ -5,7 +5,7 @@ description: What improving code by the deslop principles buys — the one idea 
 
 # What the Principles Buy
 
-**Why this is slop:** a rule is worth its cost only if it buys something a reader can feel, so the slop is a principle kept for its own sake while the code gets no easier to trust.
+**Why this is slop:** Nothing concrete justifies the churn and regression risk when a cleanup is defended by rule names alone.
 
 *Read this when you must explain why a pass is worth doing, rank which principles to lead with for a codebase,
 or brief other agents who will fix code in parallel.*

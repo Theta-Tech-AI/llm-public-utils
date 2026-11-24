@@ -5,7 +5,7 @@ description: Deslop principle — Match the Index to the Query Shape: Composite 
 
 # Match the Index to the Query Shape
 
-**Why this is slop:** an index whose shape does not match how the query reads it costs write time on every row and buys nothing on the one plan that matters.
+**Why this is slop:** An index ordered for a different query leaves the intended lookup scanning or sorting rows while writes still pay to maintain it.
 
 An index helps only if its shape matches how the query reads. The rules that pay the most rent:
 

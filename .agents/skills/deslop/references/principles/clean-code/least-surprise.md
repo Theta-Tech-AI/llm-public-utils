@@ -5,7 +5,7 @@ description: Deslop principle — Principle of Least Surprise: a name, default o
 
 # Principle of Least Surprise
 
-**Why this is slop:** a component that behaves unlike its name forces every caller to keep a private correction in their head, and that correction is never written down.
+**Why this is slop:** Callers rely on behaviour the component never provides when its name misleads them.
 
 > "In interface design, always do the least surprising thing."
 > — Eric S. Raymond

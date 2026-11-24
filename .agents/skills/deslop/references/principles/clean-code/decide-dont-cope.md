@@ -5,7 +5,7 @@ description: Deslop principle — Decide, Don't Cope: Decide types once at the b
 
 # Decide, Don't Cope
 
-**Why this is slop:** the coping mentality accepts anything, adjusts locally and never decides, so the ambiguity travels downstream and every later reader adds one more concession.
+**Why this is slop:** Accepting every possible input shape makes each consumer carry speculative branches that no real caller requires.
 
 The most common shape of AI-generated slop is not a bad algorithm — it is a **coping mentality**. Generated code treats every input as a hostile mystery and copes with it locally: it accepts `unknown`, then builds an if/else-if ladder of `typeof` checks, `instanceof` tests, inline casts, try/catch rungs, and stacked fallbacks until *something* produces a usable value. Every rung handles a hypothetical ("what if it's an object with a message? what if stringify throws?") that no requirement ever asked for. The code optimizes for "never crash on any conceivable input **here**" instead of "invalid input cannot **reach** here."
 

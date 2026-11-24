@@ -5,7 +5,7 @@ description: Deslop pattern — Fork Instead of Extension: a downstream module c
 
 # Fork of upstream instead of extension
 
-**Why this is slop:** a downstream copy of an upstream module drifts until two writers own one fact and both receipts look verified.
+**Why this is slop:** Downstream maintainers rediscover and port every upstream fix by hand once a module is copied rather than extended.
 
 ## The structural tell
 

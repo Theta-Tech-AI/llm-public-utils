@@ -5,7 +5,7 @@ description: Deslop pattern — Vocabulary Drift: one closed set of values spell
 
 # Vocabulary drift across layers
 
-**Why this is slop:** one closed set of values is respelled in every layer until the spellings, and sometimes the members, differ, so the UI handles a status the API never emits.
+**Why this is slop:** When layers maintain separate status lists, adding a status in one leaves another unable to handle the value it receives.
 
 ## The structural tell
 

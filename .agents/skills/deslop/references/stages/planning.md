@@ -5,7 +5,7 @@ description: Plan a deslop pass — survey the code, design slices, group the pr
 
 # Planning a pass: cells, grouping, order
 
-**Why this is slop:** a directory-wide skim opens only the principles it already suspects, so the pass returns the findings that were easy to see and calls the rest clean.
+**Why this is slop:** A directory-wide skim opens only the principles it already suspects, so the pass returns the findings that were easy to see and calls the rest clean.
 
 This file is about how to **think about a deslop pass before running one**. It ends where the readings begin;
 aggregation, consolidation and reporting are separate references (§12), so planning does not carry context it has

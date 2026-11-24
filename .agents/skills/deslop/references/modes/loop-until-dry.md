@@ -5,7 +5,7 @@ description: Iterate deslop passes until a full scan yields nothing actionable â
 
 # Loop until dry
 
-**Why this is slop:** a single pass is a sample, so the slop that survives is exactly the slop nobody rescanned for â€” the second and third instance of the shape, found by the pass that ran after.
+**Why this is slop:** Stopping after the first fixes leaves defects exposed by those changes unexamined and mistakes a sample for a clean result.
 
 A single pass is a sample, not a verdict. When the user asks for thorough
 desloping (or says "keep going"), iterate: fix the violations you found,

@@ -5,7 +5,7 @@ description: Deslop principle — Errors at the Boundary: validate where untrust
 
 # Errors at the Boundary
 
-**Why this is slop:** an error detected late, translated nowhere and decided at the top of the stack has lost the context that would have let anyone fix it.
+**Why this is slop:** Callers several abstraction layers above a raw driver error must guess at retry or status handling from details their interface never promised.
 
 > "Higher layers should catch lower-level exceptions and, in their place, throw exceptions that can be explained in
 > terms of the higher-level abstraction."

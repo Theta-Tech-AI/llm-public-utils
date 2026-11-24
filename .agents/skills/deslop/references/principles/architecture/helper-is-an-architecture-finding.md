@@ -5,7 +5,7 @@ description: Deslop principle — A Helper That Must Exist Is an Architecture Fi
 
 # A Helper That Must Exist Is an Architecture Finding
 
-**Why this is slop:** a private helper that exists to make a value usable is the receipt for a boundary crossed raw, so repairing the helper leaves the missing owner exactly where it was.
+**Why this is slop:** Leaving a foreign value uninterpreted at its entry point forces consumers to invent local meanings that disagree.
 
 > "A properly architected system wouldn't need this helper function in the first place."
 > — the correction that produced this principle

@@ -5,7 +5,7 @@ description: When to relax the deslop coding principles — contexts where rules
 
 # When to Relax Rules
 
-**Why this is slop:** a rule applied past the point where it helps makes the code worse while quoting a principle, which is doctrine used in place of judgement.
+**Why this is slop:** Splitting a tiny script into extra modules makes readers navigate interfaces whose upkeep costs more than the separation saves.
 
 *Over-applying principles causes as much harm as ignoring them. Know when to make exceptions.*
 

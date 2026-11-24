@@ -5,7 +5,7 @@ description: Deslop principle — Complete Mediation: the authority to act (a pe
 
 # Complete Mediation
 
-**Why this is slop:** a rule every call site must remember to apply is a rule the seventh call site forgets, and the authority to act was never checked where the act happens.
+**Why this is slop:** When write authority is checked only in callers, a missed check leaves the write available without permission.
 
 > "Every access to every object must be checked for authority."
 > — Jerome Saltzer and Michael Schroeder, *The Protection of Information in Computer Systems* (1975)

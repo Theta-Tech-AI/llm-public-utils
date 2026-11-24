@@ -5,7 +5,7 @@ description: Bibliography for the deslop principles — foundational texts, semi
 
 # References
 
-**Why this is slop:** a principle quoted without its source ages into folklore, and the repair made from half-remembered hearsay is the slop this file defends against.
+**Why this is slop:** Without traceable sources, reviewers cannot check a principle's original scope or distinguish established guidance from this library's additions.
 
 ## Foundational Texts
 

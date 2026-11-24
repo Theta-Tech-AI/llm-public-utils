@@ -5,7 +5,7 @@ description: Deslop principle — Single Source of Truth: One authoritative loca
 
 # Single Source of Truth
 
-**Why this is slop:** a datum stored in more than one place cannot say which copy is authoritative, so the copies diverge quietly and the bug appears wherever the stale one is read.
+**Why this is slop:** Independently maintained copies of one datum give callers conflicting answers with no authoritative value to resolve them.
 
 > "There should be one—and preferably only one—obvious way to store a piece of information."
 

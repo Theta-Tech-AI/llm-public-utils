@@ -5,7 +5,7 @@ description: Deslop principle — Elegance: the least code that fully does the j
 
 # Elegance
 
-**Why this is slop:** a solution with parts that earn nothing is slop however well it works, because the reader carries each superfluous part and can never delete it.
+**Why this is slop:** Superfluous parts make readers reconstruct a solution's intent through machinery that contributes nothing to the result.
 
 > "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."
 > — Antoine de Saint-Exupéry
