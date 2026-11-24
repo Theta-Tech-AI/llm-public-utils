@@ -30,6 +30,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 | [references/driving.md](references/driving.md) | Choosing **browser vs API vs hybrid** — different surfaces catch different bugs |
 | [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix), and **talking a fixed bug through with its owner**: bug, solution, predicted critique; then act on their answer |
 | [references/api-flows.md](references/api-flows.md) | **API-first runs** — the generated flow map (stages, call order, dependency edges, routes nobody has called), simulated user flows from HTTP calls, the move × state × actor matrix, many lanes on one environment, the shared tools and the pacing gate |
+| [references/oracles.md](references/oracles.md) | **Oracle lanes** — one property checked across everything (consistency, cost, liveness, log and run census, ground truth, record), which tester model runs which lane, and why a lane that never started is not a result |
 
 ## Mode references (read the ones you will use)
 

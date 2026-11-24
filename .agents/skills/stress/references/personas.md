@@ -101,7 +101,8 @@ The ranked list is a *panel* view: it does not replace the individual issues fil
 Fixing is not proof. The panel is rerun **as an experiment**, and the experiment is only valid if nothing but the product changed:
 
 1. **Bound the fix pass.** Fix the panel's top findings as one scoped pass — small, additive, tested knots as [findings.md](findings.md) allows; load-bearing ones get filed and cited, not silently rewritten mid-run. Record the fixed SHA.
-2. **Freeze the scripts.** The persona briefs, start URL, definition of first success and event format are **byte-identical** to run one. Change any of them and you have tested a different panel.
+2. **Freeze the scripts.** The persona briefs, start URL, definition of first success and event format are **byte-identical** to run one. Change any of them and you have tested a different panel. Save each persona's brief as a file on the first run; a brief that lives only in a past conversation cannot be reproduced.
+   **Freeze the starting state too, not only the data's name.** A persona pointed at an existing project or account meets whatever state it has reached since run one: a project already past its first success proves nothing. Give the rerun data in the same starting state (a fresh copy, or another item at the same stage), and say in the report which persona ran on which.
 3. **Rerun blind and fresh.** New subagents, new accounts, new sessions, no fix list, against the fixed deploy. A persona told "we fixed the CTA" will find it.
 4. **Report persona-by-persona and finding-by-finding:** who completes now, who still abandons and exactly where, which entries are closed, which regressed, which are new. State which findings the fix pass did **not** address, so "5/5 complete" is never read as "everything fixed".
 5. **Verify the rerun target is the fixed build** — the SHA in the rerun report must match the fixed SHA. A rerun against a stale deploy is a re-run of run one and proves exactly nothing.
