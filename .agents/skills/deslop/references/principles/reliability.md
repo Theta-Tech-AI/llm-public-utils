@@ -1,6 +1,6 @@
 ---
 name: deslop-reliability
-description: Deslop principles — Reliability: Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Errors at the Boundary, Complete Mediation, Resilience & Graceful Degradation, Least Privilege, Boy Scout Rule, Observability.
+description: Deslop principles — Reliability: Fail-Fast, No Silent Defaults, Design by Contract, Postel's Law, Errors at the Boundary, Complete Mediation, Resilience & Graceful Degradation, Liveness, Least Privilege, Boy Scout Rule, Observability.
 ---
 
 # Reliability
@@ -22,6 +22,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [Errors at the Boundary](reliability/errors-at-the-boundary.md) | **Detect at the edge, translate at the seam, decide where the context is.** Every `catch` must name a decision; a handler that only logs and continues, or re-raises unchanged, is a misplacement. Tells: `except Exception: log(e)` in a service; `if "duplicate key" in str(exc)` at a controller — string-matching a driver's message instead of an error type at the seam; a validator called from twelve leaves because the value was never made safe where it entered; a lower layer's exception type in a public signature; `raise X()` without `from`, losing the cause. Count the seams between throw and catch: more than one means nobody translated |
 | [Complete Mediation](reliability/complete-mediation.md) | **A cross-cutting rule that each call site must remember to apply**, where the rule is the authority to act (a permission, a lock or lease, its freshness), is missing at the site that forgot, and nothing fails. Repair by design: the one door every change passes (the store, the repository) checks under the lock its write takes and returns the only handle that can write (the open transaction), closed on exit, resolving child resources through itself; each exemption is its own narrow operation. This removes forgetting by honest authors; database privileges stop bypass. Tells (structural): a write door that accepts a caller with no proof of the check; the check appears N times and the members (the route table, the handler registry) number M > N; independent decisions of one rule with different meanings; a fix that adds the check to one more site; a refusal with no record. The **population census** (`readings/auditing.md`) detects the holes; it is never the repair |
 | [Resilience & Graceful Degradation](reliability/resilience.md) | Retry, fall back, circuit-break; design for partial failure |
+| [Liveness: Every State Has an Owner](reliability/liveness.md) | Every state leaves by itself or names the person and decision it waits for; an unowned state gets an owner by accident (a Retry button, a runbook, a repairing guard, a sweep that fails it) |
 | [Principle of Least Privilege](reliability/least-privilege.md) | Minimum permissions per component |
 
 ## Maintainability & Operations

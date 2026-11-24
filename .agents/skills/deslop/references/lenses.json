@@ -142,7 +142,6 @@
         "principles/clean-code/legibility.md",
         "principles/clean-code/least-surprise.md",
         "principles/clean-code/patchwork.md",
-        "principles/clean-code/recovery-in-the-system.md",
         "principles/clean-code/special-cases.md",
         "principles/clean-code/decide-dont-cope.md"
       ],
@@ -162,6 +161,7 @@
         "principles/architecture/idempotency.md",
         "principles/reliability/observability.md",
         "principles/reliability/resilience.md",
+        "principles/reliability/liveness.md",
         "principles/reliability/least-privilege.md",
         "principles/reliability/boy-scout-rule.md",
         "principles/reliability/errors-at-the-boundary.md",

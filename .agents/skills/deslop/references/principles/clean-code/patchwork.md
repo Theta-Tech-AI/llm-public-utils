@@ -151,7 +151,7 @@ In relation to other principles, patchwork sits closest to the diagnosis it desc
 | [**Boy Scout Rule**](../reliability/boy-scout-rule.md) | The rule that does **not** fix patchwork — incremental tidying is what produced it |
 | [**Measuring a campaign**](../../library/measuring.md) | LOC and duplication harnesses cannot see patchwork; say so in the report rather than implying coverage |
 | [**Campaign mode**](../../modes/campaign.md) | Sweeps find dead weight and duplication. Patchwork needs the `changes-behaviour` lane instead. |
-| [**Recovery Belongs in the System, Not in a Button**](recovery-in-the-system.md) | The same disease at the interface: a Retry or Draft-again control is compensation handed to a person; the test is to name the human decision it asks for |
+| [**Liveness: Every State Has an Owner**](../reliability/liveness.md) | What an unowned state turns into: a Retry button, a runbook or a repairing guard is compensation for a state nothing moves forward. |
 | [**Legibility**](legibility.md) | The reader's experience: patchwork is the file where the map in the reader's head cannot be built from anything on screen |
 
 ## Summary
