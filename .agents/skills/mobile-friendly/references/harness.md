@@ -26,9 +26,10 @@ agent worktree ──(sync)──▶ private app tree ──▶ dev server :53NN
 
 A state the local stack cannot show (an editor in edit mode, rows that need a finished pipeline, a chart that needs history) is a tooling gap, not a reason to check on the cloud. Copy one record from a deployed environment onto localhost and keep the loop local:
 
-- **Capture through the app's own read APIs**, one named record at a time, paced for the gateway; never a raw database dump. Downloads through the app may write audit records on the source environment: use test records.
+- **Capture through the app's own read APIs**, one named record at a time, paced for the gateway; never a raw database dump. Downloads through the app may write audit records on the source environment.
+- **Borrow only data approved for development use**: synthetic or sanitized test records, with their related data (roster profiles, attachments) checked too. Leave out credentials and sensitive attachments, keep the capture in an ignored local folder, delete it when the work ends, and keep borrowed personal data out of screenshots you share.
 - **Import through the app's APIs or one importer per table family**, with the same identities on the roster (owner, editor, reviewer) so permission checks still hold.
-- **Guard the import target hard**: before connecting, refuse any host that is not the local service; after connecting, refuse a server that carries a cloud-only marker (a managed-database setting). A host name alone can be spoofed.
+- **Guard the import target hard, and fail closed**: before connecting, refuse any host that is not the local service; after connecting, require a positive identity of the disposable local database (a marker the local provisioning writes, such as a sentinel row or a database comment, checked against the expected value) and refuse a server that carries a cloud-only marker. A host name, a port or a missing marker alone can be spoofed (a local port can forward to a remote database).
 - **Expect version drift**: the deployed API may be ahead or behind the local one (a lock `schema_version`, a renamed endpoint). Map it in the importer, not by hand.
 - **Know the gaps**: append-only or run-history tables (simulations, agent runs) are the expensive part; name them instead of faking them.
 
