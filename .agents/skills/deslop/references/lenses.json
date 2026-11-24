@@ -142,6 +142,7 @@
         "principles/clean-code/legibility.md",
         "principles/clean-code/least-surprise.md",
         "principles/clean-code/patchwork.md",
+        "principles/clean-code/recovery-in-the-system.md",
         "principles/clean-code/special-cases.md",
         "principles/clean-code/decide-dont-cope.md"
       ],
