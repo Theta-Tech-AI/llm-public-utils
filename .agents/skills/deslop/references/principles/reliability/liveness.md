@@ -5,14 +5,14 @@ description: Deslop principle — Liveness: every state leaves by itself or name
 
 # Liveness: Every State Has an Owner That Moves It Forward
 
-> "A safety property asserts that something bad does not happen … a liveness property asserts that something good eventually happens."
-> — after Leslie Lamport, *Proving the Correctness of Multiprocess Programs* (1977); the safety/liveness split as later formalised by Alpern and Schneider (1985)
+> Safety: nothing bad happens. Liveness: something good eventually happens.
+> — the distinction, paraphrased, from Leslie Lamport, *Proving the Correctness of Multiprocess Programs* (1977), formalised by Alpern and Schneider, *Defining Liveness* (1985)
 
 ## Core Concept
 
-Most reliability rules are **safety** rules: an illegal state cannot be stored, a write is checked, an error stops early. They say what must never happen. **Liveness** says what must eventually happen: every non-final state is left, by something, in bounded time. A system can be perfectly safe and still stuck: nothing wrong is ever written, and nothing finishes.
+Most reliability rules are **safety** rules: an illegal state cannot be stored, a write is checked, an error stops early. They say what must never happen. **Liveness** says what must eventually happen: every non-final state is eventually left, under stated assumptions (the service comes back, the person acts). A system can be perfectly safe and still stuck: nothing wrong is ever written, and nothing finishes. For the states the system owns, add an operational bound on top (attempts, a deadline, then escalation); for states that wait on a person, name the person, so the wait is visible rather than bounded.
 
-The test is one question per state: **what moves it forward, and when?** Valid answers are few:
+The test is one question per state: **what moves it forward, and when?** Keep two words apart. The **owner** is the one place that holds the transition's policy (its guards, what "current" means, what happens on failure). A **trigger** is anything that asks the owner to run: a timer, an event, a person's control. Many triggers are fine; two owners are not. Valid owners are few:
 
 | The owner | When | Example |
 |---|---|---|
@@ -76,8 +76,8 @@ A person's **authority to decide** keeps a control, not the system's inability t
 ## Finding and fixing it
 
 1. **List the states** of a flow (from the status column, the run table, or the screens), not only the happy ones: queued, running, deferred, blocked, failed, stale.
-2. **Write the owner and the trigger next to each.** A blank, "the user presses X", "an operator runs Y", or "a sweep fails it" is a finding.
-3. **Find the second owners:** controls, scripts and guards that move a state the system already moves. Route them through the one owner or delete them.
+2. **Write the owner and the triggers next to each.** A finding is a state with no owner (a blank, "whoever notices", "a sweep fails it"), or a state whose only way forward is a person or an operator although the system could own it (the Retry button, the runbook). A person's control that triggers the owner's transition for a real decision, an unwatchable refresh or a person-owned sync is not a finding.
+3. **Find the second owners:** controls, scripts and guards that carry their own transition policy (their own freshness test, cache key or guard) for a state the system already moves. Make them triggers of the one owner, or delete them.
 4. **Bound every automatic owner** (attempts, time) and say where it escalates when the bound runs out.
 5. **Make every wait visible:** the state names its owner and its next time ("retrying at 14:05", "waiting for Ana to upload the report").
 
@@ -95,7 +95,7 @@ In relation to other principles:
 ## Summary
 
 1. **Safety says nothing bad happens; liveness says something good eventually happens.** Check both.
-2. **Every state names what moves it forward and when:** the system (bounded), a named person and action, a named decision, or the fix pipeline.
+2. **Every state names its owner and its triggers:** the system (bounded in operation), a named person and action, a named decision, or the fix pipeline. Many triggers are fine; one owner.
 3. **An unowned state gets an owner by accident:** a Retry button, a runbook, a repairing guard, a sweep that fails it, or nothing.
 4. **Classify at the one place the work runs;** screens render the state, never decide recovery.
 5. **One owner per transition.** A manual control beside an automatic owner becomes a second definition of the state. Keep a control only where a person has the authority to decide.

@@ -1,6 +1,6 @@
 ---
 name: deslop-clean-code
-description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Patchwork, Recovery Belongs in the System, Not in a Button, An Unclaimed Guarantee, Least Surprise, A Special Case Is a Requirement the Design Never Accounted For.
+description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Guard Clauses, Decide Don't Cope, Cognitive Load, Cyclomatic Complexity, SLAP, Self-Documenting Code, Documentation Discipline, Elegance, Legibility, Patchwork, An Unclaimed Guarantee, Least Surprise, A Special Case Is a Requirement the Design Never Accounted For.
 ---
 
 # Clean Code
