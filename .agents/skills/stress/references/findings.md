@@ -329,6 +329,12 @@ Filing and fixing teach the system; talking a fixed bug through with the person 
 
 Pick the bug yourself, and prefer one whose fix you suspect was a patch. The point is to find out where your judgement and the owner's differ, not to show the work went well.
 
+**The same three paragraphs work for a bug that is not fixed yet:** the second paragraph is then the fix you propose. And put the third paragraph in every medium-or-worse issue you file, as a closing section (for example "What the owner would say"), so the fixer starts from the class and not from the instance.
+
+**Where the deeper decision usually hides.** The six questions of the deslop reading *One Level Deeper* are the checklist (should the mechanism exist; who owns the fact; is it in the right channel; what moves the state on, and what happens on failure; is there a silent default; what did the fix delete). Two questions are easy to forget:
+- **How long was the bug live before anyone saw it, and why?** A failure that logged errors for a day and reached nobody has a second defect: the failure had no owner. Predict the detection fix too.
+- **How many times has this class been fixed before?** Search the closed issues. A class fixed three times, each time for a different instance, needs the mechanism that ends it, not a fourth instance fix.
+
 ### What to do with the owner's response
 
 Compare their answer with your third paragraph, line by line:
