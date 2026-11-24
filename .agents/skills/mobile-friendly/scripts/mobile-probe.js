@@ -14,11 +14,12 @@
 //                   page scroller to shoot below the fold: a full-page screenshot only shows its first screen
 //   scrollRegions   narrower regions that scroll sideways on purpose (they need a name and keyboard focus)
 //   targets         controls whose real hit area (see Method) is under MIN_TARGET px; hitW/hitH is the measured size
-//   sampling        {controls, sampled, covered, unsampled, points, unsampledList}: which controls could be asked
+//   sampling        {controls, sampled, covered, unsampled, points, incomplete, unsampledList}: which controls could be asked;
+//                   unsampledList is {above, below, side, budget}; incomplete names checks the deadline cut
 //   crowded         controls whose hit areas come closer than MIN_GAP px (overlap counts as 0), or where a tap in the
 //                   MIN_TARGET square around one control's centre reaches the other
 //   overlaps        text over a control it is not inside, or two controls whose boxes cross
-//   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 1 px
+//   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 1 px, any side
 //   smallText       text under MIN_TEXT px
 //   smallBody       running text under MIN_BODY px: text in a p/li/dd/td/blockquote/figcaption whose whole text is over
 //                   40 characters, or any other element whose own text is over 40 characters
@@ -31,6 +32,7 @@
 //   offscreenFixed  fixed or stuck elements that cross the viewport edge (they never widen the page, so overflow misses them)
 //   vhRules         CSS rules that use 100vh without a dvh/svh/lvh twin, on elements that exist now
 //   meta            {viewport, zoomBlocked, fitCover}
+//   scrollTop, scrollHeight, clientHeight   of the page scroller: accumulate coverage across scroll stops until the bottom
 //   ms              run time of the probe in milliseconds
 // Method: tap size, crowding and overlaps are MEASURED, not read from boxes. For each control that touches the viewport
 // the probe calls document.elementFromPoint on a grid (GRID px, out to REACH px beyond each edge) and keeps the points
@@ -64,10 +66,12 @@
   const MAX_BARS_SHARE = 0.12; // share of viewport height that fixed or sticky bars may cover
   const GRID = 4; // px between hit samples
   const REACH = 22; // px sampled beyond each edge of a control: a hit pad can grow a target that far
-  const BUDGET_MS = 1000; // controls not sampled by then are listed as unsampled
+  const BUDGET_MS = 1000; // after it, sampling stops and the cut checks are named in sampling.incomplete
   const LIMIT = 15;
 
   const t0 = performance.now();
+  const late = () => performance.now() - t0 > BUDGET_MS; // one deadline for sampling, crowding and overlaps
+  const incomplete = new Set(); // the checks the deadline cut short
 
   const W = window.innerWidth;
   const H = window.innerHeight;
@@ -297,11 +301,13 @@
   const hit = []; // {c, r, eff, near}: the controls that could be asked
   for (const c of tappable) {
     const r = box(c);
-    if (r.right <= 0 || r.left >= W || r.bottom <= 0 || r.top >= H) { unsampled.push({ el: c, ...rect(c) }); continue; }
-    if (performance.now() - t0 > BUDGET_MS) { unsampled.push({ el: c, ...rect(c), budget: true }); continue; }
+    // above / below / side: outside the viewport (scroll and run again); budget: in view, cut by the deadline
+    const where = r.bottom <= 0 ? "above" : r.top >= H ? "below" : r.right <= 0 || r.left >= W ? "side" : "";
+    if (where) { unsampled.push({ el: c, ...rect(c), where }); continue; }
+    if (late()) { unsampled.push({ el: c, ...rect(c), where: "budget" }); incomplete.add("targets"); continue; }
     const m = measure(c, r);
     if (m.state === "covered") coveredList.push({ el: c, ...rect(c) });
-    else if (m.state) unsampled.push({ el: c, ...rect(c) });
+    else if (m.state) unsampled.push({ el: c, ...rect(c), where: "below" });
     else hit.push({ c, r, ...m });
   }
   // 1 px of slack: the sampling edge is a pixel, a box edge may be fractional.
@@ -322,6 +328,7 @@
       const [lx, rx] = [Math.max(x.r.left, y.r.left), Math.min(x.r.right, y.r.right)];
       const [ty, by] = [Math.max(x.r.top, y.r.top), Math.min(x.r.bottom, y.r.bottom)];
       if (rx - lx <= 2 || by - ty <= 2) continue;
+      if (late()) { incomplete.add("overlaps"); continue; }
       let seen = false;
       for (const fx of [0.2, 0.5, 0.8]) for (const fy of [0.2, 0.5, 0.8]) {
         const o = ownerOf(hitAt(lx + (rx - lx) * fx, ty + (by - ty) * fy));
@@ -367,6 +374,7 @@
       const vt = visibleRect(e, t);
       if (!vt) continue;
       for (const { c, r } of hit) {
+        if (late()) { incomplete.add("overlaps"); break; }
         if (c.contains(e) || e.contains(c) || [...hot].some((o) => o.contains(e))) continue;
         const [l, rt] = [Math.max(vt.left, r.left), Math.min(vt.right, r.right)];
         const [tp, bt] = [Math.max(vt.top, r.top), Math.min(vt.bottom, r.bottom)];
@@ -384,6 +392,7 @@
   const clear = (c) => c === "transparent" || /(rgba|hsla)\(.*,\s*0\)$/.test(c) || /\/\s*0(\.0+)?\)$/.test(c);
   const chrome = (cs) => cs.boxShadow !== "none" || cs.backgroundImage !== "none" || !clear(cs.backgroundColor)
     || ["Top", "Right", "Bottom", "Left"].some((s) => parseFloat(cs[`border${s}Width`]) > 0 && cs[`border${s}Style`] !== "none" && !clear(cs[`border${s}Color`]));
+  const selfHolder = (e) => { const cs = style(e); return cs.overflowX === "visible" && cs.overflowY === "visible" && chrome(cs); };
   const holders = new Map();
   const holderOf = (e) => {
     let h = holders.get(e);
@@ -410,12 +419,18 @@
   const escaping = [];
   for (const e of scoped) {
     if (!shown(e) || /^(absolute|fixed)$/.test(style(e).position)) continue;
-    const c = holderOf(e);
-    if (!c || inRegion(e.parentElement)) continue;
-    const cr = box(c);
-    const rs = textRects.has(e) ? textRects.get(e) : [box(e)];
-    const past = Math.max(0, ...rs.map((r) => Math.max(r.right - cr.right, cr.left - r.left)));
-    if (past > 1) escaping.push({ e, past, c });
+    if (inRegion(e.parentElement)) continue;
+    // Text is judged against the element itself when it is the painted container, else against the one around it.
+    const outer = holderOf(e);
+    const own = textRects.has(e) ? (selfHolder(e) ? e : outer) : null;
+    for (const [c, rs] of [[own, textRects.get(e)], [outer, [box(e)]]]) {
+      if (!c || !rs) continue;
+      const cr = box(c);
+      const past = Math.max(0, ...rs.map((r) => Math.max(r.right - cr.right, cr.left - r.left, r.bottom - cr.bottom, cr.top - r.top)));
+      const prev = escaping.find((o) => o.e === e);
+      if (past > 1 && !prev) escaping.push({ e, past, c });
+      else if (past > 1 && past > prev.past) Object.assign(prev, { past, c });
+    }
   }
   const escapes = outermost(escaping).sort((a, b) => b.past - a.past)
     .map((o) => ({ el: o.e, ...rect(o.e), past: Math.round(o.past), container: o.c }));
@@ -578,6 +593,7 @@
   };
   // Elements become readable names only for the lists that are printed.
   const named = (list) => list.slice(0, LIMIT).map((o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v instanceof Element ? name(v) : v])));
+  const pageEl = pageList[0] || document.scrollingElement || doc; // the page scroller: scroll it and run again
   return JSON.stringify({
     ms: Math.round(performance.now() - t0),
     viewport: { w: W, h: H, dpr: devicePixelRatio, coarse: matchMedia("(any-pointer: coarse)").matches },
@@ -588,7 +604,8 @@
     scrollers: named(scrollers),
     scrollRegions: scrollRegions.slice(0, LIMIT),
     targets: named(targets),
-    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, unsampledList: named(unsampled) },
+    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
+    scrollTop: Math.round(pageEl.scrollTop), scrollHeight: pageEl.scrollHeight, clientHeight: pageEl.clientHeight,
     crowded: named(crowded),
     overlaps: named(overlaps),
     escapes: named(escapes),
