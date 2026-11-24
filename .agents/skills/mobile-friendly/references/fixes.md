@@ -14,7 +14,9 @@
 
 ## 📊 Table on a phone
 
-- **Stacked records:** under the breakpoint, render each row as a card: the name as the card title, then two or three key facts as label-above-value pairs, the rest behind a tap. In CSS-only form: `tr { display: grid }`, `td::before { content: attr(data-label) }`, `thead { display: none }` (keep the header text reachable by `data-label`).
+- **Stacked records:** under the breakpoint, render each row as a card: the name as the card title, then two or three key facts as label-above-value pairs, the rest behind a tap. In CSS-only form: `tr { display: grid }`, `td::before { content: attr(data-label) }` as a small muted label above the value (13 px, secondary colour, no colon). Keep the header row in the accessibility tree: hide it visually (a visually-hidden class), not with `display: none`, which drops the header-to-cell association ([WAI: tables](https://www.w3.org/WAI/tutorials/tables/tips/)). Better still, render real records (a list of cards with their own labels) on phones.
+- **Shape the card, not only the stack:** a generic stack rule gives one label block per cell (a 6-cell row became ~900 px). Put the row on a grid (`tr { display: grid; grid-template-columns: repeat(6, 1fr) }`), the name across all columns, three short figures spanning 2 each, two dates spanning 3 each: one compact card.
+- **Sorting dies with the header row:** when column headers hide on phones, move sort into the filter panel as one `Sort` select (key and direction).
 - **Priority columns:** keep name + one status, hide the rest under the breakpoint, show them on row tap or in a detail view.
 - **A matrix that must stay a table:** wrap it in `<div role="region" aria-label="…" tabindex="0" style="overflow-x:auto">`, freeze the first column (`position: sticky; left: 0` on the first cell, with a background), and let a cut-off column show as the cue.
 
@@ -26,8 +28,11 @@
 
 ## 👆 Small or crowded targets
 
+- **Rules gated on `(pointer: coarse)` only** do not apply in a headless phone viewport and miss touch laptops' small windows: gate phone target sizes by width as well, `@media (pointer: coarse), (max-width: <bp - 1>px)`.
 - Pad the hit area, not the icon: `min-width: 44px; min-height: 44px; display: inline-grid; place-items: center` on the button.
-- A visual that must stay small (a chip, a dense list row): extend the hit area with a pseudo-element (`position: relative` on the control; `::after { content: ""; position: absolute; inset: -10px; }`), and keep neighbours 8 px apart so the extended areas do not overlap.
+- A visual that must stay small (a chip, a back link styled as a caption): extend the hit area with a pseudo-element (`position: relative` on the control; `::after { content: ""; position: absolute; inset: -10px; }`), and keep neighbours 8 px apart so the extended areas do not overlap. The probe measures the element's own box, so it still reports such a control: note it in the report as an extended hit area, or prefer padding (`min-height: 44px; display: inline-flex; align-items: center`) where the layout allows.
+- A row of a full-width disclosure line plus a sibling link ("Section (6) … Go to") is crowded by construction: put `gap: 0.5rem` on the flex parent, not margins on the children.
+- Raising targets to 44 px makes rows taller: look at the screenshot after, and take back wasted height from padding around the row, not from the target.
 - A row of icon buttons: `gap: 8px` and 44 px each; if they do not fit, move the extras behind "More".
 - A checkbox: make the whole label row the target (`<label>` wraps the input and the text, `min-height: 44px`).
 
@@ -51,3 +56,23 @@
 
 - `100vh` shells: `min-height: 100dvh` (or `100svh` for a drawer that must not jump).
 - Bottom bars: `padding-bottom: env(safe-area-inset-bottom)`; with a form, `scroll-padding-bottom` equal to the bar height so the focused field is not under it.
+
+## 🧩 Patterns from the first campaign
+
+- **Breakpoint prefix:** utility frameworks name breakpoints by their own scale. Tailwind's `sm:` is 640 px; if the app's phone layout runs to 767 px, phone rules use the `md:` split (`p-3 md:p-6`, `text-base md:text-sm`).
+- **Desktop padding never scoped:** `p-6`, `px-7` on a nested panel adds a second text edge on phones. Fix: `p-3 md:p-6` (one card inset) or `md:px-7` (no inset).
+- **A card around one list:** apply the card's border and padding only from the desktop breakpoint; on a phone the list sits flat at the page margin with full-width dividers.
+- **A pill or badge holding a sentence:** `flex-shrink: 0` plus `white-space: nowrap` pushes the page sideways. Let it wrap and shrink on phones (`white-space: normal`, `min-width: 0`, a rounder-rect radius once it is two lines).
+- **A rail of repeated cards ahead of the main content** (lens pickers, model chips, stat tiles): stack them and the main chart starts two screens down. Turn the rail into a horizontal snap strip (`display: flex; overflow-x: auto; scroll-snap-type: x mandatory; flex: 0 0 min(15rem, 72%)` per card) in a named, focusable region, or move it below the content with `order` on a flex column.
+- **Headline numbers:** one full-width tile for the main number, the next two side by side (`grid-cols-2`, first `col-span-2`), smaller padding, decorative icons dropped so 200 % text still fits.
+- **A list row with fixed side columns** (icon | name | share | amount): at 320 px the name gets a few characters and breaks mid-word. Use three columns (icon | name | fixed-width figure) and move the secondary cells to a second line. A fixed figure column also keeps value bars comparable from row to row.
+- **Caps labels with letter-spacing** break mid-word in half-width tiles: reduce the letter-spacing on phones, not the font size.
+- **A hidden grid item still holds its track:** `display: none` on an emblem left a fixed first column, pushing the name to x=100. Reset `grid-template-columns` (with at least the original selector's specificity) and the remaining child's `grid-column`.
+- **Superscripts and chips sized in `em`** fall under the 12 px floor (`0.62em` of 16 px = 9.9 px): `font-size: max(0.62em, 0.75rem)`.
+- **Utility class loses to a component rule:** a `max-md:grid` on a table row did nothing because the table's component CSS set `display: block` with higher specificity. Fix the component rule for phones, or raise the utility (`!grid`) only in the page's own file.
+- **A container cannot restyle itself from its own container query:** `@container` rules apply to descendants. A change to the wrapper's own frame goes in a media query.
+- **Container query vs media query:** a page that switches on its own container width (`@container page (max-width: 30rem)`) can sit wider than the phone breakpoint at 767 px; a gap fix written only inside the container query is missing there. Fix spacing at the flex parent for every width.
+- **A segmented control with many options:** fixed-width, no-wrap options scroll sideways in an unnamed region. Let options wrap and grow (`flex: 1 1 auto`) or use a select on phones.
+- **Overflowing popovers:** a popover anchored to a header control sticks out past the right edge: `max-width: calc(100vw - 2 * <page margin>)` and keep its inline position inside the viewport. Shoot every popover open; the probe sees it only while it is open.
+- **Scroll regions for code and logs:** a `<pre>` that scrolls needs `role="region"`, an `aria-label` and `tabindex="0"` so keyboard users can scroll it, at every width.
+- **Filters on a live-filtering page:** one "Filter · n" button beside the always-visible search, opening an inline panel (one field per row) is enough; a sheet with Apply only where filters are applied in a batch.

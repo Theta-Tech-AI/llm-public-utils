@@ -8,7 +8,7 @@ Phone layout = below the app's tablet/desktop breakpoint (often 768 px). The com
 
 **M1. 🥇 Content first, one column.** The first screen shows the page title and the first real content (first card, row or field). Only the top bar and one primary action sit above it. Filters, stats, status lines and secondary actions go behind one control or below the content. 📸 *Is the first real item above the fold at 390 × 844?* — [web.dev: content first], [NN/g]
 
-**M2. 📐 One side margin, one left edge.** One page margin (16 px is the Material compact margin) on every page, widened to the safe-area inset where the device has one: `padding-inline: max(16px, env(safe-area-inset-left))`. A nested group (section, panel, form block) adds no side padding of its own on a phone; a box around a single field or a single list is not needed. A card may keep one inset (12 px) that all its text shares. 📏 `edges` (a histogram: many distinct x values = nested padding), 📸 ruler down the page. — [Material 3: structure]
+**M2. 📐 One side margin, one left edge.** One page margin (16 px is the Material compact margin) on every page, widened to the safe-area inset where the device has one: `padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right))`. A nested group (section, panel, form block) adds no side padding of its own on a phone; a box around a single field or a single list is not needed. A card may keep one inset (12 px) that all its text shares. 📏 `edges` (a histogram: many distinct x values = nested padding), 📸 ruler down the page. — [Material 3: structure]
 
 **M3. 👆 Tap targets 44 × 44 px, 8 px apart.** Pad the hit area; the icon may stay smaller. Inline links in a sentence are exempt. WCAG 2.5.8 (AA) asks 24 px; 2.5.5 (AAA) and Apple ask 44; Material asks 48 with 8 px spacing. Take 44 below the breakpoint unconditionally, 48 for the menu button and primary actions. Above the breakpoint, raise small targets under `@media (any-pointer: coarse)` (not `pointer`, which reports only the primary pointer). 📏 `targets`, `crowded`. — [web.dev: tap targets], [WCAG 2.5.8]
 
@@ -30,19 +30,20 @@ Phone layout = below the app's tablet/desktop breakpoint (often 768 px). The com
 
 ## 🔍 Critique questions
 
-Answer each in writing, per width, before you call a page done:
+Answer each in writing, per width, before you call a page done. The expected answer is in brackets; any other answer is a fault.
 
-1. 🥇 What is on the first screen? Is the first real content visible without scrolling?
-2. 👁️ Where does the eye land first? Is that the page's main thing?
-3. 🪧 Is the header one row, with page actions in one row below it (two at most)?
-4. 📐 Do all texts outside cards start at one x? Inside each card, at one x?
-5. 👆 Is every control big enough to hit with a thumb, and apart from its neighbour?
-6. 🔤 Is every text readable without zoom? Does any name end in "…"?
-7. ↔️ Does anything scroll sideways, or sit cut off at the right edge?
-8. 🧱 Is there a box inside a box, or a band of empty space with no job?
-9. 🔁 Is any fact shown twice?
-10. 🌗 Does it hold in both themes? Does the 768 px render switch to the desktop layout?
-11. 🧭 With the drawer open on this page, is the current place visible and marked?
+1. 🥇 Is the first real content (first card, row or field) visible without scrolling? [yes]
+2. 👁️ Does the eye land first on the page's main thing? [yes]
+3. 🪧 Is the header one row, with page actions in one row below it, two at most? [yes]
+4. 📐 Do all texts outside cards start at one x, and inside each card at one x? [yes]
+5. 👆 Can every control be hit with a thumb without touching its neighbour? [yes]
+6. 🔤 Is every text readable without zoom, and every name shown in full? [yes]
+7. ↔️ Does anything scroll sideways, sit cut off at the right edge, or run under another element? [no]
+8. 🧱 Is there a box inside a box, or a band of empty space with no job? [no]
+9. 🔁 Is any fact shown twice? [no]
+10. 🌗 Does the page hold in both themes, and does the render at the breakpoint switch to the desktop layout? [yes]
+11. 🧭 With the drawer open on this page, is the current place visible and marked? [yes]
+12. 💬 With each popover, menu and dialog open, does it fit inside the screen? [yes]
 
 ## Sources
 

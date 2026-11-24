@@ -1,67 +1,89 @@
 # The per-page loop
 
-**Why a loop:** one screenshot and one fix almost never finish a page. A fix at 390 px breaks 320 px; a wrapped title pushes the first card below the fold; a padded button crowds its neighbour. The loop re-measures everything after every change, so each iteration either removes a fault or shows the fix was wrong.
+**Why a loop:** one screenshot and one fix almost never finish a page. A fix at 390 px breaks 320 px; a wrapped title pushes the first card below the fold; a padded button crowds its neighbour. The loop re-measures everything after every change, so each iteration either removes a fault or shows the fix was wrong. It only works when the time from edit to screenshot is about a second, which is why it runs on a local hot-reload preview, never on a deploy.
 
 One agent owns one page. It works in its own worktree and its own preview server ([harness.md](harness.md)), and it edits only its page's files.
 
 ## 0. 🔧 Set up (once)
 
+Run each step as its own command, each under a timeout: a cold dev server on a loaded machine can take a minute or more for the first page, and a combined command times out half-way.
+
 ```bash
-# Start your private preview server, sign in, set a phone viewport (names are examples).
-<preview> start <port>
-agent-browser --session <s> set viewport 390 844 2
-<preview> login <s> <port> <page-path>
+<preview> start <port>                       # private dev server, hot reload
+<preview> login <s> <port> <page-path>       # sign in, open the page
+agent-browser --session <s> set viewport 390 844 2   # AFTER login: opening a page can reset the viewport
+agent-browser --session <s> get url          # the page may have redirected; the probe would measure the wrong page
 ```
 
-Then **wait for real content**: a screenshot of loading skeletons judges nothing. Wait until a known element of the loaded page exists (`agent-browser --session <s> wait "<selector>"`, or poll `eval` for it), never a bare sleep. If the page needs a record (a project, an item), pick one with realistic data: long names, many rows, an empty state too.
+Then **wait for real content**: a screenshot of loading skeletons or a spinner judges nothing. Wait for a CSS selector of the loaded page (`agent-browser --session <s> wait "<selector>"`); text selectors and fixed sleeps are unreliable. A first paint that shows a load error after a cold start ("failed to fetch dynamically imported module") is the dev server still compiling: reload once.
 
-## 1. 📸 Shoot
+**Pick a record with data.** An empty project, list or account hides every row-level fault. If the page needs a record, use one with long names, many rows and every optional part filled; check an empty state too.
 
-For each width **320, 390, 767** (height 844), and once at **768** (the desktop layout must start there):
+## 1. 🌐 Research (before your first fix)
+
+Search the web for your page's main pattern ([research.md](research.md)): 2–4 queries, primary sources first. Write what you took from each URL into your report, including searches that changed nothing.
+
+## 2. 📸 Shoot
+
+Widths: **320**, **390**, and **the widest phone width** (one pixel under the app's phone/desktop breakpoint, 767 when it is 768), height 844, and once **at the breakpoint** (the desktop layout must start there) and once at a common desktop width (1280: your change must not move it).
 
 ```bash
 agent-browser --session <s> set viewport <w> 844 2
-agent-browser --session <s> screenshot <dir>/<page>-<w>-<theme>-i<n>.png          # first screen
-agent-browser --session <s> screenshot --full <dir>/<page>-<w>-<theme>-i<n>-full.png
+agent-browser --session <s> screenshot <dir>/<page>-<w>-<theme>-i<n>.png
 ```
 
-Read every image (open the PNG). One state per image: never a collage. Cover the states a phone user meets on this page: loaded, empty, long names, an open dialog or sheet, the menu drawer open, a form with the keyboard field focused. Both themes when the app has two (`agent-browser set media dark|light`, or the app's own toggle).
+- **Name every shot in order** (`i0` before, `i1` after the first fix, …) and keep every one: the user watches them.
+- Read every image (open the PNG). One state per image: never a collage.
+- **Below the fold:** when the app scrolls inside its own container (the probe lists `scrollers`), `screenshot --full` shows only the first screen. Scroll the container (`eval "document.querySelector('<scroller>').scrollTop = <n>"`) and shoot in steps, or use `scrollIntoView` on the element you need.
+- Cover the states a phone user meets: loaded, empty, long names, an open dialog or sheet, the menu drawer open, a form field focused. Both themes when the app has two (`agent-browser set media dark|light`, or the app's own toggle).
+- After a style change, give the dev server a second before the shot; the first shot can still show the old layout.
 
-## 2. 📏 Probe
+## 3. 📏 Probe
 
 ```bash
-agent-browser --session <s> eval "$(cat <skill>/scripts/mobile-probe.js)"
+agent-browser --session <s> eval "window.__mobileProbeRoot='<page container selector>'; $(cat <skill>/scripts/mobile-probe.js)"
 ```
 
-Run it at each width, after the content loaded. Read `counts` first; then the lists. `overflow` names the **outermost** wide element: that element (or a child that refuses to shrink) is the cause, not the page. `edges` is a histogram of text start positions: the two or three biggest bars should be the page margin and the card inset; a long tail of x values means nested padding.
+Run it at each width, after the content loaded (a probe during loading reports transient crowding). Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once without the root to see the frame. Read `counts` first, then the lists:
 
-The probe does not see touch emulation: `agent-browser set device` sets the user agent and pixel ratio but not touch, so `(any-pointer: coarse)` is false. Below the breakpoint that does not matter if the app applies phone rules by width.
+- `overflow` names the **outermost** wide element: it, or a child that refuses to shrink, is the cause.
+- `overlaps` names boxes that run into each other (a title under a button): always a fault.
+- `edges` is a histogram of text start positions: the two or three biggest bars should be the page margin and the card inset; a long tail means nested padding.
+- `textSizes` shows the spread: body text under 16 px is `smallBody`.
 
-## 3. 🔍 Critique
+The probe cannot see touch emulation: `agent-browser set device` sets the user agent and pixel ratio but not touch, so `(any-pointer: coarse)` is false.
 
-Write the answers to [the critique questions](checklist.md#-critique-questions) for each width, plus the probe counts. Name each fault with its rule (M1–M11 or the project's own rule number), what you see, and the element. Rank: sideways scroll and unreachable controls first, then the first screen, then targets and text, then alignment and polish.
+## 4. 🔍 Critique
 
-## 4. 🛠️ Fix
+Write the answers to [the critique questions](checklist.md#-critique-questions) for each width, plus the probe counts. Name each fault with its rule (M1–M11 or the project's own rule number), what you see, and the element. Rank: sideways scroll, overlaps and unreachable controls first, then the first screen, then targets and text, then alignment and polish.
+
+## 5. 🛠️ Fix
 
 Fix at the cause, in the page's own files ([fixes.md](fixes.md) has the patterns):
 
-- Scope phone changes to the phone breakpoint (`@media (max-width: <bp - 1>px)` or the app's helper) so the desktop layout does not move. Check 1280 px once at the end.
+- Scope phone changes to the phone breakpoint so the desktop layout does not move. With a utility framework, check which prefix matches the app's breakpoint (Tailwind's `sm:` is 640 px; a 768 px breakpoint is `md:`).
 - Use the app's existing tokens, spacing scale and breakpoint helpers. Search for how another page already solved the same fault before you write a new pattern.
 - Never `overflow-x: hidden` on `html`, `body` or a page wrapper to hide a wide child. Never shrink text below the floor to make a line fit. Never `display: none` real content on a phone without a way to reach it.
-- A fault in the shared frame (top bar, drawer, shared component used on many pages) is not yours: write it down for the coordinator and move on.
+- A fault in the shared frame (top bar, drawer, a shared component used on many pages) is not yours: write it down for the coordinator and move on.
+- A page that already passes needs no edit. Do not invent changes.
 
-Sync the edit into the preview (`<preview> sync`), let it hot-reload, and go back to step 1.
+Sync the edit into the preview, let it hot-reload, and go back to step 2.
 
-## 5. 🛑 Stop
+## 6. 🛑 Stop
 
 Stop when [the happy test](../SKILL.md#-when-is-an-agent-happy) holds at every width. Stop and report when three iterations on one fault made no progress: the fault is structural (a component designed only for wide screens, a shared frame fault, a data shape) and needs a decision, not more nudging.
 
-## 6. 📦 Report
+## 7. 📦 Report
 
 Commit your page's files on your branch. Then return, in this order:
 
 1. **Result table**: one row per width, the probe counts before and after.
-2. **Screenshots**: the before and after paths at 390 px (and any width that changed most).
+2. **Screenshots**: every path, in order; mark the before and the final at 390 px.
 3. **Faults fixed**: rule, what it was, the fix, the file.
 4. **Faults left**: rule, element, why it stays or who owns it (shell / shared component / backend data).
-5. **Findings for the skill**: anything that was hard to see, a probe false positive or miss, a fix pattern that worked, a trap in the harness. One line each: *class — symptom — cause — fix — caught by (probe field / screenshot / neither)*.
+5. **🌐 Research**: URL — what you took — did it change the fix.
+6. **Findings for the skill**: one line each, *class — symptom — cause — fix — caught by (probe field / screenshot / neither)*. Include probe false positives and misses, and harness traps.
+
+## 📣 Show the user
+
+The user wants to watch the work, not read about it. **Send every new screenshot to the user in the chat, as images, as soon as it exists** — the before of each page, each iteration, and the after — with a one-line caption (page, width, what changed). Page agents save every shot in order into one folder per page; the coordinator watches the folder and sends each new batch (a page's before → after pair at least, and every iteration when the user asked for more). More often is better than tidier: a stream of small batches beats one gallery at the end.
