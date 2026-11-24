@@ -17,7 +17,7 @@ agent-browser --session <s> get url          # the page may have redirected; the
 
 Then **wait for real content**: a screenshot of loading skeletons or a spinner judges nothing. Wait for a CSS selector of the loaded page (`agent-browser --session <s> wait "<selector>"`); text selectors and fixed sleeps are unreliable. A first paint that shows a load error after a cold start ("failed to fetch dynamically imported module") is the dev server still compiling: reload once.
 
-**Pick a record with data.** An empty project, list or account hides every row-level fault. If the page needs a record, use one with long names, many rows and every optional part filled; check an empty state too.
+**Pick a record with data.** An empty project, list or account hides every row-level fault. If the page needs a record, use one with long names, many rows and every optional part filled; check an empty state too. **When the local stack has no such record, borrow one** from a deployed environment onto localhost ([harness.md § borrow](harness.md#borrow-data-never-move-the-loop)); never move the loop to the cloud. Sign in as the record's own roster user (by id) when a state needs edit rights.
 
 ## 1. 🌐 Research (before your first fix)
 

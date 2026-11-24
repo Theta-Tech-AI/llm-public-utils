@@ -24,6 +24,8 @@
 
 A page agent that needs a shared change writes it in its report (*file, change, why, which pages it helps*) and does not make it. Before editing a file, a page agent checks who else imports it; more than its own page means it is shared. The coordinator forwards shared faults to the shell agent **while it is still running**, so they land in one place once.
 
+**Check who owns the frame before you change it.** Another session may be redesigning the header or layout at the same time; a shell fix built on the old structure conflicts on merge. Ask the frame's owner, hand over the rule and the reference branch, and let one owner implement it; then re-run the sweep when it lands.
+
 **Shell first.** Every page agent in the first campaign reported the same frame faults (the header row, the side margin, the back-link target, `100vh`). Give the shell agent a head start of one full round, then start the page agents on the fixed frame; their screenshots then show their own faults, not the frame's.
 
 ## 2. ✉️ The brief

@@ -54,6 +54,10 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 - **Probe review rounds** — three second-model rounds on the probe found 19, then 14, then fewer edge cases (page-scroller guesses, invisible or clipped boxes, native modals, label-wrapped inputs, viewport-unit overrides) — a geometric heuristic never ends in a perfect rule — add explicit hooks (`__mobileProbeRoot`, `__mobileProbePageScroller`, `[data-scroll-region]`), state each limit in the header, and cap the review rounds
 - **Desktop leaks** — three page fixes changed the desktop look (unprefixed `!shrink`, `min-h-11`, state-coloured borders) — fixes written without a phone prefix — review every class a phone fix adds for a breakpoint prefix; compare the 1280 px screenshot — second-model review
 
+- **Localhost could not show five states** (editor in edit mode, document rows, a long lineage graph, an editable intake, a simulation report) — the local stack had no record with that data — borrow one record from the development environment through the app's APIs (capture → import), sign in as its roster editor by id; four states became checkable locally, the simulation report stays a named gap (append-only run tables) → promoted to [harness.md § borrow](harness.md#borrow-data-never-move-the-loop)
+- **Frame redesign in parallel** — a header overflow built on the old header conflicted with another session's frame move — the frame had two owners for an hour — ask the frame owner first and hand the rule over → promoted to [fan-out.md § ownership](fan-out.md#1--ownership)
+- **Probe false positives on rich pages** — SVG edge paths of a graph counted as overlaps (42–69 on one page); a sticky toolbar over scrolled text counted as overlaps and crowded; an `::after` hit pad made its control count as truncated and as a small target; a `role=toolbar` scroll row with a label counted as an unnamed region — read the lists, not only the counts
+
 ### Page faults (fix patterns in [fixes.md § patterns](fixes.md#-patterns-from-the-first-campaign))
 
 - **Sentence in a pill** — page scrolled sideways — `shrink-0` + no-wrap — wrap and shrink — screenshot

@@ -22,6 +22,17 @@ agent worktree ──(sync)──▶ private app tree ──▶ dev server :53NN
 9. **Ports and sessions are assigned, not chosen.** The coordinator hands each agent one port and one browser session name. Two agents on one port means one sees the other's page.
 10. **Prove it before you hand it out**: start, sign in, open a page with real data at 390 px, edit one style, see it change, stop, port closed. Write the exact commands into the brief.
 
+## Borrow data, never move the loop
+
+A state the local stack cannot show (an editor in edit mode, rows that need a finished pipeline, a chart that needs history) is a tooling gap, not a reason to check on the cloud. Copy one record from a deployed environment onto localhost and keep the loop local:
+
+- **Capture through the app's own read APIs**, one named record at a time, paced for the gateway; never a raw database dump. Downloads through the app may write audit records on the source environment.
+- **Borrow only data approved for development use**: synthetic or sanitized test records, with their related data (roster profiles, attachments) checked too. Leave out credentials and sensitive attachments, keep the capture in an ignored local folder, delete it when the work ends, and keep borrowed personal data out of screenshots you share.
+- **Import through the app's APIs or one importer per table family**, with the same identities on the roster (owner, editor, reviewer) so permission checks still hold.
+- **Guard the import target hard, and fail closed**: before connecting, refuse any host that is not the local service; after connecting, require a positive identity of the disposable local database (a marker the local provisioning writes, such as a sentinel row or a database comment, checked against the expected value) and refuse a server that carries a cloud-only marker. A host name, a port or a missing marker alone can be spoofed (a local port can forward to a remote database).
+- **Expect version drift**: the deployed API may be ahead or behind the local one (a lock `schema_version`, a renamed endpoint). Map it in the importer, not by hand.
+- **Know the gaps**: append-only or run-history tables (simulations, agent runs) are the expensive part; name them instead of faking them.
+
 ## Cost
 
 One dev server (~300–500 MB) plus one headless browser (~0.5–1 GB) per agent. Check free memory and load before you start 16 of them; on a shared box, keep headroom for everyone else, and warm the base (item 2).
