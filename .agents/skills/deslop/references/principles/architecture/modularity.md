@@ -5,6 +5,8 @@ description: Deslop principle — Modularity: Deep modules, each hiding one desi
 
 # Modularity
 
+**Why this is slop:** a module that hides nothing is a hop that adds a name and no policy, so readers pay an indirection they learn nothing from.
+
 > "Every module is characterized by its knowledge of a design decision which it hides from all others."
 > — David Parnas
 

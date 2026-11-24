@@ -5,6 +5,8 @@ description: Deslop principle — No Silent Defaults: model absence, never synth
 
 # No Silent Defaults
 
+**Why this is slop:** manufacturing a value of the right type when the honest answer is that there is none converts a missing fact into a plausible fiction that outlives the incident.
+
 > "Errors should never pass silently. Unless explicitly silenced."
 > — Tim Peters, The Zen of Python (PEP 20)
 

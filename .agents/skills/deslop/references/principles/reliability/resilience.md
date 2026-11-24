@@ -5,6 +5,8 @@ description: Deslop principle — Resilience & Graceful Degradation: bounded ret
 
 # Resilience & Graceful Degradation
 
+**Why this is slop:** retries, circuit breakers and degradation bolted onto call sites with no policy owner produce a system that survives slowly and cannot say what it traded away.
+
 > "In complex systems, failure is the normal state. Success is the special case that requires explanation."
 > — Richard Cook
 

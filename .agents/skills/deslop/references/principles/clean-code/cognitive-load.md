@@ -5,6 +5,8 @@ description: Deslop principle — Cognitive Load: Minimize mental effort to read
 
 # Cognitive Load
 
+**Why this is slop:** code read ten times for every write is slop the moment it spends the reader's working memory on bookkeeping instead of on the problem.
+
 > "Cognitive load is how much a developer needs to think in order to complete a task."
 > — Artem Zakirullin
 

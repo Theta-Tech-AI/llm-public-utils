@@ -5,6 +5,8 @@ description: Deslop pattern — Absence Equals Failure: one value answers both "
 
 # Absence and failure share one value
 
+**Why this is slop:** one value answers both "nothing is saved" and "the read failed", so absence is promoted to success and the caller can no longer choose what to do about it.
+
 ## The structural tell
 
 One return value (`None`, `[]`, `""`, `"not available"`, a `fallback=` argument) answers both "nothing is saved" and "the read failed". A catch-all wrapper turns every exception into the empty answer, so the caller cannot choose between *show empty* and *show an outage*.

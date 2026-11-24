@@ -5,6 +5,8 @@ description: Deslop principle — Orthogonality: unrelated things change indepen
 
 # Orthogonality
 
+**Why this is slop:** two units that change together are one unit wearing two names, and a change in either forces work in the other that was never supposed to notice it.
+
 > "Each software module should have one and only one reason to change."
 > — Robert C. Martin, "The Single Responsibility Principle" (2014)
 

@@ -5,6 +5,8 @@ description: Deslop principle — One Logical Unit, One Home: one module per res
 
 # One Logical Unit, One Home
 
+**Why this is slop:** one thing the system does is scattered across packages, so the next person changes four places to alter one behaviour and misses the fifth.
+
 > "You found things that are one logical unit spread across multiple packages — your next immediate
 > thought should have been: hey, this is slop."
 > — the review that motivated this principle

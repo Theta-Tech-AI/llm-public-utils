@@ -5,6 +5,8 @@ description: Pick the shape of a deslop pass before reading anything else. A fil
 
 # Recipes
 
+**Why this is slop:** the shape is picked from the ask, because a quick look spent on a whole repository and a coverage pass spent on a five-line diff both find the wrong thing at the wrong cost.
+
 Pick the shape from the ask, then read only what that shape needs. A target that is not a diff or PR gets a
 **coverage pass**. The other rows are for narrower asks, or for work that is not a pass at all.
 

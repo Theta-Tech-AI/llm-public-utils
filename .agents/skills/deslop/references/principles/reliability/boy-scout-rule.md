@@ -5,6 +5,8 @@ description: Deslop principle — Boy Scout Rule: leave code better than you fou
 
 # Boy Scout Rule
 
+**Why this is slop:** a codebase where every visitor leaves the small neglect untouched degrades one uncorrected commit at a time, and no single change is ever responsible.
+
 > "Always leave the code better than you found it."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 

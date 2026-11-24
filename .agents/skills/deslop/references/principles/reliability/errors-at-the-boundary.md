@@ -5,6 +5,8 @@ description: Deslop principle — Errors at the Boundary: validate where untrust
 
 # Errors at the Boundary
 
+**Why this is slop:** an error detected late, translated nowhere and decided at the top of the stack has lost the context that would have let anyone fix it.
+
 > "Higher layers should catch lower-level exceptions and, in their place, throw exceptions that can be explained in
 > terms of the higher-level abstraction."
 > — Joshua Bloch, *Effective Java*, Item 73 (exception translation)

@@ -5,6 +5,8 @@ description: Deslop principle — Small Functions: short functions that do one t
 
 # Small Functions
 
+**Why this is slop:** a function that does several things has several reasons to change and cannot be named, tested or reused as one, so readers reconstruct what it is for.
+
 > "The first rule of functions is that they should be small. The second rule of functions is that they should be smaller than that."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 

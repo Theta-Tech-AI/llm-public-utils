@@ -5,6 +5,8 @@ description: Deslop principle — Guard Clauses: Exit early on invalid states; k
 
 # Guard Clauses
 
+**Why this is slop:** preconditions checked in the middle of the body bury the happy path under the exceptions, so the ordinary case reads as the special one.
+
 > "The guard clause says, 'This is rare, and if it happens, do something and get out.'"
 > — Martin Fowler, *Refactoring*
 

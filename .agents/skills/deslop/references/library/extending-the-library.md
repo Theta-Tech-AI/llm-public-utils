@@ -5,6 +5,8 @@ description: How to add a principle to this library — discovery, research, dra
 
 # Extending the Library
 
+**Why this is slop:** the next piece of slop resembles nothing already in the library, so a closed rulebook hardens into a vocabulary that detects only its own past.
+
 > "The library is only as good as the gap it just closed."
 
 Deslop is not a fixed document. It is a **principles library**, and the reason to keep it open is that the

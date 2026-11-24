@@ -5,6 +5,8 @@ description: What a pass actually proved — the control runs, their numbers, an
 
 # Evaluation
 
+**Why this is slop:** a rule nobody tested is a fitted detector — it fires on the example that wrote it and walks past every renamed copy, so the slop stays and the library merely feels useful.
+
 A pass is a claim about coverage, and a claim needs evidence of two different kinds. Keep them apart, because a
 control that shows a rule **fires** says nothing about whether the rule is **right**, and the reverse.
 

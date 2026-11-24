@@ -1,5 +1,7 @@
 # Fixtures
 
+**Why this is slop:** a rule tested only against the example that inspired it proves its detector agrees with itself, which is the self-confirming slop these planted corpora exist to break.
+
 Planted-defect corpora for controlling a change to a rule. Each directory is a small repo: what is
 **PLANTED** must be found, and what is marked **LEGITIMATE** must be declined — a reading that reports the clean
 control has produced a false positive and the change is not ready.

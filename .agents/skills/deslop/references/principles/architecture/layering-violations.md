@@ -5,6 +5,8 @@ description: Deslop principle — Layering Violations: a dependency against the 
 
 # Layering Violations
 
+**Why this is slop:** one import against the arrows means knowledge flows both ways, and the layer that was supposed to be replaceable now depends on the thing above it.
+
 > "No cycles on the application module level — the dependencies between modules have to form a directed acyclic
 > graph. Efferent module access via API packages only."
 > — Spring Modulith, *Verifying Application Module Structure*

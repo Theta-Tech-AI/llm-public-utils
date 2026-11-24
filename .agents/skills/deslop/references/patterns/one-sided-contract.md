@@ -5,6 +5,8 @@ description: Deslop pattern — One-Sided Contract: one end of an agreement exis
 
 # One-sided contract
 
+**Why this is slop:** one end of an agreement exists and the other never did, so the client retries an error code the server never emits and the promise is fiction by construction.
+
 ## The structural tell
 
 One end of an agreement exists without the other: the client retries and polls on an error code the server never emits; an idempotency key is sent and never honoured; a configured group list is parsed and logged but used only as an on/off switch. Walk each end to its partner. The end with none is the finding.

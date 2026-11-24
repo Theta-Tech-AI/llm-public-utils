@@ -1,5 +1,7 @@
 # Fixture — a rule every member must remember
 
+**Why this is slop:** a rule every route must remember to apply is slop because the seventh route forgets it, and this corpus plants the forgetting beside the handlers that must not be reported.
+
 A small project API with an edit lease, used to control *Complete Mediation*. The router checks each route's
 role before the handler runs (`web/app.py`). The rule under test: **every route that changes a project needs
 the caller to hold that project's edit lease**. Packages: `projects/` (the lease and project routes),

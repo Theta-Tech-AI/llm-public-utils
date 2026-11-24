@@ -5,6 +5,8 @@ description: Deslop pattern — Grammar Without an Owner: one input format (an i
 
 # Grammar without an owner
 
+**Why this is slop:** one identifier format is taken apart by several regexes that disagree on its parts, so the grammar lives nowhere and every parse is a guess that happens to pass today.
+
 ## The structural tell
 
 One identifier format (`INV-2024-0042`, `doc#page=3`) is taken apart by several regexes or `split`s that disagree on the prefix set, the digit width or the optional parts. Collect them: seven patterns for one format is a grammar with no parser.

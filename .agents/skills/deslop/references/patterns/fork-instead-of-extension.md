@@ -5,6 +5,8 @@ description: Deslop pattern — Fork Instead of Extension: a downstream module c
 
 # Fork of upstream instead of extension
 
+**Why this is slop:** a downstream copy of an upstream module drifts until two writers own one fact and both receipts look verified.
+
 ## The structural tell
 
 A downstream module copies an upstream module and edits it; the two drift, and sometimes both write a store (two receipts for one "verified" fact). Tell by behaviour, not by name: same job, same inputs, two writers.

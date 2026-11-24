@@ -5,6 +5,8 @@ description: Deslop principle — Implicit Coupling: two components agree on som
 
 # Implicit Coupling
 
+**Why this is slop:** the agreement two components actually rely on — call order, a magic value, a field set at the right moment — is the part the code never says, so it breaks without a diff.
+
 > "Connascence codifies what many experienced engineers have learned by trial and error: having a common set of
 > nouns to refer to different types of coupling allows us to share that experience more easily."
 > — connascence.io, after Page-Jones

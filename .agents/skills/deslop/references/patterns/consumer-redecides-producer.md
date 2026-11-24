@@ -5,6 +5,8 @@ description: Deslop pattern — Consumer Re-Decides the Producer: a client or la
 
 # Consumer re-decides the producer's decision
 
+**Why this is slop:** the client re-derives what the producer already decided, so the rule has two owners and the second one is the copy that will drift.
+
 ## The structural tell
 
 The client, or a later stage, reconciles answers the producer already reconciled: merging two server lists into one view, parsing again a field the API already typed, hand-copying a server rule ("orders over 50 ship free") into the SPA.

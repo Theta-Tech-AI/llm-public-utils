@@ -5,6 +5,8 @@ description: Deslop principle — Index Every Foreign Key: Postgres does not aut
 
 # Index Every Foreign Key
 
+**Why this is slop:** Postgres indexes keys and uniques but not foreign keys, so an unindexed reference taxes every parent delete and every child join while no constraint complains.
+
 Postgres automatically indexes primary keys and unique constraints — but **not** foreign keys. An unindexed FK is a quiet two-way tax: every delete or update on the *parent* sequentially scans the whole child table to check for references (one parent row delete can read millions of child rows), and every join from parent to child has no index to ride. Add a plain B-tree index on every FK column. This is the single most common missing index precisely because the FK and the index that should accompany it are declared in different places — easy to write one and forget the other.
 
 ```sql

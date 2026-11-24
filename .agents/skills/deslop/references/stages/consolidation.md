@@ -5,6 +5,8 @@ description: Consolidate and triage deslop findings — decide what matters now,
 
 # Consolidating and triage
 
+**Why this is slop:** forty findings handed over as a flat queue is slop in the report itself — the longest list instead of the load-bearing one, with nothing saying what matters.
+
 **Read this after aggregation and before you communicate anything.** Its job is the judgement a merged list cannot
 do: a pass will always return more than anyone should act on at once, so somebody has to decide — out loud, with
 reasons — what is worth attention now, what can wait, and what should be dropped.

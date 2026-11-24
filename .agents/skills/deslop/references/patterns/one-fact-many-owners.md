@@ -5,6 +5,8 @@ description: Deslop pattern — One Fact, Many Owners: two places decide the sam
 
 # One fact, many owners
 
+**Why this is slop:** each copy was correct when written and no module was ever named the owner, which is why the drift is structural rather than careless and why it is the costliest pattern in the field run.
+
 The single-fact disease and the costliest pattern in the field run. Each copy was correct when written; no module was ever named the owner, so each drifted.
 
 ## The structural tell

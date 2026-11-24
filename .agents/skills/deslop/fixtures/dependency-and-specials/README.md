@@ -1,5 +1,7 @@
 # Fixture: change-rate edges and special cases
 
+**Why this is slop:** an import edge pointing at the fastest-moving end of the system, and a special case bolted on where the design had no shape for it — planted here so a reading has to find them and still decline the clean controls.
+
 A planted corpus for two principles — **Depend in the Direction of Stability** and **A Special Case Is a
 Requirement the Design Never Accounted For** — plus the two rules folded into their owners
 (`small-functions` flag arguments, `legibility` dead code). Small on purpose: every planted defect is

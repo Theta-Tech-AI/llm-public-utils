@@ -5,6 +5,8 @@ description: Deslop principle — YAGNI: You Aren't Gonna Need It: Don't build f
 
 # YAGNI: You Aren't Gonna Need It
 
+**Why this is slop:** code built for a future that never arrives is still read, tested and kept true by everyone after, so the feature for later is a liability on the day it is written.
+
 > "Always implement things when you actually need them, never when you just foresee that you need them."
 > — Ron Jeffries, XP co-founder
 

@@ -5,6 +5,8 @@ description: Deslop principle — Principle of Least Privilege: minimum permissi
 
 # Principle of Least Privilege
 
+**Why this is slop:** a component holding permissions its job never needs widens the blast radius of every mistake it makes and every credential it leaks.
+
 > "Every program and every user of the system should operate using the least set of privileges necessary to complete the job."
 > — Jerome Saltzer, *Protection and the Control of Information Sharing in Multics* (1974)
 

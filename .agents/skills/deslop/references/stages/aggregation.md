@@ -5,6 +5,8 @@ description: Merge deslop cell reports into one candidate list — corroborated,
 
 # Aggregating findings
 
+**Why this is slop:** a pass that skips aggregation reports the same defect three times under three names and files the loudest rather than the worst.
+
 **Read this the moment more than one reading has reported** — a planned pass, several agents, or a second-opinion
 run. Not before: during planning you do not need this. [pass-planning.md](planning.md) produced the cells;
 this stage turns their reports into **one candidate list**, still unordered.

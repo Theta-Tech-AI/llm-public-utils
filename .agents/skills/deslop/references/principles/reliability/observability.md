@@ -5,6 +5,8 @@ description: Deslop principle — Observability & Transparency: structured, corr
 
 # Observability & Transparency
 
+**Why this is slop:** behaviour nobody can see is behaviour nobody can defend, and without telemetry every production incident is a guess made from memory.
+
 > "Observability is the ability to understand the internal state of a system by examining its external outputs."
 > — Charity Majors
 

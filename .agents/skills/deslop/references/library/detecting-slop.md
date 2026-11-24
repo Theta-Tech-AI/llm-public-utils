@@ -5,6 +5,8 @@ description: How deslop detection is packaged — what automated tools cannot se
 
 # Detecting Slop
 
+**Why this is slop:** slop survives because detection is allocated badly, not because it is rare: a rule no pass ever trips over, or one that lives only in a reviewer's memory, catches nothing.
+
 Two questions decide how much of this library ever gets used: **which failures detection can see at all**,
 and **where detection lives**. Both are operational rather than philosophical — a rule no pass ever trips
 over may as well not be in the library.

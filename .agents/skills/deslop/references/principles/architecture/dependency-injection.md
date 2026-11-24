@@ -5,6 +5,8 @@ description: Deslop principle — Dependency Injection: hand a unit what it need
 
 # Dependency Injection
 
+**Why this is slop:** a unit that constructs what it needs cannot be tested alone, cannot be handed a substitute, and hides a dependency its signature never declared.
+
 > "The key benefit of Dependency Injection is that it removes the dependency that a class has on a concrete implementation."
 > — Martin Fowler
 

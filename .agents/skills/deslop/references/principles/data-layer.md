@@ -5,6 +5,8 @@ description: Deslop principles — The Data Layer: schema integrity (FKs, normal
 
 # The Data Layer
 
+**Why this is slop:** integrity that lives in the application is integrity the next writer can skip, which is why every rule in this category belongs in the schema or in an access path.
+
 > *Slop in the schema is the most expensive kind. Application code is rewritten, ported between languages, and bypassed by migrations, scripts, and the next service — but the database outlives all of them and is the one place an invariant can be made true for every writer at once. These principles govern integrity, where logic lives, how rows are reached, and how many statements one request sends.*
 
 Each principle is a self-contained file — open it when a finding implicates that principle.

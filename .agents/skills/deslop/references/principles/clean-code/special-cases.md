@@ -5,6 +5,8 @@ description: Deslop principle — A Special Case Is a Requirement the Design Nev
 
 # A Special Case Is a Requirement the Design Never Accounted For
 
+**Why this is slop:** every special case is a requirement the design could not express, and each branch, flag or delay is that design confessing in the place the reader least expects.
+
 > "Special cases: code that exists for one situation instead of following from how the system works."
 > — the framing borrowed from an outside skill, kept because it is the clearest statement of the rule
 

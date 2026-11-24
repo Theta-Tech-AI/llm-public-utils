@@ -5,6 +5,8 @@ description: Deslop principle — Separation of Concerns: High cohesion, low cou
 
 # Separation of Concerns
 
+**Why this is slop:** a unit holding several concerns changes for several reasons, so one concern's edit reaches the others and a single feature scatters across the tree.
+
 > "The separation of concerns, even if not perfectly possible, is yet the only available technique for effective ordering of one's thoughts."
 > — Edsger Dijkstra
 

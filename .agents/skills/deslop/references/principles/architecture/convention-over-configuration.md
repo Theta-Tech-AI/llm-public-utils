@@ -5,6 +5,8 @@ description: Deslop principle — Convention Over Configuration: sensible defaul
 
 # Convention Over Configuration
 
+**Why this is slop:** a decision every caller must restate is a decision nobody owns, and the config key exists only so each call site can decide the same thing again, slightly differently.
+
 > "You're not a beautiful and unique snowflake. By giving up vain individuality, you can leapfrog the toils of mundane decisions, and make faster progress in areas that really matter."
 > — David Heinemeier Hansson, The Rails Doctrine
 

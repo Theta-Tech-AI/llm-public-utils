@@ -5,6 +5,8 @@ description: Deslop principle — A State Machine Nobody Wrote Down: a status fi
 
 # A State Machine Nobody Wrote Down
 
+**Why this is slop:** the legal moves of a status field are smeared across every condition that touches it, so "how did it get into that state" has no single place to answer from.
+
 Every system with a status field already has a state machine. The question is only whether it is
 explicit — a graph someone can read and enforce — or implicit, smeared across the conditions of every
 caller, so the transitions live in the developers' heads.

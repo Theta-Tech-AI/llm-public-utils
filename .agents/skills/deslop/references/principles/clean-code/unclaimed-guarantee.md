@@ -5,6 +5,8 @@ description: Deslop principle — An Unclaimed Guarantee: machinery promising a 
 
 # An Unclaimed Guarantee
 
+**Why this is slop:** machinery with no claimant adds capability nobody asked for, so the reader carries assumptions the code does not hold and the gap between promise and behaviour is the slop.
+
 > "This is a perfect example of the type of change AI will happily make. It does literally nothing and makes the
 > code worse."
 > — a Go diff posted publicly, in which three hunks of hygiene were read as improvement

@@ -5,6 +5,8 @@ description: Deslop principle — Liveness: every state leaves by itself or name
 
 # Liveness: Every State Has an Owner That Moves It Forward
 
+**Why this is slop:** a system that forbids the wrong states and never guarantees the right move forward stalls politely — every safety rule holds and the work still never finishes.
+
 > Safety: nothing bad happens. Liveness: something good eventually happens.
 > — the distinction, paraphrased, from Leslie Lamport, *Proving the Correctness of Multiprocess Programs* (1977), formalised by Alpern and Schneider, *Defining Liveness* (1985)
 

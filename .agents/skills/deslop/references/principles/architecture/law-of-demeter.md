@@ -5,6 +5,8 @@ description: Deslop principle — Law of Demeter: talk only to immediate friends
 
 # Law of Demeter
 
+**Why this is slop:** a caller that reaches through an object into its structure knows two objects' internals, so a change in either lands in code that should have been insulated from both.
+
 > "Each unit should have only limited knowledge about other units: only talk to your immediate friends; don't talk to strangers."
 > — Ian Holland
 

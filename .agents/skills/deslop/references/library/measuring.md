@@ -5,6 +5,8 @@ description: How to measure a deslop campaign — the four harnesses (static sha
 
 # Measuring a deslop campaign
 
+**Why this is slop:** a campaign that cannot be measured cannot be claimed, so the slop here is a reduction asserted in adjectives while the cost of reading the code never moved.
+
 > **A campaign that cannot be measured cannot be claimed.** LOC alone is the weakest signal in this
 > file; the strongest is *what an agent pays to read the code*.
 

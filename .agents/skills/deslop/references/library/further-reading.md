@@ -5,6 +5,8 @@ description: Bibliography for the deslop principles — foundational texts, semi
 
 # References
 
+**Why this is slop:** a principle quoted without its source ages into folklore, and the repair made from half-remembered hearsay is the slop this file defends against.
+
 ## Foundational Texts
 
 Essential books that shaped modern software design thinking.

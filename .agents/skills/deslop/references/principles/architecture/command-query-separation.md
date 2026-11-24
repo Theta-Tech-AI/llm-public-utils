@@ -5,6 +5,8 @@ description: Deslop principle — Command-Query Separation: Methods either do or
 
 # Command-Query Separation
 
+**Why this is slop:** a method that both answers a question and changes state cannot be called, cached or parallelised safely, so every caller must know which half it is triggering.
+
 > "Asking a question should not change the answer."
 > — Bertrand Meyer
 
