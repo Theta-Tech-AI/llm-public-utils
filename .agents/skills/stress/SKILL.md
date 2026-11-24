@@ -28,7 +28,7 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 |------|------|
 | [references/process.md](references/process.md) | **The standard run** — deployment lay of the land, then 1-3 reliability → 1-3 comb → 1-3 mischief passes |
 | [references/driving.md](references/driving.md) | Choosing **browser vs API vs hybrid** — different surfaces catch different bugs |
-| [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix) |
+| [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix), and **talking a fixed bug through with its owner**: bug, solution, predicted critique; then act on their answer |
 | [references/api-flows.md](references/api-flows.md) | **API-first runs** — the generated flow map (stages, call order, dependency edges, routes nobody has called), simulated user flows from HTTP calls, the move × state × actor matrix, many lanes on one environment, the shared tools and the pacing gate |
 
 ## Mode references (read the ones you will use)
