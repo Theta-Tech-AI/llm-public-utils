@@ -98,6 +98,7 @@
       "owes_input_census": true,
       "files": [
         "principles/architecture/parse-dont-validate.md",
+        "principles/architecture/metadata-beside-content.md",
         "principles/architecture/helper-is-an-architecture-finding.md",
         "principles/reliability/no-silent-defaults.md",
         "principles/reliability/fail-fast.md",

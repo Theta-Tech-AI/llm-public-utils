@@ -1,22 +1,22 @@
 ---
 name: deslop
-description: "Library of 64 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
+description: "Library of 65 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
 ---
 
 # Deslop: code quality analysis
 
 `/deslop [file-or-directory]` (or `$deslop`) reads your code against the principles in [references/](references/) and suggests fixes with before/after examples.
 
-**Coverage pass by default.** Any target that is not a diff or PR (a file, directory, module, package, subsystem or whole repository) gets a **coverage pass**: one reading per principle group in [references/lenses.json](references/lenses.json) (all nine today), each reading its group's index and then every principle file in that group, in full. Only a diff or PR review, or an explicit request for a quick or narrow look, gets a **scoped pass**, and its report names the groups it did not read. Pass shapes: [references/stages/recipes.md](references/stages/recipes.md). When the ask is a **campaign** ("massive simplification", "across the board", "minimum 30% LOC", "break up the god files", "get it all done, no excuses, present me a PR") follow [references/modes/campaign.md](references/modes/campaign.md) and measure with [references/library/measuring.md](references/library/measuring.md).
+**Coverage pass by default.** Any target that is not a diff or PR (a file, directory, module, package, subsystem or whole repository) gets a **coverage pass**: one reading per principle group in [references/lenses.json](references/lenses.json) (all nine today), each reading its group's index and then every principle file in that group, in full. Only a diff or PR review, or an explicit request for a quick or narrow look, gets a **scoped pass**, and its report names the groups it did not read. Pass shapes: [references/stages/recipes.md](references/stages/recipes.md). When the ask is a **campaign** ("massive simplification", "across the board", "minimum 30% LOC", "break up the god files") follow [references/modes/campaign.md](references/modes/campaign.md) and measure with [references/library/measuring.md](references/library/measuring.md).
 
 ## What good code is, and why it matters
 
-One idea under the library: **a reader can trust what the code appears to say.** Slop is any place that trust breaks: the truth lives in a second copy, a swallowed error or an unwritten assumption. Ten tenets, each with its lead files. Why the principles pay, and which lead for which kind of code: [what-the-principles-buy](references/library/what-the-principles-buy.md).
+One idea under the library: **a reader can trust what the code appears to say.** Slop is any place that trust breaks: the truth lives in a second copy, a swallowed error or an unwritten assumption. Ten tenets, each with its lead files. Why they pay: [what-the-principles-buy](references/library/what-the-principles-buy.md).
 
 1. **One owner per fact.** Every fact is decided in one place and everything else derives from it. *Why:* a change is one edit instead of five, and copies cannot drift into disagreement.
    [dry](references/principles/architecture/dry.md), [single-source-of-truth](references/principles/architecture/single-source-of-truth.md), [one-logical-unit-one-home](references/principles/architecture/one-logical-unit-one-home.md); patterns: [one-fact-many-owners](references/patterns/one-fact-many-owners.md), [fork-instead-of-extension](references/patterns/fork-instead-of-extension.md)
-2. **Parse at the boundary, decide once.** Turn external input into precise types at the edge; downstream code receives a decision, never raw material. *Why:* type-sniffing ladders, re-validation and compensating helpers disappear, and the bug class "the value was not what we assumed" goes with them.
-   [parse-dont-validate](references/principles/architecture/parse-dont-validate.md), [decide-dont-cope](references/principles/clean-code/decide-dont-cope.md), [illegal-states-unrepresentable](references/principles/architecture/illegal-states-unrepresentable.md), [errors-at-the-boundary](references/principles/reliability/errors-at-the-boundary.md); patterns: [consumer-redecides-producer](references/patterns/consumer-redecides-producer.md), [grammar-without-owner](references/patterns/grammar-without-owner.md)
+2. **Parse at the boundary, decide once.** Turn external input into precise types at the edge; downstream code receives a decision, never raw material. *Why:* type-sniffing, re-validation and compensating helpers disappear.
+   [parse-dont-validate](references/principles/architecture/parse-dont-validate.md), [decide-dont-cope](references/principles/clean-code/decide-dont-cope.md), [illegal-states-unrepresentable](references/principles/architecture/illegal-states-unrepresentable.md), [metadata-beside-content](references/principles/architecture/metadata-beside-content.md), [errors-at-the-boundary](references/principles/reliability/errors-at-the-boundary.md); patterns: [consumer-redecides-producer](references/patterns/consumer-redecides-producer.md), [grammar-without-owner](references/patterns/grammar-without-owner.md)
 3. **Small units, one job, one reason to change.** Each module hides one design decision; each function does one thing at one level. *Why:* a change lands in one place, units are testable alone, and no one has to hold the whole system in their head.
    [separation-of-concerns](references/principles/architecture/separation-of-concerns.md), [modularity](references/principles/architecture/modularity.md), [orthogonality](references/principles/architecture/orthogonality.md), [small-functions](references/principles/clean-code/small-functions.md)
 4. **Dependencies point toward stability, no reaching through.** What changes rarely is depended on; units are handed what they need and know only their neighbours. *Why:* a volatile edit cannot force work in stable code, and hidden agreements stop breaking the next caller.
@@ -34,7 +34,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 10. **Delete before you add.** No feature for later, no special case without a missing mechanism, no patch over a decision; leave touched code better, and relax a rule when applying it makes worse code. *Why:* every line is a liability that must be read, tested and kept true, so the best change often removes lines.
    [yagni](references/principles/clean-code/yagni.md), [special-cases](references/principles/clean-code/special-cases.md), [patchwork](references/principles/clean-code/patchwork.md), [when-to-relax](references/readings/when-to-relax.md)
 
-**What the library provides:** 64 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting, measured campaigns, and a procedure to [extend the library](references/library/extending-the-library.md).
+**What the library provides:** 65 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting, measured campaigns, and a procedure to [extend the library](references/library/extending-the-library.md).
 
 ## The library at a glance
 
@@ -71,6 +71,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 **parsing** — Where does an external value enter, and which single component turns it into a decision? Follow each input from the edge to every place that re-interprets it.
 
 - Parse, Don't Validate — Convert input to precise types once at the boundary
+- Metadata Beside Content — what is true about content travels beside it, typed
 - A Helper That Must Exist Is an Architecture Finding — a function that reconciles a value with the shape the system expects…
 - No Silent Defaults — model absence, never synthesize a plausible value for it
 - Fail-Fast & Defensive Programming — Detect and report errors at the earliest possible moment
@@ -171,7 +172,7 @@ One row per file, in the order a pass meets them. CI fails on a markdown that no
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example: an LLM agent fleet collapsed into one agent |
 | [references/library/further-reading.md](references/library/further-reading.md) | Bibliography and attribution |
-| [references/lenses.json](references/lenses.json) | The default partition of 64 principles into 9 reading stances; regroup freely |
+| [references/lenses.json](references/lenses.json) | The default partition of 65 principles into 9 reading stances; regroup freely |
 
 ## Layout and checks
 
