@@ -67,7 +67,7 @@ def run_job(job_id: str) -> None:
 
 ## A control must not reach what the automatic path rules out
 
-When the system already moves a state forward, a manual control for the same move is a **second owner**. To decide whether to act it needs its own idea of the state, and that copy drifts. In one case a "draft again" path judged a table by a cache key the automatic path did not use; after a prompt change, a table the screen called current was paid for again and replaced. One owner per transition: the control is deleted, or relabelled as the decision it really is.
+When the system already moves a state forward, a manual control for the same move is safe only as a **trigger** of the owner's transition. It becomes a **second owner** the moment it carries its own policy: its own freshness test, cache key or guard. That copy drifts. In one case a "draft again" path judged a table by a cache key the automatic path did not use; after a prompt change, a table the screen called current was paid for again and replaced. Route the control through the one owner. Then apply the decision test: a trigger with a real decision behind it stays, labelled as that decision; a trigger with none ("Retry now" on a wait the system already owns) adds nothing the owner does not already do.
 
 ## When a control is right
 
@@ -98,4 +98,4 @@ In relation to other principles:
 2. **Every state names its owner and its triggers:** the system (bounded in operation), a named person and action, a named decision, or the fix pipeline. Many triggers are fine; one owner.
 3. **An unowned state gets an owner by accident:** a Retry button, a runbook, a repairing guard, a sweep that fails it, or nothing.
 4. **Classify at the one place the work runs;** screens render the state, never decide recovery.
-5. **One owner per transition.** A manual control beside an automatic owner becomes a second definition of the state. Keep a control only where a person has the authority to decide.
+5. **One owner per transition; triggers are fine.** A control that carries its own policy is a second owner and drifts; a control that triggers the owner is safe, and stays when a person has a real decision to make.
