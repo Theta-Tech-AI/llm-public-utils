@@ -38,7 +38,9 @@ One dev server (~300–500 MB) plus one headless browser (~0.5–1 GB) per agent
 
 ## Text size and zoom
 
-Two different checks, both worth one screenshot:
+Four different conditions; do not let one stand in for another:
 
-- **Browser zoom at 200 %** enlarges everything, `px` text included (WCAG 1.4.4 accepts it). Emulate it with a viewport of half the width (a 390 px phone at 200 % lays out like 195 px): nothing may overflow or overlap.
-- **The system text size** (iOS Dynamic Type, Android font scale) scales only `rem`/`em`-based text where the browser maps it to the root size. Set `document.documentElement.style.fontSize` to twice the app's root size in `eval`: text containers must grow (minimum heights, never fixed heights). Text in `px` does not grow here; that is a finding to weigh, not automatically a fault.
+- **Reflow (WCAG 1.4.10):** a 320 px wide layout (the phone loop already covers it) and, for one-direction horizontal content, a short viewport (256 px high).
+- **Desktop page zoom at 200 %:** the layout viewport halves in both directions. Emulate it with half the desktop width **and** half its height (1280 × 800 → 640 × 400): nothing may overflow, overlap or hide behind a fixed bar.
+- **Phone pinch zoom:** enlarges the visual viewport only; the layout does not change. Check that zoom is not blocked (`meta.zoomBlocked` is 0) and that fixed bars do not cover the zoomed content.
+- **System text size** (iOS Dynamic Type, Android font scale): scales `rem`/`em`-based text where the browser maps it to the root size. Set `document.documentElement.style.fontSize` to twice the app's root size in `eval`: text containers must grow (minimum heights, never fixed heights). Text in `px` does not grow here; that is a finding to weigh, not automatically a fault.

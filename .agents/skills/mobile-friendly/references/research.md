@@ -22,7 +22,7 @@
 
 **Layout and units**
 - Container queries let a component follow its slot, not the window; design components, not pages. — [web.dev: the new responsive](https://web.dev/articles/new-responsive), [container queries in action](https://web.dev/articles/baseline-in-action-container-queries)
-- Use `dvh`/`svh`/`lvh` instead of `vh`: `svh` for things that must never jump (a drawer), `dvh` for app shells. — [Chrome guide: responsive design](https://developer.chrome.com/docs/modern-web-guidance/guides/css/responsive-design), [web.dev: viewport units](https://web.dev/blog/viewport-units)
+- Use `dvh` or `svh` instead of `vh`: `svh` for things that must never jump (a drawer), `dvh` for app shells. `lvh` equals today's `vh` (the large viewport, behind expanded browser bars), so it is not a fix. — [Chrome guide: responsive design](https://developer.chrome.com/docs/modern-web-guidance/guides/css/responsive-design), [web.dev: viewport units](https://web.dev/blog/viewport-units)
 - Edge-to-edge with `viewport-fit=cover` and `max(16px, env(safe-area-inset-*))` on bars. — [Chrome guide: form factor adaptation](https://developer.chrome.com/docs/modern-web-guidance/guides/user-experience/form-factor-adaptation.md.txt)
 - `text-wrap: pretty` for paragraphs (no one-word last lines); `balance` only for short headings. — [Chrome: text-wrap pretty](https://developer.chrome.com/blog/css-text-wrap-pretty)
 - `field-sizing: content` for inputs that grow with their text (keep a `min-width`).

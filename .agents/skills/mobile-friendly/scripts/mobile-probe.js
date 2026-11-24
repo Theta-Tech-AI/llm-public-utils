@@ -17,14 +17,23 @@
 //   crowded         target pairs closer than MIN_GAP px (overlap counts as distance 0)
 //   overlaps        text over a control it is not inside, or two controls that intersect
 //   smallText       text under MIN_TEXT px
-//   smallBody       running text under MIN_BODY px (p, li, dd, td, blockquote, label, any own text over 40 characters)
+//   smallBody       running text under MIN_BODY px: text in a p/li/dd/td/blockquote/figcaption whose whole text is over
+//                   40 characters, or any other element whose own text is over 40 characters
+//   smallSecondary  short text (labels, captions) from MIN_TEXT up to MIN_SECONDARY px
 //   textSizes       histogram {px: number of text elements}
 //   smallInputs     form fields under MIN_INPUT px (iOS Safari zooms on focus)
 //   edges           histogram of where text lines start (many distinct x means nested padding ate the width)
 //   bars            fixed/sticky bars: share = union of the viewport height they cover, list = each bar
-//   truncated       ellipsis or line clamp that cut text
+//   truncated       text cut by an ellipsis, a line clamp, or an overflow-hidden box of its own (even with no ellipsis)
+//   offscreenFixed  fixed or stuck elements that cross the viewport edge (they never widen the page, so overflow misses them)
 //   vhRules         CSS rules that use 100vh without a dvh/svh/lvh twin, on elements that exist now
 //   meta            {viewport, zoomBlocked, fitCover}
+// Heuristics that cannot be exact have a hook (set it in the same eval, before the file):
+//   window.__mobileProbePageScroller = '<selector list>'  the scroll containers that carry the page (replaces the guess)
+//   [data-scroll-region] or role=region with a name        an intentional sideways scroll region (never a page scroller)
+// Without the hook, a page scroller is a scroll container that holds the main landmark or the h1; only if none does,
+// a container at least 90 % of the viewport wide and half as tall. A modal <dialog> limits targets, crowded and
+// overlaps to the top-most open one (root.modal names it). A custom modal that is not a <dialog> needs __mobileProbeRoot.
 // A clean page has every count at 0 except `edges` (a histogram to read) and `bars` (read the share).
 // Thresholds follow WCAG 2.2 / Apple HIG / Material; change MIN_* only to match a project's own written rules.
 (() => {
@@ -32,6 +41,7 @@
   const MIN_GAP = 8; // px between neighbouring targets
   const MIN_TEXT = 12; // px, absolute minimum for any text
   const MIN_BODY = 16; // px, running text on a phone
+  const MIN_SECONDARY = 13; // px, short labels and captions
   const MIN_INPUT = 16; // px, below this iOS Safari zooms the page on focus
   const MAX_BARS_SHARE = 0.12; // share of viewport height that fixed or sticky bars may cover
   const LIMIT = 15;
@@ -92,13 +102,16 @@
   // Scrollers. An app often scrolls inside one container, not the document, so that container carries the page.
   const scrollsX = (e) => /(auto|scroll)/.test(style(e).overflowX) && e.scrollWidth > e.clientWidth + 1;
   const scrollsY = (e) => /(auto|scroll)/.test(style(e).overflowY) && e.scrollHeight > e.clientHeight + 1;
-  const pageScrollers = new Set(all.filter((e) => {
-    if (!/(auto|scroll)/.test(style(e).overflowY) || !shown(e)) return false;
-    const r = box(e);
-    // Page-sized: about the viewport wide and at least half as tall. A short page does not scroll vertically yet
-    // still scrolls sideways, so vertical overflow is not required.
-    return r.width >= W * 0.9 && r.height >= H * 0.5;
-  }));
+  const REGION = "[data-scroll-region], [role=region][aria-label], [role=region][aria-labelledby]";
+  const scrollable = all.filter((e) => /(auto|scroll)/.test(style(e).overflowY) && shown(e) && !e.matches(REGION));
+  let hook = [];
+  try { hook = window.__mobileProbePageScroller ? [...document.querySelectorAll(window.__mobileProbePageScroller)] : []; } catch { /* bad selector: use the guess */ }
+  let pageList = hook.length ? hook : scrollable.filter((e) => e.matches("main, [role=main]") || e.querySelector("main, [role=main], h1"));
+  if (!pageList.length) {
+    // No landmark inside any scroller: fall back to size, which cannot tell a tall wide table from an app shell.
+    pageList = scrollable.filter((e) => { const r = box(e); return r.width >= W * 0.9 && r.height >= H * 0.5; });
+  }
+  const pageScrollers = new Set(pageList);
   const sideways = (s) => (s === doc
     ? Math.max(0, doc.scrollWidth - W)
     : /(auto|scroll)/.test(style(s).overflowX) ? Math.max(0, s.scrollWidth - s.clientWidth) : 0);
@@ -161,15 +174,30 @@
     for (const a of e.parentElement.querySelectorAll("a")) text = text.replace(a.textContent, "");
     return text.replace(/\s+/g, " ").trim().length >= 20;
   };
-  const tappable = [...rootEl.querySelectorAll(TAPPABLE)].filter((e) => shown(e) && !inline(e) && !e.disabled)
-    // A label wrapping a small checkbox gives it its hit area; measure the label instead.
-    .map((e) => (e.matches("input[type=checkbox], input[type=radio]") && e.closest("label") ? e.closest("label") : e))
-    .filter((e, i, list) => list.indexOf(e) === i && !list.some((o) => o !== e && o.contains(e) && o.matches(CONTROL)));
+  // A native modal dialog makes everything behind it inert, so only the top-most one is judged.
+  let modal = null;
+  try { modal = [...document.querySelectorAll("dialog:modal")].pop() || null; } catch { /* no :modal support */ }
+  const tapScope = modal || rootEl;
+  // A hidden native checkbox gives its hit area to the label around it (or the label[for]), which is what is measured.
+  const hitArea = (e) => (e.matches("input[type=checkbox], input[type=radio]")
+    ? e.closest("label") || (e.id ? document.querySelector(`label[for="${CSS.escape(e.id)}"]`) : null) || e : e);
+  const tappable = [...tapScope.querySelectorAll(TAPPABLE)].filter((e) => !e.disabled).map(hitArea)
+    .filter((e, i, list) => shown(e) && !inline(e) && list.indexOf(e) === i && !list.some((o) => o !== e && o.contains(e) && o.matches(CONTROL)));
   const targets = tappable.filter((e) => { const r = box(e); return r.width < MIN_TARGET || r.height < MIN_TARGET; })
     .map((e) => ({ el: e, ...rect(e) }));
   // Rectangle distance: 0 when the boxes touch or overlap, diagonal neighbours included.
   const dist = (a, b) => Math.hypot(Math.max(a.left - b.right, b.left - a.right, 0), Math.max(a.top - b.bottom, b.top - a.bottom, 0));
-  const within = (a, b) => a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom;
+  // Only the part of a box that its clipping ancestors leave visible can overlap (a chip scrolled half out of its row does not).
+  const visibleRect = (e, t, from = e) => {
+    let [l, tp, r, b] = [t.left, t.top, t.right, t.bottom];
+    for (let p = from; p && p !== document.body; p = p.parentElement) {
+      const cs = style(p);
+      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
+      const pr = box(p);
+      [l, tp, r, b] = [Math.max(l, pr.left), Math.max(tp, pr.top), Math.min(r, pr.right), Math.min(b, pr.bottom)];
+    }
+    return r - l > 1 && b - tp > 1 ? { left: l, top: tp, right: r, bottom: b } : null;
+  };
   const crowded = [];
   const overlaps = [];
   // A fixed or sticky bar slides over the content when it scrolls; only pairs inside the same layer are a fault.
@@ -179,13 +207,13 @@
       const [x, y] = [tappable[i], tappable[j]];
       if (x.contains(y) || y.contains(x)) continue;
       const [a, b] = [box(x), box(y)];
-      // A stretched link under a card's buttons is a pattern, not a crowd.
-      if (within(a, b) || within(b, a)) continue;
       const d = dist(a, b);
       if (d >= MIN_GAP) continue;
       crowded.push({ a: x, b: y, gap: Math.round(d) });
-      const ix = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-      const iy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      const [va, vb] = [visibleRect(x, a, x.parentElement), visibleRect(y, b, y.parentElement)];
+      if (!va || !vb) continue;
+      const ix = Math.min(va.right, vb.right) - Math.max(va.left, vb.left);
+      const iy = Math.min(va.bottom, vb.bottom) - Math.max(va.top, vb.top);
       if (ix > 2 && iy > 2 && layer(x) === layer(y)) overlaps.push({ a: x, b: y, w: Math.round(ix), h: Math.round(iy) });
     }
   }
@@ -204,12 +232,14 @@
     textRects.set(e, rects);
   }
   // Text running under a control it is not part of: the title that slides below a button at 320 px.
-  const controlRects = tappable.map(box);
-  for (const e of texty) {
+  const controlRects = tappable.map((c) => visibleRect(c, box(c), c.parentElement));
+  // The label of a control that already overlaps another control is the same fault, not a second one.
+  const hot = new Set(overlaps.flatMap((o) => [o.a, o.b]));
+  for (const e of modal ? texty.filter((t) => modal.contains(t)) : texty) {
     for (let k = 0; k < tappable.length; k += 1) {
       const [c, cr] = [tappable[k], controlRects[k]];
-      if (cr.right <= 0 || cr.left >= W || c.contains(e) || e.contains(c)) continue;
-      const hit = textRects.get(e).find((t) => t.right > 0 && t.left < W
+      if (!cr || cr.right <= 0 || cr.left >= W || c.contains(e) || e.contains(c) || tappable.some((o) => hot.has(o) && o.contains(e))) continue;
+      const hit = textRects.get(e).map((t) => visibleRect(e, t)).find((t) => t && t.right > 0 && t.left < W
         && Math.min(t.right, cr.right) - Math.max(t.left, cr.left) > 2 && Math.min(t.bottom, cr.bottom) - Math.max(t.top, cr.top) > 4);
       if (!hit || layer(e) !== layer(c)) continue;
       overlaps.push({ a: e, b: c, w: Math.round(Math.min(hit.right, cr.right) - Math.max(hit.left, cr.left)), h: Math.round(Math.min(hit.bottom, cr.bottom) - Math.max(hit.top, cr.top)) });
@@ -221,10 +251,23 @@
   const sizeCount = {};
   for (const e of texty) { const k = String(Math.round(px(e) * 10) / 10); sizeCount[k] = (sizeCount[k] || 0) + 1; }
   const textSizes = Object.fromEntries(Object.entries(sizeCount).sort((a, b) => a[0] - b[0]));
-  // Running text is what people read for more than a glance, so it needs the larger floor.
-  const smallBody = texty.filter((e) => px(e) < MIN_BODY
-    && (/^(P|LI|DD|TD|BLOCKQUOTE|LABEL)$/.test(e.tagName) || ownNodes(e).map((n) => n.textContent).join("").trim().length > 40))
-    .map((e) => ({ el: e, px: px(e) }));
+  // Running text is what people read for more than a glance. Its owner is the paragraph-like block, so a span inside a
+  // long <p> counts by the paragraph; a short label or caption is secondary text with its own lower floor.
+  const textLen = (e) => e.textContent.replace(/\s+/g, " ").trim().length;
+  const BLOCK = "p, li, dd, td, blockquote, figcaption";
+  const smallBody = [];
+  const smallSecondary = [];
+  const seenBlocks = new Set();
+  for (const e of texty) {
+    const size = px(e);
+    if (size >= MIN_BODY) continue;
+    const block = e.closest(BLOCK);
+    if (block ? textLen(block) > 40 : textLen(e) > 40) {
+      if (block && seenBlocks.has(block)) continue;
+      if (block) seenBlocks.add(block);
+      smallBody.push({ el: e, px: size });
+    } else if (size >= MIN_TEXT && size < MIN_SECONDARY) smallSecondary.push({ el: e, px: size });
+  }
   const smallInputs = [...rootEl.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]), select, textarea, [contenteditable=true]")]
     .filter((e) => shown(e) && px(e) < MIN_INPUT)
     .map((e) => ({ el: e, px: px(e) }));
@@ -251,8 +294,7 @@
   const barEls = all.filter((e) => shown(e) && /^(fixed|sticky)$/.test(style(e).position) && stuck(e, style(e)))
     .map((e) => { const r = box(e); return { e, w: Math.min(r.right, W) - Math.max(r.left, 0), top: Math.max(r.top, 0), bottom: Math.min(r.bottom, H) }; })
     // A box covering the whole screen is an app shell or a backdrop, not a bar.
-    .filter((b) => b.w > W * 0.5 && b.bottom - b.top > 1 && b.bottom - b.top <= H * 0.9)
-    .filter((b, i, list) => !list.some((o) => o !== b && o.e.contains(b.e)));
+    .filter((b) => b.w > W * 0.5 && b.bottom - b.top > 1 && b.bottom - b.top <= H * 0.9);
   let covered = 0;
   let edge = 0;
   for (const b of [...barEls].sort((x, y) => x.top - y.top)) {
@@ -262,10 +304,21 @@
   const bars = barEls.map((b) => ({ el: b.e, position: style(b.e).position, h: Math.round(b.bottom - b.top), top: Math.round(b.top) }));
   const barsShare = Math.round((covered / H) * 100) / 100;
 
+  // A fixed or stuck element is positioned against the viewport, so it can cross the edge without widening the page.
+  const vw = window.visualViewport?.width || W;
+  const vh = window.visualViewport?.height || H;
+  const offscreen = all.filter((e) => shown(e) && /^(fixed|sticky)$/.test(style(e).position) && stuck(e, style(e)))
+    .map((e) => ({ e, r: box(e) }))
+    // Wholly outside is a closed drawer; crossing the edge is the fault.
+    .filter(({ r }) => r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh && (r.right > vw + 1 || r.left < -1 || r.bottom > vh + 1 || r.top < -1))
+    .map(({ e, r }) => ({ e, past: Math.max(r.right - vw, -r.left, r.bottom - vh, -r.top) }));
+  const offscreenFixed = outermost(offscreen).map((o) => ({ el: o.e, ...rect(o.e), past: Math.round(o.past) }));
+
   // Truncated text: an ellipsis or a clamp that actually cut something.
   const truncated = texty.filter((e) => {
     const cs = style(e);
-    return (cs.textOverflow === "ellipsis" && e.scrollWidth > e.clientWidth + 1) || (cs.webkitLineClamp !== "none" && e.scrollHeight > e.clientHeight + 1);
+    // overflow hidden on a box that holds the text cuts it with or without an ellipsis
+    return (/^(hidden|clip)$/.test(cs.overflowX) && e.scrollWidth > e.clientWidth + 1) || (cs.webkitLineClamp !== "none" && e.scrollHeight > e.clientHeight + 1);
   }).map((e) => ({ el: e }));
 
   // 100vh on a phone ignores the browser toolbars; dvh/svh follow them. Same-origin sheets only.
@@ -284,6 +337,8 @@
   const matchesNow = (sel) => topLevelParts(sel).some((part) => {
     try { return !!document.querySelector(part.replace(/::[a-z-]+(\(.*\))?\s*$/i, "").trim() || "x-none"); } catch { return false; }
   });
+  // Last declaration wins per selector and property: a later dvh/svh rule is the fix, a later vh rule brings the fault back.
+  const vhState = new Map();
   const walk = (list) => {
     for (const r of list) {
       try {
@@ -291,12 +346,11 @@
         if (r.media && !matchMedia(r.media.mediaText).matches) continue;
         if (r.conditionText !== undefined && r.constructor.name === "CSSSupportsRule" && !CSS.supports(r.conditionText)) continue;
         if (r.selectorText && r.style) {
-          const hit = [...r.style].some((prop) => {
+          for (const prop of r.style) {
             const v = r.style.getPropertyValue(prop);
-            // A fallback pair (height: 100vh; height: 100dvh) is the fix, not a fault.
-            return /\b100vh\b/.test(v) && !/[dsl]vh/.test(v) && !new RegExp(`${prop}\\s*:[^;]*[dsl]vh`).test(r.cssText);
-          });
-          if (hit && matchesNow(r.selectorText)) vhRules.push(r.selectorText.slice(0, 60));
+            if (/\d[ds]vh\b/.test(v)) vhState.set(`${r.selectorText}|${prop}`, false);
+            else if (/\b100l?vh\b/.test(v)) vhState.set(`${r.selectorText}|${prop}`, true); // lvh is vh: both ignore the toolbars
+          }
         }
         if (r.cssRules) walk(r.cssRules);
       } catch { /* one odd rule must not hide the rest */ }
@@ -304,6 +358,11 @@
   };
   for (const sheet of [...document.styleSheets, ...(document.adoptedStyleSheets || [])]) {
     try { if (!sheet.disabled && (!sheet.media?.mediaText || matchMedia(sheet.media.mediaText).matches)) walk(sheet.cssRules); } catch { /* cross-origin sheet */ }
+  }
+
+  for (const [key, fault] of vhState) {
+    const sel = key.slice(0, key.lastIndexOf("|"));
+    if (fault && matchesNow(sel)) vhRules.push(sel.slice(0, 60));
   }
 
   const viewportMeta = document.querySelector("meta[name=viewport]")?.content || "";
@@ -329,6 +388,8 @@
     overlaps: overlaps.length,
     smallText: smallText.length,
     smallBody: smallBody.length,
+    smallSecondary: smallSecondary.length,
+    offscreenFixed: offscreenFixed.length,
     smallInputs: smallInputs.length,
     distinctEdges: Object.keys(edgeCount).length,
     barsOverShare: barsShare > MAX_BARS_SHARE ? barsShare : 0,
@@ -340,7 +401,7 @@
   const named = (list) => list.slice(0, LIMIT).map((o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v instanceof Element ? name(v) : v])));
   return JSON.stringify({
     viewport: { w: W, h: H, dpr: devicePixelRatio, coarse: matchMedia("(any-pointer: coarse)").matches },
-    root: { selector: rootSelector, found: rootFound },
+    root: { selector: rootSelector, found: rootFound, modal: modal ? name(modal) : null },
     counts,
     overflow: named(overflow),
     clipped: named(clipped),
@@ -351,6 +412,8 @@
     overlaps: named(overlaps),
     smallText: named(smallText),
     smallBody: named(smallBody),
+    smallSecondary: named(smallSecondary),
+    offscreenFixed: named(offscreenFixed),
     textSizes,
     smallInputs: named(smallInputs),
     edges,

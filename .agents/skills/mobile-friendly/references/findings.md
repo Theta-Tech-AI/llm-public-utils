@@ -41,9 +41,12 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 - **First-screen blindness** — tall stat tiles and a rail of cards pushed the main chart two screens down with every count at 0 — the probe has no notion of "first real content" — screenshot only; critique question 1
 - **Popovers** — a status popover clipped at the right edge was invisible to the probe while closed — shoot every popover open → critique question 12
 
-- **Touch-only target rules** — 175 small targets on a page that already had 44 px rules — the rules sat under `@media (pointer: coarse)`, which a headless phone viewport never matches — apply phone target sizes by width too: `@media (pointer: coarse), (max-width: <bp - 1>px)`; on real phones the original rule did apply, so read such counts with `viewport.coarse` in mind — probe `targets` + `viewport.coarse` → promoted to [fixes.md](fixes.md#-small-or-crowded-targets)
+- **Touch-only target rules** — 175 small targets on a page that already had 44 px rules — the rules sat under `@media (pointer: coarse)`, which a headless phone viewport never matches — apply phone target sizes by width too: `@media (any-pointer: coarse), (max-width: <bp - 1>px)`; on real phones the original rule did apply, so read such counts with `viewport.coarse` in mind — probe `targets` + `viewport.coarse` → promoted to [fixes.md](fixes.md#-small-or-crowded-targets)
 - **Modal false positives** — crowded pairs reported for page elements behind an open modal — the probe measured the inert page too — check the dialog screenshot; set the page root to the dialog while it is open
 - **Capped lists** — `targets` listed 15 of 175 — the probe caps each list — group the full list by tag and size when a count is large
+
+- **Probe review rounds** — three second-model rounds on the probe found 19, then 14, then fewer edge cases (page-scroller guesses, invisible or clipped boxes, native modals, label-wrapped inputs, viewport-unit overrides) — a geometric heuristic never ends in a perfect rule — add explicit hooks (`__mobileProbeRoot`, `__mobileProbePageScroller`, `[data-scroll-region]`), state each limit in the header, and cap the review rounds
+- **Desktop leaks** — three page fixes changed the desktop look (unprefixed `!shrink`, `min-h-11`, state-coloured borders) — fixes written without a phone prefix — review every class a phone fix adds for a breakpoint prefix; compare the 1280 px screenshot — second-model review
 
 ### Page faults (fix patterns in [fixes.md § patterns](fixes.md#-patterns-from-the-first-campaign))
 
