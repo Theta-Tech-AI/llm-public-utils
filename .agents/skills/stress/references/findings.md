@@ -319,6 +319,28 @@ Periodically:
 
 A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see the browser-only callout in [driving.md](driving.md).)
 
+## Talk a bug through with the owner (predict the critique)
+
+Filing and fixing teach the system; talking a fixed bug through with the person who owns the product teaches **you**. Do it one bug at a time, and write it in exactly three paragraphs:
+
+1. **The bug.** What a user saw, the impact, how it was found (which pass, which lane), and the cause in one or two sentences. Plain words, no internal codes.
+2. **Our solution.** What was changed, where, and what the live check showed. Say what is still owed. Do not defend it.
+3. **What I think you will say.** Your prediction of the owner's critique and of how they would have solved it, grounded in the critiques they gave on earlier bugs (quote the pattern, not a slogan). Predict one level deeper than the fix: the decision the fix did not make, the second owner it left in place, the silent default it added, the mechanism that should not exist at all. A prediction that only praises the fix is not a prediction.
+
+Pick the bug yourself, and prefer one whose fix you suspect was a patch. The point is to find out where your judgement and the owner's differ, not to show the work went well.
+
+### What to do with the owner's response
+
+Compare their answer with your third paragraph, line by line:
+
+- **Where you predicted right:** that lens is now yours. Apply it to the next fix *before* reporting it (state it in the fix's design), and re-check the open fixes of the same class against it.
+- **Where you missed:** write the delta down as durable feedback in the words the owner used (what they said, what you had predicted, the rule it implies), in the place your future sessions read (project memory, the project's agent rules file). Do not generalize past what they said; label your own interpretation as yours.
+- **When the critique names a general principle** (a class, not an instance): generalize it, then add it where every future pass sees it: the stress catalog (comb, mischief or bug-hunter), or a code principle in the team's principles library. Draft it from several instances, not one, or it will be too specific.
+- **When the critique shows the shipped fix was a patch:** reopen or follow up the issue with the redesign, and hunt the siblings of the class across the codebase.
+- **Keep the record:** post the three paragraphs and the owner's answer on the issue, so the reasoning survives the session.
+
+Over time the third paragraph should come closer to the owner's answer. When it matches several bugs in a row, the lens is learned; keep predicting anyway, because new owners and new kinds of bugs reset the curve.
+
 ## After the pass
 
 Summarize for the user:
