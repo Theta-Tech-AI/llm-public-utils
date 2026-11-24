@@ -34,7 +34,7 @@ agent-browser --session <s> screenshot <dir>/<page>-<w>-<theme>-i<n>.png
 
 - **Name every shot in order** (`i0` before, `i1` after the first fix, …) and keep every one: the user watches them.
 - Read every image (open the PNG). One state per image: never a collage.
-- **Below the fold:** when the app scrolls inside its own container (the probe lists `scrollers`), `screenshot --full` shows only the first screen. Scroll the container (`eval "document.querySelector('<scroller>').scrollTop = <n>"`) and shoot in steps, or use `scrollIntoView` on the element you need.
+- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: set `window.__mobileProbeSeen = null`, probe, scroll the probe's `scroller` one screen down, probe again, and stop when its `scrollTop + clientHeight` reaches `scrollHeight`. The probe keeps the coverage across runs in the page: `coverage.unseen` must then hold only controls cut by the time budget (`sampling.incomplete`, `sampling.unsampledList.budget`) or off to the side; re-probe those with the page root narrowed to their section.
 - Cover the states a phone user meets: loaded, empty, long names, an open dialog or sheet, the menu drawer open, a form field focused. Both themes when the app has two (`agent-browser set media dark|light`, or the app's own toggle).
 - After a style change, give the dev server a second before the shot; the first shot can still show the old layout.
 
