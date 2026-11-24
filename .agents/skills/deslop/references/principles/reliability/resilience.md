@@ -31,5 +31,5 @@ In relation to other principles, resilience:
 | [**Idempotency**](../architecture/idempotency.md) | Only idempotent operations are safe to retry |
 | [**Fail-Fast**](fail-fast.md) | Auth failures should fail fast, not loop |
 | [**Observability & Transparency**](observability.md) | Fallbacks must be logged to be debugged |
-| [**Recovery Belongs in the System, Not in a Button**](../clean-code/recovery-in-the-system.md) | The boundary: a fallback *value* for degraded data is fine; a fallback *control* that asks a person to run the recovery is that principle. Transient failures get automatic bounded recovery here, never a button |
+| [**Liveness: Every State Has an Owner**](liveness.md) | Resilience is the mechanics of the system-owned case; a fallback *value* is fine, a fallback *control* that hands the move to a person is a liveness gap. |
 | [**Postel's Law**](postels-law.md) | Both assume the outside world is unreliable |

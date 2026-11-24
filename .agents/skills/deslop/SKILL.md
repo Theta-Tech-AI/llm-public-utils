@@ -96,7 +96,6 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Legibility — a navigable codebase where the path from entry point to effect is…
 - Principle of Least Surprise — a name, default or side effect behaves as a reader expects, so no one…
 - Patchwork — compensating code you cannot simplify by deleting
-- Recovery in the System — a Retry button the system could replace
 - A Special Case Is a Requirement the Design Never Accounted For — a branch that exists for one situation is evidence of a missing…
 - Decide, Don't Cope — Decide types once at the boundary
 
@@ -107,6 +106,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Idempotency — repeating an operation changes nothing the second time
 - Observability & Transparency — structured, correlated telemetry as the production debugger
 - Resilience & Graceful Degradation — bounded retries, timeouts, fallbacks and circuit breakers for partial…
+- Liveness — every state leaves by itself or names who it waits for
 - Principle of Least Privilege — minimum permissions per component, so a flaw has a small blast radius
 - Boy Scout Rule — leave code better than you found it, scoped to what you touch
 - Errors at the Boundary — validate where untrusted input enters
