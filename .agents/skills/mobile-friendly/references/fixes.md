@@ -44,6 +44,17 @@
 
 ## 📐 Nested padding eats the width
 
+Find the layer that adds it in one step: walk up from the first misplaced text and print each ancestor's x and padding.
+
+```js
+// agent-browser eval: which ancestor moves this text off the page margin?
+(() => { const t = [...document.querySelectorAll("*")].find((e) => /<text>/.test(e.textContent) && !e.children.length);
+  const out = []; for (let e = t; e && e !== document.documentElement; e = e.parentElement) { const cs = getComputedStyle(e);
+    out.push(`${e.tagName}.${String(e.className).slice(0, 40)} x=${Math.round(e.getBoundingClientRect().left)} pl=${cs.paddingLeft} ml=${cs.marginLeft}`); }
+  return out.join("\n"); })()
+```
+
+
 - A panel inside a section inside a page, each with 16–24 px padding, leaves 300 px of a 390 px screen. Under the breakpoint, set nested groups' side padding to 0 and let the page margin be the only one; a card keeps one inset.
 - Use the safe-area-aware page margin once, on the page container: `padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right))`.
 

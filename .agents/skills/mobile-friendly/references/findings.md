@@ -12,6 +12,7 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 - **Nothing to fix** — three of the first six reports were "no change": routes that only redirect or render a title plus a shared empty-state panel — classify routes before assigning → promoted to [fan-out.md § inventory](fan-out.md#0--inventory-every-page-the-app-serves)
 - **Stale inventory** — a page file named in the brief did not exist, five served routes were missing (one from an upstream package, one from the menu only), and one page file had no route at all (dead code) — the inventory was read from an old checkout and from one route file — inventory from the branch tree, reconcile router and menu → promoted to [fan-out.md](fan-out.md#0--inventory-every-page-the-app-serves)
 - **Empty records hide row faults** — a page's document rows were never rendered because the chosen project had none — pick a record with data per page → promoted to [loop.md § 0](loop.md#0--set-up-once)
+- **Locked records hide forms** — a locked project showed no editable step, so input sizes and the keyboard rule went unchecked — name an unlocked record for form pages
 - **Read-only rules hide editors** — the section editor's toolbar was never opened because the shared data must not change — give the agent a throwaway record it may edit, or check editors against a disposable environment
 - **Research skipped under pressure** — one agent of the twelve that got the research instruction skipped it — make research a numbered loop step, not an add-on → promoted to [loop.md § 1](loop.md#1--research-before-your-first-fix)
 
@@ -28,6 +29,7 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 - **Inner scroll container** — full-page screenshots showed only the first screen — the app scrolls in its own container — scroll the container and shoot in steps → promoted to [loop.md § 2](loop.md#2--shoot)
 - **Blocked tools in sandboxed agents** — `sleep` and `npx -y <pkg>@latest` were denied — use the driver's `wait` and the web versions of the guides → promoted to [harness.md](harness.md#driver-traps-agent-browser-027)
 - **Text selectors** — `wait "text=…"` and `click "text=…"` missed elements on screen — use CSS selectors or snapshot refs → promoted to [harness.md](harness.md#driver-traps-agent-browser-027)
+- **Two agents on one preview tree** — a helper agent started and stopped a preview from the coordinator's worktree; the shared pid file then pointed at the wrong server and a start reported "port in use" — one preview per worktree, one owner
 - **Hot reload crash** — a CSS update in the middle of a context-heavy panel threw a provider error — hot reload remounted part of the tree — reload; not a real fault
 
 ### Probe
@@ -43,6 +45,8 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 
 - **Touch-only target rules** — 175 small targets on a page that already had 44 px rules — the rules sat under `@media (pointer: coarse)`, which a headless phone viewport never matches — apply phone target sizes by width too: `@media (any-pointer: coarse), (max-width: <bp - 1>px)`; on real phones the original rule did apply, so read such counts with `viewport.coarse` in mind — probe `targets` + `viewport.coarse` → promoted to [fixes.md](fixes.md#-small-or-crowded-targets)
 - **Modal false positives** — crowded pairs reported for page elements behind an open modal — the probe measured the inert page too — check the dialog screenshot; set the page root to the dialog while it is open
+- **One wrapper, many targets** — 45 small targets on one step came from one focusable tooltip wrapper around a status pill — group the list by component before counting causes
+- **12 px meta text** — after the pass, the home cards still carried 77 lines at 12 px (allowed as the floor, under the 13 px secondary size) — `smallSecondary` reports them; a project decides whether its meta lines move to 13 px
 - **Capped lists** — `targets` listed 15 of 175 — the probe caps each list — group the full list by tag and size when a count is large
 
 - **Probe review rounds** — three second-model rounds on the probe found 19, then 14, then fewer edge cases (page-scroller guesses, invisible or clipped boxes, native modals, label-wrapped inputs, viewport-unit overrides) — a geometric heuristic never ends in a perfect rule — add explicit hooks (`__mobileProbeRoot`, `__mobileProbePageScroller`, `[data-scroll-region]`), state each limit in the header, and cap the review rounds
