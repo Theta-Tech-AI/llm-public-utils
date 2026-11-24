@@ -162,9 +162,9 @@ less code to read. Without the ledger, only the bug count is visible, and patchw
 
 | Row | How to count it reproducibly | Target |
 |---|---|---|
-| **Owners of the fact** | State the fact in one sentence ("whether a claim has a source"). Grep its identifiers (the symbol, the regex, the literal, the column) and count the files that *decide* it: compute it, parse it, or branch on it. Files that only pass it through do not count. | 1 |
+| **Owners of the fact** | State the fact in one sentence ("whether a claim has a source"). Grep its identifiers (the symbol, the regex, the literal, the column) and count the **independent implementations** that decide it: each place that computes or parses it from raw input, listed as `file:symbol`. Two copies in one file are two owners; a call to the owner, or a branch on the owner's result, is a consumer and does not count. | 1 |
 | **Files touching it** | `git grep -l` over the same identifiers, at the base commit and at the head. | down |
-| **Net code lines** | `git diff --numstat <base>...<head>` over source files only: no tests, docs or generated files. Report code lines without blanks and comments when a counter (`scc`, `cloc`) is available. | down, or a stated reason |
+| **Net code lines** | `git diff --numstat <base> <head> -- <source pathspecs>` (two dots' worth: the same two snapshots as the other rows, not the merge base) over source files only: no tests, docs or generated files. Report code lines without blanks and comments when a counter (`scc`, `cloc`) is available. | down, or a stated reason |
 | **Special-case branches** | Conditionals and exemptions on the fact: branches on its kind or flag, "skip", "keep", "except for" rules. List them, not only count them. | down |
 
 Rules that keep it honest:
@@ -174,7 +174,7 @@ Rules that keep it honest:
    [patchwork](../principles/clean-code/patchwork.md) until the ledger shows otherwise.
 2. **Before is a prediction, after is a measurement.** Write the before row and the predicted after in the
    design; measure the after on the merged head. A gap between the two is a finding about the design.
-3. **Moving is not deleting.** Code moved to another file still counts; count at one base commit.
+3. **Moving is not deleting.** Code moved to another file still counts, and moving two copies into one file still leaves two owners. Count every row on the same two snapshots: the recorded base commit and the head.
 4. **One fact per ledger.** A change that touches two facts writes two ledgers.
 
 *Anonymized example.* Inline metadata markers inside generated prose (citations and "needs a source" written
