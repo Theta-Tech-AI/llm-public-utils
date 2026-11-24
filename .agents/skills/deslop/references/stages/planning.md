@@ -127,7 +127,7 @@ audits *reachability* of every markdown in the library. Each file must sit in ex
 An index file is **not** a substitute for the principle files (it carries one-line essences; a finding needs the
 full text), and a principle file is not a substitute for the index (the index is what tells a reader what a
 violated boundary even looks like). Read both, index first. `--check` fails on any file reachable by none of these
-paths and prints the tally — on this library: `96/96 files reachable — lens 65, lens-index 4, lens-protocol 3,
+paths and prints the tally — on this library: `97/97 files reachable — lens 65, lens-index 4, lens-protocol 4,
 library 7, mode 2, pattern 9, pattern-index 1, stage 5`.
 
 That is a guarantee of **reachability**, not of reading. No harness can prove an agent opened a file, but a
