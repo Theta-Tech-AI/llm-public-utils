@@ -30,6 +30,8 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 - **Blocked tools in sandboxed agents** — `sleep` and `npx -y <pkg>@latest` were denied — use the driver's `wait` and the web versions of the guides → promoted to [harness.md](harness.md#driver-traps-agent-browser-027)
 - **Text selectors** — `wait "text=…"` and `click "text=…"` missed elements on screen — use CSS selectors or snapshot refs → promoted to [harness.md](harness.md#driver-traps-agent-browser-027)
 - **Two agents on one preview tree** — a helper agent started and stopped a preview from the coordinator's worktree; the shared pid file then pointed at the wrong server and a start reported "port in use" — one preview per worktree, one owner
+- **Dev auth host name** — local e-signing fell through to the real identity provider in the preview — the app enables its fake signing only for `localhost`, and the preview ran on `127.0.0.1` — serve and open the preview on `localhost` → promoted to [harness.md](harness.md#shape)
+- **Half-built base published** — a failed dependency install still left a base directory that later starts reused — `set -e` does not apply inside `$(...)` without `inherit_errexit` — enable it, publish by rename only after success → promoted to [harness.md](harness.md#shape)
 - **Hot reload crash** — a CSS update in the middle of a context-heavy panel threw a provider error — hot reload remounted part of the tree — reload; not a real fault
 
 ### Probe
