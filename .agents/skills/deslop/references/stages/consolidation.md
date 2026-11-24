@@ -35,6 +35,8 @@ Run the list through [when-to-relax.md](../readings/when-to-relax.md) before ran
 truth — a small amount of duplication that keeps two modules independent, an explicit check that documents a real
 edge case — drop it, and say that you dropped it. An audit that files churn is an audit nobody reads.
 
+Then run every surviving finding's repair through [one-level-deeper.md](../readings/one-level-deeper.md): six questions that catch a repair which stops the symptom without making the decision the bug is evidence of. A repair that changes there is the one you rank.
+
 ## 3. Score, then sort into three buckets
 
 Score each surviving finding on three axes, not one:

@@ -4,7 +4,8 @@
   "shared": {
     "protocols": [
       "readings/auditing.md",
-      "readings/when-to-relax.md"
+      "readings/when-to-relax.md",
+  "readings/one-level-deeper.md"
     ],
     "stage_protocols": {
       "stages/aggregation.md": "the moment more than one reading has reported",
