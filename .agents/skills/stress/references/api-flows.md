@@ -149,4 +149,6 @@ So the diagnostic in [driving.md](driving.md) cuts both ways: findings that are 
 
 ## See also
 
+- [oracles.md](oracles.md): lanes that check one property across the whole system instead of walking a path.
+
 - [driving.md](driving.md) · [process.md](process.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md) · [findings.md](findings.md)
