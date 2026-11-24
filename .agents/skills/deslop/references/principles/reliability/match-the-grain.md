@@ -46,7 +46,7 @@ def suggest_all(form, model):
 def suggest_one(question, model):
     return Suggestion.parse(question, model.suggest(question))   # refused here, for this question only
 
-outcomes = run_units(form.questions, suggest_one, key=lambda q: q.id,
+outcomes = run_units(form.questions, lambda q: suggest_one(q, model), key=lambda q: q.id,
                      retries=2, backoff_s=2.0, save=store.save_one, skip_done=True)
 # {question_id: Done(suggestion) | Unavailable(reason)}; the job's status is derived from these
 ```

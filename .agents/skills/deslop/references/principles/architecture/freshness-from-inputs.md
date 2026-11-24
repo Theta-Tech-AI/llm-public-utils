@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-freshness-from-inputs
-description: Deslop principle — Freshness From Inputs: stale only when its inputs changed; never by a time, an event or the producer's version.
+description: Deslop principle — Freshness From Inputs: stale only when its inputs changed; never by a time or an event, and a producer version only by a written decision.
 ---
 
 # Freshness From Inputs
@@ -92,5 +92,5 @@ In relation to other principles, freshness from inputs:
 1. **Stale means its inputs changed.** Store a digest of exactly what the producer read, and compare it.
 2. **Times and events are not changes.** An identical save, or an unlock and re-lock, must leave derived work current.
 3. **Size the key to what was read** ([match the grain](../reliability/match-the-grain.md)). A key that is too wide wastes work quietly. A key that is too narrow serves old output as current.
-4. **The producer's version is provenance.** Redoing old work with a new producer is a recorded decision, not a side effect of a deploy.
+4. **A producer's version is provenance unless a written decision says the change alters every past output.** Then it belongs in the key, with the reason beside it. Otherwise redoing old work with a new producer is a recorded action, not a side effect of a deploy.
 5. **Log what changed on every miss**, so a reader can tell a real change from a key that is too wide.
