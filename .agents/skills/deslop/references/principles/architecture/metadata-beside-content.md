@@ -30,8 +30,8 @@ The tell in code is a **reader that searches text for meaning**: a regex for a m
 ```python
 # ❌ Metadata in the content: every reader re-parses it, and each decides alone.
 section.text = "The device is sterile.【src:42】 Shelf life is 3 years.【unsourced: no stability report】"
-fda_copy  = re.sub(r"【[^】]*】", "", section.text)           # also deletes the unsourced signal
-ready     = "【unsourced" not in section.text                 # a second reader, a second rule
+prose_only  = re.sub(r"【[^】]*】", "", section.text)          # also deletes the unsourced signal
+ready       = "【unsourced" not in section.text               # a second reader, a second rule
 
 # ✅ Content and metadata in two channels; readers ask by name.
 @dataclass(frozen=True)
@@ -45,8 +45,8 @@ class SectionVersion:
     text: str                                                 # prose only
     claims: tuple[Claim, ...]
 
-fda_copy = version.text                                       # nothing to strip
-ready    = not any(c.needs_source is not None for c in version.claims)
+prose_only = version.text                                     # nothing to strip
+ready      = not any(c.needs_source is not None for c in version.claims)
 ```
 
 ## Finding and fixing it
