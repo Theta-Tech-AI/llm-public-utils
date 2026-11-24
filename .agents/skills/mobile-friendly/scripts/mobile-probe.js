@@ -32,7 +32,11 @@
 //   offscreenFixed  fixed or stuck elements that cross the viewport edge (they never widen the page, so overflow misses them)
 //   vhRules         CSS rules that use 100vh without a dvh/svh/lvh twin, on elements that exist now
 //   meta            {viewport, zoomBlocked, fitCover}
-//   scrollTop, scrollHeight, clientHeight   of the page scroller: accumulate coverage across scroll stops until the bottom
+//   scroller        the page scroller whose metrics follow: the innermost page scroller that really scrolls, or "document"
+//   coverage        {controls, seen, unseen, unseenList} over ALL controls in scope, across runs: each run adds the controls it
+//                   sampled to window.__mobileProbeSeen (a WeakSet); set it to null to reset. Scroll, run, repeat until
+//                   scrollTop + clientHeight >= scrollHeight; then coverage.unseen holds only budget, side and covered cases
+//   scrollTop, scrollHeight, clientHeight   of that scroller: accumulate coverage across scroll stops until the bottom
 //   ms              run time of the probe in milliseconds
 // Method: tap size, crowding and overlaps are MEASURED, not read from boxes. For each control that touches the viewport
 // the probe calls document.elementFromPoint on a grid (GRID px, out to REACH px beyond each edge) and keeps the points
@@ -593,7 +597,16 @@
   };
   // Elements become readable names only for the lists that are printed.
   const named = (list) => list.slice(0, LIMIT).map((o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v instanceof Element ? name(v) : v])));
-  const pageEl = pageList[0] || document.scrollingElement || doc; // the page scroller: scroll it and run again
+  // The page scroller is the innermost candidate that really scrolls (an outer shell that does not overflow says nothing
+  // about the bottom); one that holds the root or sits inside it wins. Every scroll metric reads this one element.
+  const scrolling = [...pageScrollers].filter((e) => e.scrollHeight > e.clientHeight + 1);
+  const depth = (e) => { let n = 0; for (let p = e; p; p = p.parentElement) n += 1; return n; };
+  const related = scrolling.filter((e) => e.contains(rootEl) || rootEl.contains(e));
+  const pageEl = (related.length ? related : scrolling).sort((a, b) => depth(b) - depth(a))[0] || document.scrollingElement || doc;
+  // Coverage across scroll stops: each run adds the controls it sampled to a set kept on the window.
+  if (!(window.__mobileProbeSeen instanceof WeakSet)) window.__mobileProbeSeen = new WeakSet();
+  for (const o of hit) window.__mobileProbeSeen.add(o.c);
+  const unseen = tappable.filter((c) => !window.__mobileProbeSeen.has(c));
   return JSON.stringify({
     ms: Math.round(performance.now() - t0),
     viewport: { w: W, h: H, dpr: devicePixelRatio, coarse: matchMedia("(any-pointer: coarse)").matches },
@@ -605,6 +618,8 @@
     scrollRegions: scrollRegions.slice(0, LIMIT),
     targets: named(targets),
     sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
+    scroller: pageEl === doc || pageEl === document.scrollingElement ? "document" : name(pageEl).replace(/ ".*$/, ""),
+    coverage: { controls: tappable.length, seen: tappable.length - unseen.length, unseen: unseen.length, unseenList: named(unseen.map((c) => ({ el: c, ...rect(c) }))) },
     scrollTop: Math.round(pageEl.scrollTop), scrollHeight: pageEl.scrollHeight, clientHeight: pageEl.clientHeight,
     crowded: named(crowded),
     overlaps: named(overlaps),
