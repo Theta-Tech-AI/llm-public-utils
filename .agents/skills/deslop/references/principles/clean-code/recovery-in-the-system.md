@@ -18,13 +18,14 @@ For each such control, finish this sentence: "The person presses this to decide 
 
 ## Classify at one owner
 
-Put the classification in one place (the run, the job, the state machine), not in each screen.
+Put the classification in one place (the run, the job, the state machine), not in each screen. Four cases, and none of them is a Retry button.
 
 | Case | Examples | What the system does |
 |------|----------|----------------------|
 | **Transient** | rate limit, outage, deploy or restart, timeout, lock | Bounded automatic recovery with a visible waiting state ("retrying at 14:05"). Never a button. After the bound, move to the next row. |
 | **Needs a person** | missing input, refused content, a permission | Name the cause in plain words and offer the one action that fixes it. The control is labelled by that action ("Add the missing file"), not by "Retry". |
 | **A decision** | regenerate signed or approved work, spend money, discard someone's edit | A decision control, labelled as the decision ("Replace the signed table"), with its cost shown. Never styled as a fallback. |
+| **Unexpected** | an unclassified exception, a bug in our own code | Stop safely (no half-written result; the last good state stays), fail loud (full diagnostics with a correlation id, an alert to the owners), tell the person plainly that the fault is ours and their work is safe, and re-queue the stopped work by itself once a build with the fix is live. Then classify the error into one of the rows above, so it does not stay unknown: a rising count here means the classification is missing a row. A Retry button on a bug repeats the bug and its cost. |
 
 ## A control must not reach what the automatic path rules out
 
@@ -34,6 +35,7 @@ A "just in case" control often becomes a **second definition of the state**. If 
 # ❌ A retry endpoint with its own idea of "current". The screen calls the table current;
 #    this path adds the prompt version to the key, so a prompt change re-pays and replaces it.
 def retry_table(table_id: str) -> Table:
+    table = load(table_id)
     key = (table.inputs_hash, PROMPT_VERSION)           # a second definition of "current"
     if cache.get(key) is None:
         table = draft(table_id)                         # runs again, replaces what the expert sees
@@ -50,12 +52,19 @@ def run_draft(table_id: str) -> None:
     try:
         save(draft(table))
     except TransientError as err:                       # rate limit, outage, restart, timeout
-        defer(table_id, retry_at=backoff(table.attempts), reason=str(err))   # shows "retrying at ..."
+        attempts = record_attempt(table_id)             # persisted, so a restart keeps the count
+        if attempts < MAX_ATTEMPTS:
+            defer(table_id, retry_at=backoff(attempts), reason=str(err))     # shows "retrying at ..."
+        else:
+            block(table_id, cause="still unavailable after several tries", action=None)  # the next row
     except NeedsPerson as err:                          # missing input, refused content
         block(table_id, cause=err.plain_words, action=err.fix)               # one named action
+    except Exception:                                   # unexpected: a bug or an unclassified error
+        stop_and_report(table_id)                       # keeps the last good table, alerts, re-queues after the fix
+        raise
 ```
 
-On the screen the same split holds. The ❌ shows a "Draft again" button next to every table, always enabled. The ✅ shows nothing on a current table, "retrying at 14:05" on a deferred one, the cause with its one fix on a blocked one, and "Replace the signed table" only where a person decides.
+On the screen the same split holds. The ❌ shows a "Draft again" button next to every table, always enabled. The ✅ shows nothing on a current table, "retrying at 14:05" on a deferred one, the cause with its one fix on a blocked one, "our error, reported (ref …); your table is unchanged" on a stopped one, and "Replace the signed table" only where a person decides.
 
 ## Worked example (anonymized)
 
@@ -73,7 +82,7 @@ The repair was not a better guard on the button:
 - **An expert's explicit regenerate of approved content**: that is the decision row above, labelled as such.
 - **Offline-first apps where the person controls sync**: here the person owning sync is the design.
 
-If the system *can* observe the failure or the staleness, it is not on this list.
+What keeps a control on this list is a person's authority to decide, not the system's inability to see: an offline app sees its pending changes and still lets the person choose when to sync. A control whose only reason is "the system did not recover" is not on this list.
 
 ## Finding and fixing it
 
