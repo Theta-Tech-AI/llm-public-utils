@@ -335,7 +335,7 @@ Compare their answer with your third paragraph, line by line:
 
 - **Where you predicted right:** that lens is now yours. Apply it to the next fix *before* reporting it (state it in the fix's design), and re-check the open fixes of the same class against it.
 - **Where you missed:** write the delta down as durable feedback in the words the owner used (what they said, what you had predicted, the rule it implies), in the place your future sessions read (project memory, the project's agent rules file). Do not generalize past what they said; label your own interpretation as yours.
-- **When the critique names a general principle** (a class, not an instance): generalize it, then add it where every future pass sees it: the stress catalog (comb, mischief or bug-hunter), or a code principle in the team's principles library. Draft it from several instances, not one, or it will be too specific.
+- **When the critique names a general class:** add the reusable stress check to the catalog (comb, mischief or bug-hunter) at once, as "Learn from bugs users found first" asks; one instance is enough for a check. A **code principle** for the team's principles library is broader: draft it from several instances of the class, or it will describe the instance instead of the principle.
 - **When the critique shows the shipped fix was a patch:** reopen or follow up the issue with the redesign, and hunt the siblings of the class across the codebase.
 - **Keep the record:** post the three paragraphs and the owner's answer on the issue, so the reasoning survives the session.
 
