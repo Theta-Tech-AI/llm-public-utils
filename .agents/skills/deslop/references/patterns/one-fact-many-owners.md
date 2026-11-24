@@ -65,6 +65,14 @@ Repair, on top of "owner first" above:
 3. Add a guard that fails when a new copy is written outside the owner: a lint rule or a check script (for example, no literal glow value outside the token file).
 4. Report the owner count before and after. The goal is one. If it is more, each extra owner has a reason in the list.
 
+Who else owns a piece of this:
+- [complete-mediation](../principles/reliability/complete-mediation.md): there was no single door, so one surface bypassed the owner and nothing enforced the route.
+- [implicit-coupling](../principles/architecture/implicit-coupling.md): the shared look was an unstated convention, and nothing tied the literal to the token.
+- [unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md): the report said "single source" while copies remained, a claimed guarantee with no check.
+- [patchwork](../principles/clean-code/patchwork.md): a local fix per page, instead of fixing the decision once.
+- [fail-fast](../principles/reliability/fail-fast.md): no guard fails on a new copy, so drift stays silent.
+- [vocabulary-drift](vocabulary-drift.md): four different names for one card hid that it was one concept.
+
 ## Who owns the mechanism
 
 | Principle | Owns | Boundary with this pattern |

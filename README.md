@@ -8,7 +8,7 @@ From the root of your project repository (any git repo, even one that has never 
 npx -y skills add Theta-Tech-AI/llm-public-utils -y --skill deslop
 ```
 
-The same command installs the skill on the first run and refreshes it to the latest version on every later run. It writes `.agents/skills/deslop/`, links it for your agent harness (for example `.claude/skills/deslop` for Claude Code) and records the source in `skills-lock.json`. Restart your agent, then run `/deslop` (Claude Code) or `$deslop` (Codex).
+To update an installed copy, run `npx skills update -y --skill deslop` instead. `add` is for the first install. The install writes `.agents/skills/deslop/`, links it for your agent harness (for example `.claude/skills/deslop` for Claude Code) and records the source in `skills-lock.json`. Restart your agent, then run `/deslop` (Claude Code) or `$deslop` (Codex).
 
 A collection of agent skills, utility scripts, and experiments for LLM-assisted development workflows. Skills are installed with [`npx skills`](https://github.com/vercel-labs/skills) — GitHub is the registry, so a **public repo needs no clone**: there is nothing to clone, pull, or keep beside your project. The installer fetches from `Theta-Tech-AI/llm-public-utils` directly and records what it took.
 
