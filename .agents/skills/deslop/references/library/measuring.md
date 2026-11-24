@@ -153,6 +153,35 @@ HEAD in a clean env to determine whether the failure is pre-existing."*
 - **Resource exhaustion from parallelism:** ~30 worktrees each started their own Pyright, consuming
   ~8.7 GB; fixed by sharing one language server with a liveness check.
 
+## The simplicity ledger (one change, not a campaign)
+
+A campaign is measured with the harnesses above. A single redesign or "fix the class" change is measured with
+a ledger of four rows, written into the change's design **before** building and reported in the pull request
+**after**. Fixing the bug is half the payoff; the other half is that fewer places decide the fact and there is
+less code to read. Without the ledger, only the bug count is visible, and patchwork looks like progress.
+
+| Row | How to count it reproducibly | Target |
+|---|---|---|
+| **Owners of the fact** | State the fact in one sentence ("whether a claim has a source"). Grep its identifiers (the symbol, the regex, the literal, the column) and count the **independent implementations** that decide it: each place that computes or parses it from raw input, listed as `file:symbol`. Two copies in one file are two owners; a call to the owner, or a branch on the owner's result, is a consumer and does not count. | 1 |
+| **Files touching it** | `git grep -l` over the same identifiers, at the base commit and at the head. | down |
+| **Net code lines** | `git diff --numstat <base> <head> -- <source pathspecs>` (two dots' worth: the same two snapshots as the other rows, not the merge base) over source files only: no tests, docs or generated files. Report code lines without blanks and comments when a counter (`scc`, `cloc`) is available. | down, or a stated reason |
+| **Special-case branches** | Conditionals and exemptions on the fact: branches on its kind or flag, "skip", "keep", "except for" rules. List them, not only count them. | down |
+
+Rules that keep it honest:
+
+1. **Owners first, lines second, both always reported.** A change may grow lines when it removes owners
+   (a consolidation); it then says so. A change that adds compensating lines and removes no owner is
+   [patchwork](../principles/clean-code/patchwork.md) until the ledger shows otherwise.
+2. **Before is a prediction, after is a measurement.** Write the before row and the predicted after in the
+   design; measure the after on the merged head. A gap between the two is a finding about the design.
+3. **Moving is not deleting.** Code moved to another file still counts, and moving two copies into one file still leaves two owners. Count every row on the same two snapshots: the recorded base commit and the head.
+4. **One fact per ledger.** A change that touches two facts writes two ledgers.
+
+*Anonymized example.* Inline metadata markers inside generated prose (citations and "needs a source" written
+as tokens in the text): 39 files parsed them, with per-output keep, strip and skip rules, and one output
+stripped a marker mid-sentence. The design moved the markers into typed annotations beside the text; its
+ledger predicted owners 39 → 1 (one reader of legacy text), a net line reduction, and zero per-output rules.
+
 ## Reporting skeleton
 
 ```
