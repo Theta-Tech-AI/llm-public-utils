@@ -47,7 +47,7 @@ agent-browser --session <s> eval "window.__mobileProbeRoot='<page container sele
 The probe measures what a finger gets, not what the CSS boxes imply: it samples `elementFromPoint` on a grid over and around each control, so a padded `::after` hit area counts, a control under a sticky bar or a modal is skipped (`sampling.covered`), and a neighbour that steals a tap shows as `crowded`. It also reports content that **escapes its container** (`escapes`: text or a box past its card, at any width, desktop included).
 
 - **Probe at scroll top, after the content loaded.** A sticky bar over scrolled text reads as an overlap, and a probe during loading reports transient crowding.
-- **Below the fold:** only the viewport can be hit-tested. Controls further down are listed in `sampling.unsampledList`; scroll the page scroller one screen at a time and run the probe again until the list is empty.
+- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: probe, scroll the page scroller one screen down, probe again, and stop when the probe's `scrollTop + clientHeight` reaches its `scrollHeight` (the page scroller's, read by the probe). Keep the union of the controls sampled at each stop; a control counts as covered once any stop sampled it (`sampling.unsampledList.above` / `.below` / `.side` are only outside this stop's view). Controls cut by the time budget (`sampling.unsampledList.budget`, and `sampling.incomplete`) are a separate list: re-probe that stop with the page root narrowed to their section.
 - Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once without the root to see the frame.
 
 Read `counts` first, then the lists:
