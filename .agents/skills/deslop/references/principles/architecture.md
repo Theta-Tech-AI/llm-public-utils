@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture
-description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, Implicit Coupling, Layering Violations, SOLID, CQS, Reusability, Parse Don't Validate, Metadata Beside Content, Make Illegal States Unrepresentable, A State Machine Nobody Wrote Down, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency, Depend in the Direction of Stability.
+description: Deslop principles — Architecture: DRY, Single Source of Truth, Separation of Concerns, Modularity, One Logical Unit One Home, Encapsulation, Demeter, Orthogonality, DI, Composition, Implicit Coupling, Layering Violations, SOLID, CQS, Reusability, Parse Don't Validate, Metadata Beside Content, Make Illegal States Unrepresentable, A State Machine Nobody Wrote Down, A Helper That Must Exist Is an Architecture Finding, Immutability, Idempotency, Freshness From Inputs, Depend in the Direction of Stability.
 ---
 
 # Architecture
@@ -51,7 +51,7 @@ Each principle is a self-contained file — open it when a finding implicates th
 
 ## Data & State
 
-*How should data flow and behave? Parse Don't Validate transforms unstructured input into typed domain objects at boundaries, Make Illegal States Unrepresentable fixes the shape it lands in, and A State Machine Nobody Wrote Down gives the moves between those states one owner. Immutability eliminates bugs by preventing state changes after creation. Idempotency ensures operations can be safely repeated.*
+*How should data flow and behave? Parse Don't Validate transforms unstructured input into typed domain objects at boundaries, Make Illegal States Unrepresentable fixes the shape it lands in, and A State Machine Nobody Wrote Down gives the moves between those states one owner. Immutability eliminates bugs by preventing state changes after creation. Idempotency ensures operations can be safely repeated, and Freshness From Inputs decides from content, not from clocks, whether derived work must be redone.*
 
 | Principle | What it says |
 |-------------|----------------|
@@ -62,3 +62,4 @@ Each principle is a self-contained file — open it when a finding implicates th
 | [A State Machine Nobody Wrote Down](architecture/implicit-state-machine.md) | **A status or mode field whose legal transitions exist only as conditions across callers** — no file says which move is allowed. Count the **writers**: two or more assignments means the transition relation has no owner. Then the **legality question** — *can it go from X to Y?* — an answer that requires studying the callers is the finding. Tells: `status` written in three modules; a job that sets the field directly instead of calling the checker; `n` booleans interacting with a status field (`2^n × states` combinations, only a few intended); a stale `# only valid when …` comment at a write site. Repair: name the states, centralize the transitions, route every mutation through the owner |
 | [Immutability](architecture/immutability.md) | Values fixed after creation; never mutate caller data |
 | [Idempotency](architecture/idempotency.md) | Safe repetition; design for duplicate requests |
+| [Freshness From Inputs](architecture/freshness-from-inputs.md) | **Derived work is stale only when what it read changed.** Store a digest of exactly what the producer read beside the output and compare it; never a time or event (`updated_at > built_at`, "changed after the lock"), never a key wider or narrower than what was read, never the producer's own version (that is provenance; redoing old work with a new producer is a recorded decision). Tells: an identical re-save or an unlock and re-lock makes work stale; a cache whose hit rate collapses after any unrelated change; a deploy that invalidates every stored result |

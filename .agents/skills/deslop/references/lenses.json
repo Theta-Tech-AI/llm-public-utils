@@ -161,6 +161,7 @@
         "principles/clean-code/unclaimed-guarantee.md",
         "principles/architecture/immutability.md",
         "principles/architecture/idempotency.md",
+        "principles/architecture/freshness-from-inputs.md",
         "principles/reliability/observability.md",
         "principles/reliability/resilience.md",
         "principles/reliability/liveness.md",

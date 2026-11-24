@@ -33,6 +33,14 @@ Polishing one copy of a fact that has several is the commonest wasted fix. Disag
 
 In the schema the same shape is the update anomaly: one fact on several rows, or in two columns (`status` plus `stage`, a JSON blob beside the scalars projected out of it, a "current" snapshot beside a versions table), so an update touches all of them or leaves them disagreeing. It survives in production for years because both reads still "work". A `# kept in sync by the app` comment is the confession. The repair is the same: one home for the fact, the rest derived (a view, a generated column).
 
+## Variant: a status and its message
+
+How a job or a check ended is one fact: its outcome, and the words that tell a person about it. Look at a job that runs three checks, where one check fails. The job writes `status = "succeeded"`. The failed check writes its own `error` text, and the job also adds a "check did not run" finding. Then two screens decide what to say. One says "wait for the checks to finish". The other says "two checks failed; run them again". Each copy is right by its own definition, and the person cannot tell which one to believe. The tell is a status field in one place and the message about it written or composed in other places. Repair:
+1. Give each unit one outcome value, written once by the code that knows how the unit ended. Use a closed set, for example `pending`, `retrying(at)`, `needs_person(action)`, `failed(incident)`, `done`.
+2. Derive the parent's status from its children's outcomes.
+3. Make every message a lookup from that value in one wording table.
+4. Delete the free-text error fields and the extra findings that repeat it.
+
 ## Who owns the mechanism
 
 | Principle | Owns | Boundary with this pattern |
