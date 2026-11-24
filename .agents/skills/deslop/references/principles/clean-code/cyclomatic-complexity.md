@@ -5,6 +5,8 @@ description: Deslop principle — Cyclomatic Complexity: a testability metric, r
 
 # Cyclomatic Complexity
 
+**Why this is slop:** A lower complexity score is a false improvement when extracting each branch leaves readers following more shallow functions.
+
 > "…we were very aware that if we measure it, you will try to improve it."
 > — SonarSource, *Cognitive Complexity, Because Testability != Understandability*
 

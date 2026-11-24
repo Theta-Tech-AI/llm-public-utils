@@ -5,6 +5,8 @@ description: Deslop principles — Reliability: Fail-Fast, No Silent Defaults, D
 
 # Reliability
 
+**Why this is slop:** Hidden failures, unchecked authority and stalled work let the system appear healthy while users receive wrong results or wait without an answer.
+
 > *Building robust, maintainable systems. These principles govern how code handles errors, maintains itself over time, and operates in production.*
 
 Each principle is a self-contained file — open it when a finding implicates that principle.

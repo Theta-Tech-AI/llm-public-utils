@@ -5,6 +5,8 @@ description: Pick the shape of a deslop pass before reading anything else. A fil
 
 # Recipes
 
+**Why this is slop:** Treating a quick look as full coverage leaves defect classes unexamined while telling the requester the review is complete.
+
 Pick the shape from the ask, then read only what that shape needs. A target that is not a diff or PR gets a
 **coverage pass**. The other rows are for narrower asks, or for work that is not a pass at all.
 

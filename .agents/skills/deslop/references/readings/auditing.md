@@ -5,6 +5,8 @@ description: The deslop audit workflow — the analyzer persona, the up-front mo
 
 # Auditing
 
+**Why this is slop:** Routes that never called a check stay out of the report when the audit lists only the checks it finds.
+
 You are an obsessive code quality analyzer. Your task is to identify "slop" - code that violates established coding principles - and suggest concrete improvements.
 
 **Ask the mode question FIRST, not after the audit.** Unless the invocation

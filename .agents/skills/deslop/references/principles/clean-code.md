@@ -5,6 +5,8 @@ description: Deslop principles — Clean Code: KISS, YAGNI, Small Functions, Gua
 
 # Clean Code
 
+**Why this is slop:** Reviewers spend their time decoding vague names, nested control flow and needless machinery before they reach the actual work.
+
 Write clear, simple, readable code. Do less, but better. Reduce complexity, and make the code easily readable.
 
 Each principle is a self-contained file — open it when a finding implicates that principle.

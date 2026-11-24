@@ -5,6 +5,8 @@ description: Deslop principle — Convention Over Configuration: sensible defaul
 
 # Convention Over Configuration
 
+**Why this is slop:** Users must supply the same routine settings at each call site when the common case has no defaults.
+
 > "You're not a beautiful and unique snowflake. By giving up vain individuality, you can leapfrog the toils of mundane decisions, and make faster progress in areas that really matter."
 > — David Heinemeier Hansson, The Rails Doctrine
 

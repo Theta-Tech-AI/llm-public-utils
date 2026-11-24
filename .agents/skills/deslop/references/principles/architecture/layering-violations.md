@@ -5,6 +5,8 @@ description: Deslop principle — Layering Violations: a dependency against the 
 
 # Layering Violations
 
+**Why this is slop:** A domain rule that imports an HTTP request object makes testing and changing business behaviour depend on the web framework.
+
 > "No cycles on the application module level — the dependencies between modules have to form a directed acyclic
 > graph. Efferent module access via API packages only."
 > — Spring Modulith, *Verifying Application Module Structure*

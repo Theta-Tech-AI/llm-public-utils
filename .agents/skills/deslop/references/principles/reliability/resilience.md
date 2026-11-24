@@ -5,6 +5,8 @@ description: Deslop principle — Resilience & Graceful Degradation: bounded ret
 
 # Resilience & Graceful Degradation
 
+**Why this is slop:** Callers hang when a dependency stops responding, because a call with no timeout has no way back.
+
 > "In complex systems, failure is the normal state. Success is the special case that requires explanation."
 > — Richard Cook
 

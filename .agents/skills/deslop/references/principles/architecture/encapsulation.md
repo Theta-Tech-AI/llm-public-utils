@@ -5,6 +5,8 @@ description: Deslop principle — Encapsulation: Tell, don't ask; hide state beh
 
 # Encapsulation
 
+**Why this is slop:** Callers that make an object's decisions from its exposed state must change whenever that internal representation changes.
+
 > "Ask not what an object knows; ask what it can do for you."
 
 Bundle related data with the behavior that operates on it, and hide internal state behind an interface so it can change without breaking callers. The core habit is **tell, don't ask**: rather than querying an object's state and making decisions for it externally, command it to act and let it enforce its own rules.

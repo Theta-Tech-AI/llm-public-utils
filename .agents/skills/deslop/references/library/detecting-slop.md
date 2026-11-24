@@ -5,6 +5,8 @@ description: How deslop detection is packaged — what automated tools cannot se
 
 # Detecting Slop
 
+**Why this is slop:** Reviewers get false confidence from a detector fitted to the spellings it was written against, while renamed defects walk past it.
+
 Two questions decide how much of this library ever gets used: **which failures detection can see at all**,
 and **where detection lives**. Both are operational rather than philosophical — a rule no pass ever trips
 over may as well not be in the library.

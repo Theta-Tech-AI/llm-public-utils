@@ -5,6 +5,8 @@ description: How to report a deslop pass to a person — lead with the answer, b
 
 # Reporting results
 
+**Why this is slop:** A report that narrates its method buries the one finding that mattered, and leaves the reader to reconstruct the answer from the working.
+
 **Read this immediately before you say anything to the person who asked.** Everything before it produced a
 consolidated, bucketed, concern-level list; this stage decides the shape of the sentence.
 

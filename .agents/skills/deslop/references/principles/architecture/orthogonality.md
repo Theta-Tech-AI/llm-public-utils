@@ -5,6 +5,8 @@ description: Deslop principle — Orthogonality: unrelated things change indepen
 
 # Orthogonality
 
+**Why this is slop:** Without a contract separating independent reasons to change, replacing one collaborator forces edits to the unit's unrelated work.
+
 > "Each software module should have one and only one reason to change."
 > — Robert C. Martin, "The Single Responsibility Principle" (2014)
 

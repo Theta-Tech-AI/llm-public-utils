@@ -5,6 +5,8 @@ description: Deslop principle — Command-Query Separation: Methods either do or
 
 # Command-Query Separation
 
+**Why this is slop:** Inspecting a value also changes the system when a query has hidden side effects.
+
 > "Asking a question should not change the answer."
 > — Bertrand Meyer
 

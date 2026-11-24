@@ -5,6 +5,8 @@ description: Deslop principle — Illegal States Unrepresentable: a field valid 
 
 # Make Illegal States Unrepresentable
 
+**Why this is slop:** A model that permits contradictory field combinations makes consumers defend against values the domain forbids.
+
 > "Make illegal states unrepresentable."
 > — Yaron Minsky, *Effective ML Revisited* (Jane Street, 2011)
 

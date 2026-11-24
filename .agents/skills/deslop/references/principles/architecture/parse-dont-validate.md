@@ -5,6 +5,8 @@ description: Deslop principle — Parse, Don't Validate: Convert input to precis
 
 # Parse, Don't Validate
 
+**Why this is slop:** A check that discards its normalized result lets the caller store a different value, forcing later readers to repair data that supposedly passed validation.
+
 > "A parser is just a function that consumes less-structured input and produces more-structured output."
 > — Alexis King
 

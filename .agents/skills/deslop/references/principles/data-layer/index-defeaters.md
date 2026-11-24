@@ -5,6 +5,8 @@ description: Deslop principle — Know What Defeats an Index: Leading wildcards,
 
 # Know What Defeats an Index
 
+**Why this is slop:** The database reads rows the index was meant to skip whenever a predicate defeats it.
+
 Most "why is this slow" is a predicate written so the index *can't* be used. The recurring ones:
 
 - **Leading wildcard** — `LIKE '%term%'` cannot use a B-tree; use a `pg_trgm` GIN index (or full-text search).

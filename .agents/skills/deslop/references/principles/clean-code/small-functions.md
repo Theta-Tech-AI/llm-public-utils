@@ -5,6 +5,8 @@ description: Deslop principle — Small Functions: short functions that do one t
 
 # Small Functions
 
+**Why this is slop:** Each job in a function with several is coupled to the others' setup and side effects, so no one of them can be tested or reused alone.
+
 > "The first rule of functions is that they should be small. The second rule of functions is that they should be smaller than that."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 

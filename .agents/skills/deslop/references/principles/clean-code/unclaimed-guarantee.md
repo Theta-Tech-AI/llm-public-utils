@@ -5,6 +5,8 @@ description: Deslop principle — An Unclaimed Guarantee: machinery promising a 
 
 # An Unclaimed Guarantee
 
+**Why this is slop:** Unused lifecycle guarantees add handles and cleanup duties that maintainers must preserve without serving a caller.
+
 > "This is a perfect example of the type of change AI will happily make. It does literally nothing and makes the
 > code worse."
 > — a Go diff posted publicly, in which three hunks of hygiene were read as improvement

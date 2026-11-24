@@ -1,5 +1,7 @@
 # Fixture: change-rate edges and special cases
 
+**Why this is slop:** A vendor upgrade forces edits to stable pricing rules, while customer branches and timing patches make unrelated changes collide in shared code.
+
 A planted corpus for two principles — **Depend in the Direction of Stability** and **A Special Case Is a
 Requirement the Design Never Accounted For** — plus the two rules folded into their owners
 (`small-functions` flag arguments, `legibility` dead code). Small on purpose: every planted defect is

@@ -5,6 +5,8 @@ description: Deslop principle — Single Level of Abstraction (SLAP): Each funct
 
 # Single Level of Abstraction (SLAP)
 
+**Why this is slop:** Readers must sort low-level parsing statements into workflow steps themselves when both occupy the same function.
+
 > "The code within a function should operate at a single level of abstraction."
 > — Robert C. Martin, Clean Code
 

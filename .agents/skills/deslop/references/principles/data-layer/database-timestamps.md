@@ -5,6 +5,8 @@ description: Deslop principle — Let the Database Own Timestamps and Derived Va
 
 # Let the Database Own Timestamps and Derived Values
 
+**Why this is slop:** The modification time stays stale when a writer forgets the timestamp assignment that only application code enforces.
+
 `created_at` and `updated_at` are the textbook case of logic that belongs one layer down. `created_at timestamptz NOT NULL DEFAULT now()` is set correctly on every insert from any client, forever. `updated_at` is the trap: a `DEFAULT now()` fires only on insert, so teams "fix" it by writing `updated_at = now()` in every `UPDATE` — which means every statement that forgets the clause silently ships a stale timestamp, and the ones that remember are redundant with each other and overwritten anyway. Maintain it with one `BEFORE UPDATE` trigger so the column is right whether the write came from the service, a migration, or a one-off `psql` session.
 
 ```sql

@@ -5,6 +5,8 @@ description: Deslop principle — Boy Scout Rule: leave code better than you fou
 
 # Boy Scout Rule
 
+**Why this is slop:** Unclear names, dead imports and tangled conditions accumulate until ordinary feature work requires a separate cleanup.
+
 > "Always leave the code better than you found it."
 > — Robert C. Martin (Uncle Bob), *Clean Code*
 

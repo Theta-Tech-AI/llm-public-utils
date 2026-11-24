@@ -5,6 +5,8 @@ description: Deslop principle — Design by Contract: Explicit preconditions, po
 
 # Design by Contract
 
+**Why this is slop:** An agreement that lives in the caller's head — preconditions nobody states, invariants nobody checks — is re-derived at every call site and broken at one.
+
 > "A software system is not a bunch of components thrown together. It is a construction of interacting elements, connected by clear contracts."
 > — Bertrand Meyer
 

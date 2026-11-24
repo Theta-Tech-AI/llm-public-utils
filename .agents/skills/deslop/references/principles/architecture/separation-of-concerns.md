@@ -5,6 +5,8 @@ description: Deslop principle — Separation of Concerns: High cohesion, low cou
 
 # Separation of Concerns
 
+**Why this is slop:** Misplaced concerns make unrelated edits compete in one file or force one feature change across several files.
+
 > "The separation of concerns, even if not perfectly possible, is yet the only available technique for effective ordering of one's thoughts."
 > — Edsger Dijkstra
 

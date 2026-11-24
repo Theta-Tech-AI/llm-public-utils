@@ -5,6 +5,8 @@ description: How to measure a deslop campaign — the four harnesses (static sha
 
 # Measuring a deslop campaign
 
+**Why this is slop:** Reporting only deleted lines hides slower lookups, higher import costs and duplicated decisions that survived the cleanup.
+
 > **A campaign that cannot be measured cannot be claimed.** LOC alone is the weakest signal in this
 > file; the strongest is *what an agent pays to read the code*.
 

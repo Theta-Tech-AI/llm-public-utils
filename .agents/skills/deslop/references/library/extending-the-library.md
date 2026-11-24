@@ -5,6 +5,8 @@ description: How to add a principle to this library — discovery, research, dra
 
 # Extending the Library
 
+**Why this is slop:** Adding a principle that restates a sibling gives auditors two rules for the same defect and no clear place to file it.
+
 > "The library is only as good as the gap it just closed."
 
 Deslop is not a fixed document. It is a **principles library**, and the reason to keep it open is that the

@@ -5,6 +5,8 @@ description: Index of the recurring diagnostic patterns a very large audit measu
 
 # Patterns: index
 
+**Why this is slop:** Treating recurring failures as unrelated local defects produces repeated patches while the shared cause survives.
+
 Read this index before the pattern files your lens lists, the way a reading opens a category index before its principles. Each pattern has its own file under `patterns/`.
 
 ## Pattern versus principle

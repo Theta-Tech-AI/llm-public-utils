@@ -5,6 +5,8 @@ description: Deslop principle — Cognitive Load: Minimize mental effort to read
 
 # Cognitive Load
 
+**Why this is slop:** Dense expressions consume the working memory a newcomer needs to follow the program's logic.
+
 > "Cognitive load is how much a developer needs to think in order to complete a task."
 > — Artem Zakirullin
 

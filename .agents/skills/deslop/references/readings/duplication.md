@@ -5,6 +5,8 @@ description: How to hunt duplication beyond token scanners — the three-axis ta
 
 ## Hunting Duplication — Beyond Token Scanners
 
+**Why this is slop:** A duplication review limited to matching text misses independently written versions of the same rule, leaving inconsistent behaviour undiscovered.
+
 Mechanical clone detectors (jscpd, token/AST diffing) only catch byte-for-byte
 or near-identical text. The more expensive duplication is semantic: the same
 business rule reimplemented with different variable names, different control

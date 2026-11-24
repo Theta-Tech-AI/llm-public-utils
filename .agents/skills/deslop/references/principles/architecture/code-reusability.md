@@ -5,6 +5,8 @@ description: Deslop principle — Code Reusability: Earn reuse from real callers
 
 # Code Reusability
 
+**Why this is slop:** Maintainers must thread unused options through an interface designed around callers that do not exist.
+
 > "A little copying is better than a little dependency."
 > — Rob Pike
 

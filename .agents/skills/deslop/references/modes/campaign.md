@@ -5,6 +5,8 @@ description: Deslop campaign mode — run a whole-codebase simplification progra
 
 # Campaign mode
 
+**Why this is slop:** Moved code counts as progress and regressions hide in an unreviewable diff when a repository-wide cleanup has no measured baseline or staged verification.
+
 A normal deslop pass is a coverage pass over a file, a directory or a module, and a scoped pass over a diff
 ([recipes](../stages/recipes.md)). **Campaign mode is scoped to the
 codebase, runs to completion, and carries a measurable target.** It is what the user means when they

@@ -5,6 +5,8 @@ description: "Library of 65 coding principles and 9 diagnostic patterns for find
 
 # Deslop: code quality analysis
 
+**Why this is slop:** A reader can no longer trust what the code says — the truth sits in a second copy, an error is swallowed, an assumption is unwritten.
+
 `/deslop [file-or-directory]` (or `$deslop`) reads your code against the principles in [references/](references/) and suggests fixes with before/after examples.
 
 **Coverage pass by default.** Any target that is not a diff or PR (a file, directory, module, package, subsystem or whole repository) gets a **coverage pass**: one reading per principle group in [references/lenses.json](references/lenses.json) (all nine today), each reading its group's index and then every principle file in that group, in full. Only a diff or PR review, or an explicit request for a quick or narrow look, gets a **scoped pass**, and its report names the groups it did not read. Pass shapes: [references/stages/recipes.md](references/stages/recipes.md). When the ask is a **campaign** ("massive simplification", "across the board", "minimum 30% LOC", "break up the god files") follow [references/modes/campaign.md](references/modes/campaign.md) and measure with [references/library/measuring.md](references/library/measuring.md).
@@ -34,7 +36,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 10. **Delete before you add.** No feature for later, no special case without a missing mechanism, no patch over a decision; leave touched code better, and relax a rule when applying it makes worse code. *Why:* every line must be read, tested and kept true, so the best change often removes lines.
    [yagni](references/principles/clean-code/yagni.md), [special-cases](references/principles/clean-code/special-cases.md), [patchwork](references/principles/clean-code/patchwork.md), [one-level-deeper](references/readings/one-level-deeper.md), [when-to-relax](references/readings/when-to-relax.md)
 
-**What the library provides:** 65 principles in four categories (clean code, architecture, reliability, data layer), 9 cross-principle patterns, 9 reading lenses, coverage and scoped passes with planning, aggregation, consolidation and reporting, measured campaigns, and a procedure to [extend the library](references/library/extending-the-library.md).
+**What the library provides:** 65 principles in four categories, 9 patterns, 9 lenses, the stage and campaign protocols, and [how to extend it](references/library/extending-the-library.md).
 
 ## The library at a glance
 
@@ -149,7 +151,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 
 ## Where to read what
 
-One row per file, in the order a pass meets them. CI fails on a markdown that no row here and no index links.
+One row per file, in the order a pass meets them; CI fails on a markdown no row here and no index links.
 
 | File | When |
 |------|------|

@@ -1,5 +1,7 @@
 # Fixture — a rule every member must remember
 
+**Why this is slop:** Routes that enforce leases only by convention leave project writes unprotected and permit a lease to change between its check and the write.
+
 A small project API with an edit lease, used to control *Complete Mediation*. The router checks each route's
 role before the handler runs (`web/app.py`). The rule under test: **every route that changes a project needs
 the caller to hold that project's edit lease**. Packages: `projects/` (the lease and project routes),

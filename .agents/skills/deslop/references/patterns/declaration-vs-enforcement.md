@@ -5,6 +5,8 @@ description: Deslop pattern — Declaration vs Enforcement: a name, docstring, r
 
 # Declaration vs enforcement
 
+**Why this is slop:** An admin-only declaration with no enforcing check lets a caller perform the protected operation despite the advertised restriction.
+
 The declaration was written once and the code changed under it; nothing couples the two.
 
 ## The structural tell

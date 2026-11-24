@@ -5,6 +5,8 @@ description: When to relax the deslop coding principles — contexts where rules
 
 # When to Relax Rules
 
+**Why this is slop:** Splitting a tiny script into extra modules makes readers navigate interfaces whose upkeep costs more than the separation saves.
+
 *Over-applying principles causes as much harm as ignoring them. Know when to make exceptions.*
 
 | Context | Relaxed Principles | Why |

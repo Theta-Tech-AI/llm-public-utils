@@ -5,6 +5,8 @@ description: Deslop principle — Match the Index to the Query Shape: Composite 
 
 # Match the Index to the Query Shape
 
+**Why this is slop:** An index ordered for a different query leaves the intended lookup scanning or sorting rows while writes still pay to maintain it.
+
 An index helps only if its shape matches how the query reads. The rules that pay the most rent:
 
 - **Composite order is left-to-right.** An index on `(a, b, c)` serves predicates on `a`, on `a, b`, and on `a, b, c` — but **not** on `b` alone or `c` alone. Lead with the column that's always equality-filtered, then the range/sort column: `WHERE project_id = ? ORDER BY created_at DESC` wants `(project_id, created_at DESC)`, in that order.

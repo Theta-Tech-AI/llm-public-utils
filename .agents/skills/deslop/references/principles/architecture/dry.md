@@ -5,6 +5,8 @@ description: Deslop principle — DRY: Don't Repeat Yourself: One authoritative 
 
 # DRY: Don't Repeat Yourself
 
+**Why this is slop:** A second copy of the same knowledge is free to disagree with the first, and nothing in the system says which one is true.
+
 > "Every piece of knowledge must have a single, unambiguous, authoritative representation within a system."
 > — Andy Hunt & Dave Thomas, *The Pragmatic Programmer*
 

@@ -5,6 +5,8 @@ description: Deslop principle — Observability & Transparency: structured, corr
 
 # Observability & Transparency
 
+**Why this is slop:** Operators must piece together a failing request by hand when service logs omit a shared correlation ID.
+
 > "Observability is the ability to understand the internal state of a system by examining its external outputs."
 > — Charity Majors
 

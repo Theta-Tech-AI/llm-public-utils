@@ -1,5 +1,7 @@
 # Fixtures
 
+**Why this is slop:** Testing a rule only on its motivating example leaves missed defects and false alarms unchallenged.
+
 Planted-defect corpora for controlling a change to a rule. Each directory is a small repo: what is
 **PLANTED** must be found, and what is marked **LEGITIMATE** must be declined — a reading that reports the clean
 control has produced a false positive and the change is not ready.

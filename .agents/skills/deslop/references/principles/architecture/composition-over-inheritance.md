@@ -5,6 +5,8 @@ description: Deslop principle — Composition Over Inheritance: has-a over is-a;
 
 # Composition Over Inheritance
 
+**Why this is slop:** A subclass sees its parent's internals and depends on them, so every change near the top cascades unpredictably and the combinations breed a subclass per case.
+
 > "Favor object composition over class inheritance."
 > — Gang of Four, *Design Patterns*
 

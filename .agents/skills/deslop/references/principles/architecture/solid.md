@@ -5,6 +5,8 @@ description: Deslop principle — SOLID Principles: SRP, OCP, LSP, ISP, DIP; wit
 
 # SOLID Principles
 
+**Why this is slop:** Adding a variant requires edits throughout existing code when responsibilities, interfaces and concrete implementations are entangled.
+
 > "SOLID principles are the foundation of good software design—they make code more maintainable, flexible, and testable."
 > — Robert C. Martin (Uncle Bob)
 

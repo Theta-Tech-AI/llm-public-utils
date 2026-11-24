@@ -5,6 +5,8 @@ description: Bibliography for the deslop principles — foundational texts, semi
 
 # References
 
+**Why this is slop:** Without traceable sources, reviewers cannot check a principle's original scope or distinguish established guidance from this library's additions.
+
 ## Foundational Texts
 
 Essential books that shaped modern software design thinking.

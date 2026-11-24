@@ -5,6 +5,8 @@ description: Deslop pattern — One Fact, Many Owners: two places decide the sam
 
 # One fact, many owners
 
+**Why this is slop:** Changing one of several independent copies leaves other consumers following a conflicting version of the same rule.
+
 The single-fact disease and the costliest pattern in the field run. Each copy was correct when written; no module was ever named the owner, so each drifted.
 
 ## The structural tell

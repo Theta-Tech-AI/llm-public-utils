@@ -5,6 +5,8 @@ description: Deslop principle — Modularity: Deep modules, each hiding one desi
 
 # Modularity
 
+**Why this is slop:** Readers make an extra stop and maintainers an extra signature for a forwarding layer that hides no design decision.
+
 > "Every module is characterized by its knowledge of a design decision which it hides from all others."
 > — David Parnas
 
