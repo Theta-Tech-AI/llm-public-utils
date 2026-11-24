@@ -58,6 +58,9 @@ Keep entries provider-neutral: the framework and the fault, not the product or i
 - **Frame redesign in parallel** — a header overflow built on the old header conflicted with another session's frame move — the frame had two owners for an hour — ask the frame owner first and hand the rule over → promoted to [fan-out.md § ownership](fan-out.md#1--ownership)
 - **Probe false positives on rich pages** — SVG edge paths of a graph counted as overlaps (42–69 on one page); a sticky toolbar over scrolled text counted as overlaps and crowded; an `::after` hit pad made its control count as truncated and as a small target; a `role=toolbar` scroll row with a label counted as an unnamed region — read the lists, not only the counts
 
+- **Probe v3 measures, it does not guess** — five review rounds patched box-geometry rules (pads, SVG edges, sticky bars, page scrollers) — the probe now samples real hit areas with `elementFromPoint` and checks content against its card; on a heavy page it ran in about 1 s instead of 7 s, and real pages in 80–650 ms — the operator's choice after the talk-through
+- **Repeated class, one rule** — text ran past its box five times (a pill, a cost row, a crumb, a 1 px bar, a card at 1280 px) — no base rule for long tokens and min-content tracks — one app-wide containment rule and the `escapes` check → promoted to [checklist M12](checklist.md)
+
 ### Page faults (fix patterns in [fixes.md § patterns](fixes.md#-patterns-from-the-first-campaign))
 
 - **Sentence in a pill** — page scrolled sideways — `shrink-0` + no-wrap — wrap and shrink — screenshot

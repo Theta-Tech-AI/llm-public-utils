@@ -4,6 +4,7 @@
 
 ## ↔️ The page scrolls sideways
 
+- **The class has one fix:** before fixing an instance, check that the app has the containment base rule ([checklist M12](checklist.md)); if not, add it at the owner of all text containers and delete the instance fixes it covers.
 - **Find the cause first.** The probe's `overflow` list names the outermost element past the right edge. Open its children: the culprit is usually one child that will not shrink.
 - **Flex or grid child refuses to shrink.** A flex item's `min-width` is `auto` (its content's width), so a long word, a URL, an id or a `white-space: nowrap` label keeps it wide. Fix: `min-width: 0` on the flex/grid child (and `overflow-wrap: anywhere` on the text in it). This is the most common cause.
 - **Fixed widths.** `width: 480px`, `min-width: 600px`, a grid with `grid-template-columns: 300px 1fr`. Fix: `max-width: 100%`, `minmax(0, 1fr)`, or one column under the breakpoint.

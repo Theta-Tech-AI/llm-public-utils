@@ -34,7 +34,7 @@ agent-browser --session <s> screenshot <dir>/<page>-<w>-<theme>-i<n>.png
 
 - **Name every shot in order** (`i0` before, `i1` after the first fix, …) and keep every one: the user watches them.
 - Read every image (open the PNG). One state per image: never a collage.
-- **Below the fold:** when the app scrolls inside its own container (the probe lists `scrollers`), `screenshot --full` shows only the first screen. Scroll the container (`eval "document.querySelector('<scroller>').scrollTop = <n>"`) and shoot in steps, or use `scrollIntoView` on the element you need.
+- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: set `window.__mobileProbeSeen = null`, probe, scroll the probe's `scroller` one screen down, probe again, and stop when its `scrollTop + clientHeight` reaches `scrollHeight`. The probe keeps the coverage across runs in the page: `coverage.unseen` must then hold only controls cut by the time budget (`sampling.incomplete`, `sampling.unsampledList.budget`) or off to the side; re-probe those with the page root narrowed to their section.
 - Cover the states a phone user meets: loaded, empty, long names, an open dialog or sheet, the menu drawer open, a form field focused. Both themes when the app has two (`agent-browser set media dark|light`, or the app's own toggle).
 - After a style change, give the dev server a second before the shot; the first shot can still show the old layout.
 
@@ -44,12 +44,21 @@ agent-browser --session <s> screenshot <dir>/<page>-<w>-<theme>-i<n>.png
 agent-browser --session <s> eval "window.__mobileProbeRoot='<page container selector>'; $(cat <skill>/scripts/mobile-probe.js)"
 ```
 
-Run it at each width, after the content loaded (a probe during loading reports transient crowding). Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once without the root to see the frame. Read `counts` first, then the lists:
+The probe measures what a finger gets, not what the CSS boxes imply: it samples `elementFromPoint` on a grid over and around each control, so a padded `::after` hit area counts, a control under a sticky bar or a modal is skipped (`sampling.covered`), and a neighbour that steals a tap shows as `crowded`. It also reports content that **escapes its container** (`escapes`: text or a box past its card, at any width, desktop included).
+
+- **Probe at scroll top, after the content loaded.** A sticky bar over scrolled text reads as an overlap, and a probe during loading reports transient crowding.
+- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: probe, scroll the page scroller one screen down, probe again, and stop when the probe's `scrollTop + clientHeight` reaches its `scrollHeight` (the page scroller's, read by the probe). Keep the union of the controls sampled at each stop; a control counts as covered once any stop sampled it (`sampling.unsampledList.above` / `.below` / `.side` are only outside this stop's view). Controls cut by the time budget (`sampling.unsampledList.budget`, and `sampling.incomplete`) are a separate list: re-probe that stop with the page root narrowed to their section.
+- Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once without the root to see the frame.
+
+Read `counts` first, then the lists:
 
 - `overflow` names the **outermost** wide element: it, or a child that refuses to shrink, is the cause.
-- `overlaps` names boxes that run into each other (a title under a button): always a fault.
+- `escapes` names text or boxes that run past their card: the containment base rule is missing or bypassed ([checklist M12](checklist.md)).
+- `targets` carry `hitW`/`hitH`, the measured tap area; `crowded` pairs share or nearly share one.
+- `overlaps` names text under a control or two controls on top of each other: always a fault at scroll top.
 - `edges` is a histogram of text start positions: the two or three biggest bars should be the page margin and the card inset; a long tail means nested padding.
 - `textSizes` shows the spread: body text under 16 px is `smallBody`.
+- `ms` is the run time; sampling stops after a budget (about 1 s) on very heavy pages.
 
 The probe cannot see touch emulation: `agent-browser set device` sets the user agent and pixel ratio but not touch, so `(any-pointer: coarse)` is false.
 
