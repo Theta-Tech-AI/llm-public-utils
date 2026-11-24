@@ -50,6 +50,8 @@ library no longer supports.
 3. Compare findings, tool calls and wall time.
 4. If the markdown-only agent finds the same things in comparable effort, **delete the script**.
 
+**An exclusion without a reason is an unfinished consolidation.** When a report lists surfaces that "kept their own" version, each needs a stated reason; see [the partial consolidation](../patterns/one-fact-many-owners.md#variant-the-partial-consolidation).
+
 **Verify a finding on the current tip before you file it** — a copy may already be consolidated, and an
 unverified report costs the reader the check you skipped. File it with the evidence, never as a note.
 

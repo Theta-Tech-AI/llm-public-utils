@@ -41,6 +41,34 @@ How a job or a check ended is one fact: its outcome, and the words that tell a p
 3. Make the status wording a lookup from that value in one table. Keep the diagnostic detail (which claim, the refused value, the provider's message) in the outcome's payload, not in a second status.
 4. Delete the separate fields and extra findings that state the status a second time. The unit of the outcome is the unit of work: see [match the grain](../principles/reliability/match-the-grain.md).
 
+## Variant: the partial consolidation
+
+A fix moved some copies onto a new owner, and a change at the owner still does not reach every consumer. Example: the glow on a card was set in shared tokens, and Costs and Audit followed. The feed cards kept a literal copy of the same glow in the upstream code, so the change skipped them. The consolidation made a second source of truth beside the old copies instead of replacing them.
+
+The tell: change the owner's value and look at an input whose result should change with it (every screen, response or output that shows the fact). Account for regeneration and caching first: rebuild, and clear caches. If one still does not move, trace why before filing it. If it follows an independent decision, it is still an owner.
+
+Why it arises:
+1. The fix was added beside the old copies, not in place of them.
+2. The search covered one side of a boundary. The other side (the upstream the code consumes, vendored or generated code) kept its copy.
+3. A surface was left out of the list with no reason, and nobody asked for one.
+4. Only the values were shared. Each component still wrote its own rule that reads them, so a new component can still write a new copy.
+5. Nothing fails when a new copy appears.
+
+Find it:
+1. Grep both sides of every boundary: the downstream code, the upstream it consumes, and any generated or vendored code.
+2. List every surface that decides the fact, not only the ones you plan to change.
+3. Count the owners before the change.
+
+Repair, on top of "owner first" above:
+1. Shared values (a token or table) are enough when every consumer reads them and makes no decision of its own. Require one component or function only where consumers still re-decide the same thing, for example each writes its own card rule that combines the tokens. Then one card component that reads the tokens beats ten card rules that each read them.
+2. Delete every copy in the same change, or list it as `excluded: <surface>, <reason>`. No reason means it is not excluded; it is still to do. An exclusion without a reason is an unfinished consolidation.
+3. Add a guard that fails when a new copy is written outside the owner: a lint rule or a check script (for example, no literal glow value outside the token file).
+4. Report the owner count before and after. The goal is one. If it is more, each extra owner has a reason in the list.
+
+Related principles:
+- [implicit-coupling](../principles/architecture/implicit-coupling.md): the shared look was an agreement the code never stated, and nothing tied the literal to the token.
+- Same shape as [complete-mediation](../principles/reliability/complete-mediation.md) (an analogy; that principle covers authority checks): one surface went around the owner, and nothing forced the route through it.
+
 ## Who owns the mechanism
 
 | Principle | Owns | Boundary with this pattern |

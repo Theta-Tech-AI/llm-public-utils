@@ -34,6 +34,8 @@ def get_user_by_id(user_id: int) -> User: ...
 def get_user_by_email(email: str) -> User: ...
 ```
 
+After a DRY fix, check that every consumer now reaches the one representation, on both sides of each boundary: [the partial consolidation](../../patterns/one-fact-many-owners.md#variant-the-partial-consolidation).
+
 DRY extends beyond code: define database constraints once in the schema, generate API contracts from code (FastAPI/Pydantic) rather than maintaining them separately, centralize config in one module, and keep a single authoritative source for documentation.
 
 ## Worked Example: Two Classes Repeating the Same 3 Lines
