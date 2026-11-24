@@ -23,6 +23,7 @@ One parse function and one format function own the grammar; callers receive a ty
 |---|---|---|
 | [parse-dont-validate](../principles/architecture/parse-dont-validate.md) | turning a string into a typed value once | the mechanism the callers skip |
 | [helper-is-an-architecture-finding](../principles/architecture/helper-is-an-architecture-finding.md) | the missing owner behind repeated helpers | each regex is such a helper |
+| [metadata-beside-content](../principles/architecture/metadata-beside-content.md) | keeping metadata out of content | when the grammar is metadata written into content, the repair is a typed channel, not one parser |
 | [single-source-of-truth](../principles/architecture/single-source-of-truth.md) | one authority for the format | the format's definition |
 
 ## Variant: config parsed twice with different rules
