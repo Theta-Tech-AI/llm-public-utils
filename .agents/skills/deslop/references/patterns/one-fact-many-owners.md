@@ -45,7 +45,7 @@ How a job or a check ended is one fact: its outcome, and the words that tell a p
 
 A fix moved some copies onto a new owner, and a change at the owner still does not reach every consumer. Example: the glow on a card was set in shared tokens, and Costs and Audit followed. The feed cards kept a literal copy of the same glow in the upstream code, so the change skipped them. The consolidation made a second source of truth beside the old copies instead of replacing them.
 
-The tell: change the owner's value and look at every screen, response or output that shows the fact. If one does not move, it is still an owner.
+The tell: change the owner's value and look at an input whose result should change with it (every screen, response or output that shows the fact). Account for regeneration and caching first: rebuild, and clear caches. If one still does not move, trace why before filing it. If it follows an independent decision, it is still an owner.
 
 Why it arises:
 1. The fix was added beside the old copies, not in place of them.
@@ -60,18 +60,14 @@ Find it:
 3. Count the owners before the change.
 
 Repair, on top of "owner first" above:
-1. Make the owner a component or function that consumers render or call, not only a set of shared values. One card component that reads the tokens beats ten card rules that each read the tokens.
+1. Shared values (a token or table) are enough when every consumer reads them and makes no decision of its own. Require one component or function only where consumers still re-decide the same thing, for example each writes its own card rule that combines the tokens. Then one card component that reads the tokens beats ten card rules that each read them.
 2. Delete every copy in the same change, or list it as `excluded: <surface>, <reason>`. No reason means it is not excluded; it is still to do. An exclusion without a reason is an unfinished consolidation.
 3. Add a guard that fails when a new copy is written outside the owner: a lint rule or a check script (for example, no literal glow value outside the token file).
 4. Report the owner count before and after. The goal is one. If it is more, each extra owner has a reason in the list.
 
-Who else owns a piece of this:
-- [complete-mediation](../principles/reliability/complete-mediation.md): there was no single door, so one surface bypassed the owner and nothing enforced the route.
-- [implicit-coupling](../principles/architecture/implicit-coupling.md): the shared look was an unstated convention, and nothing tied the literal to the token.
-- [unclaimed-guarantee](../principles/clean-code/unclaimed-guarantee.md): the report said "single source" while copies remained, a claimed guarantee with no check.
-- [patchwork](../principles/clean-code/patchwork.md): a local fix per page, instead of fixing the decision once.
-- [fail-fast](../principles/reliability/fail-fast.md): no guard fails on a new copy, so drift stays silent.
-- [vocabulary-drift](vocabulary-drift.md): four different names for one card hid that it was one concept.
+Related principles:
+- [implicit-coupling](../principles/architecture/implicit-coupling.md): the shared look was an agreement the code never stated, and nothing tied the literal to the token.
+- Same shape as [complete-mediation](../principles/reliability/complete-mediation.md) (an analogy; that principle covers authority checks): one surface went around the owner, and nothing forced the route through it.
 
 ## Who owns the mechanism
 
