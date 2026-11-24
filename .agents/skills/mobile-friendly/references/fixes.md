@@ -87,3 +87,8 @@ Find the layer that adds it in one step: walk up from the first misplaced text a
 - **Overflowing popovers:** a popover anchored to a header control sticks out past the right edge: `max-width: calc(100vw - 2 * <page margin>)` and keep its inline position inside the viewport. Shoot every popover open; the probe sees it only while it is open.
 - **Scroll regions for code and logs:** a `<pre>` that scrolls needs `role="region"`, an `aria-label` and `tabindex="0"` so keyboard users can scroll it, at every width.
 - **Filters on a live-filtering page:** one "Filter · n" button beside the always-visible search, opening an inline panel (one field per row) is enough; a sheet with Apply only where filters are applied in a batch.
+- **A notice drawn over a canvas:** a status line positioned `absolute` over a full-bleed graph covers nodes on a phone. Put it in the flow above the canvas below the breakpoint (desktop may keep the overlay); give the canvas a definite height in a container that scrolls, or its bottom controls are clipped by an `overflow: hidden` ancestor.
+- **Hover-only controls and labels:** `opacity: 0` until `:hover` (zoom buttons, a provenance label) is unreachable on touch. Show them by default below the breakpoint (`md:opacity-0 md:group-hover:opacity-100`).
+- **Two messages in one line:** `{reason} What is drawn…` concatenated in markup reads as one sentence. Render each message as its own block.
+- **A sticky bar inside a scroll container** needs a solid background and a padding (not margin) gap, or text scrolls visibly under it.
+- **A hit-area pseudo-element inside `overflow: hidden`:** a control that clips its own overflow (a truncation rule) also clips its `::after` pad. Exclude the control from the clipping rule.
