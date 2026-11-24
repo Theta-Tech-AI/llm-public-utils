@@ -220,7 +220,9 @@
 
   // Text: every element that holds its own visible text.
   const ownNodes = (e) => [...e.childNodes].filter((n) => n.nodeType === 3 && /\S/.test(n.textContent));
-  const texty = scoped.filter((e) => ownNodes(e).length && shown(e));
+  // A modal dialog can sit outside the root; its text must be judged against its own controls.
+  const textPool = modal ? [...new Set([...scoped, ...all.filter((e) => modal.contains(e))])] : scoped;
+  const texty = textPool.filter((e) => ownNodes(e).length && shown(e));
   const textRects = new Map(); // line boxes of the element's own text, not of its (wider) block box
   for (const e of texty) {
     const rects = [];
@@ -337,7 +339,7 @@
   const matchesNow = (sel) => topLevelParts(sel).some((part) => {
     try { return !!document.querySelector(part.replace(/::[a-z-]+(\(.*\))?\s*$/i, "").trim() || "x-none"); } catch { return false; }
   });
-  // Last declaration wins per selector and property: a later dvh/svh rule is the fix, a later vh rule brings the fault back.
+  // Last declaration wins per selector and property: any later non-vh value (dvh, svh, auto) is the fix, a later vh brings the fault back.
   const vhState = new Map();
   const walk = (list) => {
     for (const r of list) {
@@ -348,8 +350,9 @@
         if (r.selectorText && r.style) {
           for (const prop of r.style) {
             const v = r.style.getPropertyValue(prop);
-            if (/\d[ds]vh\b/.test(v)) vhState.set(`${r.selectorText}|${prop}`, false);
-            else if (/\b100l?vh\b/.test(v)) vhState.set(`${r.selectorText}|${prop}`, true); // lvh is vh: both ignore the toolbars
+            const key = `${r.selectorText}|${prop}`;
+            if (/\b100l?vh\b/.test(v) && !/\d[ds]vh\b/.test(v)) vhState.set(key, true); // lvh is vh: both ignore the toolbars
+            else if (vhState.has(key) || /\d[ds]vh\b/.test(v)) vhState.set(key, false); // any later non-vh value replaces it
           }
         }
         if (r.cssRules) walk(r.cssRules);
