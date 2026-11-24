@@ -35,11 +35,11 @@ In the schema the same shape is the update anomaly: one fact on several rows, or
 
 ## Variant: a status and its message
 
-How a job or a check ended is one fact: its outcome, and the words that tell a person about it. Look at a job that runs three checks, where one check fails. The job writes `status = "succeeded"`. The failed check writes its own `error` text, and the job also adds a "check did not run" finding. Then two screens decide what to say. One says "wait for the checks to finish". The other says "two checks failed; run them again". Each copy is right by its own definition, and the person cannot tell which one to believe. The tell is a status field in one place and the message about it written or composed in other places. Repair:
+How a job or a check ended is one fact: its outcome, and the words that tell a person about it. Look at a job that runs three checks, where one check fails. The job writes `status = "succeeded"`. The failed check writes its own `error` text, and the job also adds a "check did not run" finding. Then two screens decide what to say. One says "wait for the checks to finish". The other says "two checks failed; run them again". Each copy is right by its own definition, and the person cannot tell which one to believe. The tell is a status in one place and a message about it composed in another place that can disagree with it. Repair:
 1. Give each unit one outcome value, written once by the code that knows how the unit ended. Use a closed set, for example `pending`, `retrying(at)`, `needs_person(action)`, `failed(incident)`, `done`.
-2. Derive the parent's status from its children's outcomes.
-3. Make every message a lookup from that value in one wording table.
-4. Delete the free-text error fields and the extra findings that repeat it.
+2. Derive the parent's status from its children's outcomes and its own steps (a final save or publish) by one rule that also says which children are required.
+3. Make the status wording a lookup from that value in one table. Keep the diagnostic detail (which claim, the refused value, the provider's message) in the outcome's payload, not in a second status.
+4. Delete the separate fields and extra findings that state the status a second time. The unit of the outcome is the unit of work: see [match the grain](../principles/reliability/match-the-grain.md).
 
 ## Who owns the mechanism
 

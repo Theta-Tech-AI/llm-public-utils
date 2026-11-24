@@ -1,6 +1,6 @@
 ---
 name: deslop
-description: "Library of 66 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
+description: "Library of 67 coding principles and 9 diagnostic patterns for finding and fixing slop: duplication, dead code, god files, over-abstraction, needless complexity. High-quality code has one owner per fact; parses input once at the boundary into types that cannot be illegal; small units with one job; dependencies pointing toward stability; written-down lifecycles; fails loud and tells the truth; a schema that enforces integrity; code a stranger can read; less of it. Why: changes stay one edit, bugs surface at their cause, audited code stays reviewable. Provides clean-code, architecture, reliability and data-layer principles, 9 reading lenses, coverage and scoped passes, measured campaigns, and a procedure to extend the library. Load for deslop passes, code or PR review, refactor planning, dedup, tech-debt triage, messy or copy-pasted code, simplification campaigns, or adding a principle."
 ---
 
 # Deslop: code quality analysis
@@ -35,8 +35,6 @@ One idea under the library: **a reader can trust what the code appears to say.**
    [legibility](references/principles/clean-code/legibility.md), [cognitive-load](references/principles/clean-code/cognitive-load.md), [kiss](references/principles/clean-code/kiss.md)
 10. **Delete before you add.** No feature for later, no special case without a missing mechanism, no patch over a decision; leave touched code better, and relax a rule when applying it makes worse code. *Why:* every line must be read, tested and kept true, so the best change often removes lines.
    [yagni](references/principles/clean-code/yagni.md), [special-cases](references/principles/clean-code/special-cases.md), [patchwork](references/principles/clean-code/patchwork.md), [one-level-deeper](references/readings/one-level-deeper.md), [when-to-relax](references/readings/when-to-relax.md)
-
-**What the library provides:** 66 principles, 9 patterns, 9 lenses, the stage and campaign protocols, and [how to extend it](references/library/extending-the-library.md).
 
 ## The library at a glance
 
@@ -111,6 +109,7 @@ One idea under the library: **a reader can trust what the code appears to say.**
 - Observability & Transparency — structured, correlated telemetry as the production debugger
 - Resilience & Graceful Degradation — bounded retries, timeouts, fallbacks and circuit breakers for partial…
 - Liveness — every state leaves by itself or names who it waits for
+- Match the Grain — every mechanism around work acts per unit of work
 - Principle of Least Privilege — minimum permissions per component, so a flaw has a small blast radius
 - Boy Scout Rule — leave code better than you found it, scoped to what you touch
 - Errors at the Boundary — validate where untrusted input enters
@@ -175,7 +174,7 @@ One row per file, in the order a pass meets them; CI fails on a markdown no row 
 | [references/readings/duplication.md](references/readings/duplication.md) | Running a dedup sweep beyond token scanners: the primitives to grep for, the field-overlap recipe for one entity described many times, and the shape-clone scripts in [scripts/](scripts/) |
 | [references/library/case-study-simplification-agent-fleet.md](references/library/case-study-simplification-agent-fleet.md) | Worked KISS example: an LLM agent fleet collapsed into one agent |
 | [references/library/further-reading.md](references/library/further-reading.md) | Bibliography and attribution |
-| [references/lenses.json](references/lenses.json) | The default partition of 66 principles into 9 reading stances; regroup freely |
+| [references/lenses.json](references/lenses.json) | The default partition of 67 principles into 9 reading stances; regroup freely |
 
 ## Layout and checks
 

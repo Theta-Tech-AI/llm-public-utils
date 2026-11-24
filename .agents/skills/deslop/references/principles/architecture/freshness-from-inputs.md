@@ -14,10 +14,10 @@ Derived work is anything computed from other data and kept: a cache entry, a gen
 
 The substitutes look cheaper, and each one fails in a direction nobody sees in a test:
 
-- **A time or an event** (`updated_at > built_at`, "changed after the last lock", "a run happened since"). It fires when nothing changed: a save of identical text, an unlock and re-lock, a touch. It also misses a change that came without an event, such as a backfill, a restore or a clock skew. `make` decides by file times, so `touch` rebuilds a target; content-digest build systems such as Bazel and Nix key each action on the digests of its inputs instead.
+- **A time or an event** (`updated_at > built_at`, "changed after the last lock", "a run happened since"). It fires when nothing changed: a save of identical text, an unlock and re-lock, a touch. It also misses a change that came without an event, such as a backfill, a restore or a clock skew. `make` decides by file times, so `touch` rebuilds a target; Bazel keys each action on a digest of its inputs and its command line instead.
 - **A key that is too wide** (every setting, every fact in the project, the whole input set). One change anywhere makes everything stale. The results are still right, only slow and expensive, so nobody files the bug.
 - **A key that is too narrow** (an input the producer reads is missing from the key). Old output is served as current. This is the dangerous direction: it is wrong, not slow.
-- **The producer's own version in the key** (code version, model id, prompt hash, schema version). Every release makes all finished work stale. Whether a better producer must redo old work is a **policy decision**. Write that decision down, and act on it explicitly. Do not let it happen as a side effect of a deploy. By default, the producer's version is *provenance*: you store it beside the output, and you do not key on it.
+- **The producer's own version in the key, with no decision behind it** (code version, model id, prompt hash). Every release makes all finished work stale. Whether a new producer must redo old work is a **policy decision**, and it has two honest answers. (1) The change alters the meaning of every past output, for example a compiler flag, an incompatible output format, or a fix to a wrong algorithm. Then the version belongs in the key, with the reason written beside it; build systems key on the command line for this reason. (2) The change is an improvement that old, reviewed work does not need, for example a better model or a reworded prompt. Then the version is *provenance*: store it beside the output, do not key on it, and make any redo a recorded action. Work that people review or sign needs the second answer by default, because a deploy must not reopen it.
 
 ## Example
 
@@ -41,7 +41,8 @@ def basis(section, passages, facts) -> str:
 def needs_check(section, last, passages, facts) -> bool:
     return last is None or last.basis != basis(section, passages, facts)
 
-# Stored beside the findings: basis (the key), checker_version and model_id (provenance only).
+# Stored beside the findings: basis (the key); checker_version and model_id as provenance, by a written
+# decision: a new checker applies to new text, and re-checking old text is a recorded action.
 ```
 
 The ✅ version has one owner of "what this check depends on" (`basis`). The producer and every reader that asks "is it current?" call it.
@@ -54,7 +55,7 @@ The ✅ version has one owner of "what this check depends on" (`basis`). The pro
    - It uses a time or an event: finding.
    - The key holds something the producer does not read: too wide. Look at the miss rate.
    - The producer reads something the key lacks: too narrow. File this at a higher severity, because it serves old output as current.
-   - The key holds the producer's version: ask where the decision to redo old work is written. If no one wrote it, that is the finding.
+   - The key holds the producer's version: ask where the decision to redo old work is written, and which of the two answers it gives. If no one wrote it, that is the finding.
 4. **Count the owners.** Two places that compute the basis of one output in different ways are [one fact, many owners](../../patterns/one-fact-many-owners.md).
 5. **Measure.** Record how often stored work is reused. On every miss, log which part of the basis changed (part names and short digests, no content). Without that line, a too-wide key looks like normal traffic.
 
@@ -63,13 +64,13 @@ The ✅ version has one owner of "what this check depends on" (`basis`). The pro
 1. Put one `basis()` function beside the producer. It digests exactly what the producer reads, in a canonical form.
 2. Store the basis with the output, together with provenance (producer version, model, time). This is [metadata beside content](metadata-beside-content.md).
 3. Make every reader that asks "stale?", "owed?" or "current?" compare the stored basis with a fresh `basis()`. Delete their own time tests.
-4. If a new producer version must redo old work, make that a recorded action: a migration, or a person's decision with an audit row. Never put it in the key.
+4. If a new producer version must redo old work, either key on it with the reason written beside the key (the meaning changed), or make the redo a recorded action: a migration, or a person's decision with an audit row (an improvement).
 5. Old outputs that have no stored basis: give them one named legacy rule, for example "treat as current until the next real change". Do not scatter fallbacks.
 
 ## When a time is the right test
 
 - **Inputs you cannot read.** For a remote resource you do not hold, a time to live or a validator such as an HTTP `ETag` or `Last-Modified` is the only signal. Say so in the code.
-- **Inputs that are immutable and versioned.** If an input never changes after it is written, its version id already is a content address. Comparing ids is comparing digests.
+- **Inputs that are immutable and versioned.** If an input never changes after it is written, its version id is a safe key. Two versions with the same bytes but different ids cause one extra, harmless re-run; an id can never hide a change.
 - **Expiry that is the rule itself.** A token that is valid for an hour, or a quote that is valid for a day. The time is the meaning, not a proxy for change.
 
 ---
@@ -78,6 +79,7 @@ In relation to other principles, freshness from inputs:
 
 | Principle | Relationship |
 |-----------|--------------|
+| [**Match the Grain**](../reliability/match-the-grain.md) | The general rule: every mechanism around work, staleness included, acts per unit; this file owns how staleness is decided |
 | [**Idempotency**](idempotency.md) | Idempotency makes a repeated run harmless; this decides whether a run is needed at all |
 | [**Single Source of Truth**](single-source-of-truth.md) | `basis()` is the one owner of "what this output depends on"; time tests are second owners that disagree |
 | [**Liveness**](../reliability/liveness.md) | Liveness asks who moves a stale state forward; this decides, from content, whether the state is stale |
@@ -89,6 +91,6 @@ In relation to other principles, freshness from inputs:
 
 1. **Stale means its inputs changed.** Store a digest of exactly what the producer read, and compare it.
 2. **Times and events are not changes.** An identical save, or an unlock and re-lock, must leave derived work current.
-3. **Size the key to what was read.** A key that is too wide wastes work quietly. A key that is too narrow serves old output as current.
+3. **Size the key to what was read** ([match the grain](../reliability/match-the-grain.md)). A key that is too wide wastes work quietly. A key that is too narrow serves old output as current.
 4. **The producer's version is provenance.** Redoing old work with a new producer is a recorded decision, not a side effect of a deploy.
 5. **Log what changed on every miss**, so a reader can tell a real change from a key that is too wide.

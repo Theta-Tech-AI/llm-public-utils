@@ -165,6 +165,7 @@
         "principles/reliability/observability.md",
         "principles/reliability/resilience.md",
         "principles/reliability/liveness.md",
+        "principles/reliability/match-the-grain.md",
         "principles/reliability/least-privilege.md",
         "principles/reliability/boy-scout-rule.md",
         "principles/reliability/errors-at-the-boundary.md",
