@@ -44,7 +44,7 @@ class SectionVersion:
     claims: tuple[Claim, ...]
 
 fda_copy = version.text                                       # nothing to strip
-ready    = not any(c.needs_source for c in version.claims)
+ready    = not any(c.needs_source is not None for c in version.claims)
 ```
 
 ## Finding and fixing it
