@@ -350,9 +350,12 @@
         if (r.selectorText && r.style) {
           for (const prop of r.style) {
             const v = r.style.getPropertyValue(prop);
+            const important = r.style.getPropertyPriority(prop) === "important";
             const key = `${r.selectorText}|${prop}`;
-            if (/\b100l?vh\b/.test(v) && !/\d[ds]vh\b/.test(v)) vhState.set(key, true); // lvh is vh: both ignore the toolbars
-            else if (vhState.has(key) || /\d[ds]vh\b/.test(v)) vhState.set(key, false); // any later non-vh value replaces it
+            // A later normal declaration cannot replace an !important one.
+            if (vhState.get(key)?.important && !important) continue;
+            if (/\b100l?vh\b/.test(v) && !/\d[ds]vh\b/.test(v)) vhState.set(key, { fault: true, important }); // lvh is vh: both ignore the toolbars
+            else if (vhState.has(key) || /\d[ds]vh\b/.test(v)) vhState.set(key, { fault: false, important }); // any later non-vh value replaces it
           }
         }
         if (r.cssRules) walk(r.cssRules);
@@ -363,7 +366,7 @@
     try { if (!sheet.disabled && (!sheet.media?.mediaText || matchMedia(sheet.media.mediaText).matches)) walk(sheet.cssRules); } catch { /* cross-origin sheet */ }
   }
 
-  for (const [key, fault] of vhState) {
+  for (const [key, { fault }] of vhState) {
     const sel = key.slice(0, key.lastIndexOf("|"));
     if (fault && matchesNow(sel)) vhRules.push(sel.slice(0, 60));
   }
