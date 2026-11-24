@@ -67,7 +67,7 @@ def run_job(job_id: str) -> None:
 
 ## A control must not reach what the automatic path rules out
 
-When the system already moves a state forward, a manual control for the same move is safe only as a **trigger** of the owner's transition. It becomes a **second owner** the moment it carries its own policy: its own freshness test, cache key or guard. That copy drifts. In one case a "draft again" path judged a table by a cache key the automatic path did not use; after a prompt change, a table the screen called current was paid for again and replaced. Route the control through the one owner. Then apply the decision test: a trigger with a real decision behind it stays, labelled as that decision; a trigger with none ("Retry now" on a wait the system already owns) adds nothing the owner does not already do.
+When the system already moves a state forward, a manual control for the same move is safe only as a **trigger** of the owner's transition. It becomes a **second owner** the moment it carries its own policy: its own freshness test, cache key or guard. That copy drifts. In one case a "draft again" path judged a table by a cache key the automatic path did not use; after a prompt change, a table the screen called current was paid for again and replaced. Route the control through the one owner: that fixes the liveness defect. A second, separate rule then decides whether the control stays at all, and it is deliberate: **a control needs a decision behind it**. A trigger with a real decision ("check now" on data the system cannot watch, an expert's regenerate, a person-owned sync) stays, labelled as that decision. A trigger with none ("Retry now" on a wait the system already owns) is not a correctness bug, but it is removed anyway: it adds a path no one needs, and the next fix to it is how a second owner grows back.
 
 ## When a control is right
 
@@ -98,4 +98,4 @@ In relation to other principles:
 2. **Every state names its owner and its triggers:** the system (bounded in operation), a named person and action, a named decision, or the fix pipeline. Many triggers are fine; one owner.
 3. **An unowned state gets an owner by accident:** a Retry button, a runbook, a repairing guard, a sweep that fails it, or nothing.
 4. **Classify at the one place the work runs;** screens render the state, never decide recovery.
-5. **One owner per transition; triggers are fine.** A control that carries its own policy is a second owner and drifts; a control that triggers the owner is safe, and stays when a person has a real decision to make.
+5. **One owner per transition; then a decision behind every control.** A control that carries its own policy is a second owner (a defect). A control that only triggers the owner is safe, and it stays when a person has a real decision to make; without one it is clutter, removed by design choice, not as a defect.
