@@ -142,14 +142,10 @@
   const all = [...document.body.querySelectorAll("*")];
   const decor = (e) => !!e.closest("[aria-hidden=true]"); // aria-hidden decoration is not content to judge
   const pinnedCache = new Map();
-  const pinned = (e) => { // the element or an ancestor is fixed, or sticky and stuck right now (its rect equals its sticky offset)
-    if (!e || e === document.body) return false;
+  // Inside a fixed or stuck bar. barEls leaves out a full-screen fixed shell, so scrolled text in an app shell is not "pinned".
+  const pinned = (e) => {
     let v = pinnedCache.get(e);
-    if (v === undefined) {
-      const pos = style(e).position;
-      v = pos === "fixed" || (pos === "sticky" && stuck(e, style(e))) || pinned(e.parentElement);
-      pinnedCache.set(e, v);
-    }
+    if (v === undefined) { v = barEls.some((b) => b.e.contains(e)); pinnedCache.set(e, v); }
     return v;
   };
   const scrolled = (e) => { // the content has been scrolled: something under a bar may be scrolled text, not a layout fault
@@ -390,11 +386,22 @@
       return "partial";
     }
     if (pinned(c)) return false;
-    return barEls.some((b) => {
+    // A bar over the control: scrolling moves it out from under the bar only if its scroller can move away from the bar's edge.
+    // At the end of that scroll range the control stays obscured for good and is reported in `clipped`.
+    const bar = barEls.find((b) => {
       if (b.e.contains(c)) return false;
       const br = box(b.e);
       return Math.min(r.right, br.right) - Math.max(r.left, br.left) > r.width * 0.5 && Math.min(r.bottom, br.bottom) - Math.max(r.top, br.top) > 1;
-    }) ? "partial" : false;
+    });
+    if (!bar) return false;
+    let sc = c.parentElement;
+    while (sc && sc !== document.body && !scrollsY(sc)) sc = sc.parentElement;
+    if (!sc || sc === document.body) sc = document.scrollingElement || doc;
+    const fromTop = bar.top <= 1; // a bar on the top edge hides what is above the scroll position
+    const room = fromTop ? sc.scrollTop > 1 : sc.scrollTop + sc.clientHeight < sc.scrollHeight - 1;
+    if (room) return "partial";
+    clippedControls.push({ e: c, by: bar.e });
+    return "clipped";
   };
   const unsampled = [];
   const coveredList = [];
@@ -566,6 +573,9 @@
     }
     return false;
   };
+  // Words by the language's own rules (a Chinese or Japanese paragraph has no spaces); whitespace only where Intl.Segmenter is missing.
+  const segmenter = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: "word" }) : null;
+  const wordCount = (t) => (segmenter ? [...segmenter.segment(t)].filter((x) => x.isWordLike).length : t.trim().split(/\s+/).length);
   const textLen = (e) => e.textContent.replace(/\s+/g, " ").trim().length;
   const BLOCK = "p, li, dd, td, blockquote, figcaption";
   const smallBody = [];
@@ -576,7 +586,7 @@
     if (size >= MIN_BODY) continue;
     const block = e.closest(BLOCK);
     // Long text is running text wherever it sits; only a short label (3 words or fewer) or a pill or badge from 13 px up is not.
-    const words = (block || e).textContent.trim().split(/\s+/).length;
+    const words = wordCount((block || e).textContent);
     const label = words <= 3 || (size >= MIN_SECONDARY && inPill(e));
     if (!label && textLen(block || e) > 40) {
       if (block && seenBlocks.has(block)) continue;
@@ -612,6 +622,7 @@
     let split = null;
     for (let n = walker.nextNode(); n && !split && !late(); n = walker.nextNode()) {
       for (const m of n.textContent.matchAll(/\S+/g)) {
+        if (late()) break;
         if (m[0].length > 24) continue;
         let at = m.index;
         for (const part of m[0].split(/(?<=[-\u00AD/])/)) {
@@ -646,7 +657,7 @@
     // `labels` is only a NodeList on a labelable element (a form with a field named "labels" shadows it)
     const labels = e.matches(LABELABLE) && e.labels instanceof NodeList ? [...e.labels].map(content).join(" ") : "";
     const own = e.matches("input[type=image]") ? e.getAttribute("alt") : e.matches("input[type=button], input[type=submit], input[type=reset]") ? e.value : "";
-    return [e.getAttribute("aria-label"), ids, labels, own, e.matches("input") ? "" : content(e), e.title].join(" ").trim();
+    return [e.getAttribute("aria-label"), ids, labels, own, e.matches("input, select, textarea") ? "" : content(e), e.title].join(" ").trim();
   };
   const unnamedControls = tappable.filter((c) => within("unnamedControls") && !nameOf(c)).map((c) => ({ el: c, ...rect(c) }));
   // The same heading text twice on the first screen (a page title and the card heading under it).
