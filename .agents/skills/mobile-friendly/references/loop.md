@@ -58,7 +58,7 @@ Read `counts` first, then the lists:
 - `overlaps` names text under a control or two controls on top of each other: always a fault at scroll top.
 - `edges` is a histogram of text start positions: the two or three biggest bars should be the page margin and the card inset; a long tail means nested padding.
 - `textSizes` shows the spread: body text under 16 px is `smallBody`.
-- `sampling.unsampledList.partial` lists a control not whole at this stop, with its reason (`clipped-by-<ancestor>`, `under-bar`, `pan-region`). The probe does not judge it: the walk does. A control still listed at the last stop is `clipped`: fix it. A map or graph canvas that pans on purpose carries `data-pan-viewport` on its viewport, so its own clip is not judged; `touch-action: none` alone exempts nothing.
+- `sampling.unsampledList.partial` lists a control not whole at this stop, with its reason (`clipped-by-<ancestor>`, `under-bar`, `pan-region`). The probe does not judge it: the walk does. A control still listed at the last stop and absent from `coverage` (never sampled whole at any stop) is `clipped`: fix it. A map or graph canvas that pans on purpose carries `data-pan-viewport` on its viewport, so its own clip is not judged; `touch-action: none` alone exempts nothing.
 - `letterColumn`, `splitWords`, `unnamedControls`, `repeatedHeading`, `squeezedScroller` name faults a screenshot shows but the older checks missed; judge each one.
 - `ms` is the run time; sampling stops after a budget (about 1 s) on very heavy pages.
 

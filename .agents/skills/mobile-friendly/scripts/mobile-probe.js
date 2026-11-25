@@ -25,8 +25,8 @@
 //                   under-bar, pan-region): not whole at this stop, walk the page in overlapping stops (loop.md); incomplete names checks the deadline cut
 //   crowded         controls whose hit areas come closer than MIN_GAP px (gap under 7.5 px, unrounded; overlap counts as 0),
 //                   or where a tap in the MIN_TARGET square around one control's centre reaches the other. Not judged: a
-//                   control that names its field (aria-controls) or shares its label, and a bar that is stuck (fixed, or sticky
-//                   with its rect at its sticky offset) over content that has been scrolled
+//                   control that names its field (aria-controls) or shares its label. A bar over scrolled content is reported:
+//                   at a scroll stop below the top, judge each one (the bar covers text that scrolled under it)
 //   overlaps        text over a control it is not inside, or two controls whose boxes cross (same exemptions as crowded)
 //   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 2 px, any
 //                   side. A scroller (its own overflow) is the boundary: content in it is judged against a card inside it.
@@ -148,13 +148,6 @@
     if (v === undefined) { v = barEls.some((b) => b.e.contains(e)); pinnedCache.set(e, v); }
     return v;
   };
-  const scrolled = (e) => { // the content has been scrolled: something under a bar may be scrolled text, not a layout fault
-    if (scrollY > 0) return true;
-    for (let p = e; p && p !== document.body; p = p.parentElement) if (p.scrollTop > 0) return true;
-    return false;
-  };
-  // A bar over scrolled content is not a fault at this stop; a bar over content at scroll top is.
-  const underBar = (a, b) => (pinned(a) !== pinned(b) && scrolled(pinned(a) ? b : a));
 
   // Scope: a root narrows the per-element checks; page scroll and bars always look at the whole page.
   const rootSelector = String(window.__mobileProbeRoot || "");
@@ -274,9 +267,9 @@
     let [l, tp, r, b] = [t.left, t.top, t.right, t.bottom];
     for (let p = e; p && p !== document.body; p = p.parentElement) {
       const cs = style(p);
-      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
       const pr = box(p);
-      [l, tp, r, b] = [Math.max(l, pr.left), Math.max(tp, pr.top), Math.min(r, pr.right), Math.min(b, pr.bottom)];
+      if (cs.overflowX !== "visible") [l, r] = [Math.max(l, pr.left), Math.min(r, pr.right)]; // each axis clips on its own
+      if (cs.overflowY !== "visible") [tp, b] = [Math.max(tp, pr.top), Math.min(b, pr.bottom)];
     }
     return r - l > 1 && b - tp > 1 ? { left: l, top: tp, right: r, bottom: b } : null;
   };
@@ -373,9 +366,8 @@
     if (!v || v.right - v.left < r.width - 1 || v.bottom - v.top < r.height - 1) {
       for (let p = c.parentElement; p && p !== document.body; p = p.parentElement) {
         const cs = style(p);
-        if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
         const pr = box(p);
-        if (pr.left > r.left + 1 || pr.right < r.right - 1 || pr.top > r.top + 1 || pr.bottom < r.bottom - 1) return p.matches(PAN) ? "pan-region" : `clipped-by-${name(p).replace(/ ".*$/, "")}`;
+        if ((cs.overflowX !== "visible" && (pr.left > r.left + 1 || pr.right < r.right - 1)) || (cs.overflowY !== "visible" && (pr.top > r.top + 1 || pr.bottom < r.bottom - 1))) return p.matches(PAN) ? "pan-region" : `clipped-by-${name(p).replace(/ ".*$/, "")}`;
       }
       return "clipped-by-ancestor";
     }
@@ -434,7 +426,7 @@
       if (x.c.contains(y.c) || y.c.contains(x.c)) continue;
       // A control that names its field or shares its label is one widget; a bar over scrolled content is judged
       // at the stop where the content is clear.
-      if (inField(x, y) || inField(y, x) || underBar(x.c, y.c)) continue;
+      if (inField(x, y) || inField(y, x)) continue;
       const d = dist(snap(x), snap(y));
       if (d >= MIN_GAP - 0.5 && !x.near.has(y.c) && !y.near.has(x.c)) continue;
       crowded.push({ a: x.c, b: y.c, gap: Math.round(d * 10) / 10 });
@@ -478,7 +470,7 @@
       if (!vt) continue;
       for (const { c, r } of hit) {
         if (late()) { incomplete.add("overlaps"); break; }
-        if (c.contains(e) || e.contains(c) || underBar(e, c) || [...hot].some((o) => o.contains(e))) continue;
+        if (c.contains(e) || e.contains(c) || [...hot].some((o) => o.contains(e))) continue;
         const [l, rt] = [Math.max(vt.left, r.left), Math.min(vt.right, r.right)];
         const [tp, bt] = [Math.max(vt.top, r.top), Math.min(vt.bottom, r.bottom)];
         if (rt - l <= 2 || bt - tp <= 4) continue;
@@ -653,7 +645,7 @@
     // `labels` is only a NodeList on a labelable element (a form with a field named "labels" shadows it)
     const labels = e.matches(LABELABLE) && e.labels instanceof NodeList ? [...e.labels].map(content).join(" ") : "";
     const own = e.matches("input[type=image]") ? e.getAttribute("alt") : e.matches("input[type=button], input[type=submit], input[type=reset]") ? e.value : "";
-    return [e.getAttribute("aria-label"), ids, labels, own, e.matches("input, select, textarea") ? "" : content(e), e.title].join(" ").trim();
+    return [e.getAttribute("aria-label"), ids, labels, own, e.matches("input, select, textarea, [role=textbox], [role=searchbox], [role=combobox], [contenteditable=true]") ? "" : content(e), e.title].join(" ").trim();
   };
   const unnamedControls = tappable.filter((c) => within("unnamedControls") && !nameOf(native.get(c) || c)).map((c) => ({ el: c, ...rect(c) }));
   // The same heading text twice on the first screen (a page title and the card heading under it).
