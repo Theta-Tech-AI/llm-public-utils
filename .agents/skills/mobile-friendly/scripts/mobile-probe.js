@@ -250,7 +250,8 @@
   // A hidden native checkbox gives its hit area to the label around it (or the label[for]), which is what is measured.
   const hitArea = (e) => (e.matches("input[type=checkbox], input[type=radio]")
     ? e.closest("label") || (e.id ? document.querySelector(`label[for="${CSS.escape(e.id)}"]`) : null) || e : e);
-  const tappable = [...tapScope.querySelectorAll(TAPPABLE)].filter((e) => !e.disabled).map(hitArea)
+  const native = new Map(); // hit area -> the native control it stands for (a name is read from the control)
+  const tappable = [...tapScope.querySelectorAll(TAPPABLE)].filter((e) => !e.disabled).map((e) => { const a = hitArea(e); if (a !== e) native.set(a, e); return a; })
     .filter((e, i, list) => shown(e) && !inline(e) && list.indexOf(e) === i && !list.some((o) => o !== e && o.contains(e) && o.matches(CONTROL)));
 
   // Fixed and sticky bars: together they may cover only a small share of the height (the union, not the sum).
@@ -388,16 +389,26 @@
     if (pinned(c)) return false;
     // A bar over the control: scrolling moves it out from under the bar only if its scroller can move away from the bar's edge.
     // At the end of that scroll range the control stays obscured for good and is reported in `clipped`.
+    // The bar must really take the taps there: a control painted above it (z-index) or a bar with pointer-events none is reachable.
     const bar = barEls.find((b) => {
       if (b.e.contains(c)) return false;
       const br = box(b.e);
-      return Math.min(r.right, br.right) - Math.max(r.left, br.left) > r.width * 0.5 && Math.min(r.bottom, br.bottom) - Math.max(r.top, br.top) > 1;
+      const [l, rt] = [Math.max(r.left, br.left), Math.min(r.right, br.right)];
+      const [tp, bt] = [Math.max(r.top, br.top), Math.min(r.bottom, br.bottom)];
+      if (rt - l <= r.width * 0.5 || bt - tp <= 1) return false;
+      for (const fx of [0.2, 0.5, 0.8]) for (const fy of [0.2, 0.5, 0.8]) {
+        const h = hitAt(l + (rt - l) * fx, tp + (bt - tp) * fy);
+        if (h && b.e.contains(h)) return true;
+      }
+      return false;
     });
     if (!bar) return false;
     let sc = c.parentElement;
     while (sc && sc !== document.body && !scrollsY(sc)) sc = sc.parentElement;
     if (!sc || sc === document.body) sc = document.scrollingElement || doc;
-    const fromTop = bar.top <= 1; // a bar on the top edge hides what is above the scroll position
+    // The bar sits on the top or the bottom edge of the scrollport (the scroller's own box; the screen for the document).
+    const port = sc === document.scrollingElement || sc === doc ? { top: 0, bottom: H } : box(sc);
+    const fromTop = bar.top - port.top < port.bottom - bar.bottom;
     const room = fromTop ? sc.scrollTop > 1 : sc.scrollTop + sc.clientHeight < sc.scrollHeight - 1;
     if (room) return "partial";
     clippedControls.push({ e: c, by: bar.e });
@@ -659,7 +670,7 @@
     const own = e.matches("input[type=image]") ? e.getAttribute("alt") : e.matches("input[type=button], input[type=submit], input[type=reset]") ? e.value : "";
     return [e.getAttribute("aria-label"), ids, labels, own, e.matches("input, select, textarea") ? "" : content(e), e.title].join(" ").trim();
   };
-  const unnamedControls = tappable.filter((c) => within("unnamedControls") && !nameOf(c)).map((c) => ({ el: c, ...rect(c) }));
+  const unnamedControls = tappable.filter((c) => within("unnamedControls") && !nameOf(native.get(c) || c)).map((c) => ({ el: c, ...rect(c) }));
   // The same heading text twice on the first screen (a page title and the card heading under it).
   const headingCount = {};
   const repeatedHeading = [];
