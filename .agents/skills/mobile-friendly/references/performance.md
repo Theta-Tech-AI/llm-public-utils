@@ -13,7 +13,8 @@ Add this check when the page loads slowly, a tap takes too long, the content mov
 ## 🔍 Where to look
 
 - 🖼️ **Slow first useful content.** Look for oversized images, late fonts, blocking requests, and work that can start after the first screen. Size images to their display width and prioritize media that is the LCP element. Use the trace to check when the element starts loading and renders. [Optimize LCP](https://web.dev/articles/optimize-lcp)
-- 👆 **Slow taps, typing, or scrolling.** Look for long main-thread tasks, synchronous rendering of large lists or charts, and scripts that start when the page opens. Check input delay, handler time, and presentation delay. [Optimize INP](https://web.dev/articles/optimize-inp)
+- 👆 **Slow taps or typing.** Look for long main-thread tasks, synchronous rendering of large lists or charts, and scripts that start when the page opens. Check input delay, handler time, and presentation delay. [Optimize INP](https://web.dev/articles/optimize-inp)
+- 🧭 **Uneven scrolling.** Record a scroll in the Performance panel. Check dropped frames, long rendering tasks, and paint-heavy content during the scroll. [Chrome DevTools Performance](https://developer.chrome.com/docs/devtools/performance/overview)
 - 📐 **Content jumps.** Inspect layout shift events. Check image and chart dimensions, skeleton sizes, late banners, and font swaps. Reserve room for media and delayed content. [Optimize CLS](https://web.dev/articles/optimize-cls)
 - 📡 **Slow data or repeat work.** Use the network waterfall to find duplicate requests and dependencies that run in series. Compare with server timings when available. Keep screen data and cache state consistent across runs.
 
