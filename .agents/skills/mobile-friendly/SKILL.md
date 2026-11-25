@@ -34,6 +34,8 @@ Two instruments, used together on every iteration:
 
 **When a fault class repeats, fix the class:** a fault seen on three pages (text running past its box, a target under 44 px) gets a base rule at the owner of all of them and a probe check, and the instance fixes are deleted. Five spot fixes for spilled text in the first campaign were one missing rule ([checklist.md M12](references/checklist.md)).
 
+Use a lower-cost model for the page agents when the runtime supports it. Keep one page per agent and limit active previews to the capacity of the machine. The coordinator reads the before and after images and resolves shared defects before publishing.
+
 ## 🎯 When is an agent happy?
 
 All of these, at **320 px, 390 px and the widest phone width** (one pixel under the app's phone/desktop breakpoint), 844 px high, and once **at the breakpoint** to confirm the desktop layout starts there:
