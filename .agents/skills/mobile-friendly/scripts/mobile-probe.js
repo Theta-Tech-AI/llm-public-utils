@@ -19,7 +19,8 @@
 //   scrollRegions   narrower regions that scroll sideways on purpose (they need a name and keyboard focus)
 //   targets         controls whose real hit area (see Method) is under MIN_TARGET px; hitW/hitH is the measured size.
 //                   A control is a real action: button, a[href], input, select, textarea, summary or a role (button, link,
-//                   tab, checkbox, radio, switch, menuitem, option). A tabindex alone (a tooltip trigger) is not one.
+//                   tab, checkbox, radio, switch, menuitem, option, combobox, slider, spinbutton, textbox, searchbox, treeitem) or a
+//                   contenteditable. A tabindex alone (a tooltip trigger) is not one.
 //   sampling        {controls, sampled, covered, unsampled, points, incomplete, unsampledList}: which controls could be asked;
 //                   unsampledList is {above, below, side, budget, partial, clipped}; partial = cut by its scroller's edge or
 //                   under a bar at this stop (walk the page in overlapping stops, see loop.md); clipped = cut for good; incomplete names checks the deadline cut
@@ -213,7 +214,7 @@
   // A declared pan viewport (a map, a graph canvas) moves its content on purpose. touch-action: none alone proves nothing
   // (a draggable card has it): mark the viewport with [data-pan-viewport], or use a known library viewport.
   const PAN = "[data-pan-viewport], .react-flow, .leaflet-container, .mapboxgl-map, .maplibregl-map, .ol-viewport";
-  const panned = (e) => !!e.closest(PAN);
+  const panned = (by) => by.matches(PAN); // only the pan viewport's own clip: a card clipping its text inside a map is a fault
   const wide = [];
   const clippedSet = [];
   for (const e of all) {
@@ -222,7 +223,7 @@
     const c = classify(e);
     if (c.region) continue;
     const inRoot = scoped === all || rootEl.contains(e);
-    if (c.cut) { if (inRoot && !decor(e) && !panned(e)) clippedSet.push({ e, by: c.cut }); continue; }
+    if (c.cut) { if (inRoot && !decor(e) && !panned(c.cut)) clippedSet.push({ e, by: c.cut }); continue; }
     let past = 0;
     if (c.home === doc) past = Math.max(r.right - W, -r.left);
     else { const x = r.left - box(c.home).left + c.home.scrollLeft; past = Math.max(x + r.width - c.home.clientWidth, -x); }
@@ -235,7 +236,7 @@
   const clippedAll = () => [...outermost(clippedSet), ...clippedControls].map((o) => ({ el: o.e, ...rect(o.e), by: o.by }));
 
   // Tap targets: a link inside running text is exempt (WCAG 2.5.8 inline exception).
-  const TAPPABLE = "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option]";
+  const TAPPABLE = "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option], [role=combobox], [role=slider], [role=spinbutton], [role=textbox], [role=searchbox], [role=treeitem], [contenteditable=true]";
   // An outer element of this kind activates the same thing as the control inside it.
   const CONTROL = "a[href], button, summary, label, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option]";
   // Inline only counts as prose when the parent holds real text besides its links, not a row of sibling links.
@@ -375,9 +376,10 @@
       const pr = box(p);
       const cutX = pr.left > r.left + 1 || pr.right < r.right - 1;
       const cutY = pr.top > r.top + 1 || pr.bottom < r.bottom - 1;
-      // A scroller smaller than the control never shows it whole, at any scroll position.
-      if ((cutX && /(auto|scroll)/.test(cs.overflowX) && r.width > p.clientWidth + 1) || (cutY && /(auto|scroll)/.test(cs.overflowY) && r.height > p.clientHeight + 1)) return p;
-      if ((cutX && /(auto|scroll)/.test(cs.overflowX)) || (cutY && /(auto|scroll)/.test(cs.overflowY))) return null;
+      // A scroller shows the control whole only if it has scroll range on that axis and is big enough to hold the control.
+      const gets = (cut, ov, size, scrollSize, client) => cut && /(auto|scroll)/.test(ov) && size <= client + 1 && scrollSize > client + 1;
+      if (gets(cutX, cs.overflowX, r.width, p.scrollWidth, p.clientWidth) || gets(cutY, cs.overflowY, r.height, p.scrollHeight, p.clientHeight)) return null;
+      if ((cutX && /(auto|scroll)/.test(cs.overflowX)) || (cutY && /(auto|scroll)/.test(cs.overflowY))) return p;
       if ((cutX && /(hidden|clip)/.test(cs.overflowX)) || (cutY && /(hidden|clip)/.test(cs.overflowY))) return p;
     }
     return null;
@@ -407,15 +409,19 @@
       return false;
     });
     if (!bar) return false;
-    // The control stays obscured for good only when no scroller around it (up to the document) can move it out from under the bar.
+    // The control stays obscured for good unless a scroller can move it from under the bar by enough travel. Only a scroller that
+    // does not carry the bar along counts: any scroller around a fixed bar, only the bar's own scroller for a sticky bar.
+    const pageScroll = document.scrollingElement || doc;
+    const barRoot = style(bar.e).position === "fixed" ? null : (() => { let q = bar.e.parentElement; while (q && q !== document.body && !scrollsY(q)) q = q.parentElement; return q && q !== document.body ? q : pageScroll; })();
     const movable = (sc) => {
-      const doc_ = sc === document.scrollingElement || sc === doc;
-      const port = doc_ ? { top: 0, bottom: H } : box(sc);
+      const port = sc === pageScroll || sc === doc ? { top: 0, bottom: H } : box(sc);
       const fromTop = bar.top - port.top < port.bottom - bar.bottom; // the bar sits on the top or bottom edge of this scrollport
-      return fromTop ? sc.scrollTop > 1 : sc.scrollTop + sc.clientHeight < sc.scrollHeight - 1;
+      return fromTop ? sc.scrollTop >= bar.bottom - r.top - 1 : sc.scrollHeight - sc.clientHeight - sc.scrollTop >= r.bottom - bar.top - 1;
     };
-    for (let sc = c.parentElement; sc && sc !== document.body; sc = sc.parentElement) if (scrollsY(sc) && movable(sc)) return "partial";
-    if (movable(document.scrollingElement || doc)) return "partial";
+    for (let sc = c.parentElement; sc && sc !== document.body; sc = sc.parentElement) {
+      if (scrollsY(sc) && (barRoot === null || sc === barRoot) && movable(sc)) return "partial";
+    }
+    if ((barRoot === null || barRoot === pageScroll) && movable(pageScroll)) return "partial";
     clippedControls.push({ e: c, by: bar.e });
     return "clipped";
   };
@@ -549,6 +555,7 @@
   const hiddenVisually = (e) => {
     for (let p = e; p && p !== document.body; p = p.parentElement) {
       const cs = style(p);
+      if (cs.display === "contents") continue; // no box of its own: its children are painted
       const r = box(p);
       if (/inset\(50%\)/.test(cs.clipPath) || (cs.clip && cs.clip !== "auto" && r.width <= 1) || (r.width <= 1 && r.height <= 1)) return true;
     }
@@ -641,7 +648,7 @@
     for (let n = walker.nextNode(); n && !split && !late(); n = walker.nextNode()) {
       for (const m of n.textContent.matchAll(/\S+/g)) {
         if (late()) break;
-        if (m[0].length > 24) continue;
+        if (m[0].length > 24 || /[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(m[0])) continue; // CJK may break between any two characters
         let at = m.index;
         for (const part of m[0].split(/(?<=[-\u00AD/])/)) {
           if (part.length > 1) {
