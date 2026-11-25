@@ -44,7 +44,7 @@
 ## 🔤 Text and inputs
 
 - Inputs, selects and textareas at `font-size: max(16px, 1rem)` under the breakpoint (stops iOS zoom on focus), as an `!important` base rule inside the phone query: an unlayered page rule (`font: inherit`) beats a normal rule in a layer. Do not prevent zoom with the viewport meta instead.
-- **One type scale:** body text under 16 px on phones across many pages is one class. Move the small steps of the app's one scale up below the phone line (body 16, secondary 13, minimum 12), make prose and plugin sizes read the same token, then delete every per-page size bump. Never patch sizes per page.
+- **One type scale:** body text under 16 px on phones across many pages is one class. Below the phone breakpoint, raise the shared font-size tokens to these minimums: body 16, secondary 13, minimum 12. Make prose and plugin sizes read the same token, then delete every per-page size bump. Never patch sizes per page.
 - Labels and captions at 12 px or more; caps sub-labels are the usual offenders (10–11 px with letter-spacing).
 - Truncated names: replace `white-space: nowrap; text-overflow: ellipsis` with wrapping (`overflow-wrap: anywhere`, two-line clamp only where a list needs a fixed rhythm and the full name is one tap away).
 

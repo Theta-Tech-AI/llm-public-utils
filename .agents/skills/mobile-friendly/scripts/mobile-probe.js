@@ -11,7 +11,8 @@
 //   root            {selector, found}: the scope in use
 //   counts          one number per fault below, 0 is clean (distinctEdges and barsOverShare are a count and a share)
 //   overflow        outermost elements wider than a page scroller (the document or an app-shell scroll container)
-//   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one).
+//   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one), and
+//                   controls so cut at the top or side, which no scroll shows whole.
 //                   Not judged: aria-hidden decoration, pan regions (touch-action: none)
 //   scrollers       every scroll container found; page:true marks the ones that carry the page. Scroll the inner
 //                   page scroller to shoot below the fold: a full-page screenshot only shows its first screen
@@ -20,26 +21,32 @@
 //                   A control is a real action: button, a[href], input, select, textarea, summary or a role (button, link,
 //                   tab, checkbox, radio, switch, menuitem, option). A tabindex alone (a tooltip trigger) is not one.
 //   sampling        {controls, sampled, covered, unsampled, points, incomplete, unsampledList}: which controls could be asked;
-//                   unsampledList is {above, below, side, budget, partial}; partial = cut by its scroller's edge or under a
-//                   fixed/sticky bar at this stop (it is asked at the stop where it is whole); incomplete names checks the deadline cut
+//                   unsampledList is {above, below, side, budget, partial, clipped}; partial = cut by its scroller's edge or
+//                   under a bar at this stop (walk the page in overlapping stops, see loop.md); clipped = cut for good; incomplete names checks the deadline cut
 //   crowded         controls whose hit areas come closer than MIN_GAP px (gap under 7.5 px, unrounded; overlap counts as 0),
-//                   or where a tap in the MIN_TARGET square around one control's centre reaches the other. A pair where
-//                   one box holds the other, or exactly one has a fixed or sticky ancestor, is not judged
+//                   or where a tap in the MIN_TARGET square around one control's centre reaches the other. Not judged: a
+//                   control inside its own field (a clear button in its input), and a bar that is stuck (fixed, or sticky
+//                   with its rect at its sticky offset) over content that has been scrolled
 //   overlaps        text over a control it is not inside, or two controls whose boxes cross (same exemptions as crowded)
 //   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 2 px, any
-//                   side. Not judged: visually hidden or aria-hidden elements, content inside a scroller or role=region,
-//                   an element that is its own container
+//                   side. A scroller (its own overflow) is the boundary: content in it is judged against a card inside it.
+//                   Not judged: visually hidden or aria-hidden elements; the box of an element against itself
 //   smallText       text under MIN_TEXT px
 //   smallBody       running text under MIN_BODY px: text in a p/li/dd/td/blockquote/figcaption whose whole text is over
-//                   40 characters, or a div whose own text is over 40 characters. A pill or badge label from 13 px up is not body
+//                   40 characters, or any other element whose own text is over 40 characters. Not body: a label of 3 words or fewer, a pill or badge
+//                   (rounded to half its height, with a background or border) from 13 px up
 //   smallSecondary  short text (labels, captions) from MIN_TEXT up to MIN_SECONDARY px
 //   textSizes       histogram {px: number of text elements}
 //   smallInputs     form fields under MIN_INPUT px (iOS Safari zooms on focus)
-//   letterColumn    text over 5 lines tall whose lines are all under 2 characters wide (a value broken one letter per line)
-//   splitWords      table cells that break a word of up to 24 characters across lines ("Standar/d")
-//   unnamedControls controls with no accessible name (an icon-only button whose label is hidden on phones)
+//   letterColumn    text over 5 rendered lines (rects on one line are merged) whose lines are all under 2 characters wide
+//   splitWords      table cells that break a word across lines ("Standar/d"); a token over 24 characters is skipped, a break
+//                   after a hyphen, soft hyphen or slash is legal
+//   unnamedControls controls with no accessible name (aria-label, labelledby, native label, value, alt, visible content
+//                   without aria-hidden parts, title); an icon-only button whose label is hidden on phones
 //   repeatedHeading the same heading text twice on the first screen (page title and card heading)
-//   squeezedScroller a vertical scroller under 40 % of the screen height with much more content, while the document does not scroll
+//   squeezedScroller a vertical scroller in the root under 40 % of the screen height with much more content, while the page
+//                   scrolls nowhere else (document and page scrollers still, or the scroller itself)
+//                   The five checks above share the time budget; one cut short is named in sampling.incomplete
 //   edges           histogram of where text lines start (many distinct x means nested padding ate the width)
 //   bars            fixed/sticky bars: share = union of the viewport height they cover, list = each bar
 //   truncated       text cut by an ellipsis, a line clamp, or an overflow-hidden box of its own (even with no ellipsis)
@@ -135,12 +142,23 @@
   const all = [...document.body.querySelectorAll("*")];
   const decor = (e) => !!e.closest("[aria-hidden=true]"); // aria-hidden decoration is not content to judge
   const pinnedCache = new Map();
-  const pinned = (e) => { // the element or an ancestor is fixed or sticky
+  const pinned = (e) => { // the element or an ancestor is fixed, or sticky and stuck right now (its rect equals its sticky offset)
     if (!e || e === document.body) return false;
     let v = pinnedCache.get(e);
-    if (v === undefined) { v = /^(fixed|sticky)$/.test(style(e).position) || pinned(e.parentElement); pinnedCache.set(e, v); }
+    if (v === undefined) {
+      const pos = style(e).position;
+      v = pos === "fixed" || (pos === "sticky" && stuck(e, style(e))) || pinned(e.parentElement);
+      pinnedCache.set(e, v);
+    }
     return v;
   };
+  const scrolled = (e) => { // the content has been scrolled: something under a bar may be scrolled text, not a layout fault
+    if (scrollY > 0) return true;
+    for (let p = e; p && p !== document.body; p = p.parentElement) if (p.scrollTop > 0) return true;
+    return false;
+  };
+  // A bar over scrolled content is not a fault at this stop; a bar over content at scroll top is.
+  const underBar = (a, b) => (pinned(a) !== pinned(b) && scrolled(pinned(a) ? b : a));
 
   // Scope: a root narrows the per-element checks; page scroll and bars always look at the whole page.
   const rootSelector = String(window.__mobileProbeRoot || "");
@@ -216,7 +234,7 @@
   const outermost = (list) => { const set = new Set(list.map((o) => o.e)); return list.filter((o) => { for (let p = o.e.parentElement; p; p = p.parentElement) if (set.has(p)) return false; return true; }); };
   const overflow = outermost(wide).sort((a, b) => b.past - a.past)
     .map((o) => ({ el: o.e, ...rect(o.e), past: Math.round(o.past), ...(o.home === doc ? {} : { scroller: o.home }) }));
-  const clipped = outermost(clippedSet).map((o) => ({ el: o.e, ...rect(o.e), by: o.by }));
+  const clippedAll = () => [...outermost(clippedSet), ...clippedControls].map((o) => ({ el: o.e, ...rect(o.e), by: o.by }));
 
   // Tap targets: a link inside running text is exempt (WCAG 2.5.8 inline exception).
   const TAPPABLE = "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option]";
@@ -349,15 +367,34 @@
     if (r.bottom > H) eff.bottom = r.bottom;
     return { eff: { ...eff, width: eff.right - eff.left, height: eff.bottom - eff.top }, near };
   };
+  // An ancestor with overflow hidden or clip that cuts the control cuts it for good: no scroll shows it whole. A scroller
+  // (auto, scroll) that cuts it is checked first: scrolling brings the control in, so it is asked at another stop.
+  const cutForGood = (c, r) => {
+    for (let p = c.parentElement; p && p !== document.body; p = p.parentElement) {
+      const cs = style(p);
+      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
+      const pr = box(p);
+      const cutX = pr.left > r.left + 1 || pr.right < r.right - 1;
+      const cutY = pr.top > r.top + 1 || pr.bottom < r.bottom - 1;
+      if ((cutX && /(auto|scroll)/.test(cs.overflowX)) || (cutY && /(auto|scroll)/.test(cs.overflowY))) return null;
+      if ((cutX && /(hidden|clip)/.test(cs.overflowX)) || (cutY && /(hidden|clip)/.test(cs.overflowY))) return p;
+    }
+    return null;
+  };
+  const clippedControls = [];
   const partial = (c, r) => {
     const v = visibleRect(c, r);
-    if (!v || v.right - v.left < r.width - 1 || v.bottom - v.top < r.height - 1) return true;
+    if (!v || v.right - v.left < r.width - 1 || v.bottom - v.top < r.height - 1) {
+      const by = cutForGood(c, r);
+      if (by) { clippedControls.push({ e: c, by }); return "clipped"; }
+      return "partial";
+    }
     if (pinned(c)) return false;
     return barEls.some((b) => {
       if (b.e.contains(c)) return false;
       const br = box(b.e);
       return Math.min(r.right, br.right) - Math.max(r.left, br.left) > r.width * 0.5 && Math.min(r.bottom, br.bottom) - Math.max(r.top, br.top) > 1;
-    });
+    }) ? "partial" : false;
   };
   const unsampled = [];
   const coveredList = [];
@@ -369,7 +406,8 @@
     if (where) { unsampled.push({ el: c, ...rect(c), where }); continue; }
     if (late()) { unsampled.push({ el: c, ...rect(c), where: "budget" }); incomplete.add("targets"); continue; }
     // A control cut by its scroller's edge or half under a bar shows a hit area smaller than its own: it is asked at the stop where it is whole.
-    if (partial(c, r)) { unsampled.push({ el: c, ...rect(c), where: "partial" }); continue; }
+    const cut = partial(c, r);
+    if (cut) { unsampled.push({ el: c, ...rect(c), where: cut }); continue; }
     const m = measure(c, r);
     if (m.state === "covered") coveredList.push({ el: c, ...rect(c) });
     else if (m.state) unsampled.push({ el: c, ...rect(c), where: "below" });
@@ -384,6 +422,7 @@
     const near = (v, w) => (Math.abs(v - w) <= 1 ? w : v);
     return { left: near(o.eff.left, o.r.left), right: near(o.eff.right, o.r.right), top: near(o.eff.top, o.r.top), bottom: near(o.eff.bottom, o.r.bottom) };
   };
+  const inField = (a, b) => b.c.matches("input, select, textarea") && a.c.parentElement === b.c.parentElement && inside(a.r, b.r);
   const inside = (a, b) => a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1;
   const dist = (a, b) => Math.hypot(Math.max(a.left - b.right, b.left - a.right, 0), Math.max(a.top - b.bottom, b.top - a.bottom, 0));
   const crowded = [];
@@ -392,9 +431,9 @@
     for (let j = i + 1; j < hit.length; j += 1) {
       const [x, y] = [hit[i], hit[j]];
       if (x.c.contains(y.c) || y.c.contains(x.c)) continue;
-      // One box inside the other is a part of one widget (an icon in its own input); one control under a sticky or fixed
-      // bar and the other not is scrolled content under the bar, judged at the stop where it is clear.
-      if (inside(x.r, y.r) || inside(y.r, x.r) || pinned(x.c) !== pinned(y.c)) continue;
+      // A control inside its own field (a clear button in its input) is one widget; a bar over scrolled content is judged
+      // at the stop where the content is clear.
+      if (inField(x, y) || inField(y, x) || underBar(x.c, y.c)) continue;
       const d = dist(snap(x), snap(y));
       if (d >= MIN_GAP - 0.5 && !x.near.has(y.c) && !y.near.has(x.c)) continue;
       crowded.push({ a: x.c, b: y.c, gap: Math.round(d * 10) / 10 });
@@ -438,7 +477,7 @@
       if (!vt) continue;
       for (const { c, r } of hit) {
         if (late()) { incomplete.add("overlaps"); break; }
-        if (c.contains(e) || e.contains(c) || pinned(e) !== pinned(c) || [...hot].some((o) => o.contains(e))) continue;
+        if (c.contains(e) || e.contains(c) || underBar(e, c) || [...hot].some((o) => o.contains(e))) continue;
         const [l, rt] = [Math.max(vt.left, r.left), Math.min(vt.right, r.right)];
         const [tp, bt] = [Math.max(vt.top, r.top), Math.min(vt.bottom, r.bottom)];
         if (rt - l <= 2 || bt - tp <= 4) continue;
@@ -479,18 +518,26 @@
     if (v === undefined) { v = (scrollsX(e) && !pageScrollers.has(e)) || inRegion(e.parentElement); regions.set(e, v); }
     return v;
   };
-  // Content inside a scroller (or a named region) is reached by scrolling, so it does not spill; the page scrollers are not such regions.
-  const inScroll = (e) => { for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) if (!pageScrollers.has(p) && (/(auto|scroll)/.test(style(p).overflowX + style(p).overflowY) || p.getAttribute("role") === "region")) return true; return false; };
-  const hiddenVisually = (e) => { const cs = style(e); const r = box(e); return /inset\(50%\)/.test(cs.clipPath) || (cs.clip && cs.clip !== "auto" && r.width <= 1) || (r.width <= 1 && r.height <= 1); };
+  // The container search (holderOf) already stops at an ancestor with its own overflow, so a scroller is the boundary:
+  // content in it is judged against a card inside it, never against a box outside it. A region role does not scroll.
+  // A screen-reader-only holder (1 px box, clip, clip-path inset(50%)) hides everything inside it, so its ancestors count too.
+  const hiddenVisually = (e) => {
+    for (let p = e; p && p !== document.body; p = p.parentElement) {
+      const cs = style(p);
+      const r = box(p);
+      if (/inset\(50%\)/.test(cs.clipPath) || (cs.clip && cs.clip !== "auto" && r.width <= 1) || (r.width <= 1 && r.height <= 1)) return true;
+    }
+    return false;
+  };
   const escaping = [];
   for (const e of scoped) {
     if (!shown(e) || /^(absolute|fixed)$/.test(style(e).position)) continue;
-    if (inRegion(e.parentElement) || inScroll(e) || decor(e) || hiddenVisually(e)) continue;
+    if (inRegion(e.parentElement) || decor(e) || hiddenVisually(e)) continue;
     // Text is judged against the element itself when it is the painted container, else against the one around it.
     const outer = holderOf(e);
     const own = textRects.has(e) ? (selfHolder(e) ? e : outer) : null;
-    for (const [c, rs] of [[own, textRects.get(e)], [outer, [box(e)]]]) {
-      if (!c || !rs || c === e) continue; // a box is not its own container
+    for (const [c, rs, text] of [[own, textRects.get(e), true], [outer, [box(e)], false]]) {
+      if (!c || !rs || (c === e && !text)) continue; // a box is not its own container; its text still is judged against it
       const cr = box(c);
       const past = Math.max(0, ...rs.map((r) => Math.max(r.right - cr.right, cr.left - r.left, r.bottom - cr.bottom, cr.top - r.top)));
       const prev = escaping.find((o) => o.e === e);
@@ -509,6 +556,16 @@
   const textSizes = Object.fromEntries(Object.entries(sizeCount).sort((a, b) => a[0] - b[0]));
   // Running text is what people read for more than a glance. Its owner is the paragraph-like block, so a span inside a
   // long <p> counts by the paragraph; a short label or caption is secondary text with its own lower floor.
+  // A pill or badge: a rounded box (radius at least half its height) with a background or a border, on the element or just above it.
+  const inPill = (e) => {
+    for (let p = e, n = 0; p && p !== document.body && n < 3; p = p.parentElement, n += 1) {
+      const cs = style(p);
+      const h = box(p).height;
+      const radius = cs.borderTopLeftRadius.endsWith("%") ? parseFloat(cs.borderTopLeftRadius) * h / 50 : parseFloat(cs.borderTopLeftRadius);
+      if (h > 0 && radius >= h / 2 && chrome(cs)) return true;
+    }
+    return false;
+  };
   const textLen = (e) => e.textContent.replace(/\s+/g, " ").trim().length;
   const BLOCK = "p, li, dd, td, blockquote, figcaption";
   const smallBody = [];
@@ -518,9 +575,10 @@
     const size = px(e);
     if (size >= MIN_BODY) continue;
     const block = e.closest(BLOCK);
-    // Body is a text block, or the own text of a plain div; a pill or a badge label from 13 px up is a label, not body.
-    const plain = e.tagName === "DIV" && !(size >= MIN_SECONDARY && chrome(style(e)));
-    if (block ? textLen(block) > 40 : plain && textLen(e) > 40) {
+    // Long text is running text wherever it sits; only a short label (3 words or fewer) or a pill or badge from 13 px up is not.
+    const words = (block || e).textContent.trim().split(/\s+/).length;
+    const label = words <= 3 || (size >= MIN_SECONDARY && inPill(e));
+    if (!label && textLen(block || e) > 40) {
       if (block && seenBlocks.has(block)) continue;
       if (block) seenBlocks.add(block);
       smallBody.push({ el: e, px: size });
@@ -530,39 +588,72 @@
     .filter((e) => shown(e) && px(e) < MIN_INPUT)
     .map((e) => ({ el: e, px: px(e) }));
 
-  // A value broken one letter per line: more than 5 lines, none wider than 2 characters of its font size.
+  // The new checks share the probe's deadline; one cut short is named in sampling.incomplete.
+  const within = (name) => { if (late()) { incomplete.add(name); return false; } return true; };
+  // A value broken one letter per line: more than 5 rendered lines (rects on one line are merged: adjacent text nodes
+  // give several rects per line), none wider than 2 characters of its font size.
   const letterColumn = texty.filter((e) => {
-    const rs = textRects.get(e);
-    return rs.length > 5 && Math.max(...rs.map((r) => r.width)) < 2 * px(e);
+    if (!within("letterColumn")) return false;
+    const rs = [...textRects.get(e)].sort((a, b) => a.top - b.top);
+    const lines = [];
+    for (const r of rs) {
+      const line = lines.find((l) => Math.abs(l.top - r.top) <= 2);
+      if (line) { line.left = Math.min(line.left, r.left); line.right = Math.max(line.right, r.right); } else lines.push({ top: r.top, left: r.left, right: r.right });
+    }
+    return lines.length > 5 && Math.max(...lines.map((l) => l.right - l.left)) < 2 * px(e);
   }).map((e) => ({ el: e, ...rect(e) }));
-  // A table cell that breaks inside a word (an `overflow-wrap: anywhere` cell shrinks to one letter): a word of up to 24
-  // characters whose range has more than one line box. A longer token (a hash, a URL) is broken on purpose.
+  // A table cell that breaks inside a word (an `overflow-wrap: anywhere` cell shrinks to one letter). Whole words come first:
+  // a token over 24 characters (a hash, a URL) is broken on purpose and is skipped; a token is judged in parts at its
+  // legal break points (hyphen, soft hyphen, slash), each part on one line.
   const splitWords = [];
   for (const cell of scoped.filter((e) => /^(TD|TH)$/.test(e.tagName) && shown(e))) {
+    if (!within("splitWords")) break;
     const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
     let split = null;
-    for (let n = walker.nextNode(); n && !split; n = walker.nextNode()) {
-      for (const m of n.textContent.matchAll(/\S{2,24}/g)) {
-        const range = document.createRange();
-        range.setStart(n, m.index);
-        range.setEnd(n, m.index + m[0].length);
-        if (new Set([...range.getClientRects()].filter((r) => r.width > 1).map((r) => Math.round(r.top))).size > 1) { split = m[0]; break; }
+    for (let n = walker.nextNode(); n && !split && !late(); n = walker.nextNode()) {
+      for (const m of n.textContent.matchAll(/\S+/g)) {
+        if (m[0].length > 24) continue;
+        let at = m.index;
+        for (const part of m[0].split(/(?<=[-\u00AD/])/)) {
+          if (part.length > 1) {
+            const range = document.createRange();
+            range.setStart(n, at);
+            range.setEnd(n, at + part.length);
+            if (new Set([...range.getClientRects()].filter((r) => r.width > 1).map((r) => Math.round(r.top))).size > 1) { split = m[0]; break; }
+          }
+          at += part.length;
+        }
+        if (split) break;
       }
     }
+    if (late()) incomplete.add("splitWords");
     if (split) splitWords.push({ el: cell, word: split, wrap: style(cell).overflowWrap });
   }
-  // A control with no accessible name: no label, no visible text (innerText skips a label hidden on phones), no title, no image alt.
+  // A control with no accessible name. Computed by hand: aria-label, aria-labelledby, native label, value or alt, visible
+  // content (an aria-hidden or hidden descendant gives nothing; a label hidden on phones is not there), title.
+  const content = (n) => {
+    if (n.nodeType === 3) return n.textContent;
+    if (n.nodeType !== 1 || n.matches("[aria-hidden=true]")) return "";
+    const cs = style(n);
+    if (cs.display === "none" || cs.visibility === "hidden") return "";
+    if (n.tagName === "IMG") return n.getAttribute("alt") || "";
+    if (n.tagName === "svg" || n.tagName === "SVG") return n.querySelector(":scope > title")?.textContent || n.getAttribute("aria-label") || "";
+    return [...n.childNodes].map(content).join(" ");
+  };
+  const LABELABLE = "button, input, meter, output, progress, select, textarea";
   const nameOf = (e) => {
     const ids = (e.getAttribute("aria-labelledby") || "").split(/\s+/).map((id) => document.getElementById(id)?.textContent || "").join(" ");
-    const labels = e.labels ? [...e.labels].map((l) => l.innerText).join(" ") : "";
-    const alt = [...e.querySelectorAll("img[alt], svg title")].map((i) => i.getAttribute("alt") || i.textContent).join(" ");
-    return [e.getAttribute("aria-label"), ids, e.innerText, labels, e.title, alt, e.matches("input[type=button], input[type=submit]") ? e.value : ""].join(" ").trim();
+    // `labels` is only a NodeList on a labelable element (a form with a field named "labels" shadows it)
+    const labels = e.matches(LABELABLE) && e.labels instanceof NodeList ? [...e.labels].map(content).join(" ") : "";
+    const own = e.matches("input[type=image]") ? e.getAttribute("alt") : e.matches("input[type=button], input[type=submit], input[type=reset]") ? e.value : "";
+    return [e.getAttribute("aria-label"), ids, labels, own, e.matches("input") ? "" : content(e), e.title].join(" ").trim();
   };
-  const unnamedControls = tappable.filter((c) => !nameOf(c.matches("label") ? (c.querySelector("input") || c) : c)).map((c) => ({ el: c, ...rect(c) }));
+  const unnamedControls = tappable.filter((c) => within("unnamedControls") && !nameOf(c)).map((c) => ({ el: c, ...rect(c) }));
   // The same heading text twice on the first screen (a page title and the card heading under it).
   const headingCount = {};
   const repeatedHeading = [];
   for (const e of scoped.filter((x) => x.matches("h1, h2, h3, h4, h5, h6, [role=heading]") && shown(x))) {
+    if (!within("repeatedHeading")) break;
     const r = box(e);
     if (r.bottom <= 0 || r.top >= H) continue;
     const k = (e.innerText || "").replace(/\s+/g, " ").trim().toLowerCase();
@@ -570,10 +661,12 @@
     headingCount[k] = (headingCount[k] || 0) + 1;
     if (headingCount[k] === 2) repeatedHeading.push({ el: e, text: k.slice(0, 40) });
   }
-  // A vertical scroller under 40 % of the screen height with much more content, while the document itself does not scroll
-  // (a list squeezed under a hero or a fixed header).
-  const squeezedScroller = doc.scrollHeight > doc.clientHeight + 1 ? [] : all.filter((e) => {
-    if (!shown(e) || !scrollsY(e) || e.matches("textarea, select, pre")) return false;
+  // A vertical scroller in the root's scope under 40 % of the screen height with much more content, while the page does not
+  // scroll apart from it: the document and every page scroller are still, or are the squeezed scroller itself or inside it.
+  const pageMoving = [doc, ...pageScrollers].filter((p) => p.scrollHeight > p.clientHeight + 1 && (p === doc || /(auto|scroll)/.test(style(p).overflowY)));
+  const squeezedScroller = scoped.filter((e) => {
+    if (!within("squeezedScroller") || !shown(e) || !scrollsY(e) || e.matches("textarea, select, pre")) return false;
+    if (pageMoving.some((p) => p !== e && !e.contains(p))) return false;
     const r = box(e);
     return r.top < H && r.bottom > 0 && e.clientWidth >= W * 0.5 && e.clientHeight < H * 0.4 && e.scrollHeight > e.clientHeight * 1.5;
   }).map((e) => ({ el: e, ...rect(e), clientHeight: e.clientHeight, scrollHeight: e.scrollHeight }));
@@ -675,6 +768,7 @@
     fitCover: directives["viewport-fit"] === "cover",
   };
 
+  const clipped = clippedAll();
   const counts = {
     pageScrollsSideways: Math.round(pageSideways),
     overflow: overflow.length,
@@ -722,7 +816,7 @@
     scrollers: named(scrollers),
     scrollRegions: scrollRegions.slice(0, LIMIT),
     targets: named(targets),
-    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget", "partial"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
+    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget", "partial", "clipped"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
     scroller: pageEl === doc || pageEl === document.scrollingElement ? "document" : name(pageEl).replace(/ ".*$/, ""),
     coverage: { controls: tappable.length, seen: tappable.length - unseen.length, unseen: unseen.length, unseenList: named(unseen.map((c) => ({ el: c, ...rect(c) }))) },
     scrollTop: Math.round(pageEl.scrollTop), scrollHeight: pageEl.scrollHeight, clientHeight: pageEl.clientHeight,
