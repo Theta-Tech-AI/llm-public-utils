@@ -1,31 +1,45 @@
 // mobile-probe.js: measure the phone-layout faults a screenshot hides, on the page as it is rendered now.
 // Run it in the page, for example:
 //   agent-browser --session <s> eval "$(cat .agents/skills/mobile-friendly/scripts/mobile-probe.js)"
-// To judge one page and not the shared frame, set a root first (it limits targets, text, edges, overlaps, escapes, clipped;
-// page sideways scroll, overflow, bars and vhRules stay global; set it to '' to clear it):
+// The default root is the whole body, so the frame's own controls (the header) are judged. To judge one page and not the
+// shared frame, set a root first (it limits targets, text, edges, overlaps, escapes, clipped and the checks below;
+// page sideways scroll, overflow, bars and vhRules stay global; set it to '' to clear it). Run both: a page root such as
+// `main` hides the header's own crowding.
 //   agent-browser --session <s> eval "window.__mobileProbeRoot='main'; $(cat .agents/skills/mobile-friendly/scripts/mobile-probe.js)"
 // It returns JSON with these keys. Each list holds the worst offenders (at most LIMIT); `counts` holds the full totals.
 //   viewport        {w, h, dpr, coarse}
 //   root            {selector, found}: the scope in use
 //   counts          one number per fault below, 0 is clean (distinctEdges and barsOverShare are a count and a share)
 //   overflow        outermost elements wider than a page scroller (the document or an app-shell scroll container)
-//   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one)
+//   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one).
+//                   Not judged: aria-hidden decoration, pan regions (touch-action: none)
 //   scrollers       every scroll container found; page:true marks the ones that carry the page. Scroll the inner
 //                   page scroller to shoot below the fold: a full-page screenshot only shows its first screen
 //   scrollRegions   narrower regions that scroll sideways on purpose (they need a name and keyboard focus)
-//   targets         controls whose real hit area (see Method) is under MIN_TARGET px; hitW/hitH is the measured size
+//   targets         controls whose real hit area (see Method) is under MIN_TARGET px; hitW/hitH is the measured size.
+//                   A control is a real action: button, a[href], input, select, textarea, summary or a role (button, link,
+//                   tab, checkbox, radio, switch, menuitem, option). A tabindex alone (a tooltip trigger) is not one.
 //   sampling        {controls, sampled, covered, unsampled, points, incomplete, unsampledList}: which controls could be asked;
-//                   unsampledList is {above, below, side, budget}; incomplete names checks the deadline cut
-//   crowded         controls whose hit areas come closer than MIN_GAP px (overlap counts as 0), or where a tap in the
-//                   MIN_TARGET square around one control's centre reaches the other
-//   overlaps        text over a control it is not inside, or two controls whose boxes cross
-//   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 1 px, any side
+//                   unsampledList is {above, below, side, budget, partial}; partial = cut by its scroller's edge or under a
+//                   fixed/sticky bar at this stop (it is asked at the stop where it is whole); incomplete names checks the deadline cut
+//   crowded         controls whose hit areas come closer than MIN_GAP px (gap under 7.5 px, unrounded; overlap counts as 0),
+//                   or where a tap in the MIN_TARGET square around one control's centre reaches the other. A pair where
+//                   one box holds the other, or exactly one has a fixed or sticky ancestor, is not judged
+//   overlaps        text over a control it is not inside, or two controls whose boxes cross (same exemptions as crowded)
+//   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 2 px, any
+//                   side. Not judged: visually hidden or aria-hidden elements, content inside a scroller or role=region,
+//                   an element that is its own container
 //   smallText       text under MIN_TEXT px
 //   smallBody       running text under MIN_BODY px: text in a p/li/dd/td/blockquote/figcaption whose whole text is over
-//                   40 characters, or any other element whose own text is over 40 characters
+//                   40 characters, or a div whose own text is over 40 characters. A pill or badge label from 13 px up is not body
 //   smallSecondary  short text (labels, captions) from MIN_TEXT up to MIN_SECONDARY px
 //   textSizes       histogram {px: number of text elements}
 //   smallInputs     form fields under MIN_INPUT px (iOS Safari zooms on focus)
+//   letterColumn    text over 5 lines tall whose lines are all under 2 characters wide (a value broken one letter per line)
+//   splitWords      table cells that break a word of up to 24 characters across lines ("Standar/d")
+//   unnamedControls controls with no accessible name (an icon-only button whose label is hidden on phones)
+//   repeatedHeading the same heading text twice on the first screen (page title and card heading)
+//   squeezedScroller a vertical scroller under 40 % of the screen height with much more content, while the document does not scroll
 //   edges           histogram of where text lines start (many distinct x means nested padding ate the width)
 //   bars            fixed/sticky bars: share = union of the viewport height they cover, list = each bar
 //   truncated       text cut by an ellipsis, a line clamp, or an overflow-hidden box of its own (even with no ellipsis)
@@ -119,6 +133,14 @@
     return { x: Math.round(r.left), y: Math.round(r.top + scrollY), w: Math.round(r.width), h: Math.round(r.height) };
   };
   const all = [...document.body.querySelectorAll("*")];
+  const decor = (e) => !!e.closest("[aria-hidden=true]"); // aria-hidden decoration is not content to judge
+  const pinnedCache = new Map();
+  const pinned = (e) => { // the element or an ancestor is fixed or sticky
+    if (!e || e === document.body) return false;
+    let v = pinnedCache.get(e);
+    if (v === undefined) { v = /^(fixed|sticky)$/.test(style(e).position) || pinned(e.parentElement); pinnedCache.set(e, v); }
+    return v;
+  };
 
   // Scope: a root narrows the per-element checks; page scroll and bars always look at the whole page.
   const rootSelector = String(window.__mobileProbeRoot || "");
@@ -174,6 +196,8 @@
     }
     return { home: doc, cut };
   };
+  // A pan viewport (a map, a graph canvas) moves its content on purpose: touch-action none on the clipper or below it.
+  const panned = (e, by) => { for (let p = e; p; p = p.parentElement) { if (style(p).touchAction === "none") return true; if (p === by) break; } return false; };
   const wide = [];
   const clippedSet = [];
   for (const e of all) {
@@ -182,7 +206,7 @@
     const c = classify(e);
     if (c.region) continue;
     const inRoot = scoped === all || rootEl.contains(e);
-    if (c.cut) { if (inRoot) clippedSet.push({ e, by: c.cut }); continue; }
+    if (c.cut) { if (inRoot && !decor(e) && !panned(e, c.cut)) clippedSet.push({ e, by: c.cut }); continue; }
     let past = 0;
     if (c.home === doc) past = Math.max(r.right - W, -r.left);
     else { const x = r.left - box(c.home).left + c.home.scrollLeft; past = Math.max(x + r.width - c.home.clientWidth, -x); }
@@ -195,8 +219,8 @@
   const clipped = outermost(clippedSet).map((o) => ({ el: o.e, ...rect(o.e), by: o.by }));
 
   // Tap targets: a link inside running text is exempt (WCAG 2.5.8 inline exception).
-  const TAPPABLE = "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option], [tabindex]:not([tabindex='-1'])";
-  // An outer element of this kind activates the same thing as the control inside it; a plain tabindex region does not.
+  const TAPPABLE = "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option]";
+  // An outer element of this kind activates the same thing as the control inside it.
   const CONTROL = "a[href], button, summary, label, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option]";
   // Inline only counts as prose when the parent holds real text besides its links, not a row of sibling links.
   const inline = (e) => {
@@ -214,6 +238,31 @@
     ? e.closest("label") || (e.id ? document.querySelector(`label[for="${CSS.escape(e.id)}"]`) : null) || e : e);
   const tappable = [...tapScope.querySelectorAll(TAPPABLE)].filter((e) => !e.disabled).map(hitArea)
     .filter((e, i, list) => shown(e) && !inline(e) && list.indexOf(e) === i && !list.some((o) => o !== e && o.contains(e) && o.matches(CONTROL)));
+
+  // Fixed and sticky bars: together they may cover only a small share of the height (the union, not the sum).
+  const stuck = (e, cs) => {
+    if (cs.position === "fixed") return true;
+    // A sticky box covers content only while it sits on the edge it sticks to.
+    let bound = { top: 0, bottom: H };
+    for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) if (style(p).overflowY !== "visible") { bound = box(p); break; }
+    const [t, b, r] = [parseFloat(cs.top), parseFloat(cs.bottom), box(e)];
+    return (!isNaN(t) && Math.abs(r.top - (bound.top + t)) <= 1) || (!isNaN(b) && Math.abs(bound.bottom - b - r.bottom) <= 1);
+  };
+  const barEls = all.filter((e) => shown(e) && /^(fixed|sticky)$/.test(style(e).position) && stuck(e, style(e)))
+    .map((e) => { const r = box(e); return { e, w: Math.min(r.right, W) - Math.max(r.left, 0), top: Math.max(r.top, 0), bottom: Math.min(r.bottom, H) }; })
+    // A box covering the whole screen is an app shell or a backdrop, not a bar.
+    .filter((b) => b.w > W * 0.5 && b.bottom - b.top > 1 && b.bottom - b.top <= H * 0.9);
+  // Only the part of a box that its clipping ancestors leave visible can be seen or tapped.
+  const visibleRect = (e, t) => {
+    let [l, tp, r, b] = [t.left, t.top, t.right, t.bottom];
+    for (let p = e; p && p !== document.body; p = p.parentElement) {
+      const cs = style(p);
+      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
+      const pr = box(p);
+      [l, tp, r, b] = [Math.max(l, pr.left), Math.max(tp, pr.top), Math.min(r, pr.right), Math.min(b, pr.bottom)];
+    }
+    return r - l > 1 && b - tp > 1 ? { left: l, top: tp, right: r, bottom: b } : null;
+  };
 
   // Real hit areas: ask the browser which element a tap at a point reaches. That counts hit pads, and it ignores a
   // control that a sticky bar or a modal covers, with no guess about boxes. Only the viewport can be asked.
@@ -300,6 +349,16 @@
     if (r.bottom > H) eff.bottom = r.bottom;
     return { eff: { ...eff, width: eff.right - eff.left, height: eff.bottom - eff.top }, near };
   };
+  const partial = (c, r) => {
+    const v = visibleRect(c, r);
+    if (!v || v.right - v.left < r.width - 1 || v.bottom - v.top < r.height - 1) return true;
+    if (pinned(c)) return false;
+    return barEls.some((b) => {
+      if (b.e.contains(c)) return false;
+      const br = box(b.e);
+      return Math.min(r.right, br.right) - Math.max(r.left, br.left) > r.width * 0.5 && Math.min(r.bottom, br.bottom) - Math.max(r.top, br.top) > 1;
+    });
+  };
   const unsampled = [];
   const coveredList = [];
   const hit = []; // {c, r, eff, near}: the controls that could be asked
@@ -309,6 +368,8 @@
     const where = r.bottom <= 0 ? "above" : r.top >= H ? "below" : r.right <= 0 || r.left >= W ? "side" : "";
     if (where) { unsampled.push({ el: c, ...rect(c), where }); continue; }
     if (late()) { unsampled.push({ el: c, ...rect(c), where: "budget" }); incomplete.add("targets"); continue; }
+    // A control cut by its scroller's edge or half under a bar shows a hit area smaller than its own: it is asked at the stop where it is whole.
+    if (partial(c, r)) { unsampled.push({ el: c, ...rect(c), where: "partial" }); continue; }
     const m = measure(c, r);
     if (m.state === "covered") coveredList.push({ el: c, ...rect(c) });
     else if (m.state) unsampled.push({ el: c, ...rect(c), where: "below" });
@@ -318,6 +379,12 @@
   const targets = hit.filter((o) => o.eff.width < MIN_TARGET - 1 || o.eff.height < MIN_TARGET - 1)
     .map((o) => ({ el: o.c, ...rect(o.c), hitW: Math.round(o.eff.width), hitH: Math.round(o.eff.height) }));
   // Rectangle distance: 0 when the areas touch or overlap, diagonal neighbours included.
+  // The sampled edge is a whole pixel: where it is within 1 px of the control's own box, use the box, so an 8.0 px gap stays 8.0.
+  const snap = (o) => {
+    const near = (v, w) => (Math.abs(v - w) <= 1 ? w : v);
+    return { left: near(o.eff.left, o.r.left), right: near(o.eff.right, o.r.right), top: near(o.eff.top, o.r.top), bottom: near(o.eff.bottom, o.r.bottom) };
+  };
+  const inside = (a, b) => a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1;
   const dist = (a, b) => Math.hypot(Math.max(a.left - b.right, b.left - a.right, 0), Math.max(a.top - b.bottom, b.top - a.bottom, 0));
   const crowded = [];
   const overlaps = [];
@@ -325,9 +392,12 @@
     for (let j = i + 1; j < hit.length; j += 1) {
       const [x, y] = [hit[i], hit[j]];
       if (x.c.contains(y.c) || y.c.contains(x.c)) continue;
-      const d = dist(x.eff, y.eff);
-      if (d >= MIN_GAP && !x.near.has(y.c) && !y.near.has(x.c)) continue;
-      crowded.push({ a: x.c, b: y.c, gap: Math.round(d) });
+      // One box inside the other is a part of one widget (an icon in its own input); one control under a sticky or fixed
+      // bar and the other not is scrolled content under the bar, judged at the stop where it is clear.
+      if (inside(x.r, y.r) || inside(y.r, x.r) || pinned(x.c) !== pinned(y.c)) continue;
+      const d = dist(snap(x), snap(y));
+      if (d >= MIN_GAP - 0.5 && !x.near.has(y.c) && !y.near.has(x.c)) continue;
+      crowded.push({ a: x.c, b: y.c, gap: Math.round(d * 10) / 10 });
       // Two painted boxes that cross: a tap inside the crossing reaches one of them (not a bar or a modal on top).
       const [lx, rx] = [Math.max(x.r.left, y.r.left), Math.min(x.r.right, y.r.right)];
       const [ty, by] = [Math.max(x.r.top, y.r.top), Math.min(x.r.bottom, y.r.bottom)];
@@ -347,17 +417,6 @@
   // A modal dialog can sit outside the root; its text must be judged against its own controls.
   const textPool = modal ? [...new Set([...scoped, ...all.filter((e) => modal.contains(e))])] : scoped;
   const texty = textPool.filter((e) => ownNodes(e).length && shown(e));
-  // Only the part of a box that its clipping ancestors leave visible can be seen or tapped.
-  const visibleRect = (e, t) => {
-    let [l, tp, r, b] = [t.left, t.top, t.right, t.bottom];
-    for (let p = e; p && p !== document.body; p = p.parentElement) {
-      const cs = style(p);
-      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
-      const pr = box(p);
-      [l, tp, r, b] = [Math.max(l, pr.left), Math.max(tp, pr.top), Math.min(r, pr.right), Math.min(b, pr.bottom)];
-    }
-    return r - l > 1 && b - tp > 1 ? { left: l, top: tp, right: r, bottom: b } : null;
-  };
   const textRects = new Map(); // line boxes of the element's own text, not of its (wider) block box
   for (const e of texty) {
     const rects = [];
@@ -379,7 +438,7 @@
       if (!vt) continue;
       for (const { c, r } of hit) {
         if (late()) { incomplete.add("overlaps"); break; }
-        if (c.contains(e) || e.contains(c) || [...hot].some((o) => o.contains(e))) continue;
+        if (c.contains(e) || e.contains(c) || pinned(e) !== pinned(c) || [...hot].some((o) => o.contains(e))) continue;
         const [l, rt] = [Math.max(vt.left, r.left), Math.min(vt.right, r.right)];
         const [tp, bt] = [Math.max(vt.top, r.top), Math.min(vt.bottom, r.bottom)];
         if (rt - l <= 2 || bt - tp <= 4) continue;
@@ -420,20 +479,24 @@
     if (v === undefined) { v = (scrollsX(e) && !pageScrollers.has(e)) || inRegion(e.parentElement); regions.set(e, v); }
     return v;
   };
+  // Content inside a scroller (or a named region) is reached by scrolling, so it does not spill; the page scrollers are not such regions.
+  const inScroll = (e) => { for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) if (!pageScrollers.has(p) && (/(auto|scroll)/.test(style(p).overflowX + style(p).overflowY) || p.getAttribute("role") === "region")) return true; return false; };
+  const hiddenVisually = (e) => { const cs = style(e); const r = box(e); return /inset\(50%\)/.test(cs.clipPath) || (cs.clip && cs.clip !== "auto" && r.width <= 1) || (r.width <= 1 && r.height <= 1); };
   const escaping = [];
   for (const e of scoped) {
     if (!shown(e) || /^(absolute|fixed)$/.test(style(e).position)) continue;
-    if (inRegion(e.parentElement)) continue;
+    if (inRegion(e.parentElement) || inScroll(e) || decor(e) || hiddenVisually(e)) continue;
     // Text is judged against the element itself when it is the painted container, else against the one around it.
     const outer = holderOf(e);
     const own = textRects.has(e) ? (selfHolder(e) ? e : outer) : null;
     for (const [c, rs] of [[own, textRects.get(e)], [outer, [box(e)]]]) {
-      if (!c || !rs) continue;
+      if (!c || !rs || c === e) continue; // a box is not its own container
       const cr = box(c);
       const past = Math.max(0, ...rs.map((r) => Math.max(r.right - cr.right, cr.left - r.left, r.bottom - cr.bottom, cr.top - r.top)));
       const prev = escaping.find((o) => o.e === e);
-      if (past > 1 && !prev) escaping.push({ e, past, c });
-      else if (past > 1 && past > prev.past) Object.assign(prev, { past, c });
+      // Up to 2 px is glyph overhang (negative letter-spacing, gradient text), not a spill.
+      if (past > 2 && !prev) escaping.push({ e, past, c });
+      else if (past > 2 && past > prev.past) Object.assign(prev, { past, c });
     }
   }
   const escapes = outermost(escaping).sort((a, b) => b.past - a.past)
@@ -455,7 +518,9 @@
     const size = px(e);
     if (size >= MIN_BODY) continue;
     const block = e.closest(BLOCK);
-    if (block ? textLen(block) > 40 : textLen(e) > 40) {
+    // Body is a text block, or the own text of a plain div; a pill or a badge label from 13 px up is a label, not body.
+    const plain = e.tagName === "DIV" && !(size >= MIN_SECONDARY && chrome(style(e)));
+    if (block ? textLen(block) > 40 : plain && textLen(e) > 40) {
       if (block && seenBlocks.has(block)) continue;
       if (block) seenBlocks.add(block);
       smallBody.push({ el: e, px: size });
@@ -464,6 +529,54 @@
   const smallInputs = [...rootEl.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]), select, textarea, [contenteditable=true]")]
     .filter((e) => shown(e) && px(e) < MIN_INPUT)
     .map((e) => ({ el: e, px: px(e) }));
+
+  // A value broken one letter per line: more than 5 lines, none wider than 2 characters of its font size.
+  const letterColumn = texty.filter((e) => {
+    const rs = textRects.get(e);
+    return rs.length > 5 && Math.max(...rs.map((r) => r.width)) < 2 * px(e);
+  }).map((e) => ({ el: e, ...rect(e) }));
+  // A table cell that breaks inside a word (an `overflow-wrap: anywhere` cell shrinks to one letter): a word of up to 24
+  // characters whose range has more than one line box. A longer token (a hash, a URL) is broken on purpose.
+  const splitWords = [];
+  for (const cell of scoped.filter((e) => /^(TD|TH)$/.test(e.tagName) && shown(e))) {
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    let split = null;
+    for (let n = walker.nextNode(); n && !split; n = walker.nextNode()) {
+      for (const m of n.textContent.matchAll(/\S{2,24}/g)) {
+        const range = document.createRange();
+        range.setStart(n, m.index);
+        range.setEnd(n, m.index + m[0].length);
+        if (new Set([...range.getClientRects()].filter((r) => r.width > 1).map((r) => Math.round(r.top))).size > 1) { split = m[0]; break; }
+      }
+    }
+    if (split) splitWords.push({ el: cell, word: split, wrap: style(cell).overflowWrap });
+  }
+  // A control with no accessible name: no label, no visible text (innerText skips a label hidden on phones), no title, no image alt.
+  const nameOf = (e) => {
+    const ids = (e.getAttribute("aria-labelledby") || "").split(/\s+/).map((id) => document.getElementById(id)?.textContent || "").join(" ");
+    const labels = e.labels ? [...e.labels].map((l) => l.innerText).join(" ") : "";
+    const alt = [...e.querySelectorAll("img[alt], svg title")].map((i) => i.getAttribute("alt") || i.textContent).join(" ");
+    return [e.getAttribute("aria-label"), ids, e.innerText, labels, e.title, alt, e.matches("input[type=button], input[type=submit]") ? e.value : ""].join(" ").trim();
+  };
+  const unnamedControls = tappable.filter((c) => !nameOf(c.matches("label") ? (c.querySelector("input") || c) : c)).map((c) => ({ el: c, ...rect(c) }));
+  // The same heading text twice on the first screen (a page title and the card heading under it).
+  const headingCount = {};
+  const repeatedHeading = [];
+  for (const e of scoped.filter((x) => x.matches("h1, h2, h3, h4, h5, h6, [role=heading]") && shown(x))) {
+    const r = box(e);
+    if (r.bottom <= 0 || r.top >= H) continue;
+    const k = (e.innerText || "").replace(/\s+/g, " ").trim().toLowerCase();
+    if (!k) continue;
+    headingCount[k] = (headingCount[k] || 0) + 1;
+    if (headingCount[k] === 2) repeatedHeading.push({ el: e, text: k.slice(0, 40) });
+  }
+  // A vertical scroller under 40 % of the screen height with much more content, while the document itself does not scroll
+  // (a list squeezed under a hero or a fixed header).
+  const squeezedScroller = doc.scrollHeight > doc.clientHeight + 1 ? [] : all.filter((e) => {
+    if (!shown(e) || !scrollsY(e) || e.matches("textarea, select, pre")) return false;
+    const r = box(e);
+    return r.top < H && r.bottom > 0 && e.clientWidth >= W * 0.5 && e.clientHeight < H * 0.4 && e.scrollHeight > e.clientHeight * 1.5;
+  }).map((e) => ({ el: e, ...rect(e), clientHeight: e.clientHeight, scrollHeight: e.scrollHeight }));
 
   // Left edges: where each text line starts. Many distinct x values mean nested padding ate the width.
   const edgeCount = {};
@@ -475,19 +588,6 @@
   }
   const edges = Object.entries(edgeCount).map(([x, n]) => ({ x: Number(x), n })).sort((a, b) => b.n - a.n).slice(0, 8);
 
-  // Fixed and sticky bars: together they may cover only a small share of the height (the union, not the sum).
-  const stuck = (e, cs) => {
-    if (cs.position === "fixed") return true;
-    // A sticky box covers content only while it sits on the edge it sticks to.
-    let bound = { top: 0, bottom: H };
-    for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) if (style(p).overflowY !== "visible") { bound = box(p); break; }
-    const [t, b, r] = [parseFloat(cs.top), parseFloat(cs.bottom), box(e)];
-    return (!isNaN(t) && Math.abs(r.top - (bound.top + t)) <= 1) || (!isNaN(b) && Math.abs(bound.bottom - b - r.bottom) <= 1);
-  };
-  const barEls = all.filter((e) => shown(e) && /^(fixed|sticky)$/.test(style(e).position) && stuck(e, style(e)))
-    .map((e) => { const r = box(e); return { e, w: Math.min(r.right, W) - Math.max(r.left, 0), top: Math.max(r.top, 0), bottom: Math.min(r.bottom, H) }; })
-    // A box covering the whole screen is an app shell or a backdrop, not a bar.
-    .filter((b) => b.w > W * 0.5 && b.bottom - b.top > 1 && b.bottom - b.top <= H * 0.9);
   let covered = 0;
   let edge = 0;
   for (const b of [...barEls].sort((x, y) => x.top - y.top)) {
@@ -589,6 +689,11 @@
     smallSecondary: smallSecondary.length,
     offscreenFixed: offscreenFixed.length,
     smallInputs: smallInputs.length,
+    letterColumn: letterColumn.length,
+    splitWords: splitWords.length,
+    unnamedControls: unnamedControls.length,
+    repeatedHeading: repeatedHeading.length,
+    squeezedScroller: squeezedScroller.length,
     distinctEdges: Object.keys(edgeCount).length,
     barsOverShare: barsShare > MAX_BARS_SHARE ? barsShare : 0,
     truncated: truncated.length,
@@ -617,7 +722,7 @@
     scrollers: named(scrollers),
     scrollRegions: scrollRegions.slice(0, LIMIT),
     targets: named(targets),
-    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
+    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget", "partial"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
     scroller: pageEl === doc || pageEl === document.scrollingElement ? "document" : name(pageEl).replace(/ ".*$/, ""),
     coverage: { controls: tappable.length, seen: tappable.length - unseen.length, unseen: unseen.length, unseenList: named(unseen.map((c) => ({ el: c, ...rect(c) }))) },
     scrollTop: Math.round(pageEl.scrollTop), scrollHeight: pageEl.scrollHeight, clientHeight: pageEl.clientHeight,
@@ -630,6 +735,11 @@
     offscreenFixed: named(offscreenFixed),
     textSizes,
     smallInputs: named(smallInputs),
+    letterColumn: named(letterColumn),
+    splitWords: named(splitWords),
+    unnamedControls: named(unnamedControls),
+    repeatedHeading: named(repeatedHeading),
+    squeezedScroller: named(squeezedScroller),
     edges,
     bars: { share: barsShare, list: named(bars) },
     truncated: named(truncated),

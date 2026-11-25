@@ -16,6 +16,7 @@
 - **Query shape:** the user-visible pattern plus "mobile" and the year (`mobile data table pattern 2026`, `mobile filter bottom sheet UX`, `virtual keyboard form field visible`). One capability per query.
 - **Chrome's guides from the command line**, where the agent may run `npx`: `npx -y modern-web-guidance@latest search "<2-5 word query>"`, then `retrieve <id>`. Where `npx` is blocked (sandboxed subagents), search the web for `developer.chrome.com/docs/modern-web-guidance <topic>`: the same guides are published there.
 - **Check support** for anything newer than about two years (Baseline status, Can I Use) and write the fallback next to the technique.
+- **Load the search tool first.** When web search is a deferred tool, the agent cannot call it until it is loaded (for example a tool search for "WebSearch"): the brief says how, and asks for cited sources plus what changed. Agents skip the step when this is missing.
 - **Record:** the brief and each agent report carry a "🌐 Research" section: URL, the one thing taken from it, and whether it changed the fix. A search that changed nothing is still listed.
 
 ## 📚 Starting map (2026-11, re-check each campaign)

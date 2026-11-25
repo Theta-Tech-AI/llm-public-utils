@@ -48,7 +48,7 @@ The probe measures what a finger gets, not what the CSS boxes imply: it samples 
 
 - **Probe at scroll top, after the content loaded.** A sticky bar over scrolled text reads as an overlap, and a probe during loading reports transient crowding.
 - **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: probe, scroll the page scroller one screen down, probe again, and stop when the probe's `scrollTop + clientHeight` reaches its `scrollHeight` (the page scroller's, read by the probe). Keep the union of the controls sampled at each stop; a control counts as covered once any stop sampled it (`sampling.unsampledList.above` / `.below` / `.side` are only outside this stop's view). Controls cut by the time budget (`sampling.unsampledList.budget`, and `sampling.incomplete`) are a separate list: re-probe that stop with the page root narrowed to their section.
-- Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once without the root to see the frame.
+- Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once with the root `body` (the default) to see the frame: a root such as `main` hides the header's own controls and their crowding.
 
 Read `counts` first, then the lists:
 
@@ -58,6 +58,7 @@ Read `counts` first, then the lists:
 - `overlaps` names text under a control or two controls on top of each other: always a fault at scroll top.
 - `edges` is a histogram of text start positions: the two or three biggest bars should be the page margin and the card inset; a long tail means nested padding.
 - `textSizes` shows the spread: body text under 16 px is `smallBody`.
+- `letterColumn`, `splitWords`, `unnamedControls`, `repeatedHeading`, `squeezedScroller` name faults a screenshot shows but the older checks missed; judge each one.
 - `ms` is the run time; sampling stops after a budget (about 1 s) on very heavy pages.
 
 The probe cannot see touch emulation: `agent-browser set device` sets the user agent and pixel ratio but not touch, so `(any-pointer: coarse)` is false.
