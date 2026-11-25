@@ -42,12 +42,15 @@ All of these, at **320 px, 390 px and the widest phone width** (one pixel under 
 2. 📸 Critique: every question in [checklist.md § critique](references/checklist.md#-critique-questions) has its expected answer, in both themes if the app has two.
 3. 🔁 The last two iterations changed nothing the critique cares about. Three iterations without progress on one fault mean the fault is structural: stop and report it, do not keep nudging pixels.
 
+For a slow load, delayed tap, or jump in the layout, compare matched performance traces as part of the same before-and-after loop. See [performance.md](references/performance.md).
+
 ## 📚 References
 
 | File | Read it when |
 |------|--------------|
 | [references/research.md](references/research.md) | **Before anything**: how to research, which sources, and the current starting map of techniques |
 | [references/checklist.md](references/checklist.md) | **What to look for**: the phone rules with thresholds and sources, and the critique questions |
+| [references/performance.md](references/performance.md) | **When a page feels slow or a fix changes what loads or renders**: matched phone traces, common bottlenecks, and cloud verification |
 | [references/loop.md](references/loop.md) | **Per-page agent**: the exact shoot → probe → critique → fix loop, states, file names, showing the user |
 | [references/harness.md](references/harness.md) | Setting up private local preview servers so many agents iterate at once; the driver's traps |
 | [references/fan-out.md](references/fan-out.md) | **Coordinator**: inventory, ownership, the brief, capacity, integration, parity check, fold back |
