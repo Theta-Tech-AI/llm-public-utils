@@ -13,7 +13,7 @@
 //   overflow        outermost elements wider than a page scroller (the document or an app-shell scroll container)
 //   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one), and
 //                   controls so cut at the top or side, which no scroll shows whole.
-//                   Not judged: aria-hidden decoration, pan regions (touch-action: none)
+//                   Not judged: aria-hidden decoration, a declared pan viewport ([data-pan-viewport] or a known map/graph library)
 //   scrollers       every scroll container found; page:true marks the ones that carry the page. Scroll the inner
 //                   page scroller to shoot below the fold: a full-page screenshot only shows its first screen
 //   scrollRegions   narrower regions that scroll sideways on purpose (they need a name and keyboard focus)
@@ -25,7 +25,7 @@
 //                   under a bar at this stop (walk the page in overlapping stops, see loop.md); clipped = cut for good; incomplete names checks the deadline cut
 //   crowded         controls whose hit areas come closer than MIN_GAP px (gap under 7.5 px, unrounded; overlap counts as 0),
 //                   or where a tap in the MIN_TARGET square around one control's centre reaches the other. Not judged: a
-//                   control inside its own field (a clear button in its input), and a bar that is stuck (fixed, or sticky
+//                   control that names its field (aria-controls) or shares its label, and a bar that is stuck (fixed, or sticky
 //                   with its rect at its sticky offset) over content that has been scrolled
 //   overlaps        text over a control it is not inside, or two controls whose boxes cross (same exemptions as crowded)
 //   escapes         text or a box that runs past the card or panel around it (a border, background or shadow) by over 2 px, any
@@ -210,8 +210,10 @@
     }
     return { home: doc, cut };
   };
-  // A pan viewport (a map, a graph canvas) moves its content on purpose: touch-action none on the clipper or below it.
-  const panned = (e, by) => { for (let p = e; p; p = p.parentElement) { if (style(p).touchAction === "none") return true; if (p === by) break; } return false; };
+  // A declared pan viewport (a map, a graph canvas) moves its content on purpose. touch-action: none alone proves nothing
+  // (a draggable card has it): mark the viewport with [data-pan-viewport], or use a known library viewport.
+  const PAN = "[data-pan-viewport], .react-flow, .leaflet-container, .mapboxgl-map, .maplibregl-map, .ol-viewport";
+  const panned = (e) => !!e.closest(PAN);
   const wide = [];
   const clippedSet = [];
   for (const e of all) {
@@ -220,7 +222,7 @@
     const c = classify(e);
     if (c.region) continue;
     const inRoot = scoped === all || rootEl.contains(e);
-    if (c.cut) { if (inRoot && !decor(e) && !panned(e, c.cut)) clippedSet.push({ e, by: c.cut }); continue; }
+    if (c.cut) { if (inRoot && !decor(e) && !panned(e)) clippedSet.push({ e, by: c.cut }); continue; }
     let past = 0;
     if (c.home === doc) past = Math.max(r.right - W, -r.left);
     else { const x = r.left - box(c.home).left + c.home.scrollLeft; past = Math.max(x + r.width - c.home.clientWidth, -x); }
@@ -373,6 +375,8 @@
       const pr = box(p);
       const cutX = pr.left > r.left + 1 || pr.right < r.right - 1;
       const cutY = pr.top > r.top + 1 || pr.bottom < r.bottom - 1;
+      // A scroller smaller than the control never shows it whole, at any scroll position.
+      if ((cutX && /(auto|scroll)/.test(cs.overflowX) && r.width > p.clientWidth + 1) || (cutY && /(auto|scroll)/.test(cs.overflowY) && r.height > p.clientHeight + 1)) return p;
       if ((cutX && /(auto|scroll)/.test(cs.overflowX)) || (cutY && /(auto|scroll)/.test(cs.overflowY))) return null;
       if ((cutX && /(hidden|clip)/.test(cs.overflowX)) || (cutY && /(hidden|clip)/.test(cs.overflowY))) return p;
     }
@@ -403,14 +407,15 @@
       return false;
     });
     if (!bar) return false;
-    let sc = c.parentElement;
-    while (sc && sc !== document.body && !scrollsY(sc)) sc = sc.parentElement;
-    if (!sc || sc === document.body) sc = document.scrollingElement || doc;
-    // The bar sits on the top or the bottom edge of the scrollport (the scroller's own box; the screen for the document).
-    const port = sc === document.scrollingElement || sc === doc ? { top: 0, bottom: H } : box(sc);
-    const fromTop = bar.top - port.top < port.bottom - bar.bottom;
-    const room = fromTop ? sc.scrollTop > 1 : sc.scrollTop + sc.clientHeight < sc.scrollHeight - 1;
-    if (room) return "partial";
+    // The control stays obscured for good only when no scroller around it (up to the document) can move it out from under the bar.
+    const movable = (sc) => {
+      const doc_ = sc === document.scrollingElement || sc === doc;
+      const port = doc_ ? { top: 0, bottom: H } : box(sc);
+      const fromTop = bar.top - port.top < port.bottom - bar.bottom; // the bar sits on the top or bottom edge of this scrollport
+      return fromTop ? sc.scrollTop > 1 : sc.scrollTop + sc.clientHeight < sc.scrollHeight - 1;
+    };
+    for (let sc = c.parentElement; sc && sc !== document.body; sc = sc.parentElement) if (scrollsY(sc) && movable(sc)) return "partial";
+    if (movable(document.scrollingElement || doc)) return "partial";
     clippedControls.push({ e: c, by: bar.e });
     return "clipped";
   };
@@ -440,7 +445,9 @@
     const near = (v, w) => (Math.abs(v - w) <= 1 ? w : v);
     return { left: near(o.eff.left, o.r.left), right: near(o.eff.right, o.r.right), top: near(o.eff.top, o.r.top), bottom: near(o.eff.bottom, o.r.bottom) };
   };
-  const inField = (a, b) => b.c.matches("input, select, textarea") && a.c.parentElement === b.c.parentElement && inside(a.r, b.r);
+  // One widget only by a stated link: the control names the field (aria-controls) or both sit in one label. Anything else is judged.
+  const inField = (a, b) => b.c.matches("input, select, textarea") && inside(a.r, b.r)
+    && ((b.c.id && a.c.getAttribute("aria-controls") === b.c.id) || (!!a.c.closest("label") && a.c.closest("label") === b.c.closest("label")));
   const inside = (a, b) => a.left >= b.left - 1 && a.right <= b.right + 1 && a.top >= b.top - 1 && a.bottom <= b.bottom + 1;
   const dist = (a, b) => Math.hypot(Math.max(a.left - b.right, b.left - a.right, 0), Math.max(a.top - b.bottom, b.top - a.bottom, 0));
   const crowded = [];
@@ -449,7 +456,7 @@
     for (let j = i + 1; j < hit.length; j += 1) {
       const [x, y] = [hit[i], hit[j]];
       if (x.c.contains(y.c) || y.c.contains(x.c)) continue;
-      // A control inside its own field (a clear button in its input) is one widget; a bar over scrolled content is judged
+      // A control that names its field or shares its label is one widget; a bar over scrolled content is judged
       // at the stop where the content is clear.
       if (inField(x, y) || inField(y, x) || underBar(x.c, y.c)) continue;
       const d = dist(snap(x), snap(y));
