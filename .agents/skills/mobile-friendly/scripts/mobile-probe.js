@@ -11,8 +11,7 @@
 //   root            {selector, found}: the scope in use
 //   counts          one number per fault below, 0 is clean (distinctEdges and barsOverShare are a count and a share)
 //   overflow        outermost elements wider than a page scroller (the document or an app-shell scroll container)
-//   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one), and
-//                   controls so cut at the top or side, which no scroll shows whole.
+//   clipped         elements cut by an overflow hidden/clip ancestor (content the user cannot reach; judge each one)
 //                   Not judged: aria-hidden decoration, a declared pan viewport ([data-pan-viewport] or a known map/graph library)
 //   scrollers       every scroll container found; page:true marks the ones that carry the page. Scroll the inner
 //                   page scroller to shoot below the fold: a full-page screenshot only shows its first screen
@@ -22,8 +21,8 @@
 //                   tab, checkbox, radio, switch, menuitem, option, combobox, slider, spinbutton, textbox, searchbox, treeitem) or a
 //                   contenteditable. A tabindex alone (a tooltip trigger) is not one.
 //   sampling        {controls, sampled, covered, unsampled, points, incomplete, unsampledList}: which controls could be asked;
-//                   unsampledList is {above, below, side, budget, partial, clipped}; partial = cut by its scroller's edge or
-//                   under a bar at this stop (walk the page in overlapping stops, see loop.md); clipped = cut for good; incomplete names checks the deadline cut
+//                   unsampledList is {above, below, side, budget, partial}; partial carries a reason (clipped-by-<ancestor>,
+//                   under-bar, pan-region): not whole at this stop, walk the page in overlapping stops (loop.md); incomplete names checks the deadline cut
 //   crowded         controls whose hit areas come closer than MIN_GAP px (gap under 7.5 px, unrounded; overlap counts as 0),
 //                   or where a tap in the MIN_TARGET square around one control's centre reaches the other. Not judged: a
 //                   control that names its field (aria-controls) or shares its label, and a bar that is stuck (fixed, or sticky
@@ -233,7 +232,7 @@
   const outermost = (list) => { const set = new Set(list.map((o) => o.e)); return list.filter((o) => { for (let p = o.e.parentElement; p; p = p.parentElement) if (set.has(p)) return false; return true; }); };
   const overflow = outermost(wide).sort((a, b) => b.past - a.past)
     .map((o) => ({ el: o.e, ...rect(o.e), past: Math.round(o.past), ...(o.home === doc ? {} : { scroller: o.home }) }));
-  const clippedAll = () => [...outermost(clippedSet), ...clippedControls].map((o) => ({ el: o.e, ...rect(o.e), by: o.by }));
+  const clipped = outermost(clippedSet).map((o) => ({ el: o.e, ...rect(o.e), by: o.by }));
 
   // Tap targets: a link inside running text is exempt (WCAG 2.5.8 inline exception).
   const TAPPABLE = "a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=menuitem], [role=option], [role=combobox], [role=slider], [role=spinbutton], [role=textbox], [role=searchbox], [role=treeitem], [contenteditable=true]";
@@ -367,35 +366,21 @@
     if (r.bottom > H) eff.bottom = r.bottom;
     return { eff: { ...eff, width: eff.right - eff.left, height: eff.bottom - eff.top }, near };
   };
-  // An ancestor with overflow hidden or clip that cuts the control cuts it for good: no scroll shows it whole. A scroller
-  // (auto, scroll) that cuts it is checked first: scrolling brings the control in, so it is asked at another stop.
-  const cutForGood = (c, r) => {
-    for (let p = c.parentElement; p && p !== document.body; p = p.parentElement) {
-      const cs = style(p);
-      if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
-      const pr = box(p);
-      const cutX = pr.left > r.left + 1 || pr.right < r.right - 1;
-      const cutY = pr.top > r.top + 1 || pr.bottom < r.bottom - 1;
-      // A scroller shows the control whole only if it has scroll range on that axis and is big enough to hold the control.
-      const gets = (cut, ov, size, scrollSize, client) => cut && /(auto|scroll)/.test(ov) && size <= client + 1 && scrollSize > client + 1;
-      if (gets(cutX, cs.overflowX, r.width, p.scrollWidth, p.clientWidth) || gets(cutY, cs.overflowY, r.height, p.scrollHeight, p.clientHeight)) return null;
-      if ((cutX && /(auto|scroll)/.test(cs.overflowX)) || (cutY && /(auto|scroll)/.test(cs.overflowY))) return p;
-      if ((cutX && /(hidden|clip)/.test(cs.overflowX)) || (cutY && /(hidden|clip)/.test(cs.overflowY))) return p;
-    }
-    return null;
-  };
-  const clippedControls = [];
+  // A control the probe cannot hit-test whole at this stop is listed with the reason, never judged: the walk in loop.md (overlapping
+  // stops over the document and each inner scroller) brings it in, and one still listed after the last stop is clipped.
   const partial = (c, r) => {
     const v = visibleRect(c, r);
     if (!v || v.right - v.left < r.width - 1 || v.bottom - v.top < r.height - 1) {
-      const by = cutForGood(c, r);
-      if (by) { clippedControls.push({ e: c, by }); return "clipped"; }
-      return "partial";
+      for (let p = c.parentElement; p && p !== document.body; p = p.parentElement) {
+        const cs = style(p);
+        if (cs.overflowX === "visible" && cs.overflowY === "visible") continue;
+        const pr = box(p);
+        if (pr.left > r.left + 1 || pr.right < r.right - 1 || pr.top > r.top + 1 || pr.bottom < r.bottom - 1) return p.matches(PAN) ? "pan-region" : `clipped-by-${name(p).replace(/ ".*$/, "")}`;
+      }
+      return "clipped-by-ancestor";
     }
     if (pinned(c)) return false;
-    // A bar over the control: scrolling moves it out from under the bar only if its scroller can move away from the bar's edge.
-    // At the end of that scroll range the control stays obscured for good and is reported in `clipped`.
-    // The bar must really take the taps there: a control painted above it (z-index) or a bar with pointer-events none is reachable.
+    // A bar that really takes the taps over the control (a control painted above it, or a bar with pointer-events none, is reachable).
     const bar = barEls.find((b) => {
       if (b.e.contains(c)) return false;
       const br = box(b.e);
@@ -408,22 +393,7 @@
       }
       return false;
     });
-    if (!bar) return false;
-    // The control stays obscured for good unless a scroller can move it from under the bar by enough travel. Only a scroller that
-    // does not carry the bar along counts: any scroller around a fixed bar, only the bar's own scroller for a sticky bar.
-    const pageScroll = document.scrollingElement || doc;
-    const barRoot = style(bar.e).position === "fixed" ? null : (() => { let q = bar.e.parentElement; while (q && q !== document.body && !scrollsY(q)) q = q.parentElement; return q && q !== document.body ? q : pageScroll; })();
-    const movable = (sc) => {
-      const port = sc === pageScroll || sc === doc ? { top: 0, bottom: H } : box(sc);
-      const fromTop = bar.top - port.top < port.bottom - bar.bottom; // the bar sits on the top or bottom edge of this scrollport
-      return fromTop ? sc.scrollTop >= bar.bottom - r.top - 1 : sc.scrollHeight - sc.clientHeight - sc.scrollTop >= r.bottom - bar.top - 1;
-    };
-    for (let sc = c.parentElement; sc && sc !== document.body; sc = sc.parentElement) {
-      if (scrollsY(sc) && (barRoot === null || sc === barRoot) && movable(sc)) return "partial";
-    }
-    if ((barRoot === null || barRoot === pageScroll) && movable(pageScroll)) return "partial";
-    clippedControls.push({ e: c, by: bar.e });
-    return "clipped";
+    return bar ? "under-bar" : false;
   };
   const unsampled = [];
   const coveredList = [];
@@ -435,8 +405,8 @@
     if (where) { unsampled.push({ el: c, ...rect(c), where }); continue; }
     if (late()) { unsampled.push({ el: c, ...rect(c), where: "budget" }); incomplete.add("targets"); continue; }
     // A control cut by its scroller's edge or half under a bar shows a hit area smaller than its own: it is asked at the stop where it is whole.
-    const cut = partial(c, r);
-    if (cut) { unsampled.push({ el: c, ...rect(c), where: cut }); continue; }
+    const why = partial(c, r);
+    if (why) { unsampled.push({ el: c, ...rect(c), where: "partial", reason: why }); continue; }
     const m = measure(c, r);
     if (m.state === "covered") coveredList.push({ el: c, ...rect(c) });
     else if (m.state) unsampled.push({ el: c, ...rect(c), where: "below" });
@@ -551,13 +521,14 @@
   };
   // The container search (holderOf) already stops at an ancestor with its own overflow, so a scroller is the boundary:
   // content in it is judged against a card inside it, never against a box outside it. A region role does not scroll.
-  // A screen-reader-only holder (1 px box, clip, clip-path inset(50%)) hides everything inside it, so its ancestors count too.
+  // Hidden only on evidence: a clip or a 1 px box that clips, an off-screen offset, or hidden, invisible or transparent. A zero-sized box proves nothing.
   const hiddenVisually = (e) => {
     for (let p = e; p && p !== document.body; p = p.parentElement) {
       const cs = style(p);
-      if (cs.display === "contents") continue; // no box of its own: its children are painted
-      const r = box(p);
-      if (/inset\(50%\)/.test(cs.clipPath) || (cs.clip && cs.clip !== "auto" && r.width <= 1) || (r.width <= 1 && r.height <= 1)) return true;
+      const tiny = box(p).width <= 1 && box(p).height <= 1;
+      if (/inset\(50%\)/.test(cs.clipPath) || (tiny && (/(hidden|clip)/.test(cs.overflowX) || (cs.clip && cs.clip !== "auto")))
+        || parseFloat(cs.textIndent) <= -999 || (cs.position === "absolute" && parseFloat(cs.left) <= -999)
+        || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0 || p.hidden) return true;
     }
     return false;
   };
@@ -804,7 +775,6 @@
     fitCover: directives["viewport-fit"] === "cover",
   };
 
-  const clipped = clippedAll();
   const counts = {
     pageScrollsSideways: Math.round(pageSideways),
     overflow: overflow.length,
@@ -852,7 +822,7 @@
     scrollers: named(scrollers),
     scrollRegions: scrollRegions.slice(0, LIMIT),
     targets: named(targets),
-    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget", "partial", "clipped"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
+    sampling: { controls: tappable.length, sampled: hit.length, covered: coveredList.length, unsampled: unsampled.length, points: samples, incomplete: [...incomplete], unsampledList: Object.fromEntries(["above", "below", "side", "budget", "partial"].map((w) => [w, named(unsampled.filter((u) => u.where === w))])) },
     scroller: pageEl === doc || pageEl === document.scrollingElement ? "document" : name(pageEl).replace(/ ".*$/, ""),
     coverage: { controls: tappable.length, seen: tappable.length - unseen.length, unseen: unseen.length, unseenList: named(unseen.map((c) => ({ el: c, ...rect(c) }))) },
     scrollTop: Math.round(pageEl.scrollTop), scrollHeight: pageEl.scrollHeight, clientHeight: pageEl.clientHeight,
