@@ -333,6 +333,7 @@ Pick the bug yourself, and prefer one whose fix you suspect was a patch. The poi
 
 **Where the deeper decision usually hides.** The six questions of the deslop reading *One Level Deeper* are the checklist (should the mechanism exist; who owns the fact; is it in the right channel; what moves the state on, and what happens on failure; is there a silent default; what did the fix delete). Two questions are easy to forget:
 - **How long was the bug live before anyone saw it, and why?** Investigate the detection gap: no alert was defined, an alert went to nobody, or delivery or a filter dropped it. Each is a second defect with its own fix; name the one the evidence shows.
+- **Does the proposed fix refuse a permission or an input because a workflow expects it?** That is a guard where the design failed. A person's permission change takes effect at once and the dependent state repairs itself in the same transaction, as an audited system move with a typed cause (a removed reviewer sends the round back to the editor, with notices); the roster stays the one fact a person decides.
 - **How many times has this class been fixed before?** Search the closed issues. A class fixed three times, each time for a different instance, needs the mechanism that ends it, not a fourth instance fix.
 
 ### What to do with the owner's response
