@@ -197,7 +197,7 @@ Always include both:
 
 Good justification names the failure mode: data integrity, authz hole, user-blocking workflow, incorrect clinical/business output, security, silent wrong answer, accessibility trap, etc.
 
-**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. Before writing the suggestion, ask where the value or rule first enters the system, how many places re-derive or repair it (count them — the count is evidence), and how many readers decide the same fact. Name the class, list its sibling symptoms, and give one live check for the class. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
+**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. Before writing the suggestion, ask where the value or rule first enters the system, how many places re-derive or repair it (count them — the count is evidence), and how many readers decide the same fact. Name the class, list its sibling symptoms, and give one live check for the class. Unknowns are fine at filing time: file with what you have and add the owner, siblings and check as you learn them. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
 
 Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.se_complete` is false and match API", "add regression test X".
 
@@ -271,8 +271,8 @@ Before you patch a bug, find the bad design that let it occur in the first place
 1. **Name the class** in one line (for example "two owners of one fact", "rule only in the client", "freshness by time", "per-site lease take").
 2. **Find the decision the design never made** — who owns this fact, where the rule first enters, which one function every reader should call.
 3. **Count the siblings:** search the codebase for every other instance of the class, and the closed issues for earlier fixes of it. A class fixed before for a different instance needs the mechanism that ends it, not another instance fix.
-4. **Fix at the owner** so the class cannot recur, and delete the per-site copies it replaces. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
-5. **Say it in the issue and the fix:** the class, the owner, the siblings found, and a proposed check that would prove the class is gone, not only the instance. Run that check through the post-deploy steps below when verification becomes possible.
+4. **Fix at the owner** (only in a run where the user asked for fixes; otherwise write this as the proposed fix in the issue) so the class cannot recur, and delete the per-site copies it replaces. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
+5. **Say it in the issue and the fix:** the class, the owner, the siblings found, and a proposed check that would prove the class is gone, not only the instance. Run it when you can; it is a follow-up, and the fix's own verification below stays the gate.
 
 ## Fixing and closing issues
 
