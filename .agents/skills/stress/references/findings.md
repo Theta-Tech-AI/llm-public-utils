@@ -272,7 +272,7 @@ Before you patch a bug, find the bad design that let it occur in the first place
 2. **Find the decision the design never made** — who owns this fact, where the rule first enters, which one function every reader should call.
 3. **Count the siblings:** search the codebase for every other instance of the class, and the closed issues for earlier fixes of it. A class fixed before for a different instance needs the mechanism that ends it, not another instance fix.
 4. **Fix at the owner** (only in a run where the user asked for fixes; otherwise write this as the proposed fix in the issue) so the class cannot recur, and delete the per-site copies it replaces. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
-5. **Say it in the issue and the fix:** the class, the owner, the siblings found, and a proposed check that would prove the class is gone, not only the instance. Run it when you can; it is a follow-up, and the fix's own verification below stays the gate.
+5. **Say it in the issue and the fix:** the class, the owner, the siblings found, and a proposed check that would prove the class is gone, not only the instance. Run it when your mode and the user's authorization allow live testing (a static bug hunt only records it); it is a follow-up, and the fix's own verification below stays the gate.
 
 ## Fixing and closing issues
 
