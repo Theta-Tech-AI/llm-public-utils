@@ -264,9 +264,19 @@ List first so you reuse existing names when close enough (`gh label list`), but 
 
 ---
 
+## Fix the issue behind the issue
+
+Before you patch a bug, find the bad design that let it occur in the first place. The symptom is one instance; the design gap produces the next one too.
+
+1. **Name the class** in one line (for example "two owners of one fact", "rule only in the client", "freshness by time", "per-site lease take").
+2. **Find the decision the design never made** — who owns this fact, where the rule first enters, which one function every reader should call.
+3. **Count the siblings:** search the codebase for every other instance of the class, and the closed issues for earlier fixes of it. A class fixed before for a different instance needs the mechanism that ends it, not another instance fix.
+4. **Fix at the owner** so the class cannot recur, and delete the per-site copies it replaces. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
+5. **Say it in the issue and the fix:** the class, the owner, the siblings found, and one live check that proves the class is gone, not only the instance.
+
 ## Fixing and closing issues
 
-When you implement a fix:
+When you implement a fix (after the step above):
 
 1. **Reference the issue from the commit and/or PR** so GitHub auto-closes it on merge:
 
