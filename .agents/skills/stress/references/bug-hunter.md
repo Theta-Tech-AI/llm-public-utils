@@ -74,8 +74,8 @@ These classes have each burned a real user, and each is catchable statically or 
 
 10. **A migration hands history to a live job.** A migration copies or back-fills old rows into a table that a scheduled job then processes, and the job writes per row (an audit record, a notification, a model call). On the first deploy the job meets the whole backlog at once: it floods the audit chain, runs past its hang guard and starves the other jobs. For every migration that fills a table a live job reads, check these four things:
     - The migration settles the old shape once. It keeps each row's real processing state, so work that was still pending stays pending. Nothing in runtime should guess what an old row means.
-    - Someone counted the rows the job will see on each target environment before the push.
-    - The job is bounded per tick and records durable progress, so a timeout does not replay the same batch.
+    - Someone counted the rows the job will see on each target environment before the push, and compared that count times the per-row cost with the tick deadline, the shared capacity and an acceptable drain time. If the backlog goes past those limits, the backfill is staged or throttled.
+    - The job is bounded per tick and records durable progress. Trace a timeout between a side effect and its checkpoint: a database effect commits with the progress, and an external effect carries a stable idempotency key that the receiver honors.
     - The per-row writes match the system's audit policy: required audit events stay audited, and routine data goes to an ordinary table.
 
 ## Bugs
