@@ -354,6 +354,27 @@ def agent_browser_processes() -> tuple[list[tuple[int, int]], list[tuple[int, in
     return daemons, browsers
 
 
+def dev_server_processes() -> list[tuple[int, int, int]]:
+    """(pid, age seconds, RSS KB) of node processes running vite (not vitest): dev and preview servers."""
+    out = subprocess.run(["ps", "-u", str(os.getuid()), "-o", "pid=,etimes=,rss=,args="], capture_output=True, text=True).stdout
+    rows = []
+    for line in out.splitlines():
+        parts = line.split(None, 3)
+        argv = parts[3].split() if len(parts) == 4 else []
+        # The script itself must be vite, and a build is not a server.
+        if len(argv) > 1 and os.path.basename(argv[0]) == "node" and re.search(r"/vite(\.js)?$", argv[1]) and "build" not in argv[2:]:
+            rows.append((int(parts[0]), int(parts[1]), int(parts[2])))
+    return rows
+
+
+def in_devserver_scope(pid: int) -> bool:
+    """A server started by scripts/local/devserver.sh: systemd enforces its own lifetime, so the reaper leaves it."""
+    try:
+        return "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+    except OSError:
+        return False
+
+
 def reap_browsers(hours: float, yes: bool) -> None:
     """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run.
 
@@ -369,6 +390,16 @@ def reap_browsers(hours: float, yes: bool) -> None:
         if yes and (pid, age) in [(p, a) for p, a in agent_browser_processes()[1] if a > hours * 3600]:
             os.kill(pid, 15)
     print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
+    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600 and not in_devserver_scope(pid)]
+    for pid, age, rss in old:
+        print(f"  {'killing' if yes else 'would kill'} dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
+        # Re-read before signaling, so a recycled pid is never hit.
+        if yes and any(p == pid and a > hours * 3600 for p, a, _ in dev_server_processes()):
+            try:
+                os.kill(pid, 15)
+            except ProcessLookupError:
+                pass  # exited since the scan
+    print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
@@ -410,7 +441,7 @@ def main() -> None:
     parser.add_argument("--guidance-file", default="AGENTS.md", help="always-loaded agent guidance file whose tokens are reported")
     parser.add_argument("--review-label", help="issue label meaning 'waiting for a human', counted when given")
     parser.add_argument("--reap-browsers-older-than", type=float, metavar="HOURS",
-                        help="list agent-browser Chrome processes older than HOURS and exit; add --yes to terminate them")
+                        help="list agent-browser Chrome and node dev-server processes older than HOURS and exit; add --yes to terminate them")
     parser.add_argument("--yes", action="store_true", help="with --reap-browsers-older-than: really terminate")
     args = parser.parse_args()
     if args.reap_browsers_older_than is not None:
@@ -422,6 +453,7 @@ def main() -> None:
     issues = open_issues()
     roots = tuple(r for r in args.code_roots.split(",") if r)
     daemons, browsers = agent_browser_processes()
+    servers = dev_server_processes()
     stale_cutoff = 6 * 3600  # a browser older than any legitimate run is a leak; the reaper takes its own limit
     now = {
         **count_code(ref, roots, detail),
@@ -434,6 +466,10 @@ def main() -> None:
         "agent_browser_daemons": len(daemons),
         "agent_browser_chrome": len(browsers),
         "agent_browser_chrome_over_6h": sum(age > stale_cutoff for _, age in browsers),
+        # Detached vite servers with no owner leak the same way; one box once held 110 of them (25 GB).
+        "node_dev_servers": len(servers),
+        "node_dev_servers_over_6h": sum(age > stale_cutoff for _, age, _ in servers),
+        "node_dev_servers_rss_mb": sum(rss for _, _, rss in servers) // 1024,
     }
     if args.tree:
         now["collected_test_cases"] = collected_cases(args.tree)
