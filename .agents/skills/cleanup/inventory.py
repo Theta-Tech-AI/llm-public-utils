@@ -394,6 +394,7 @@ def list_stale_browsers(hours: float) -> None:
             argv = [x.decode(errors="replace") for x in raw.removesuffix(b"\0").split(b"\0")]
             rss = next(int(l.split()[1]) for l in Path(f"/proc/{pid}/status").read_text().splitlines() if l.startswith("VmRSS:"))
             cgroup = Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+            cgroup_ns = os.readlink(f"/proc/{pid}/ns/cgroup")
             raw_after = Path(f"/proc/{pid}/cmdline").read_bytes()
             after = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
             uptime = float(Path("/proc/uptime").read_text().split()[0])
@@ -408,10 +409,14 @@ def list_stale_browsers(hours: float) -> None:
             continue
         # exec'd during the sample (raw bytes compared): RSS and cgroup may describe another program. A cgroup path of
         # "/" is a namespace root that hides any enclosing scope, so the scope is unknown there.
-        paths = [line.split(":", 2)[2] for line in cgroup.splitlines() if line.count(":") >= 2]
-        if raw != raw_after or not paths or any(p.strip() == "/" for p in paths):
+        # Paths show the enclosing scope only from the initial cgroup namespace (the kernel's fixed inode); inside any
+        # other namespace a scope above its root is hidden. Every record must parse as id:controllers:/absolute-path.
+        lines = cgroup.splitlines()
+        records = [re.fullmatch(r"\d+:[^:]*:(/\S*)", line) for line in lines]
+        if raw != raw_after or cgroup_ns != "cgroup:[4026531835]" or not lines or not all(records):
             unknown += 1
             continue
+        paths = [m.group(1) for m in records]
         scoped = any("devserver-" in p for p in paths)
         if before != after or age <= hours * 3600:
             unknown += before != after
