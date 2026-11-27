@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the cleanup inventory and the change since the last run.
 
-Read-only (except --reap-browsers-older-than with --yes). Run it at the start of a cleanup, after each
+Read-only except `git fetch` and the snapshot it writes at --state; --list-browsers-older-than only reads. Run it at the start of a cleanup, after each
 merge batch and at the end:
     python3 .agents/skills/cleanup/inventory.py [--ref origin/main] [--detail] [--state FILE]
         [--code-roots a/,b/] [--frozen-docs docs/library/] [--baseline-glob 'ci/baseline*.txt']
@@ -367,39 +367,69 @@ def dev_server_processes() -> list[tuple[int, int, int]]:
     return rows
 
 
-def in_devserver_scope(pid: int) -> bool:
-    """A server started by scripts/local/devserver.sh: systemd enforces its own lifetime, so the reaper leaves it."""
-    try:
-        return "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
-    except OSError:
-        return False
+def list_stale_browsers(hours: float) -> None:
+    """List agent-browser Chrome main processes and node dev servers older than HOURS: candidates to inspect.
 
-
-def reap_browsers(hours: float, yes: bool) -> None:
-    """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run.
-
-    Age is a proxy, not proof the owner is gone: pick HOURS above any real run, and look at the list first.
+    Listing only. Its matching is a heuristic (an agent-browser path in the process tree, vite in the arguments), so
+    stop processes with a reaper that applies the skill's rules (exact launcher profile, running binary, scopes,
+    pidfd with a scan-time start check), never from this list by pid.
     """
     if not hours > 0:
-        sys.exit("--reap-browsers-older-than needs a positive number of hours")
+        sys.exit("--list-browsers-older-than needs a positive number of hours")
     _, browsers = agent_browser_processes()
     stale = [(pid, age) for pid, age in browsers if age > hours * 3600]
     for pid, age in stale:
-        print(f"  {'killing' if yes else 'would kill'} browser pid {pid} (age {age / 3600:.1f} h)")
-        # Re-read the process just before signaling, so a recycled pid is never hit.
-        if yes and (pid, age) in [(p, a) for p, a in agent_browser_processes()[1] if a > hours * 3600]:
-            os.kill(pid, 15)
-    print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
-    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600 and not in_devserver_scope(pid)]
+        print(f"  browser pid {pid} (age {age / 3600:.1f} h)")
+    print(f"  {len(stale)} of {len(browsers)} agent-browser browsers older than {hours} h")
+    servers = dev_server_processes()
+    old, unknown = [], 0
+    reader_ns = os.readlink("/proc/self/ns/cgroup")
+    for pid, age, rss in servers:
+        if age <= hours * 3600:
+            continue
+        # Scope and age must describe one process: the start time is read before and after the cgroup, and the age
+        # comes from it, so a PID reused since the ps snapshot is young or changes start time and counts as unknown.
+        try:
+            before = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
+            raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+            argv = [x.decode(errors="replace") for x in raw.removesuffix(b"\0").split(b"\0")]
+            rss = next(int(l.split()[1]) for l in Path(f"/proc/{pid}/status").read_text().splitlines() if l.startswith("VmRSS:"))
+            cgroup = Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+            cgroup_ns = os.readlink(f"/proc/{pid}/ns/cgroup")
+            raw_after = Path(f"/proc/{pid}/cmdline").read_bytes()
+            after = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
+            uptime = float(Path("/proc/uptime").read_text().split()[0])
+            age = int(uptime - int(before) / os.sysconf("SC_CLK_TCK"))
+        except (OSError, IndexError, ValueError, StopIteration):
+            unknown += 1
+            continue
+        # Still a vite server now (a process may exec another program and keep its pid and start time).
+        if not (len(argv) > 1 and os.path.basename(argv[0]) == "node" and re.search(r"/vite(\.js)?$", argv[1])
+                and "build" not in argv[2:]):
+            unknown += 1
+            continue
+        # exec'd during the sample (raw bytes compared): RSS and cgroup may describe another program. A cgroup path of
+        # "/" is a namespace root that hides any enclosing scope, so the scope is unknown there.
+        # Paths show the enclosing scope only from the initial cgroup namespace (the kernel's fixed inode); inside any
+        # other namespace a scope above its root is hidden. Every record must parse as id:controllers:/absolute-path.
+        lines = cgroup.splitlines()
+        records = [re.fullmatch(r"\d+:[^:]*:(/\S*)", line) for line in lines]
+        # The reader's namespace matters too: /proc/PID/cgroup is rendered relative to it.
+        if (raw != raw_after or cgroup_ns != "cgroup:[4026531835]" or reader_ns != "cgroup:[4026531835]"
+                or not lines or not all(records)):
+            unknown += 1
+            continue
+        paths = [m.group(1) for m in records]
+        scoped = any("devserver-" in p for p in paths)
+        if before != after or age <= hours * 3600:
+            unknown += before != after
+            continue
+        if not scoped:
+            old.append((pid, age, rss))
     for pid, age, rss in old:
-        print(f"  {'killing' if yes else 'would kill'} dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
-        # Re-read before signaling, so a recycled pid is never hit.
-        if yes and any(p == pid and a > hours * 3600 for p, a, _ in dev_server_processes()):
-            try:
-                os.kill(pid, 15)
-            except ProcessLookupError:
-                pass  # exited since the scan
-    print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
+        print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
+    print(f"  {len(old)} candidates (older than {hours} h, confirmed outside devserver scopes) of {len(servers)} node dev servers;"
+          f" {unknown} with unknown scope")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
@@ -440,12 +470,11 @@ def main() -> None:
     parser.add_argument("--baseline-glob", help="git pathspec of CI ratchet files, one tolerated failure per line")
     parser.add_argument("--guidance-file", default="AGENTS.md", help="always-loaded agent guidance file whose tokens are reported")
     parser.add_argument("--review-label", help="issue label meaning 'waiting for a human', counted when given")
-    parser.add_argument("--reap-browsers-older-than", type=float, metavar="HOURS",
-                        help="list agent-browser Chrome and node dev-server processes older than HOURS and exit; add --yes to terminate them")
-    parser.add_argument("--yes", action="store_true", help="with --reap-browsers-older-than: really terminate")
+    parser.add_argument("--list-browsers-older-than", type=float, metavar="HOURS",
+                        help="list agent-browser Chrome and node dev-server processes older than HOURS and exit (listing only)")
     args = parser.parse_args()
-    if args.reap_browsers_older_than is not None:
-        reap_browsers(args.reap_browsers_older_than, args.yes)
+    if args.list_browsers_older_than is not None:
+        list_stale_browsers(args.list_browsers_older_than)
         return
     ref = args.ref or default_ref()
     soft("git", "fetch", "-q", "--no-recurse-submodules", "origin")
