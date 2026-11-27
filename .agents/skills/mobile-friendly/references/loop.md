@@ -34,7 +34,7 @@ agent-browser --session <s> screenshot <dir>/<page>-<w>-<theme>-i<n>.png
 
 - **Name every shot in order** (`i0` before, `i1` after the first fix, …) and keep every one: the user watches them.
 - Read every image (open the PNG). One state per image: never a collage.
-- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: set `window.__mobileProbeSeen = null`, probe, scroll the probe's `scroller` one screen down, probe again, and stop when its `scrollTop + clientHeight` reaches `scrollHeight`. The probe keeps the coverage across runs in the page: `coverage.unseen` must then hold only controls cut by the time budget (`sampling.incomplete`, `sampling.unsampledList.budget`) or off to the side; re-probe those with the page root narrowed to their section.
+- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: set `window.__mobileProbeSeen = null`, probe, scroll the probe's `scroller` down by one screen minus 64 px minus the height of the fixed bars (the stops overlap, so a control cut at one edge is whole at the next), probe again, and stop when its `scrollTop + clientHeight` reaches `scrollHeight`. The probe keeps the coverage across runs in the page: `coverage.unseen` must then hold only controls cut by the time budget (`sampling.incomplete`, `sampling.unsampledList.budget`) or off to the side; re-probe those with the page root narrowed to their section.
 - Cover the states a phone user meets: loaded, empty, long names, an open dialog or sheet, the menu drawer open, a form field focused. Both themes when the app has two (`agent-browser set media dark|light`, or the app's own toggle).
 - After a style change, give the dev server a second before the shot; the first shot can still show the old layout.
 
@@ -47,8 +47,8 @@ agent-browser --session <s> eval "window.__mobileProbeRoot='<page container sele
 The probe measures what a finger gets, not what the CSS boxes imply: it samples `elementFromPoint` on a grid over and around each control, so a padded `::after` hit area counts, a control under a sticky bar or a modal is skipped (`sampling.covered`), and a neighbour that steals a tap shows as `crowded`. It also reports content that **escapes its container** (`escapes`: text or a box past its card, at any width, desktop included).
 
 - **Probe at scroll top, after the content loaded.** A sticky bar over scrolled text reads as an overlap, and a probe during loading reports transient crowding.
-- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: probe, scroll the page scroller one screen down, probe again, and stop when the probe's `scrollTop + clientHeight` reaches its `scrollHeight` (the page scroller's, read by the probe). Keep the union of the controls sampled at each stop; a control counts as covered once any stop sampled it (`sampling.unsampledList.above` / `.below` / `.side` are only outside this stop's view). Controls cut by the time budget (`sampling.unsampledList.budget`, and `sampling.incomplete`) are a separate list: re-probe that stop with the page root narrowed to their section.
-- Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once without the root to see the frame.
+- **Below the fold:** only the viewport can be hit-tested. Walk the page from the top: probe, scroll the page scroller down by one screen minus 64 px minus the fixed bars (overlapping stops: a control under a bar or cut by the edge is `sampling.unsampledList.partial` and is whole at the next stop), probe again, and stop when the probe's `scrollTop + clientHeight` reaches its `scrollHeight` (the page scroller's, read by the probe). Keep the union of the controls sampled at each stop; a control counts as covered once any stop sampled it (`sampling.unsampledList.above` / `.below` / `.side` are only outside this stop's view). Controls cut by the time budget (`sampling.unsampledList.budget`, and `sampling.incomplete`) are a separate list: re-probe that stop with the page root narrowed to their section.
+- Set `__mobileProbeRoot` to the page's own container so the shared frame's faults do not show on every page; run it once with the root `body` (the default) to see the frame: a root such as `main` hides the header's own controls and their crowding.
 
 Read `counts` first, then the lists:
 
@@ -58,6 +58,8 @@ Read `counts` first, then the lists:
 - `overlaps` names text under a control or two controls on top of each other: always a fault at scroll top.
 - `edges` is a histogram of text start positions: the two or three biggest bars should be the page margin and the card inset; a long tail means nested padding.
 - `textSizes` shows the spread: body text under 16 px is `smallBody`.
+- `sampling.unsampledList.partial` lists a control not whole at this stop, with its reason (`clipped-by-<ancestor>`, `under-bar`, `pan-region`). The probe does not judge it: the walk does. A control still listed at the last stop and absent from `coverage` (never sampled whole at any stop) is `clipped`: fix it. A map or graph canvas that pans on purpose carries `data-pan-viewport` on its viewport, so its own clip is not judged; `touch-action: none` alone exempts nothing.
+- `letterColumn`, `splitWords`, `unnamedControls`, `repeatedHeading`, `squeezedScroller` name faults a screenshot shows but the older checks missed; judge each one.
 - `ms` is the run time; sampling stops after a budget (about 1 s) on very heavy pages.
 
 The probe cannot see touch emulation: `agent-browser set device` sets the user agent and pixel ratio but not touch, so `(any-pointer: coarse)` is false.

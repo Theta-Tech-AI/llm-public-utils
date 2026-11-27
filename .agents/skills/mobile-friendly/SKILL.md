@@ -24,7 +24,7 @@ Two instruments, used together on every iteration:
 | 3 | 🧱 **Frame first, designed once**: the frame every page shares (header, drawer, margins) is designed as ONE component with one phone layout, and the base rules (containment, one breakpoint) are in place | frame owner | the frame passes on three pages; then the page agents start |
 | 4 | 👥 **One agent per page** runs [the loop](references/loop.md): shoot → probe → critique → fix → re-shoot | page agents | the happy test below |
 | 5 | 📸 **Show the user** every screenshot as it lands, in the chat, as images ([loop.md § show](references/loop.md#-show-the-user)) | coordinator | the user has seen each page's before, each iteration, and its after |
-| 6 | 🔗 **Integrate** on localhost: merge, typecheck, re-probe every page | coordinator | one table, every page, every count, before → after |
+| 6 | 🔗 **Integrate** on localhost: merge, typecheck, delete the per-instance rules the base rules now cover, re-probe every page | coordinator | one table, every page, every count, before → after |
 | 7 | ☁️ **Parity check** on the deployed environment: same pages, same widths, same probe | coordinator | cloud matches localhost; any difference is a finding |
 | 8 | 📒 **Fold back** findings into [findings.md](references/findings.md), then promote ([fan-out.md § fold back](references/fan-out.md#5--fold-back)) | coordinator | the skill knows what the campaign learned |
 
@@ -40,7 +40,7 @@ Use a lower-cost model for the page agents when the runtime supports it. Keep on
 
 All of these, at **320 px, 390 px and the widest phone width** (one pixel under the app's phone/desktop breakpoint), 844 px high, and once **at the breakpoint** to confirm the desktop layout starts there:
 
-1. 📏 Probe, page scope (`window.__mobileProbeRoot` set to the page's own container): `pageScrollsSideways`, `overflow`, `overlaps`, `smallInputs`, `zoomBlocked` are 0. `smallTargets`, `crowdedTargets`, `smallText`, `smallBody`, `truncated`, `clipped`, `unnamedScrollRegions`, `barsOverShare`, `vhRules` are 0, or each remaining item is named in the report with the reason it stays (an inline link in a sentence; a third-party widget; a frame fault owned by the shell).
+1. 📏 Probe, page scope (`window.__mobileProbeRoot` set to the page's own container): `pageScrollsSideways`, `overflow`, `overlaps`, `smallInputs`, `letterColumn`, `splitWords`, `zoomBlocked` are 0. `smallTargets`, `crowdedTargets`, `smallText`, `smallBody`, `truncated`, `clipped`, `unnamedScrollRegions`, `unnamedControls`, `repeatedHeading`, `squeezedScroller`, `barsOverShare`, `vhRules` are 0, or each remaining item is named in the report with the reason it stays (an inline link in a sentence; a third-party widget; a frame fault owned by the shell).
 2. 📸 Critique: every question in [checklist.md § critique](references/checklist.md#-critique-questions) has its expected answer, in both themes if the app has two.
 3. 🔁 The last two iterations changed nothing the critique cares about. Three iterations without progress on one fault mean the fault is structural: stop and report it, do not keep nudging pixels.
 

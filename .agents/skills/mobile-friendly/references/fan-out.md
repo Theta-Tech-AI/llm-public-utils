@@ -22,7 +22,7 @@
 | **Page agent** | the page's own component folder and the CSS it alone imports |
 | **Coordinator** | inventory, the brief, relaying shared faults to the shell agent, showing the user, integration, the ledger |
 
-A page agent that needs a shared change writes it in its report (*file, change, why, which pages it helps*) and does not make it. Before editing a file, a page agent checks who else imports it; more than its own page means it is shared. The coordinator forwards shared faults to the shell agent **while it is still running**, so they land in one place once.
+A page agent that needs a shared change writes it in its report (*file, change, why, which pages it helps*) and does not make it. If the permission check refuses an agent's edit to a shared file, the agent reports it and the coordinator asks the operator; nobody routes around a refusal. Before editing a file, a page agent checks who else imports it; more than its own page means it is shared. The coordinator forwards shared faults to the shell agent **while it is still running**, so they land in one place once.
 
 **Check who owns the frame before you change it.** Another session may be redesigning the header or layout at the same time; a shell fix built on the old structure conflicts on merge. Ask the frame's owner, hand over the rule and the reference branch, and let one owner implement it; then re-run the sweep when it lands.
 
@@ -43,7 +43,7 @@ Write one shared brief file and give each agent a short prompt that points at it
 - the project's code rules for CSS and components (tokens, comment style, no new dependencies);
 - cleanup: stop the preview server and close the browser session.
 
-Each prompt carries: the route(s) and component, the record id and user, worktree, branch, port and session name, and the agent's files. Update the brief when the first reports bring new traps; tell the running agents to re-read it.
+Each prompt carries: the route(s) and component, the record id and user, worktree, branch, port and session name, and the agent's files. Update the brief when the first reports bring new traps; tell the running agents to re-read it. **Verify each agent claim on the running page.** Check a shot's state before you call a regression (a filter panel the agent opened looks like a lost collapse). An overflow that an agent reports but that does not reproduce on the integrated build is not fixed with `overflow-x: hidden`: re-measure after integration and drop the patch.
 
 ## 3. ⚖️ Capacity
 
@@ -55,7 +55,7 @@ Watch the screenshot folders. Each time new shots land, send them to the user in
 
 ## 4. 🔗 Integrate, then check parity
 
-1. Merge the page branches one by one into an integration branch; a conflict means two owners touched one file: keep both intents, then tell the ledger.
+1. Merge the page branches one by one into an integration branch; a conflict means two owners touched one file: keep both intents, then tell the ledger. After the base rules land, search the merged diff for per-instance rules they now cover (size bumps, field sizes, per-host inset overrides, overflow hides) and delete them in the same batch.
 2. Run the typecheck and the build once on the merged tree.
 3. Start one local preview from the merged tree and run the probe on **every** page at 390 px (and 320 for the worst ones), with and without the page root. One table: page × count, before and after.
 4. Shoot every page at 390 px and 1280 px and send them: the desktop layout must not have moved.

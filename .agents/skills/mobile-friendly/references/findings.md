@@ -4,6 +4,17 @@
 
 Keep entries provider-neutral: the framework and the fault, not the product or its domain.
 
+## 2026-11 · Round 2: the same app re-run with the v3 skill, 8 lanes
+
+- **Base rules paid off** — the lanes deleted 11 per-instance rules (size bumps, field sizes, per-host insets, overflow hides) that the base rules now cover; lint findings fell 45 → 27 → promoted to [fan-out.md § integrate](fan-out.md#4--integrate-then-check-parity), [fixes.md](fixes.md#-text-and-inputs)
+- **Probe false positives** (6 of 8 lanes) — `crowded` read an 8.0 px gap as 7; a `tabindex` tooltip trigger counted as a target; a 13 px pill counted as body text; `escapes` flagged hidden, scrolled, decorative and 2 px glyph-overhang cases; a sticky toolbar over scrolled text and an icon inside its own input counted as overlaps; a control cut by the scroller edge read as a small target; decoration and pan regions counted as `clipped` → probe v4
+- **Probe misses, each found only by screenshot** — a value broken one letter per line, a table word split in two, an icon-only button with no name, a heading shown twice on the first screen, a list squeezed under a hero → probe v4 (`letterColumn`, `splitWords`, `unnamedControls`, `repeatedHeading`, `squeezedScroller`)
+- **Frame crowding hidden by the page root** — a root of `main` hid the header's own controls → run once with the root `body` → promoted to [loop.md § 3](loop.md#3--probe)
+- **Second-model catch** — a phone variant dropped a status the desktop shows; neither probe nor screenshots saw it → promoted to [checklist M6](checklist.md), critique question 14
+- **Coordinator traps** — a filter panel the agent opened looked like a lost collapse; an overflow one agent reported did not reproduce on the integrated build; a refused edit to a shared file → promoted to [fan-out.md](fan-out.md#2--the-brief)
+- **Harness traps** — no touch emulation, viewport and color scheme reset on navigation, double-encoded probe JSON, shared scratch folders, silent scripted replaces, relative screenshot paths, a dark default scheme, skipped research when search is a deferred tool → promoted to [harness.md](harness.md#driver-traps-agent-browser-027), [research.md](research.md)
+- **Fault classes** — one type scale, a field minimum that an unlayered rule beat, `overflow-wrap: anywhere` in tables, a second inset from a shared component, a base rule with a higher threshold than the phone line, a standalone 44 px action, ragged wrapped alignment, a no-wrap label column, a hero squeezing a list, a padded hit area on a 44 px control → promoted to [fixes.md](fixes.md)
+
 ## 2026-11 · React + Vite + Tailwind SPA, 20 routes, dark-first design system, 19 page agents
 
 ### Campaign shape

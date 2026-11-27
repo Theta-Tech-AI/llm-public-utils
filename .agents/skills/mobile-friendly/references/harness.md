@@ -42,12 +42,19 @@ One dev server (~300–500 MB) plus one headless browser (~0.5–1 GB) per agent
 ## Driver traps (agent-browser 0.27)
 
 - `set viewport <w> <h> 2` sets width, height and pixel ratio (2 gives crisp screenshots). Opening or signing in can reset the viewport: set it **after** the page is open, and check `viewport.w` in the probe output.
-- `set device "iPhone 14"` also sets the user agent (apps that sniff it change behaviour), but **not touch**: `(any-pointer: coarse)` stays false and `navigator.maxTouchPoints` is 0.
-- `set media dark|light` sets `prefers-color-scheme`; apps with their own theme toggle may ignore it.
+- `set device "iPhone 14"` also sets the user agent (apps that sniff it change behaviour), but **not touch**: `(pointer: coarse)` and `(any-pointer: coarse)` stay false and `navigator.maxTouchPoints` is 0. Probe tap areas are fine-pointer sizes, so they err safe: before you add a phone size rule, check whether a coarse-pointer rule already gives the size on a real phone.
+- `set media dark|light` sets `prefers-color-scheme`; apps with their own theme toggle may ignore it. The default scheme may be dark: set light explicitly and read the theme class back before you call a shot light.
+- Viewport and color-scheme settings reset on a navigation: set them again after each open.
+- The probe's JSON comes back double-encoded through `eval`: parse twice.
+- Wait on a selector of the new content before you probe (a probe during a load reads the old page), and wrap `eval` code in an IIFE.
+- A cold dev server or a recompile can show the app's "could not start" screen: reload once; never record it as a fault.
+- Screenshot paths resolve in the browser daemon's folder: always pass an absolute path.
 - `wait "<css selector>"` is reliable; `wait "text=…"` timed out with the text on screen. `click "text=…"` can miss too: click by ref from `snapshot -i`, or `eval` a click on the element.
 - `screenshot --full` captures the document. When the app scrolls inside its own container, it shows only the first screen: scroll the container and shoot in steps.
 - An init script (to stub something before the page loads) goes in `AGENT_BROWSER_INIT_SCRIPTS=<path>` before the open; wrap it in an IIFE.
 - In sandboxed agent shells, plain `sleep` and `npx -y <pkg>@latest` may be blocked: use `agent-browser wait <ms>` and the web versions of the guides.
+- Scratch folders under a shared `/tmp` are shared by every agent: each agent keeps its tools in its own folder.
+- A scripted replace that does not match fails silently: assert the match count, then read `git diff`.
 - Long commands hit the tool's time limit: run start, sign-in and viewport as separate calls, each under `timeout`.
 
 ## Text size and zoom

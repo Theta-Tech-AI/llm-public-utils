@@ -18,12 +18,14 @@
 - **Stacked records:** under the breakpoint, render each row as a card: the name as the card title, then two or three key facts as label-above-value pairs, the rest behind a tap. In CSS-only form: `tr { display: grid }`, `td::before { content: attr(data-label) }` as a small muted label above the value (13 px, secondary colour, no colon). Keep a header row of plain text in the accessibility tree: hide it visually (a visually-hidden class), not with `display: none`, which drops the header-to-cell association ([WAI: tables](https://www.w3.org/WAI/tutorials/tables/tips/)). A header row that holds controls (sort buttons) is the exception: visually hidden, its buttons stay focusable but unseen (a focus-visible failure), so remove it and move its function (a Sort select) where the user can see it. Better still, render real records (a list of cards with their own labels) on phones.
 - **Shape the card, not only the stack:** a generic stack rule gives one label block per cell (a 6-cell row became ~900 px). Put the row on a grid (`tr { display: grid; grid-template-columns: repeat(6, 1fr) }`), the name across all columns, three short figures spanning 2 each, two dates spanning 3 each: one compact card.
 - **Sorting dies with the header row:** when column headers hide on phones, move sort into the filter panel as one `Sort` select (key and direction).
+- **`overflow-wrap: anywhere` in a table:** it lowers a column's min-content width to one letter, so words split ("Standar/d"). Table cells use `overflow-wrap: break-word` on phones.
 - **Priority columns:** keep name + one status, hide the rest under the breakpoint, show them on row tap or in a detail view.
 - **A matrix that must stay a table:** wrap it in `<div role="region" aria-label="…" tabindex="0" style="overflow-x:auto">`, freeze the first column (`position: sticky; left: 0` on the first cell, with a background), and let a cut-off column show as the cue.
 
 ## 🥇 The first screen is all frame
 
 - Stats rows, filter forms, help text and status banners above the content: move them below the content or behind one control (a "Filter · 2" button that opens a sheet; a disclosure for stats).
+- A tall hero above a flex panel squeezes the list into the leftover height (`squeezedScroller`): give the view a screenful of its own and let the outer region scroll.
 - A page header in three rows: one row for menu + title + icons; page actions in one row below, two visible, the rest behind "More"; status into the content.
 - Two sticky bars: keep one, or make the second scroll with the page.
 
@@ -35,11 +37,14 @@
 - A row of a full-width disclosure line plus a sibling link ("Section (6) … Go to") is crowded by construction: put `gap: 0.5rem` on the flex parent, not margins on the children.
 - Raising targets to 44 px makes rows taller: look at the screenshot after, and take back wasted height from padding around the row, not from the target.
 - A row of icon buttons: `gap: 8px` and 44 px each; if they do not fit, move the extras behind "More".
+- A standalone link-style action under 44 px: use the design system's touch size; a phone-only `min-height` can lose to a later stylesheet at equal specificity.
+- A padded `::after` hit area on a control that is already 44 px covers its neighbour: do not pad hit areas inside a row of close controls.
 - A checkbox: make the whole label row the target (`<label>` wraps the input and the text, `min-height: 44px`).
 
 ## 🔤 Text and inputs
 
-- Inputs, selects and textareas at `font-size: max(16px, 1rem)` under the breakpoint (stops iOS zoom on focus). Do not prevent zoom with the viewport meta instead.
+- Inputs, selects and textareas at `font-size: max(16px, 1rem)` under the breakpoint (stops iOS zoom on focus), as an `!important` base rule inside the phone query: an unlayered page rule (`font: inherit`) beats a normal rule in a layer. Do not prevent zoom with the viewport meta instead.
+- **One type scale:** body text under 16 px on phones across many pages is one class. Below the phone breakpoint, raise the shared font-size tokens to these minimums: body 16, secondary 13, minimum 12. Make prose and plugin sizes read the same token, then delete every per-page size bump. Never patch sizes per page.
 - Labels and captions at 12 px or more; caps sub-labels are the usual offenders (10–11 px with letter-spacing).
 - Truncated names: replace `white-space: nowrap; text-overflow: ellipsis` with wrapping (`overflow-wrap: anywhere`, two-line clamp only where a list needs a fixed rhythm and the full name is one tap away).
 
@@ -57,6 +62,8 @@ Find the layer that adds it in one step: walk up from the first misplaced text a
 
 
 - A panel inside a section inside a page, each with 16–24 px padding, leaves 300 px of a 390 px screen. Under the breakpoint, set nested groups' side padding to 0 and let the page margin be the only one; a card keeps one inset.
+- A shared component with its own side padding gives a second inset in every other host: fix it once in the component, never per host.
+- Text on a glowing or bordered panel keeps an inset: removing the padding is not "no card around one list".
 - Use the safe-area-aware page margin once, on the page container: `padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right))`.
 
 ## 🧱 Side-by-side layouts
@@ -83,6 +90,9 @@ Find the layer that adds it in one step: walk up from the first misplaced text a
 - **Superscripts and chips sized in `em`** fall under the 12 px floor (`0.62em` of 16 px = 9.9 px): `font-size: max(0.62em, 0.75rem)`.
 - **Utility class loses to a component rule:** a `max-md:grid` on a table row did nothing because the table's component CSS set `display: block` with higher specificity. Fix the component rule for phones, or raise the utility (`!grid`) only in the page's own file.
 - **A container cannot restyle itself from its own container query:** `@container` rules apply to descendants. A change to the wrapper's own frame goes in a media query.
+- **A base rule with another threshold or higher specificity than the phone line** (a container-query stacking threshold, a sticky table head) beats per-page phone utilities: own the threshold once. Many `!` utilities are a sign of this class.
+- **A wide-layout alignment** (`margin-left: auto; justify-content: flex-end`) turns ragged when its row wraps: left-align the wrapped state.
+- **A label/value row grid with a no-wrap label:** a long label takes the row and the value is cut or breaks one letter per line (`letterColumn`). Cap the label column (`fit-content(60%)`) and let both wrap.
 - **Container query vs media query:** a page that switches on its own container width (`@container page (max-width: 30rem)`) can sit wider than the phone breakpoint at 767 px; a gap fix written only inside the container query is missing there. Fix spacing at the flex parent for every width.
 - **A segmented control with many options:** fixed-width, no-wrap options scroll sideways in an unnamed region. Let options wrap and grow (`flex: 1 1 auto`) or use a select on phones.
 - **Overflowing popovers:** a popover anchored to a header control sticks out past the right edge: `max-width: calc(100vw - 2 * <page margin>)` and keep its inline position inside the viewport. Shoot every popover open; the probe sees it only while it is open.
