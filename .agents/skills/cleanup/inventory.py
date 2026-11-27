@@ -390,10 +390,11 @@ def list_stale_browsers(hours: float) -> None:
         # comes from it, so a PID reused since the ps snapshot is young or changes start time and counts as unknown.
         try:
             before = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
-            argv = [x.decode(errors="replace") for x in Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0") if x]
+            raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+            argv = [x.decode(errors="replace") for x in raw.removesuffix(b"\0").split(b"\0")]
             rss = next(int(l.split()[1]) for l in Path(f"/proc/{pid}/status").read_text().splitlines() if l.startswith("VmRSS:"))
-            scoped = "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
-            argv_after = [x.decode(errors="replace") for x in Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0") if x]
+            cgroup = Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+            raw_after = Path(f"/proc/{pid}/cmdline").read_bytes()
             after = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
             uptime = float(Path("/proc/uptime").read_text().split()[0])
             age = int(uptime - int(before) / os.sysconf("SC_CLK_TCK"))
@@ -405,9 +406,13 @@ def list_stale_browsers(hours: float) -> None:
                 and "build" not in argv[2:]):
             unknown += 1
             continue
-        if argv != argv_after:  # exec'd during the sample: RSS and cgroup may describe another program
+        # exec'd during the sample (raw bytes compared): RSS and cgroup may describe another program. A cgroup path of
+        # "/" is a namespace root that hides any enclosing scope, so the scope is unknown there.
+        paths = [line.split(":", 2)[2] for line in cgroup.splitlines() if line.count(":") >= 2]
+        if raw != raw_after or not paths or any(p.strip() == "/" for p in paths):
             unknown += 1
             continue
+        scoped = any("devserver-" in p for p in paths)
         if before != after or age <= hours * 3600:
             unknown += before != after
             continue
