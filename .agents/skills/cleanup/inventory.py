@@ -393,10 +393,10 @@ def list_stale_browsers(hours: float) -> None:
             scoped = "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
             after = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
             uptime = float(Path("/proc/uptime").read_text().split()[0])
+            age = int(uptime - int(before) / os.sysconf("SC_CLK_TCK"))
         except (OSError, IndexError, ValueError):
             unknown += 1
             continue
-        age = int(uptime - int(before) / os.sysconf("SC_CLK_TCK"))
         if before != after or age <= hours * 3600:
             unknown += before != after
             continue
