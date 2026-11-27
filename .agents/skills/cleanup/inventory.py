@@ -386,10 +386,19 @@ def list_stale_browsers(hours: float) -> None:
     for pid, age, rss in servers:
         if age <= hours * 3600:
             continue
+        # Scope and age must describe one process: the start time is read before and after the cgroup, and the age
+        # comes from it, so a PID reused since the ps snapshot is young or changes start time and counts as unknown.
         try:
+            before = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
             scoped = "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
-        except OSError:
-            unknown += 1  # gone or unreadable since the scan: scope unknown, not a candidate
+            after = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+            uptime = float(Path("/proc/uptime").read_text().split()[0])
+        except (OSError, IndexError):
+            unknown += 1
+            continue
+        age = int(uptime - int(before) / os.sysconf("SC_CLK_TCK"))
+        if before != after or age <= hours * 3600:
+            unknown += before != after
             continue
         if not scoped:
             old.append((pid, age, rss))
