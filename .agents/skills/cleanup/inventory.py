@@ -384,12 +384,13 @@ def start_time(pid: int) -> int | None:
         return None
 
 
-def term_if_same(pid: int, start: int | None, min_age: float) -> str:
+def term_if_same(pid: int, start: int | None, min_age: float, still_matches) -> str:
     """TERM through a pidfd; returns "sent" or the reason it was skipped.
 
-    Once the pidfd is open it names one process. Its start time must equal the one recorded at the scan, and the age
-    computed from that start time must exceed min_age: a pid reused between the scan and the start-time read is a
-    young process, so it fails the age check even though it matches the recorded start.
+    The pidfd is opened before the process is judged again: its start time must equal the scan's, the age from that
+    start must exceed min_age (a pid reused before the start-time read is young), and the candidate matcher must still
+    select it (a process may exec another program and keep its pid). A null signal through the same pidfd then proves
+    those reads described the live process the pidfd names, and only then is TERM sent.
     """
     if start is None:
         return "skipped: gone before its start time was read"
@@ -401,8 +402,9 @@ def term_if_same(pid: int, start: int | None, min_age: float) -> str:
         return f"skipped: no pidfd ({exc.__class__.__name__}); never signalled by bare pid"
     try:
         uptime = float(Path("/proc/uptime").read_text().split()[0])
-        if start_time(pid) != start or uptime - start / os.sysconf("SC_CLK_TCK") <= min_age:
+        if start_time(pid) != start or uptime - start / os.sysconf("SC_CLK_TCK") <= min_age or not still_matches():
             return "skipped: not the process scanned"
+        signal.pidfd_send_signal(fd, 0)
         signal.pidfd_send_signal(fd, signal.SIGTERM)
         return "sent"
     except OSError as exc:
@@ -421,13 +423,18 @@ def reap_browsers(hours: float, yes: bool) -> None:
     _, browsers = agent_browser_processes()
     stale = [(pid, age, start_time(pid)) for pid, age in browsers if age > hours * 3600]
     for pid, age, start in stale:
-        outcome = term_if_same(pid, start, hours * 3600) if yes else "would TERM"
+        outcome = (term_if_same(pid, start, hours * 3600,
+                                lambda pid=pid: any(p == pid for p, a in agent_browser_processes()[1] if a > hours * 3600))
+                   if yes else "would TERM")
         print(f"  browser pid {pid} (age {age / 3600:.1f} h): {outcome}")
     print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
     old = [(pid, age, rss, start_time(pid)) for pid, age, rss in dev_server_processes()
            if age > hours * 3600 and not in_devserver_scope(pid)]
     for pid, age, rss, start in old:
-        outcome = term_if_same(pid, start, hours * 3600) if yes else "would TERM"
+        outcome = (term_if_same(pid, start, hours * 3600,
+                                lambda pid=pid: any(p == pid and a > hours * 3600 for p, a, _ in dev_server_processes())
+                                and not in_devserver_scope(pid))
+                   if yes else "would TERM")
         print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB): {outcome}")
     print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
 
