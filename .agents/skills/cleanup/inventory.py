@@ -367,6 +367,14 @@ def dev_server_processes() -> list[tuple[int, int, int]]:
     return rows
 
 
+def in_devserver_scope(pid: int) -> bool:
+    """A server started by scripts/local/devserver.sh: systemd enforces its own lifetime, so the reaper leaves it."""
+    try:
+        return "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+    except OSError:
+        return False
+
+
 def reap_browsers(hours: float, yes: bool) -> None:
     """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run.
 
@@ -382,12 +390,15 @@ def reap_browsers(hours: float, yes: bool) -> None:
         if yes and (pid, age) in [(p, a) for p, a in agent_browser_processes()[1] if a > hours * 3600]:
             os.kill(pid, 15)
     print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
-    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600]
+    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600 and not in_devserver_scope(pid)]
     for pid, age, rss in old:
         print(f"  {'killing' if yes else 'would kill'} dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
         # Re-read before signaling, so a recycled pid is never hit.
         if yes and any(p == pid and a > hours * 3600 for p, a, _ in dev_server_processes()):
-            os.kill(pid, 15)
+            try:
+                os.kill(pid, 15)
+            except ProcessLookupError:
+                pass  # exited since the scan
     print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
 
 
