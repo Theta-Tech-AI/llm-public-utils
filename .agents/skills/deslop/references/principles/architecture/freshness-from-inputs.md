@@ -1,6 +1,6 @@
 ---
 name: deslop-architecture-freshness-from-inputs
-description: Deslop principle — Freshness From Inputs: stale only when its inputs changed; never by a time or an event, and a producer version only by a written decision.
+description: Deslop principle — Freshness From Inputs: stale only when its inputs changed; never decided by a time or an event.
 ---
 
 # Freshness From Inputs
@@ -17,7 +17,7 @@ The substitutes look cheaper, and each one fails in a direction nobody sees in a
 - **A time or an event** (`updated_at > built_at`, "changed after the last lock", "a run happened since"). It fires when nothing changed: a save of identical text, an unlock and re-lock, a touch. It also misses a change that came without an event, such as a backfill, a restore or a clock skew. `make` decides by file times, so `touch` rebuilds a target; Bazel keys each action on a digest of its inputs and its command line instead.
 - **A key that is too wide** (every setting, every fact in the project, the whole input set). One change anywhere makes everything stale. The results are still right, only slow and expensive, so nobody files the bug.
 - **A key that is too narrow** (an input the producer reads is missing from the key). Old output is served as current. This is the dangerous direction: it is wrong, not slow.
-- **The producer's own version in the key, with no decision behind it** (code version, model id, prompt hash). Every release makes all finished work stale. Whether a new producer must redo old work is a **policy decision**, and it has two honest answers. (1) The change alters the meaning of every past output, for example a compiler flag, an incompatible output format, or a fix to a wrong algorithm. Then the version belongs in the key, with the reason written beside it; build systems key on the command line for this reason. (2) The change is an improvement that old, reviewed work does not need, for example a better model or a reworded prompt. Then the version is *provenance*: store it beside the output, do not key on it, and make any redo a recorded action. Work that people review or sign needs the second answer by default, because a deploy must not reopen it.
+- <a id="producer-version"></a>**The producer's own version in the key, with no decision behind it** (code version, model id, prompt hash). Every release makes all finished work stale. Whether a new producer must redo old work is a **policy decision**, and it has two honest answers. (1) The change alters the meaning of every past output, for example a compiler flag, an incompatible output format, or a fix to a wrong algorithm. Then the version belongs in the key, with the reason written beside it; build systems key on the command line for this reason. (2) The change is an improvement that old, reviewed work does not need, for example a better model or a reworded prompt. Then the version is *provenance*: store it beside the output, do not key on it, and make any redo a recorded action. Work that people review or sign needs the second answer by default, because a deploy must not reopen it.
 
 ## Example
 
@@ -55,7 +55,7 @@ The ✅ version has one owner of "what this check depends on" (`basis`). The pro
    - It uses a time or an event: finding.
    - The key holds something the producer does not read: too wide. Look at the miss rate.
    - The producer reads something the key lacks: too narrow. File this at a higher severity, because it serves old output as current.
-   - The key holds the producer's version: ask where the decision to redo old work is written, and which of the two answers it gives. If no one wrote it, that is the finding.
+   - The key holds the producer's version: check it against [the producer-version policy](#producer-version). If no decision is written, that is the finding.
 4. **Count the owners.** Two places that compute the basis of one output in different ways are [one fact, many owners](../../patterns/one-fact-many-owners.md).
 5. **Measure.** Record how often stored work is reused. On every miss, log which part of the basis changed (part names and short digests, no content). Without that line, a too-wide key looks like normal traffic.
 
@@ -64,7 +64,7 @@ The ✅ version has one owner of "what this check depends on" (`basis`). The pro
 1. Put one `basis()` function beside the producer. It digests exactly what the producer reads, in a canonical form.
 2. Store the basis with the output, together with provenance (producer version, model, time). This is [metadata beside content](metadata-beside-content.md).
 3. Make every reader that asks "stale?", "owed?" or "current?" compare the stored basis with a fresh `basis()`. Delete their own time tests.
-4. If a new producer version must redo old work, either key on it with the reason written beside the key (the meaning changed), or make the redo a recorded action: a migration, or a person's decision with an audit row (an improvement).
+4. If a new producer version must redo old work, follow [the producer-version policy](#producer-version).
 5. Old outputs that have no stored basis: give them one named legacy rule, for example "treat as current until the next real change". Do not scatter fallbacks.
 
 ## When a time is the right test
@@ -92,5 +92,5 @@ In relation to other principles, freshness from inputs:
 1. **Stale means its inputs changed.** Store a digest of exactly what the producer read, and compare it.
 2. **Times and events are not changes.** An identical save, or an unlock and re-lock, must leave derived work current.
 3. **Size the key to what was read** ([match the grain](../reliability/match-the-grain.md)). A key that is too wide wastes work quietly. A key that is too narrow serves old output as current.
-4. **A producer's version is provenance unless a written decision says the change alters every past output.** Then it belongs in the key, with the reason beside it. Otherwise redoing old work with a new producer is a recorded action, not a side effect of a deploy.
+4. **A producer's version in the key is a written policy decision**: see [the producer-version policy](#producer-version).
 5. **Log what changed on every miss**, so a reader can tell a real change from a key that is too wide.
