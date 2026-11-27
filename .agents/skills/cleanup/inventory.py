@@ -383,6 +383,7 @@ def list_stale_browsers(hours: float) -> None:
     print(f"  {len(stale)} of {len(browsers)} agent-browser browsers older than {hours} h")
     servers = dev_server_processes()
     old, unknown = [], 0
+    reader_ns = os.readlink("/proc/self/ns/cgroup")
     for pid, age, rss in servers:
         if age <= hours * 3600:
             continue
@@ -413,7 +414,9 @@ def list_stale_browsers(hours: float) -> None:
         # other namespace a scope above its root is hidden. Every record must parse as id:controllers:/absolute-path.
         lines = cgroup.splitlines()
         records = [re.fullmatch(r"\d+:[^:]*:(/\S*)", line) for line in lines]
-        if raw != raw_after or cgroup_ns != "cgroup:[4026531835]" or not lines or not all(records):
+        # The reader's namespace matters too: /proc/PID/cgroup is rendered relative to it.
+        if (raw != raw_after or cgroup_ns != "cgroup:[4026531835]" or reader_ns != "cgroup:[4026531835]"
+                or not lines or not all(records)):
             unknown += 1
             continue
         paths = [m.group(1) for m in records]
