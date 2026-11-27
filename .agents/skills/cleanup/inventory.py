@@ -367,14 +367,6 @@ def dev_server_processes() -> list[tuple[int, int, int]]:
     return rows
 
 
-def in_devserver_scope(pid: int) -> bool:
-    """A server started by scripts/local/devserver.sh: systemd enforces its own lifetime, so the reaper leaves it."""
-    try:
-        return "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
-    except OSError:
-        return False
-
-
 def list_stale_browsers(hours: float) -> None:
     """List agent-browser Chrome main processes and node dev servers older than HOURS: candidates to inspect.
 
@@ -390,10 +382,21 @@ def list_stale_browsers(hours: float) -> None:
         print(f"  browser pid {pid} (age {age / 3600:.1f} h)")
     print(f"  {len(stale)} of {len(browsers)} agent-browser browsers older than {hours} h")
     servers = dev_server_processes()
-    old = [(pid, age, rss) for pid, age, rss in servers if age > hours * 3600 and not in_devserver_scope(pid)]
+    old, unknown = [], 0
+    for pid, age, rss in servers:
+        if age <= hours * 3600:
+            continue
+        try:
+            scoped = "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+        except OSError:
+            unknown += 1  # gone or unreadable since the scan: scope unknown, not a candidate
+            continue
+        if not scoped:
+            old.append((pid, age, rss))
     for pid, age, rss in old:
         print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
-    print(f"  {len(old)} candidates (older than {hours} h, outside devserver scopes) of {len(servers)} node dev servers")
+    print(f"  {len(old)} candidates (older than {hours} h, confirmed outside devserver scopes) of {len(servers)} node dev servers;"
+          f" {unknown} with unknown scope")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
