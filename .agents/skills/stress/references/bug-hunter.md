@@ -72,7 +72,11 @@ These classes have each burned a real user, and each is catchable statically or 
 
 9. **Failure reason is an exception class.** Grep the run and job failure writers for `type(exc).__name__` or a bare class stored as the reason. For each run kind, list the failed runs and read the run record, the stage's own status route and the log: a person-readable cause and a correlation id (run, request or trace id) must be reachable from the run record. Compare stage and run statuses by their documented meanings: a stage `idle` (no active work) beside a failed latest run can be right when the failure stays visible.
 
-10. **A migration hands history to a live job.** A migration copies or back-fills old rows into a table that a scheduled job then processes, and the job writes per row (an audit record, a notification, a model call). On the first deploy the job meets the whole backlog at once: it floods the audit chain, runs past its hang guard and starves the other jobs. For every migration that fills a table a live job reads, find out how the job reads the old rows. The old shape should be settled once in the migration, never by a runtime predicate. Count the rows the job will see on each target environment before the push, and confirm the job is bounded per tick. Also check that the per-row writes are real decisions (audit) and not plain data (an ordinary table).
+10. **A migration hands history to a live job.** A migration copies or back-fills old rows into a table that a scheduled job then processes, and the job writes per row (an audit record, a notification, a model call). On the first deploy the job meets the whole backlog at once: it floods the audit chain, runs past its hang guard and starves the other jobs. For every migration that fills a table a live job reads, check these four things:
+    - The migration settles the old shape once. It keeps each row's real processing state, so work that was still pending stays pending. Nothing in runtime should guess what an old row means.
+    - Someone counted the rows the job will see on each target environment before the push.
+    - The job is bounded per tick and records durable progress, so a timeout does not replay the same batch.
+    - The per-row writes match the system's audit policy: required audit events stay audited, and routine data goes to an ordinary table.
 
 ## Bugs
 
