@@ -22,6 +22,7 @@ import re
 import os
 import shutil
 import sys
+import signal
 import subprocess
 import tokenize
 from datetime import datetime, timedelta, timezone
@@ -375,6 +376,33 @@ def in_devserver_scope(pid: int) -> bool:
         return False
 
 
+def start_time(pid: int) -> int | None:
+    """Field 22 of /proc/PID/stat (read after the "(comm)" field, which may hold spaces); None when gone."""
+    try:
+        return int(Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19])
+    except (OSError, IndexError, ValueError):
+        return None
+
+
+def term_if_same(pid: int, start: int | None) -> bool:
+    """TERM through a pidfd checked against the start time recorded at the scan, so a reused pid is never hit."""
+    if start is None:
+        return False
+    try:
+        fd = os.pidfd_open(pid)
+    except (ProcessLookupError, AttributeError, OSError):
+        return False  # gone, or no pidfd on this platform: never fall back to a bare pid
+    try:
+        if start_time(pid) != start:
+            return False
+        signal.pidfd_send_signal(fd, signal.SIGTERM)
+        return True
+    except OSError:
+        return False
+    finally:
+        os.close(fd)
+
+
 def reap_browsers(hours: float, yes: bool) -> None:
     """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run.
 
@@ -383,22 +411,18 @@ def reap_browsers(hours: float, yes: bool) -> None:
     if not hours > 0:
         sys.exit("--reap-browsers-older-than needs a positive number of hours")
     _, browsers = agent_browser_processes()
-    stale = [(pid, age) for pid, age in browsers if age > hours * 3600]
-    for pid, age in stale:
+    stale = [(pid, age, start_time(pid)) for pid, age in browsers if age > hours * 3600]
+    for pid, age, start in stale:
         print(f"  {'killing' if yes else 'would kill'} browser pid {pid} (age {age / 3600:.1f} h)")
-        # Re-read the process just before signaling, so a recycled pid is never hit.
-        if yes and (pid, age) in [(p, a) for p, a in agent_browser_processes()[1] if a > hours * 3600]:
-            os.kill(pid, 15)
+        if yes:
+            term_if_same(pid, start)
     print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
-    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600 and not in_devserver_scope(pid)]
-    for pid, age, rss in old:
+    old = [(pid, age, rss, start_time(pid)) for pid, age, rss in dev_server_processes()
+           if age > hours * 3600 and not in_devserver_scope(pid)]
+    for pid, age, rss, start in old:
         print(f"  {'killing' if yes else 'would kill'} dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
-        # Re-read before signaling, so a recycled pid is never hit.
-        if yes and any(p == pid and a > hours * 3600 for p, a, _ in dev_server_processes()):
-            try:
-                os.kill(pid, 15)
-            except ProcessLookupError:
-                pass  # exited since the scan
+        if yes:
+            term_if_same(pid, start)
     print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
 
 
