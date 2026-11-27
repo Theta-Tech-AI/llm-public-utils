@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the cleanup inventory and the change since the last run.
 
-Read-only. Run it at the start of a cleanup, after each
+Read-only except `git fetch` and the snapshot it writes at --state; --list-browsers-older-than only reads. Run it at the start of a cleanup, after each
 merge batch and at the end:
     python3 .agents/skills/cleanup/inventory.py [--ref origin/main] [--detail] [--state FILE]
         [--code-roots a/,b/] [--frozen-docs docs/library/] [--baseline-glob 'ci/baseline*.txt']
@@ -389,10 +389,11 @@ def list_stale_browsers(hours: float) -> None:
     for pid, age in stale:
         print(f"  browser pid {pid} (age {age / 3600:.1f} h)")
     print(f"  {len(stale)} of {len(browsers)} agent-browser browsers older than {hours} h")
-    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600 and not in_devserver_scope(pid)]
+    servers = dev_server_processes()
+    old = [(pid, age, rss) for pid, age, rss in servers if age > hours * 3600 and not in_devserver_scope(pid)]
     for pid, age, rss in old:
         print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
-    print(f"  {len(old)} of {len(dev_server_processes())} node dev servers older than {hours} h")
+    print(f"  {len(old)} candidates (older than {hours} h, outside devserver scopes) of {len(servers)} node dev servers")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
