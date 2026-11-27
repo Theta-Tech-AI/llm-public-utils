@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the cleanup inventory and the change since the last run.
 
-Read-only (except --reap-browsers-older-than with --yes). Run it at the start of a cleanup, after each
+Read-only. Run it at the start of a cleanup, after each
 merge batch and at the end:
     python3 .agents/skills/cleanup/inventory.py [--ref origin/main] [--detail] [--state FILE]
         [--code-roots a/,b/] [--frozen-docs docs/library/] [--baseline-glob 'ci/baseline*.txt']
@@ -22,7 +22,6 @@ import re
 import os
 import shutil
 import sys
-import signal
 import subprocess
 import tokenize
 from datetime import datetime, timedelta, timezone
@@ -376,72 +375,24 @@ def in_devserver_scope(pid: int) -> bool:
         return False
 
 
-def start_time(pid: int) -> int | None:
-    """Field 22 of /proc/PID/stat (read after the "(comm)" field, which may hold spaces); None when gone."""
-    try:
-        return int(Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19])
-    except (OSError, IndexError, ValueError):
-        return None
+def list_stale_browsers(hours: float) -> None:
+    """List agent-browser Chrome main processes and node dev servers older than HOURS: candidates to inspect.
 
-
-def term_if_same(pid: int, start: int | None, min_age: float, still_matches) -> str:
-    """TERM through a pidfd; returns "sent" or the reason it was skipped.
-
-    The pidfd is opened before the process is judged again: its start time must equal the scan's, the age from that
-    start must exceed min_age (a pid reused before the start-time read is young), and the candidate matcher must still
-    select it (a process may exec another program and keep its pid). The pidfd's own pid (fdinfo) must equal the
-    scanned pid, so a reaper whose /proc belongs to another PID namespace never signals a local look-alike. A null
-    signal through the same pidfd then proves those reads described the live process. The checks are a sample: an
-    exec in the instant before TERM is not seen, which no user-space signaller can close.
-    """
-    if start is None:
-        return "skipped: gone before its start time was read"
-    try:
-        fd = os.pidfd_open(pid)
-    except ProcessLookupError:
-        return "skipped: exited"
-    except (AttributeError, OSError) as exc:
-        return f"skipped: no pidfd ({exc.__class__.__name__}); never signalled by bare pid"
-    try:
-        fdinfo = Path(f"/proc/self/fdinfo/{fd}").read_text()
-        if f"Pid:\t{pid}\n" not in fdinfo:
-            return "skipped: pidfd names another pid namespace's process"
-        uptime = float(Path("/proc/uptime").read_text().split()[0])
-        if start_time(pid) != start or uptime - start / os.sysconf("SC_CLK_TCK") <= min_age or not still_matches():
-            return "skipped: not the process scanned"
-        signal.pidfd_send_signal(fd, 0)
-        signal.pidfd_send_signal(fd, signal.SIGTERM)
-        return "sent"
-    except OSError as exc:
-        return f"skipped: {exc.__class__.__name__}"
-    finally:
-        os.close(fd)
-
-
-def reap_browsers(hours: float, yes: bool) -> None:
-    """Dry run unless yes: terminate agent-browser Chrome main processes older than the longest legitimate run.
-
-    Age is a proxy, not proof the owner is gone: pick HOURS above any real run, and look at the list first.
+    Listing only. Its matching is a heuristic (an agent-browser path in the process tree, vite in the arguments), so
+    stop processes with a reaper that applies the skill's rules (exact launcher profile, running binary, scopes,
+    pidfd with a scan-time start check), never from this list by pid.
     """
     if not hours > 0:
-        sys.exit("--reap-browsers-older-than needs a positive number of hours")
+        sys.exit("--list-browsers-older-than needs a positive number of hours")
     _, browsers = agent_browser_processes()
-    stale = [(pid, age, start_time(pid)) for pid, age in browsers if age > hours * 3600]
-    for pid, age, start in stale:
-        outcome = (term_if_same(pid, start, hours * 3600,
-                                lambda pid=pid: any(p == pid for p, a in agent_browser_processes()[1] if a > hours * 3600))
-                   if yes else ("would TERM" if start is not None else "skipped: start time unreadable"))
-        print(f"  browser pid {pid} (age {age / 3600:.1f} h): {outcome}")
-    print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
-    old = [(pid, age, rss, start_time(pid)) for pid, age, rss in dev_server_processes()
-           if age > hours * 3600 and not in_devserver_scope(pid)]
-    for pid, age, rss, start in old:
-        outcome = (term_if_same(pid, start, hours * 3600,
-                                lambda pid=pid: any(p == pid and a > hours * 3600 for p, a, _ in dev_server_processes())
-                                and not in_devserver_scope(pid))
-                   if yes else ("would TERM" if start is not None else "skipped: start time unreadable"))
-        print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB): {outcome}")
-    print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
+    stale = [(pid, age) for pid, age in browsers if age > hours * 3600]
+    for pid, age in stale:
+        print(f"  browser pid {pid} (age {age / 3600:.1f} h)")
+    print(f"  {len(stale)} of {len(browsers)} agent-browser browsers older than {hours} h")
+    old = [(pid, age, rss) for pid, age, rss in dev_server_processes() if age > hours * 3600 and not in_devserver_scope(pid)]
+    for pid, age, rss in old:
+        print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
+    print(f"  {len(old)} of {len(dev_server_processes())} node dev servers older than {hours} h")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
@@ -482,12 +433,11 @@ def main() -> None:
     parser.add_argument("--baseline-glob", help="git pathspec of CI ratchet files, one tolerated failure per line")
     parser.add_argument("--guidance-file", default="AGENTS.md", help="always-loaded agent guidance file whose tokens are reported")
     parser.add_argument("--review-label", help="issue label meaning 'waiting for a human', counted when given")
-    parser.add_argument("--reap-browsers-older-than", type=float, metavar="HOURS",
-                        help="list agent-browser Chrome and node dev-server processes older than HOURS and exit; add --yes to terminate them")
-    parser.add_argument("--yes", action="store_true", help="with --reap-browsers-older-than: really terminate")
+    parser.add_argument("--list-browsers-older-than", type=float, metavar="HOURS",
+                        help="list agent-browser Chrome and node dev-server processes older than HOURS and exit (listing only)")
     args = parser.parse_args()
-    if args.reap_browsers_older_than is not None:
-        reap_browsers(args.reap_browsers_older_than, args.yes)
+    if args.list_browsers_older_than is not None:
+        list_stale_browsers(args.list_browsers_older_than)
         return
     ref = args.ref or default_ref()
     soft("git", "fetch", "-q", "--no-recurse-submodules", "origin")
