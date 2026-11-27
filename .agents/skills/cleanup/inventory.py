@@ -384,21 +384,29 @@ def start_time(pid: int) -> int | None:
         return None
 
 
-def term_if_same(pid: int, start: int | None) -> bool:
-    """TERM through a pidfd checked against the start time recorded at the scan, so a reused pid is never hit."""
+def term_if_same(pid: int, start: int | None, min_age: float) -> str:
+    """TERM through a pidfd; returns "sent" or the reason it was skipped.
+
+    Once the pidfd is open it names one process. Its start time must equal the one recorded at the scan, and the age
+    computed from that start time must exceed min_age: a pid reused between the scan and the start-time read is a
+    young process, so it fails the age check even though it matches the recorded start.
+    """
     if start is None:
-        return False
+        return "skipped: gone before its start time was read"
     try:
         fd = os.pidfd_open(pid)
-    except (ProcessLookupError, AttributeError, OSError):
-        return False  # gone, or no pidfd on this platform: never fall back to a bare pid
+    except ProcessLookupError:
+        return "skipped: exited"
+    except (AttributeError, OSError) as exc:
+        return f"skipped: no pidfd ({exc.__class__.__name__}); never signalled by bare pid"
     try:
-        if start_time(pid) != start:
-            return False
+        uptime = float(Path("/proc/uptime").read_text().split()[0])
+        if start_time(pid) != start or uptime - start / os.sysconf("SC_CLK_TCK") <= min_age:
+            return "skipped: not the process scanned"
         signal.pidfd_send_signal(fd, signal.SIGTERM)
-        return True
-    except OSError:
-        return False
+        return "sent"
+    except OSError as exc:
+        return f"skipped: {exc.__class__.__name__}"
     finally:
         os.close(fd)
 
@@ -413,16 +421,14 @@ def reap_browsers(hours: float, yes: bool) -> None:
     _, browsers = agent_browser_processes()
     stale = [(pid, age, start_time(pid)) for pid, age in browsers if age > hours * 3600]
     for pid, age, start in stale:
-        print(f"  {'killing' if yes else 'would kill'} browser pid {pid} (age {age / 3600:.1f} h)")
-        if yes:
-            term_if_same(pid, start)
+        outcome = term_if_same(pid, start, hours * 3600) if yes else "would TERM"
+        print(f"  browser pid {pid} (age {age / 3600:.1f} h): {outcome}")
     print(f"  {len(stale)} stale of {len(browsers)} agent-browser browsers (older than {hours} h)")
     old = [(pid, age, rss, start_time(pid)) for pid, age, rss in dev_server_processes()
            if age > hours * 3600 and not in_devserver_scope(pid)]
     for pid, age, rss, start in old:
-        print(f"  {'killing' if yes else 'would kill'} dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB)")
-        if yes:
-            term_if_same(pid, start)
+        outcome = term_if_same(pid, start, hours * 3600) if yes else "would TERM"
+        print(f"  dev server pid {pid} (age {age / 3600:.1f} h, {rss // 1024} MB): {outcome}")
     print(f"  {len(old)} stale of {len(dev_server_processes())} node dev servers (older than {hours} h)")
 
 
