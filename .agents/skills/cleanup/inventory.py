@@ -393,6 +393,7 @@ def list_stale_browsers(hours: float) -> None:
             argv = [x.decode(errors="replace") for x in Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0") if x]
             rss = next(int(l.split()[1]) for l in Path(f"/proc/{pid}/status").read_text().splitlines() if l.startswith("VmRSS:"))
             scoped = "devserver-" in Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
+            argv_after = [x.decode(errors="replace") for x in Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0") if x]
             after = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
             uptime = float(Path("/proc/uptime").read_text().split()[0])
             age = int(uptime - int(before) / os.sysconf("SC_CLK_TCK"))
@@ -402,6 +403,9 @@ def list_stale_browsers(hours: float) -> None:
         # Still a vite server now (a process may exec another program and keep its pid and start time).
         if not (len(argv) > 1 and os.path.basename(argv[0]) == "node" and re.search(r"/vite(\.js)?$", argv[1])
                 and "build" not in argv[2:]):
+            unknown += 1
+            continue
+        if argv != argv_after:  # exec'd during the sample: RSS and cgroup may describe another program
             unknown += 1
             continue
         if before != after or age <= hours * 3600:
