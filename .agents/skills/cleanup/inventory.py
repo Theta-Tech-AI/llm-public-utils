@@ -360,8 +360,9 @@ def dev_server_processes() -> list[tuple[int, int, int]]:
     rows = []
     for line in out.splitlines():
         parts = line.split(None, 3)
-        if len(parts) == 4 and os.path.basename(parts[3].split()[0]) == "node" and "vitest" not in parts[3] \
-                and re.search(r"(^|[/ ])vite(\.js)?( |$)", parts[3]):
+        argv = parts[3].split() if len(parts) == 4 else []
+        # The script itself must be vite, and a build is not a server.
+        if len(argv) > 1 and os.path.basename(argv[0]) == "node" and re.search(r"/vite(\.js)?$", argv[1]) and "build" not in argv[2:]:
             rows.append((int(parts[0]), int(parts[1]), int(parts[2])))
     return rows
 
