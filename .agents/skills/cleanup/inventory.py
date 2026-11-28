@@ -443,23 +443,30 @@ CGROUP = Path("/sys/fs/cgroup")
 UNIT = re.compile(r"\.(scope|service)$|^[0-9a-f]{64}$")  # a bare 64-hex name is a cgroupfs-driver container
 
 
-def cgroup_units(root: Path) -> list[Path]:
-    """The owning units under root: a .scope or .service (a pane, an app, a service, a container), except that a unit
-    holding .slice children (the user manager) is entered, because its scopes are the owners."""
-    units = []
+def memory_current(path: Path) -> int | None:
+    try:
+        return int((path / "memory.current").read_text())
+    except (OSError, ValueError):
+        return None  # removed mid-scan, or no memory controller
+
+
+def cgroup_units(root: Path) -> list[tuple[Path, int | None, bool]]:
+    """(cgroup, memory.current, is_remainder) rows under root. A .scope, .service or container is an owner row. A slice, and a
+    unit holding slices (the user manager), is entered; memory it holds beyond its owners (page cache left by exited scopes)
+    is one remainder row. memory.current is None for an owner whose memory could not be read."""
+    rows: list[tuple[Path, int | None, bool]] = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
-        slices = [p for p in child.iterdir() if p.is_dir() and p.name.endswith(".slice")] if UNIT.search(child.name) else []
-        if slices:  # the manager's own units (init.scope) sit beside its slices
-            units += [u for s in slices for u in cgroup_units(s)] + cgroup_units_direct(child)
+        if child.name.endswith(".slice") or child.name == "docker" or (
+                UNIT.search(child.name) and any(p.is_dir() and p.name.endswith(".slice") for p in child.iterdir())):
+            inner = cgroup_units(child)
+            rows += inner
+            total = memory_current(child)
+            rest = None if total is None else total - sum(used or 0 for _, used, _ in inner)
+            if rest and rest > 0 and child.name != "docker":
+                rows.append((child, rest, True))
         elif UNIT.search(child.name):
-            units.append(child)
-        elif child.name.endswith(".slice") or child.name == "docker":
-            units += cgroup_units(child)
-    return units
-
-
-def cgroup_units_direct(manager: Path) -> list[Path]:
-    return [p for p in sorted(manager.iterdir()) if p.is_dir() and UNIT.search(p.name)]
+            rows.append((child, memory_current(child), False))
+    return rows
 
 
 def unit_pids(unit: Path) -> list[int]:
@@ -499,16 +506,22 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
         print("  memory by owner needs cgroup v2")
         return
     uptime, ticks, names, rows, unmeasured = float(Path("/proc/uptime").read_text().split()[0]), os.sysconf("SC_CLK_TCK"), container_names(), [], 0
-    for unit in cgroup_units(CGROUP):
-        try:
-            used = int((unit / "memory.current").read_text())
-        except (OSError, ValueError):
-            unmeasured += 1  # removed mid-scan, or no memory controller
+    found = cgroup_units(CGROUP)
+    names_count = {}
+    for u, _, _ in found:
+        names_count[u.name] = names_count.get(u.name, 0) + 1
+    for unit, used, remainder in found:
+        if used is None:
+            unmeasured += 1
             continue
-        pids = unit_pids(unit)
+        pids = [] if remainder else unit_pids(unit)
         ages = [a for pid in pids if (a := pid_age_hours(pid, uptime, ticks)) is not None]
-        cid = re.search(r"(?:docker-)?([0-9a-f]{64})(?:\.scope)?$", unit.name)
+        cid = re.fullmatch(r"(?:docker-)?([0-9a-f]{64})(?:\.scope)?", unit.name)
         label = f"docker:{names[cid[1]]}" if cid and cid[1] in names else f"docker:{cid[1][:12]}" if cid else unit.name
+        if remainder:
+            label += " (cache of exited units)"
+        elif names_count[unit.name] > 1:
+            label = unit.parent.name + "/" + label  # the same unit name under another slice or manager
         rows.append((used, unit.as_posix(), label, len(pids), max(ages, default=None)))
     print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
     for used, _, label, procs, age in sorted(rows, key=lambda r: (-r[0], r[1]))[:top]:
