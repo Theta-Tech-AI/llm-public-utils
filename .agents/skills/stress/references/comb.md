@@ -100,7 +100,7 @@ it, not the conclusion.
 
 ## Time-dependent knots (the ones a settled snapshot cannot see)
 
-A control that flashes during load, a warning that fires only after idling, a figure that changes between two views, an error from navigating while a job runs: each reaches real users and each is invisible to the agent's usual open → settle → snapshot rhythm. Drive for them per [browser.md → Drive for time](browser.md#drive-for-time-not-only-for-path); it is a second axis over the reading-level pass, not a replacement.
+Knots that exist only during a transition, after idling, or across two views are invisible to the agent's usual open → settle → snapshot rhythm. Drive for them per [browser.md → Drive for time](browser.md#drive-for-time-not-only-for-path); it is a second axis over the reading-level pass, not a replacement.
 
 ## Comparison knots (one path, walked once, can never find these)
 

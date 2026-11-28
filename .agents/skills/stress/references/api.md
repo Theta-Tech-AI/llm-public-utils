@@ -47,13 +47,14 @@ while IFS= read -r -d '' log; do map_args+=(--calls "$log"); done \
   < <(find "$RUN_ROOT/lanes" -type f -name 'calls.log' -print0)
 while IFS= read -r -d '' log; do map_args+=(--server-log "$log"); done \
   < <(find "$SERVER_LOG_DIR" -type f -name '*.log' -print0)
-flow-map --ref "$DEPLOYED_SHA" "${map_args[@]}" --out "$map_dir"
+flow-map --ref "$DEPLOYED_SHA" "${map_args[@]}" --out "$map_dir" \
+  || { echo "❌ flow-map failed for ref=$DEPLOYED_SHA; no receipt" >&2; exit 1; }
 printf '🗺️ flow-map ref=%s out=%s\n' "$DEPLOYED_SHA" "$map_dir"
 ```
 
 An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final `ref=` line with the exact full commit; a shortened label inside the map is evidence only beside it. Save the server's request log in fixed UTC windows, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
 
-The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Log the action field of multi-action routes (a transition route that takes `send`, `approve`, `sign`) in the call log, or coverage counts the route and hides the actions nobody tried. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
+The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Hand each lane the map and its slice of that list; hand the next wave whatever is still on it. Log the action field of multi-action routes (a transition route that takes `send`, `approve`, `sign`) in the call log, or coverage counts the route and hides the actions nobody tried. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
 
 Render the graphs in a text format that lives next to the code (Mermaid in Markdown), keep the long tables in a machine-readable file beside it, and give every statement its source (file and line, overlay entry, or call log). The map also feeds the cheapest mischief there is: a walker that takes random legal and illegal steps along the edges and checks after each one that the state read still agrees with the map.
 
@@ -148,7 +149,7 @@ A browser pass yields anecdotes. An API pass should yield a table that someone c
 |------|--------|
 | Move / route | every transition and every mutating route of the stage |
 | State | every state the stage can be in |
-| Actor | each role, a signed-in non-member, a removed member, a member of another object using that object's ids, an administrator who holds no role on the object, anonymous |
+| Actor | each role, a signed-in non-member, a removed member, a disabled account (its token may still be valid), a member of another object using that object's ids, an administrator who holds no role on the object, anonymous |
 | Condition | each precondition made false in turn |
 
 For each cell: expected (from the docs or the code's own table of legal moves) → actual (status, error code, the audit record). Legal cells succeed **exactly once**; illegal cells are refused with the documented code, write the documented refusal record, and never answer 5xx. "What held" is part of the report — it is the coverage record that makes the next run cheaper.
@@ -170,6 +171,7 @@ The UI offers only the moves it thinks are legal, in the order its pages lead. T
 - **A warning the next step accepts.** For every stage that reports problems (conflicts, readiness blockers), read the problem list, then call the next step with the problem standing. It must be unambiguous which problems block, and the next route's acceptance must match.
 - **The order of refusals.** When several preconditions fail, the refusal must name the first one the docs name; a wrong order sends the user to fix the wrong thing.
 - **A change of mind.** Go back, change an answer, re-pick, unlock and re-lock with nothing changed. Nothing may go stale, reopen or start paid work unless content changed, and nothing signed may change silently.
+- **Mid-flight.** Start a background job, then cancel it, retry it, or change its inputs while it runs. Expect one run, a clean cancel with no half-written output, or a refusal or a new run that says why; never a stuck or duplicated run.
 - **Ceremony abuse.** For signed or confirmed steps: replay a spent challenge, use one issued for another action, user or object, let it expire, send an ordinary session token in its place. Nothing is signed by a refused call: read back the signatures and the audit records.
 
 ### 5.4 Races
@@ -177,6 +179,7 @@ The UI offers only the moves it thinks are legal, in the order its pages lead. T
 Two to ten threads on one transition, from different people where it makes sense, each race repeated about five times (report "N of M": races are intermittent). Keep each burst at ten calls or fewer.
 
 - **Exactly one effect.** One winner, one transition record; losers get the refusal the route's contract documents (usually a clean conflict that names who won). A transition that is idempotent by design, or retries that share one idempotency key, may return success to every caller: assert the count of effects and records, not that every reply differs.
+- **Double-submit.** The same create or submit twice in a row, once with one idempotency key and once with none: duplicate rows, double charges, a second paid run.
 - **Two writers, one record.** Send every write route twice at once (same body, then two users with different bodies) and once with a stale version token. Expect a read-back showing one body in full. Where a 200 carries a success boolean (`released`, `ok`), force the false path and demand a reason. Two owners claiming one exclusive resource (a folder, a lease, a unique name) must not both be accepted.
 - **Time of check vs time of use.** When a code reader says "the role is read at the request edge and the write happens seconds later under a lock", script the change in between ([lanes.md](lanes.md#the-hypothesis-loop-code-reader-to-live-lane)).
 - **A race is a finding** when the end state is impossible by the rules: two winners, a move applied on a stale state, a lost write behind a 200, counts that never agree again, a lease held by two, an audit record missing or doubled, a 500, or a state no move can leave.
@@ -191,6 +194,7 @@ Two to ten threads on one transition, from different people where it makes sense
 
 - **Typed-input fuzz per route.** For each route that takes an id, enum, free text or typed answer, send: a well-formed id that does not exist, to every route taking that id kind (all must answer in the same status class, never 200 with invented data); the wrong JSON type; a value outside the option list; gateway-sensitive text (`>=`, `; select`, quoted phrases, `<script>`); 501 and 20 000 characters (a gateway may answer an HTML error above its URL limit); a null byte; leading and trailing whitespace, zero-width and right-to-left characters. Read back: what was stored equals what was sent or its one canonical form, derived counters agree with the stored values, and a refused input queued no paid job. A value checked on a cleaned copy but stored raw is the class *validated, not parsed*.
 - **Payload matrix.** The same route with many *valid* variants (optional fields, empty strings, unicode, large bodies, boundary ids): 500s on weird-but-legal input.
+- **Contract drift.** Compare each response's shape with the OpenAPI document and with what the frontend client reads: renamed fields, null vs missing, pagination surprises.
 - **Stale credentials.** An expired or revoked token, the wrong `Authorization` scheme, a cookie-only route without its CSRF guard.
 - **API hygiene sweep.** Malformed JSON, oversize bodies, wrong method, unknown path, CORS from a foreign origin, security headers, error bodies that leak.
 
@@ -205,8 +209,8 @@ A driving check walks one path and finds what breaks on it. An **oracle** checks
 | **Liveness** | Every running or waiting state moves within a bound, or names who it waits for | Every few minutes for an hour or two, list queued, running and cancelling work and every waiting state from one system-wide list of active work (sampling each object's newest run hides an older stalled run behind it); read the run history with its timestamps for bounds broken between samples | Silent stalls; cancels that never finish; work queued behind nothing; a terminal row with no reason; an active-run flag that disagrees with the live job |
 | **Log census** | Every distinct error and warning class has an owner | Pull a day or two of error and warning lines, cluster them by site and cause, and match each class to an open issue | Failures nobody filed because each looked like noise; counts that show which class costs most |
 | **Run census** | Every failed or cancelled background run has a named cause | List the failed and cancelled runs of a period, group by kind and cause | Unclassified failures; a cancel reason that is not what happened; one cause behind many kinds |
-| **Ground truth** | A generator's output covers what a known-good output covers, faithfully | Where real finished examples exist, read them first, then compare the generated output by section and by fact: present, missing, wrong, unsupported; check that each citation's page states the value | Systematic gaps by class (a table never filled, a fact always missed); a wrong value with a confident citation |
-| **Record** | What is delivered is exactly what was approved | Export after an approval, download the package and inspect its **content**, not only its status: each document against the approved version (the version the approval bound, not the newest), after only the transformations the product declares; every file against its manifest entry; the signatures listed against the approval; then export twice and diff, allowing only the parts the product declares variable (timestamps, provenance, signature material) | Unapproved text in a delivery; a manifest that does not match its files; a second export whose content differs |
+| **Ground truth** | A generator's output covers what a known-good output covers, faithfully | Where real finished examples exist, read them first, then compare the generated output by section — length, and each key fact present, missing, wrong or unsupported; check that each citation's page states the value | Systematic gaps by class (a table never filled, a fact always missed); a wrong value with a confident citation |
+| **Record** | What is delivered is exactly what was approved | Export after an approval, download the package and inspect its **content**, not only its status: each document's content and version identity against the approved version (the version the approval bound, not the newest), after only the transformations the product declares; every file against its manifest entry; the signatures listed against the approval; then export twice and diff, allowing only the parts the product declares variable (timestamps, provenance, signature material), and require byte equality only where the product promises it | Unapproved text in a delivery; a manifest that does not match its files; a second export whose content differs |
 
 Rules:
 
@@ -214,11 +218,11 @@ Rules:
 - **A finding is a class.** Report the property, every instance found, and the one place that should own the fact. Twelve instances of one class are one issue with twelve rows.
 - **The oracle needs a ground.** Consistency needs the route's real answer, cost needs the run list, ground truth needs a known-good output. If the ground is missing, say so and stop; do not guess it.
 - **Check the ground before you report.** A surprising result is often a wrong ground: the newest version instead of the approved one, test data an earlier lane wrote ([findings.md](findings.md#what-counts-as-a-real-finding)), or a tool that silently defaults to another environment (print the target before every conclusion; "everything vanished" usually means you asked the wrong place).
-- **A read can write.** On audited systems, downloads and some reads append audit records. Name those effects in the lane's brief instead of calling it read-only.
+- **A read can write.** On audited systems, downloads and some reads append audit records. Name those effects in the lane's brief instead of calling it read-only, and ask the environment's owner only when the reads go beyond what the brief already authorizes.
 
 ### Log cross-check
 
-A response shows what the client was told; the logs show what the server and its workers did. After every surprising answer and every paid run, read the logs for that request, run or object id. An error line for your object is a finding even when the response looked fine, and a run that answered 202 has not happened until its worker logs say so. Faults that live only in the logs — a background job whose configuration differs from the API's, a traceback logged for an ordinary refusal — never reach a lane's matrix; [lanes.md](lanes.md#the-coordinator-reads-the-logs) gives the coordinator that job.
+A response shows what the client was told; the logs show what the server and its workers did. After every surprising answer and every paid run, read the logs for that request, run or object id. An error line for your object is a finding even when the response looked fine, and a run that answered 202 has not happened until its worker logs say so. Reading the environment's logs across all lanes is the coordinator's job ([lanes.md](lanes.md#the-coordinator-reads-the-logs)).
 
 ## 7. Record and re-run
 

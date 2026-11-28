@@ -17,7 +17,7 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 
 **What only it finds, or finds far faster.** One fact that different readers state differently (the reader table, [api.md §5.1](api.md#51-the-reader-table-one-fact-every-reader-every-role)); a move the UI hides but the server accepts; role × state matrices; races with exactly-one-effect checks; refusal typing and refused-action audit records; out-of-order and change-of-mind sequences; late stages of a gated flow that browser runs reach last and least; the content of exports and generated output against ground truth; the background work behind a 202.
 
-**Cost and speed.** Each probe is one HTTP round trip: no browser start, no rendering, no waiting for a selector, no screenshot to read. In one overnight API-only campaign against a gated, multi-role web app, each lane made **169 to 344 calls in 27 to 37 minutes**; eight lanes ran at once from one machine; each script acted as every person of a four-person team (owner, editor, two reviewers) in the same minute; a ten-reader, three-role reader table took a few minutes and reproduced 3 of 3. Every repro is a call list anyone can run again: deterministic, with no render flake. What limits API mode is the target, not the tester: the gateway's rate limit per IP, the worker pool, paid runs, and deploy windows.
+**Cost and speed.** Each probe is one HTTP round trip: no browser start, no rendering, no waiting for a selector, no screenshot to read. In one overnight API-only campaign against a gated, multi-role web app, the lanes of one wave that wrote full reports made **169 to 344 calls each in 27 to 37 minutes**; that wave ran eight lanes at once from one machine; each script acted as every person of a four-person team (owner, editor, two reviewers) in the same minute; a ten-reader, three-role reader table took a few minutes and reproduced 3 of 3. Every repro is a call list anyone can run again, with no render flake; for timing-dependent bugs such as races, record the timing and how often it reproduces (N of M). What limits API mode is the target, not the tester: the gateway's rate limit per IP, the worker pool, paid runs, and deploy windows.
 
 **What it cannot see.** Whether the UI offers the move at all, labels it right, or shows the refusal's reason; first paint, the async settle, stale client state, layout, keyboard, focus and copy as rendered; anything the frontend does between calls (optimistic updates, debounced saves, leave-page saves).
 
@@ -41,7 +41,20 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 
 **Cost and speed.** A browser session costs gigabytes of memory and seconds to minutes per step; one session acts as one role; refs go stale on every re-render; timing makes some runs flaky. Spend it where it pays: on the paths people walk.
 
+## Choose the lead mode by the question
+
+| The question | Lead with | Also run |
+|---|---|---|
+| "Does this webapp feel right / will strangers get through it?" (UX, launch, onboarding) | browser (and the [persona panel](personas.md)) | API to seed state and confirm backend truth |
+| Contracts, state machines, authorization, concurrency, idempotency, audit, data integrity | API | one browser lane on the user paths that touch them |
+| The late stages of a gated flow; many repetitions; many roles at once | API | browser twins for each gate finding |
+| An agent swarm, or a box that cannot afford many browsers | API ([lanes.md](lanes.md)) | at least one browser lane ([exceptions](#keep-the-balance-honest)) |
+| The surface is API-native (CLI, mobile backend, partner integration) | API | — |
+| "Stress test this" on a webapp | both, per [process.md](process.md) | — |
+
 ## How to duel them
+
+When both modes run — the default for a webapp:
 
 1. **API first, to map and hammer.** Generate the flow map, then run the reader table, the role matrix, out-of-order moves and races cheaply, standing on late-stage objects ([api.md](api.md)). This finds the contract, state, authorization and concurrency bugs — every one of them a bug in every client.
 2. **Browser on the paths people walk**, aimed by what the API pass found load-bearing: the frontend playbook in [browser.md](browser.md).
@@ -51,17 +64,6 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
    - **Browser discover → API amplify.** Turn a suspicious UI sequence into a script with variants, roles and concurrency.
    - **API assert while the browser drives.** During a UI pass, read the same resources by API and compare with what renders.
    - **HAR bridge.** Capture a HAR in the browser and turn its hot paths into API scripts.
-
-## Choose the lead mode by the question
-
-| The question | Lead with | Also run |
-|---|---|---|
-| "Does this webapp feel right / will strangers get through it?" (UX, launch, onboarding) | browser (and the [persona panel](personas.md)) | API to seed state and confirm backend truth |
-| Contracts, state machines, authorization, concurrency, idempotency, audit, data integrity | API | one browser lane on the user paths that touch them |
-| The late stages of a gated flow; many repetitions; many roles at once | API | browser twins for each gate finding |
-| An agent swarm, or a box that cannot afford many browsers | API ([lanes.md](lanes.md)) | at least one browser lane when the target has a UI |
-| The surface is API-native (CLI, mobile backend, partner integration) | API | — |
-| "Stress test this" on a webapp | both, per [process.md](process.md) | — |
 
 ## Keep the balance honest
 

@@ -88,7 +88,7 @@ Useful under stress:
 - **Refs shift** after every click that re-renders. For repeated clicks, grab the ref **fresh** each time (`snapshot -i` again); do not reuse `@e3` from three actions ago. Resizing moves refs too.
 - **Read rendered text via snapshot** (or get-text on a scoped ref), not a naive page `eval`: some layouts do not expose body text to eval, so don't conclude "empty/missing" from a bad eval.
 - **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
-- **A ref click that "succeeded" proves nothing about occlusion**: screenshot and look whether a banner, toast or modal is on top. If a click fails because something covers the target, dismiss the cover, re-snapshot, retry — and file the cover when a real user would hit it ([playbook item 7](#the-frontend-driving-playbook)).
+- **A ref click that "succeeded" proves nothing about occlusion** (playbook item 7 below).
 
 ## The frontend driving playbook
 
@@ -102,11 +102,11 @@ Driving the UI well is a skill, not a screenshot. Run these deliberately on **ev
 
 4. **Exercise every affordance, not just the forward CTA.** Click every clickable thing and confirm it goes somewhere *real* — a badge, count, or link that references an entity must navigate or scroll to it, never open an empty panel or do nothing. Open every drawer/panel/modal and confirm it has a visible close. Check hover and focus states, not just the resting look — missing or inconsistent hover/focus affordances on sibling controls are real bugs.
 
-5. **Reload to verify persistence — the single highest-yield frontend check.** After *any* change (select a row, toggle, inline-edit, autosave), hard-reload and confirm it actually stuck — once after it settles, and once *before* it visually settles. This catches optimistic-UI lies, silent non-persistence (the click looked saved but no write happened), and 500s hidden behind a cheerful success toast. If a change the user expects to auto-save requires a non-obvious explicit "save," that's also a bug.
+5. **Reload to verify persistence — the single highest-yield frontend check.** After *any* change (select a row, toggle, inline-edit, autosave), let it settle, hard-reload and confirm it actually stuck. Then reload once *before* a change settles: it must have persisted, or the UI must say clearly that it did not; silent loss is the bug. This catches optimistic-UI lies, silent non-persistence (the click looked saved but no write happened), and 500s hidden behind a cheerful success toast. If a change the user expects to auto-save requires a non-obvious explicit "save," that's also a bug.
 
 6. **Resize.** Drive the same flow at mobile, tablet, half-width and desktop sizes, and shrink the window in the middle of a wizard and keep going. Watch for overflow, clipping, overlapping elements, controls pushed off-screen or under other elements, layout shift on a tab or device switch, and layouts that become unusable. "Works on my 1440px window" is not "works."
 
-7. **Check occlusion.** Sticky headers, banners, toasts, and modals can *cover* interactive controls — a button present in the DOM but visually covered is unusable. If a click fails because something overlays the target, that is often a real user-facing bug, not merely a test annoyance to route around.
+7. **Check occlusion.** Sticky headers, banners, toasts, and modals can *cover* interactive controls — a button present in the DOM but visually covered is unusable. Don't trust a ref click that "succeeded": screenshot and look whether something is on top. If a click fails because something overlays the target, that is often a real user-facing bug, not merely a test annoyance to route around: file it, then dismiss the cover, re-snapshot and retry.
 
 8. **Stress navigation.** Back/forward/reload at each step; paste every route's deep-link URL directly in a fresh tab (not only via the nav); move between stages in illegal orders. Confirm the page rebuilds correct state from a cold URL, that the URL keeps its state on Back, and that gates hold on direct entry as well as via the nav control.
 

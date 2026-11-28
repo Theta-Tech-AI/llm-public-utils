@@ -28,6 +28,8 @@ A final-message-only finding is **not durable**. Comments can always be added la
 
 If you spawn subagents, their prompt must **explicitly require** GitHub issue creation or commenting for every confirmed finding (same detail bar as this doc). Do not let a subagent return bugs only in its final message to the parent — that dies with the session. The parent should verify issue URLs exist before treating the hunt as done.
 
+**Many lanes at once** ([lanes.md](lanes.md)): every medium-or-worse finding gets its own issue the moment it is confirmed. A lane may collect its low-severity findings into one list issue when its brief says so — one numbered item per distinct bug, each with its own repro, so any item can become its own issue later.
+
 ## What counts as a "real" finding
 
 Do **not** file from a single flaky signal. Cross-check before filing:
@@ -46,7 +48,7 @@ Rule out false alarms before filing:
 - **A budget the run spent.** A refusal from a shared quota (a third-party daily limit, a paid-run budget) that the testers or the app's own background work used up is expected; the spend itself may be the finding.
 - **Tool limitations.** An undriveable widget, a gzipped asset grep, a flaky headless run, a client defaulting to another environment: confirm on a second surface before concluding "missing" or "broken".
 
-One distinct bug per issue. Don't dump a whole session into a single ticket.
+One distinct bug per issue (the one exception is a lane's list of low-severity findings, [above](#subagents-must-file-too)). Don't dump a whole session into a single ticket.
 
 ---
 
@@ -80,7 +82,7 @@ Err on the side of **too much detail**. Future you (or another agent/human) shou
 Name the **failure**, not the session:
 
 - Good: `POST /api/orders after DELETE returns 200 and resurrects the row`
-- Good: `Authoring "Continue" stays enabled when SE gate is incomplete`
+- Good: `Wizard "Continue" stays enabled while the required step is incomplete`
 - Bad: `Bug from mischief pass 3`
 - Bad: `Something weird on staging`
 
@@ -204,7 +206,7 @@ Good justification names the failure mode: data integrity, authz hole, user-bloc
 
 **Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. How to find the owner, count the places that re-derive or repair the fact (the count is evidence) and name the class: [Fix the issue behind the issue](#fix-the-issue-behind-the-issue); how many readers state the fact: the reader table in [api.md](api.md#51-the-reader-table-one-fact-every-reader-every-role). Unknowns are fine at filing time: file with what you have and add the owner, siblings and check as you learn them.
 
-Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.se_complete` is false and match API", "add regression test X".
+Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.step_complete` is false and match the API", "add regression test X".
 
 ---
 

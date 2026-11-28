@@ -77,7 +77,7 @@ These classes repeatedly reach a human before a sweep catches them, because they
 
 6. **Return-to-in-flight-job orphaning.** Start a long-running job on a page, navigate away, then return (or refresh) while it's still running. The page must re-attach to the in-flight run and keep reporting progress (or offer cancel) — not silently orphan the run, prompt a conflicting "re-run" that could double-fire, or leave the user unsure whether work is happening in the background. Test every page that launches an async job this way.
 
-The API-side classes — the role × route × state matrix, the upstream-edit ladder, two writers on one record, stuck runs, a warning the next step accepts, a replaced source still cited — live in [api.md](api.md#5-checks-highest-yield-first), where they are run.
+The API-side classes — the role × route × state matrix, the upstream-edit ladder, two writers on one record, a warning the next step accepts, a replaced source still cited — live in [api.md §5](api.md#5-checks-highest-yield-first), and stuck runs in its liveness oracle ([api.md §6](api.md#6-oracles-one-property-across-everything)), where they are run.
 
 These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
 

@@ -16,9 +16,9 @@ Split by **part of the app**, not by mode: each lane owns one stage or one cross
 - one lane for objects, membership, roles and leases — it also owns the **authorization matrix of the whole API** ([api.md §5.2](api.md#52-the-role-matrix));
 - one lane per early stage;
 - one lane for everything outside the main object (feeds, admin, webhooks) plus the **API hygiene sweep** ([api.md §5.6](api.md#56-input-and-hygiene));
-- one **code bug-hunt** lane ([bug-hunter.md](bug-hunter.md)) and read-only **oracle** lanes ([api.md §6](api.md#6-oracles-one-property-across-everything)), for example a log census;
+- one **code bug-hunt** lane ([bug-hunter.md](bug-hunter.md)) and **oracle** lanes ([api.md §6](api.md#6-oracles-one-property-across-everything)), for example a log census — mostly read-only, with any audited reads named in the brief;
 - persona lanes, which may run by API ([personas.md](personas.md#personas-by-api));
-- at least one **browser** lane when browser use is authorised and the target has a UI, because none of the above sees a pixel (an API-only request, a declined browser, or an API-only target skips it; say so in the report).
+- at least one **browser** lane, because none of the above sees a pixel (the exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).
 
 **Which model runs which lane.** The tester's capability is a parameter, and it selects a bug class. A cheap, fast model behaves like a hurried user: it meets the obvious failures soonest and at the lowest cost (5xx, empty or wrong messages, a state that contradicts the last action, dead ends). Run the driving lanes on it first and file those cracks at once. Use a stronger model for lanes that need judgment (ground truth, log clustering, code hunts, the reliability gate, multi-person collaboration) and for the deeper classes once the easy cracks stop coming; fixers and design work need the strongest. A cheap model tends to stop before signed or paid actions and ask: clear those actions explicitly in its brief (which, how many, on which test data), or it reports the step as blocked.
 
@@ -48,17 +48,19 @@ The tester's role is to find, prove and file. A lane does not edit or push code;
 
 ## Start a lane
 
-1. **Regenerate the flow map** from the deployed build ([api.md §1](api.md#1-the-api-document-the-flow-map)); never read a saved copy.
-2. **Prove the tools run** in the lane's own checkout before the first real call ([api.md §2](api.md#2-tools-proven-before-the-first-call)).
-3. **Check the environment:** no deploy in flight, and the API and every background worker run the same build (a roll in the middle of a run turns into a page of false findings); readiness answers OK.
+Before the first lane launches, the coordinator proves the shared tools and the environment once. Then each lane, in this order:
+
+1. **Check the environment and pin the build:** readiness answers OK, no deploy is in flight, and the API and every background worker serve the same build (a roll in the middle of a run turns into a page of false findings). Record that full commit; when the brief has a deploy gate, wait for it first.
+2. **Generate the flow map** from that commit, into a new directory, with its receipt ([api.md §1](api.md#1-the-api-document-the-flow-map)); never read a saved copy.
+3. **Prove the tools run** in the lane's own checkout before the first real call ([api.md §2](api.md#2-tools-proven-before-the-first-call)).
 4. **Check shared budgets.** A third-party service with a daily quota is shared by every lane and by the app's own background work. In one campaign the app's own polling spent a document store's whole daily quota before the first lane started, so no lane could link a folder until the reset; the spend was filed as a high finding, and every later refusal from that quota was expected, not a finding. Read the remaining quota, the paid-run budget and the claims file before the first write.
 5. **Claim the lane's objects**, and post one start comment on the campaign's tracking issue.
 
 ## During a lane
 
-- **A deploy window is never a reason to stop.** A 503 "updating" from a rolling deploy stalls a lane; wait for readiness with a deadline, then continue where it left off. Deploy windows do not count against the time box. Log each window's start and end: one reliability lane spent about 100 of 175 minutes in update windows, another retried 848 calls, and windows that long are a finding against the deploy, not against the lane.
+- **A deploy window is never a reason to stop.** A 503 "updating" from a rolling deploy stalls a lane; wait for readiness with a deadline, then re-read the serving commit: when it changed, generate a fresh map in a new directory and say so in the report before you continue. Deploy windows do not count against the time box. Log each window's start and end: one reliability lane spent about 100 of 175 minutes in update windows, another retried 848 calls, and windows that long are a finding against the deploy, not against the lane.
 - **Read the logs** after every surprising answer and every paid run ([api.md → Log cross-check](api.md#log-cross-check)).
-- **File as you go**, per [findings.md](findings.md): a medium-or-worse finding gets its own issue at once, and one line in the campaign's findings file, `<issue> <severity> <lane> <one-line failure> <class>`, so the coordinator can start a fixer at once. Lows go in one issue per lane.
+- **File as you go**, per [findings.md](findings.md#subagents-must-file-too), and add one line per medium-or-worse issue to the campaign's findings file, `<issue> <severity> <lane> <one-line failure> <class>`, so the coordinator can start a fixer at once.
 - **File the first disagreement** between two readers of one fact, with the reader table ([api.md §5.1](api.md#51-the-reader-table-one-fact-every-reader-every-role)). Never wait for a second.
 - **Check your own test data** before filing a content finding ([findings.md](findings.md#what-counts-as-a-real-finding)).
 - **Work the whole time box.** Progress goes in a clock file in the lane folder, not in messages; send exactly one final report.
@@ -107,7 +109,7 @@ Give a code lane a **reading list and a floor**, not only a time box: "read thes
 When the user asked for fixes, the coordinator watches the findings file and starts a fixer for each new medium-or-worse line. Testers keep testing; fixing is a separate pipeline.
 
 - **Group by fact, not by issue.** Findings that are readers of one fact (often from different lanes) go to one fixer, which lists every reader and makes one owner ([findings.md → Fix the issue behind the issue](findings.md#fix-the-issue-behind-the-issue)).
-- **Gate every fix** with steps 4 and 7 of that section: the coordinator writes the three paragraphs before briefing the fixer and puts them in the brief; the fixer refreshes them after the fix and has a reader with no stake reread the candidate; a second-model review must pass on the exact head.
+- **Gate every fix** with steps 4 and 7 of that section, exactly as written there; the coordinator's step-4 paragraphs go into the fixer's brief.
 - **Land the passing fixes in batches**, by the repository's own merge rules (the `swarm-orchestration` skill's *integrate and deliver* stage covers batching, when installed).
 - **Live-check after the deploy.** Each fix leaves a "live check after landing" comment with the exact calls and expected answers; a live-check lane runs each one exactly on the deployed build, closes the issue on PASS with the evidence, and reopens it with the failing call on FAIL.
 - Then a sibling lane hunts the same class on other surfaces ("class still open at …" on the closed issue).
@@ -118,4 +120,4 @@ A lane that never got its scenario running has not tested anything: report it as
 
 ### Aim the next wave by coverage
 
-A wave that finds no medium-or-worse bug is good news, and also a signal that the lanes are on worn ground. Aim the next wave at the coverage overlay's work list — routes no lane has called with a well-formed request, actions never tried, mutating routes never seen to succeed — and at the classes that produced findings, hunted on new surfaces.
+A wave that finds no medium-or-worse bug is good news, and also a signal that the lanes are on worn ground. Aim the next wave at what is still on the coverage overlay's work list ([api.md §1](api.md#1-the-api-document-the-flow-map): routes no lane has called with an authenticated, well-formed request, actions never tried, mutating routes never seen to succeed), and at the classes that produced findings, hunted on new surfaces.

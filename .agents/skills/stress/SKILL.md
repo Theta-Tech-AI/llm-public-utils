@@ -19,15 +19,20 @@ A stress run hardens an app's *functionality* (not load or scale). It is **seque
 | 5 | [findings.md](references/findings.md) | **What to do with bugs**: search, file, label, fix the issue behind the issue, talk a fixed bug through with its owner |
 | 6 | [lanes.md](references/lanes.md) | **Many testers at once**: lane split, briefs, start and end of a lane, the report shape, the coordinator, auto-fix through gated fixers |
 
-## How to choose a mode
+## Three separate choices
+
+**1. Which phase**, by the request:
 
 - **"Does it work?" / sanity check / pre-release confidence** → [reliability](references/reliability.md)
 - **"Walk through the happy path" / "comb" / polish** → [comb](references/comb.md)
 - **"Break it" / "try to mess it up" / chaos** → [mischief](references/mischief.md) (optionally after one comb pass so you know the happy path)
 - **"Review the code for bugs"** → [bug hunter](references/bug-hunter.md)
 - **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents, findings ranked by how many personas hit them, then a rerun of the identical panel to prove the fixes
-- **"Hit the API" / API-only / headless / contract, authorization or concurrency stress / "simulate the flow with API calls" / late stages nobody reaches in the browser / a swarm of testers** → comb and mischief in [API mode](references/api.md), run as [lanes](references/lanes.md); keep at least one browser lane unless the request is API-only or the target has no UI
 - **"Stress test this" / vague** → the standard run in [process.md](references/process.md)
+
+**2. Which drive mode leads**, by the question: [driving.md → Choose the lead mode](references/driving.md#choose-the-lead-mode-by-the-question). "Hit the API", API-only, headless, contract, authorization or concurrency stress, or late stages nobody reaches in the browser → [API mode](references/api.md) for the requested phase; a webapp's UX → [browser mode](references/browser.md); most webapps → both.
+
+**3. One tester or many lanes.** One tester by default. Run [lanes](references/lanes.md) when the user asks for a swarm, or when breadth across the app or its late stages needs testers in parallel.
 
 ## Your job
 
