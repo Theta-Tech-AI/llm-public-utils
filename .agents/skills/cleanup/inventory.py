@@ -459,7 +459,7 @@ def cgroup_path(text: str) -> str:
 
 
 def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
-    """pid -> (ppid, rss KB, age seconds, cgroup unit, comm) from /proc; a process that exits mid-scan is skipped."""
+    """pid -> (ppid, rss KB, age seconds (float), cgroup unit, comm) from /proc; a process that exits mid-scan is skipped."""
     page_kb = os.sysconf("SC_PAGE_SIZE") // 1024
     ticks = os.sysconf("SC_CLK_TCK")
     uptime = float(Path("/proc/uptime").read_text().split()[0])
@@ -481,7 +481,7 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
         last = max((i for i, part in enumerate(parts) if part.endswith((".scope", ".service"))), default=-1)
         # A container keeps its id as the unit; otherwise the path through the owning unit keeps two users' same-named services apart.
         unit = cgroup if CONTAINER_ID.search(cgroup) else "/".join(parts[:last + 1]) if last >= 0 else ""
-        table[int(entry)] = (int(rest[1]), rss_kb, int(uptime - int(rest[19]) / ticks), unit, comm)
+        table[int(entry)] = (int(rest[1]), rss_kb, uptime - int(rest[19]) / ticks, unit, comm)
     return table
 
 
@@ -552,7 +552,8 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     """List-only: host memory totals, then the top owners by memory, with reparented and old owners flagged."""
     try:
         info = meminfo_mb()
-        owners = host_memory_owners(proc_table())
+        table = proc_table()
+        owners = host_memory_owners(table)
         samples = docker_memory_samples()
     except (OSError, ValueError, KeyError) as error:  # /proc missing (not Linux) must not stop the rest of the inventory
         print(f"  memory report unavailable: {error}")
@@ -560,7 +561,7 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     label_owners(owners, samples)
     owners.sort(key=lambda o: -o["rss_mb"])
     print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
-    if len(owners) < 20 or not Path("/proc/1/cgroup").exists():
+    if len(table) < 50 or not Path("/proc/1/cgroup").exists():
         print("  partial view: few processes are visible (restricted /proc or PID namespace), ranking is not host-wide")
     if samples is None:
         print("  docker stats unavailable: container memory is summed per-process RSS")
@@ -568,7 +569,7 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     for o in owners[:top]:
         flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] > old_hours else ""]
         print(f"  {o['shown'][:64]:64} {o['procs']:>5} {o['rss_mb']:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
-    print(f"  ({len(owners)} owners; host rows sum per-process RSS, docker rows are cgroup memory; nothing is stopped)")
+    print(f"  ({len(owners)} owners; host rows sum per-process RSS, docker rows are docker stats usage without inactive file cache; nothing is stopped)")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
