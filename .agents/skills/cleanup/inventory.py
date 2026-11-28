@@ -529,9 +529,15 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
     return owners
 
 
+def local_docker_host() -> str:
+    """A local daemon socket only: DOCKER_HOST when it is a unix socket, else the default; a remote context must not mix its containers into a local ranking."""
+    host = os.environ.get("DOCKER_HOST", "")
+    return host if host.startswith("unix://") else "unix:///var/run/docker.sock"
+
+
 def docker_memory_samples() -> dict[str, tuple[str, int]] | None:
     """Container id -> (name, memory KB) from docker stats; None when docker gave no sample."""
-    out = soft("docker", "-H", "unix:///var/run/docker.sock", "stats", "--no-stream", "--no-trunc", "--format", "{{.ID}}\t{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
+    out = soft("docker", "-H", local_docker_host(), "stats", "--no-stream", "--no-trunc", "--format", "{{.ID}}\t{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
     if out is None:
         return None
     scale = {"B": 1 / 1048576, "KiB": 1 / 1024, "MiB": 1, "GiB": 1024, "TiB": 1048576}
