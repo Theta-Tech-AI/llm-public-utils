@@ -457,7 +457,7 @@ def cgroup_units(root: Path) -> list[tuple[Path, int | None, bool]]:
     rows: list[tuple[Path, int | None, bool]] = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
         if child.name.endswith(".slice") or child.name == "docker" or (
-                UNIT.search(child.name) and any(p.is_dir() and p.name.endswith(".slice") for p in child.iterdir())):
+                re.fullmatch(r"user@\d+\.service", child.name)):
             inner = cgroup_units(child)
             rows += inner
             total = memory_current(child)
