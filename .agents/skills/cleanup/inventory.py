@@ -392,7 +392,7 @@ def list_stale_browsers(hours: float) -> None:
         try:
             before = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
             raw = Path(f"/proc/{pid}/cmdline").read_bytes()
-            argv = [x.decode(errors="replace") for x in raw.removesuffix(b"\0").split(b"\0")]
+            argv = [x.decode(errors="replace").encode("unicode_escape").decode()  # a process name may hold a newline for x in raw.removesuffix(b"\0").split(b"\0")]
             rss = next(int(l.split()[1]) for l in Path(f"/proc/{pid}/status").read_text().splitlines() if l.startswith("VmRSS:"))
             cgroup = Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
             cgroup_ns = os.readlink(f"/proc/{pid}/ns/cgroup")
