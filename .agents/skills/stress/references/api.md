@@ -40,11 +40,11 @@ Keep hand-written input to one small overlay file for facts the code cannot give
 **Each API lane generates its own map, with a receipt.** The code alone gives no coverage, so every lane brief gives the map command and its inputs: the checkout, the target environment, the full commit actually serving it (not a branch tip), the campaign's call logs and saved server request-log windows **for that environment and build only**, and a new directory for this lane. Evidence from an older build never counts toward the current coverage: a route the deploy changed is not covered by an old success. Report older coverage apart, if at all. A sketch, with the project's generator in place of `flow-map`:
 
 ```bash
-map_dir="$LANE_DIR/map"; inputs="$LANE_DIR/map-inputs.txt"
+map_dir="$LANE_DIR/map"; inputs="$LANE_DIR/map-inputs.txt"; logs="$SERVER_LOG_DIR/$TARGET_ENV-$DEPLOYED_SHA"
 test ! -e "$map_dir" || { echo "❌ refusing to reuse an existing flow-map directory: $map_dir" >&2; exit 1; }
 { printf 'env %s ref %s\n' "$TARGET_ENV" "$DEPLOYED_SHA" &&
   find "$RUN_ROOT/lanes" -type f -name "calls-$TARGET_ENV-$DEPLOYED_SHA.log" -printf 'calls %p\n' &&
-  find "$SERVER_LOG_DIR/$TARGET_ENV-$DEPLOYED_SHA" -type f -name '*.log' -printf 'server-log %p\n'
+  { test ! -d "$logs" || find "$logs" -type f -name '*.log' -printf 'server-log %p\n'; }
 } > "$inputs" || { echo "❌ could not list the map inputs" >&2; exit 1; }
 map_args=()
 while read -r kind path; do map_args+=("--$kind" "$path"); done < <(tail -n +2 "$inputs")
@@ -53,7 +53,7 @@ flow-map --ref "$DEPLOYED_SHA" "${map_args[@]}" --out "$map_dir" \
 printf '🗺️ flow-map env=%s ref=%s out=%s inputs=%s\n' "$TARGET_ENV" "$DEPLOYED_SHA" "$map_dir" "$inputs"
 ```
 
-An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final receipt line and the input list beside it: the environment, the exact full commit (a shortened label inside the map is evidence only beside it) and every file the map was built from. Save the server's request log in fixed UTC windows that start after the build began serving, filed under that environment and build, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
+No saved windows or call logs for this build yet (a fresh environment) is not an error: the map is static and its coverage pending. A listing that fails on evidence that does exist is an error. An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final receipt line and the input list beside it: the environment, the exact full commit (a shortened label inside the map is evidence only beside it) and every file the map was built from. Save the server's request log in fixed UTC windows that start after the build began serving, filed under that environment and build, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
 
 The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Hand each lane the map and its slice of that list; hand the next wave whatever is still on it. For a route that takes an action field (a transition route that takes `submit`, `approve`, `reject`), log the action in the call log and count coverage per action: **actions never tried** belong on the work list too, or coverage counts the route and hides them. This work list is the one coverage definition; lane briefs and the next wave point here. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
 
@@ -120,7 +120,7 @@ The most serious bugs an API campaign finds are one fact decided in two or more 
 2. **List every reader of it** the API exposes: the status line or summary sentence; the "waiting for" list; the actions list with each action's allowed flag and reason; the action route itself (call it — its refusal is the reader that decides); the list row's own status column; a count against the list it counts; readiness reads (can-lock, export readiness, a gap list); notifications; the activity history; the exported document.
 3. **Put the system in one state, preferably an edge.** Readers part at edges: just after a role change, an item answered but not closed, a reopen, a second approver, an archived or unlinked object, a check reused because nothing changed.
 4. **Ask every reader, as every role and as a non-member, in the same minute.** The API makes this cheap: one script, one token per role, a few dozen calls.
-5. **Write the table:** reader · called as · what it said. Two rows that disagree for the same input are a finding.
+5. **Write the table:** reader · called as · what it said. Two rows that disagree for the same input are a finding. So is a next action that every reader agrees on but that does not exist, or that the actor it names cannot take: call it as that actor.
 6. **File the first disagreement; never wait for a second.** Class `one-fact-many-owners`: put the table in the issue, list every reader you reached and the earlier issues of the same fact. The fix is one owner that every reader renders, not a patch to the reader that looked wrong ([findings.md](findings.md#fix-the-issue-behind-the-issue)). If the `deslop` skill is installed, its pattern *one fact, many owners* names the repair.
 
 A synthetic example of the shape such a table takes (an approval request, one fact: who acts next):
@@ -207,7 +207,7 @@ A driving check walks one path and finds what breaks on it. An **oracle** checks
 
 | Oracle | The property | How to run it | What it finds |
 |---|---|---|---|
-| **Consistency** | Every reader of a fact agrees, and agrees with what the action does | The reader table ([§5.1](#51-the-reader-table-one-fact-every-reader-every-role)) for each fact a person acts on | A status line that names the editor while the route needs a reviewer; `allowed: true` and a refusal |
+| **Consistency** | Every reader of a fact agrees, and agrees with what the action does | The reader table ([§5.1](#51-the-reader-table-one-fact-every-reader-every-role)) for each fact a person acts on | A status line that names the editor while the route needs a reviewer; `allowed: true` and a refusal; a blocker that names a move that does not exist |
 | **Cost** | No paid work repeats a finished result for the same inputs unless a person explicitly asked for it | Do the everyday actions (save unchanged, unlock and re-lock, re-submit, send and return, re-pick) and record every paid run each starts; a retry after a failure, or an explicit request to generate again, is not a finding | Re-runs decided by an event or a time instead of the inputs; one click that starts two runs |
 | **Liveness** | Every running or waiting state moves within a bound, or names who it waits for | Every few minutes for an hour or two, list queued, running and cancelling work and every waiting state from one system-wide list of active work (sampling each object's newest run hides an older stalled run behind it); read the run history with its timestamps for bounds broken between samples | Silent stalls; cancels that never finish; work queued behind nothing; a terminal row with no reason; an active-run flag that disagrees with the live job |
 | **Log census** | Every distinct error and warning class has an owner | Pull a day or two of error and warning lines, cluster them by site and cause, and match each class to an open issue | Failures nobody filed because each looked like noise; counts that show which class costs most |
