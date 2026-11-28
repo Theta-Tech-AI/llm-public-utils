@@ -531,7 +531,8 @@ def docker_memory_samples() -> dict[str, tuple[str, int]] | None:
     samples = {}
     for line in out.splitlines():
         cid, name, usage = (line.split("\t") + ["", ""])[:3]
-        if m := re.match(r"([\d.]+)\s*([KMGT]?i?B)", usage):
+        # "0B / 0B" is docker's empty sample for a container that just restarted: keep the scanned RSS instead
+        if (m := re.match(r"([\d.]+)\s*([KMGT]?i?B)", usage)) and float(m[1]) > 0:
             samples[cid] = (name, int(float(m[1]) * scale.get(m[2], 0) * 1024))
     return samples
 
