@@ -446,15 +446,15 @@ def meminfo_mb() -> dict[str, int]:
             "SwapUsed": (kb["SwapTotal"] - kb["SwapFree"]) // 1024}
 
 
-CONTAINER_ID = re.compile(r"docker[-/]([0-9a-f]{64})")
+CONTAINER_ID = re.compile(r"(?:^|[/-])([0-9a-f]{64})(?:\.scope)?(?:/|$)")  # systemd and cgroupfs layouts, any parent
 
 
 def cgroup_path(text: str) -> str:
     """The cgroup path to own a process by: a container record first, else the v2 record, else the systemd hierarchy."""
-    records = [line.split(":", 2)[-1] for line in text.splitlines() if line.count(":") >= 2]
-    for pick in (lambda l: CONTAINER_ID.search(l), lambda l: True):
+    records = [line.split(":", 2) for line in text.splitlines() if line.count(":") >= 2]
+    for pick in (lambda r: CONTAINER_ID.search(r[2]), lambda r: r[0] == "0", lambda r: r[1] == "name=systemd", lambda r: True):
         if match := next((r for r in records if pick(r)), None):
-            return match
+            return match[2]
     return ""
 
 
@@ -473,6 +473,8 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
             rest = stat[stat.rindex(b")") + 2:].split()
             rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
             cgroup = cgroup_path(Path(f"/proc/{entry}/cgroup").read_text())
+            if Path(f"/proc/{entry}/stat").read_bytes().rpartition(b")")[2].split()[19] != rest[19]:
+                continue  # the pid was reused while its files were read
         except (OSError, ValueError, IndexError):
             continue
         parts = cgroup.split("/")
@@ -543,7 +545,7 @@ def label_owners(owners: list[dict], samples: dict[str, tuple[str, int]] | None)
             o["owner"] = f"container:{o['container'][:12]} (no docker stats)"
     names = [unit_name(o["owner"]) for o in owners]
     for o, name in zip(owners, names):  # a short name that two owners share gets its full path
-        o["shown"] = name if names.count(name) == 1 else o["owner"]
+        o["shown"] = name if names.count(name) == 1 else "…" + o["owner"][-63:]
 
 
 def print_memory_report(old_hours: float, top: int = 15) -> None:
@@ -558,6 +560,8 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     label_owners(owners, samples)
     owners.sort(key=lambda o: -o["rss_mb"])
     print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
+    if len(owners) < 20 or not Path("/proc/1/cgroup").exists():
+        print("  partial view: few processes are visible (restricted /proc or PID namespace), ranking is not host-wide")
     if samples is None:
         print("  docker stats unavailable: container memory is summed per-process RSS")
     print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
