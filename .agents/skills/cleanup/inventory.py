@@ -527,7 +527,7 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     for used, _, label, procs, age in sorted(rows, key=lambda r: (-r[0], r[1]))[:top]:
         flag = f"older than {old_hours:g}h" if age is not None and age > old_hours else ""
         print(f"  {label:64} {procs:>5} {used // 1048576:>8,} {'-' if age is None else f'{age:.1f}':>9}  {flag}")
-    print(f"  ({len(rows)} owners; kernel memory.current per cgroup unit, includes page cache; {unmeasured} without memory.current; nothing is stopped)")
+    print(f"  ({sum(not r[2].endswith('(unattributed)') for r in rows)} owners, {sum(r[2].endswith('(unattributed)') for r in rows)} unattributed slice remainders; kernel memory.current per cgroup unit, includes page cache; {unmeasured} without memory.current; nothing is stopped)")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
