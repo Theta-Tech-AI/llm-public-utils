@@ -481,7 +481,7 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
         last = max((i for i, part in enumerate(parts) if part.endswith((".scope", ".service"))), default=-1)
         # A container keeps its id as the unit; otherwise the path through the owning unit keeps two users' same-named services apart.
         unit = cgroup if CONTAINER_ID.search(cgroup) else "/".join(parts[:last + 1]) if last >= 0 else ""
-        table[int(entry)] = (int(rest[1]), rss_kb, uptime - int(rest[19]) / ticks, unit, comm)
+        table[int(entry)] = (int(rest[1]), rss_kb, max(0.0, uptime - int(rest[19]) / ticks), unit, comm)
     return table
 
 
@@ -505,7 +505,7 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
             groups.setdefault(f"container:{container[1]}", []).append(pid)
         elif not unit or name.startswith(GENERIC_UNITS):
             top, seen = pid, {pid}
-            while (parent := table[top][0]) in table and parent > 1 and parent not in seen and table[parent][4] not in ("systemd", "sshd", "login"):
+            while (parent := table[top][0]) in table and parent > 1 and parent not in seen and table[parent][4] not in ("systemd", "sshd", "sshd-session", "login"):
                 top = parent
                 seen.add(top)  # a pid reused during the scan can make a parent cycle
             groups.setdefault(f"{table[top][4]}[{top}] in {name or 'no unit'}", []).append(pid)
@@ -523,7 +523,7 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
 
 
 def docker_memory_samples() -> dict[str, tuple[str, int]] | None:
-    """Container id -> (name, cgroup memory MB) from docker stats; None when docker gave no sample."""
+    """Container id -> (name, memory KB) from docker stats; None when docker gave no sample."""
     out = soft("docker", "stats", "--no-stream", "--no-trunc", "--format", "{{.ID}}\t{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
     if out is None:
         return None
@@ -532,7 +532,7 @@ def docker_memory_samples() -> dict[str, tuple[str, int]] | None:
     for line in out.splitlines():
         cid, name, usage = (line.split("\t") + ["", ""])[:3]
         if m := re.match(r"([\d.]+)\s*([KMGT]?i?B)", usage):
-            samples[cid] = (name, int(float(m[1]) * scale.get(m[2], 0)))
+            samples[cid] = (name, int(float(m[1]) * scale.get(m[2], 0) * 1024))
     return samples
 
 
@@ -540,12 +540,12 @@ def label_owners(owners: list[dict], samples: dict[str, tuple[str, int]] | None)
     """Name each container from docker stats and use its cgroup memory; a container with no sample stays a host row by id."""
     for o in owners:
         if o["container"] and samples and o["container"] in samples:
-            o["owner"], o["rss_kb"] = f"docker:{samples[o['container']][0]}", samples[o["container"]][1] * 1024
+            o["owner"], o["rss_kb"] = f"docker:{samples[o['container']][0]}", samples[o["container"]][1]
         elif o["container"]:
             o["owner"] = f"container:{o['container'][:12]} (no docker stats)"
     names = [unit_name(o["owner"]) for o in owners]
     for o, name in zip(owners, names):  # a short name that two owners share gets its full path
-        o["shown"] = name if names.count(name) == 1 else "…" + o["owner"][-63:]
+        o["shown"] = name if names.count(name) == 1 else o["owner"]  # a collision prints the full path, widening the column
 
 
 def print_memory_report(old_hours: float, top: int = 15) -> None:
@@ -568,7 +568,7 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
         flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] > old_hours else ""]
-        print(f"  {o['shown'][:64]:64} {o['procs']:>5} {o['rss_kb'] // 1024:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
+        print(f"  {o['shown']:64} {o['procs']:>5} {o['rss_kb'] // 1024:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
     print(f"  ({len(owners)} owners among {len(table)} visible processes; host rows sum per-process RSS, docker rows are docker stats usage without inactive file cache; nothing is stopped)")
 
 
