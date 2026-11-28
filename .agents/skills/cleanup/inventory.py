@@ -432,6 +432,104 @@ def list_stale_browsers(hours: float) -> None:
           f" {unknown} with unknown scope")
 
 
+def positive_hours(text: str) -> float:
+    value = float(text)
+    if not 0 < value < float("inf"):
+        raise argparse.ArgumentTypeError("must be a positive number of hours")
+    return value
+
+
+CGROUP = Path("/sys/fs/cgroup")
+UNIT = re.compile(r"(?!.*\.slice$).+")  # any cgroup under a slice that is not itself a slice: a unit, a build step, a cgroupfs container
+
+
+def memory_current(path: Path) -> int | None:
+    try:
+        return int((path / "memory.current").read_text())
+    except (OSError, ValueError):
+        return None  # removed mid-scan, or no memory controller
+
+
+def cgroup_units(root: Path) -> list[tuple[Path, int | None, bool]]:
+    """(cgroup, memory.current, is_remainder) rows under root. A .scope, .service or container is an owner row. A slice, and a
+    unit holding slices (the user manager), is entered; memory it holds beyond its owners (page cache of exited units, early allocations)
+    is one remainder row. memory.current is None for an owner whose memory could not be read."""
+    rows: list[tuple[Path, int | None, bool]] = []
+    for child in sorted(p for p in root.iterdir() if p.is_dir()):
+        if child.name.endswith(".slice") or child.name == "docker" or (
+                re.fullmatch(r"user@\d+\.service", child.name)):
+            inner = cgroup_units(child)
+            rows += inner
+            total = memory_current(child)
+            rest = None if total is None else total - sum(used or 0 for _, used, _ in inner)
+            if rest and rest > 0 and child.name != "docker":
+                rows.append((child, rest, True))
+        elif UNIT.search(child.name):
+            rows.append((child, memory_current(child), False))
+    return rows
+
+
+def unit_pids(unit: Path) -> list[int]:
+    pids = []
+    for procs in unit.rglob("cgroup.procs"):
+        try:
+            pids += [int(x) for x in procs.read_text().split()]
+        except (OSError, ValueError):
+            pass  # the cgroup was removed mid-scan
+    return pids
+
+
+def container_names() -> dict[str, str]:
+    """Full container id -> name from one docker ps call (a label only); empty when docker is not usable."""
+    out = soft("docker", "ps", "--no-trunc", "--format", "{{.ID}}\t{{.Names}}") if shutil.which("docker") else None
+    return dict(line.split("\t", 1) for line in (out or "").splitlines() if "\t" in line)
+
+
+def pid_age_hours(pid: int, uptime: float, ticks: int) -> float | None:
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_bytes()
+        return max(0.0, uptime - int(stat[stat.rindex(b")") + 2:].split()[19]) / ticks) / 3600
+    except (OSError, ValueError, IndexError):
+        return None  # the process exited mid-scan
+
+
+def print_memory_report(old_hours: float, top: int = 15) -> None:
+    """List-only: host memory totals, then the top cgroup units by the kernel's own memory.current, with age flags."""
+    try:
+        kb = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in Path("/proc/meminfo").read_text().splitlines())}
+    except (OSError, ValueError):
+        print("  memory report unavailable: /proc/meminfo")
+        return
+    print(f"🧠 memory: total {kb['MemTotal'] // 1024:,} MiB, available {kb['MemAvailable'] // 1024:,} MiB, "
+          f"swap used {(kb['SwapTotal'] - kb['SwapFree']) // 1024:,} MiB")
+    if not (CGROUP / "cgroup.controllers").exists():
+        print("  memory by owner needs cgroup v2")
+        return
+    uptime, ticks, names, rows = float(Path("/proc/uptime").read_text().split()[0]), os.sysconf("SC_CLK_TCK"), container_names(), []
+    every = cgroup_units(CGROUP)
+    found = [r for r in every if r[1] is not None]
+    unmeasured = len(every) - len(found)
+    for unit, used, remainder in found:
+        pids = [] if remainder else unit_pids(unit)
+        ages = [a for pid in pids if (a := pid_age_hours(pid, uptime, ticks)) is not None]
+        rel = unit.relative_to(CGROUP).parts
+        cid = re.fullmatch(r"(?:docker-)?([0-9a-f]{64})(?:\.scope)?", unit.name)
+        label = f"docker:{names[cid[1]]}" if cid and cid[1] in names else f"docker:{cid[1][:12]}" if cid else unit.name
+        rows.append((used, rel, label, remainder, len(pids), max(ages, default=None)))
+    shown = []
+    for used, rel, label, remainder, procs, age in rows:
+        twins = [r for r in rows if r[2] == label and r[3] == remainder]
+        depth = next((d for d in range(1, len(rel) + 1) if len({r[1][-d:] for r in twins}) == len(twins)), len(rel))
+        name = label if len(twins) == 1 or label.startswith("docker:") else "/".join(rel[-depth:])
+        shown.append((used, "/".join(rel), name + (" (unattributed)" if remainder else ""), procs, age))
+    rows = shown
+    print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
+    for used, _, label, procs, age in sorted(rows, key=lambda r: (-r[0], r[1]))[:top]:
+        flag = f"older than {old_hours:g}h" if age is not None and age > old_hours else ""
+        print(f"  {label:64} {procs:>5} {used // 1048576:>8,} {'-' if age is None else f'{age:.1f}':>9}  {flag}")
+    print(f"  ({sum(not r[2].endswith('(unattributed)') for r in rows)} owners, {sum(r[2].endswith('(unattributed)') for r in rows)} unattributed slice remainders; kernel memory.current per cgroup unit, includes page cache; {unmeasured} without memory.current; nothing is stopped)")
+
+
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
     """Rows that exist only when the project has the input; each is skipped, not failed, when it is missing."""
     rows: dict[str, int] = {}
@@ -472,6 +570,7 @@ def main() -> None:
     parser.add_argument("--review-label", help="issue label meaning 'waiting for a human', counted when given")
     parser.add_argument("--list-browsers-older-than", type=float, metavar="HOURS",
                         help="list agent-browser Chrome and node dev-server processes older than HOURS and exit (listing only)")
+    parser.add_argument("--memory-old-hours", type=positive_hours, default=6, help="flag memory owners older than this many hours (default 6)")
     args = parser.parse_args()
     if args.list_browsers_older_than is not None:
         list_stale_browsers(args.list_browsers_older_than)
@@ -507,6 +606,7 @@ def main() -> None:
     for key, value in now.items():
         delta = value - before[key] if key in before else None
         print(f"  {key:28} {value:>9,}" + (f"  ({delta:+,})" if delta else ""))
+    print_memory_report(args.memory_old_hours)
     if detail is not None:
         print_detail(detail, issues)
     args.state.parent.mkdir(parents=True, exist_ok=True)
