@@ -516,7 +516,7 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
         members = set(pids)
         roots = [p for p in pids if table[p][0] not in members]
         reparented = all(table[p][0] == 1 or table.get(table[p][0], (0, 0, 0, "", ""))[4] == "systemd" for p in roots)
-        tracks_parent = not key.endswith(".service")
+        tracks_parent = " in " in key or not key.endswith(".service")
         owners.append({"owner": key, "container": key.removeprefix("container:") if key.startswith("container:") else None, "procs": len(pids), "rss_kb": sum(table[p][1] for p in pids),
                        "age_h": max(table[p][2] for p in pids) / 3600, "reparented": tracks_parent and reparented})
     return owners
