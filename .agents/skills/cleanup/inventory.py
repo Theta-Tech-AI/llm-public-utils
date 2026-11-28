@@ -531,7 +531,7 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
 
 def docker_memory_samples() -> dict[str, tuple[str, int]] | None:
     """Container id -> (name, memory KB) from docker stats; None when docker gave no sample."""
-    out = soft("docker", "stats", "--no-stream", "--no-trunc", "--format", "{{.ID}}\t{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
+    out = soft("docker", "-H", "unix:///var/run/docker.sock", "stats", "--no-stream", "--no-trunc", "--format", "{{.ID}}\t{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
     if out is None:
         return None
     scale = {"B": 1 / 1048576, "KiB": 1 / 1024, "MiB": 1, "GiB": 1024, "TiB": 1048576}
@@ -580,7 +580,9 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
         flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] is not None and o["age_h"] > old_hours else ""]
-        print(f"  {o['shown']:64} {o['procs'] if o['procs'] is not None else '-':>5} {o['rss_kb'] // 1024:>8,} {f"{o['age_h']:.1f}" if o['age_h'] is not None else '-':>9}  {' '.join(f for f in flags if f)}")
+        procs = "-" if o["procs"] is None else o["procs"]
+        age = "-" if o["age_h"] is None else f"{o['age_h']:.1f}"
+        print(f"  {o['shown']:64} {procs:>5} {o['rss_kb'] // 1024:>8,} {age:>9}  {' '.join(f for f in flags if f)}")
     print(f"  ({len(owners)} owners among {len(table)} visible processes; host rows sum per-process RSS, docker rows are docker stats usage without inactive file cache; nothing is stopped)")
 
 
