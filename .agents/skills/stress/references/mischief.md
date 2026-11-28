@@ -59,7 +59,7 @@ A clean snapshot is **not** proof. Mischief triggers 4xx/5xx constantly; SPAs sw
 
 ### 7. Mischief by API
 
-No browser required: reverse-engineer what the frontend would send, then break that conversation. Create disposable scratch objects (an administrator may *create* them; attack with normal user tokens), prefix them (`MISCHIEF-…`, `SCRATCH-…`), and clean up. Blast each mutation with the checks in [api.md §5](api.md#5-checks-highest-yield-first): out-of-order moves, races, wrong roles and other objects' ids, refusal and audit checks, typed-input fuzz. They often find validation gaps, cross-object references accepted, and audit or atomicity failures.
+No browser required: reverse-engineer what the frontend would send, then break that conversation. Create disposable scratch objects (an administrator may *create* them; attack with normal user tokens), prefix them and clean up ([api.md → Stand on what exists](api.md#stand-on-what-exists)). Blast each mutation with the checks in [api.md §5](api.md#5-checks-highest-yield-first): out-of-order moves, races, wrong roles and other objects' ids, refusal and audit checks, typed-input fuzz. They often find validation gaps, cross-object references accepted, and audit or atomicity failures.
 
 ## Field-proven state-contradiction classes (bugs users hit first)
 

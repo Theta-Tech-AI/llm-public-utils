@@ -99,12 +99,12 @@ A **simulated flow** is the user's path written as the calls the frontend really
 
 1. Read the frontend's API client to learn the calls and their order; read the router for each body. The frontend is the truth for *what a user's session sends*; the router is the truth for *what the server does*, not for *what should be legal* — take intended rules from the product docs or requirements, and report every place the code and the intent disagree (a missing gate is invisible if the code is also your oracle).
 2. Write one resumable driver per flow: every step records its ids and timestamps in a state file, so a crashed or replaced worker continues instead of starting again. For a mutating step, write the intent to the state file **before** sending, use the API's idempotency key where it has one, and after a crash read the server's state to learn whether the step happened before replaying it — a checkpoint written after the call cannot tell a lost reply from a lost request, and a replayed paid run or signature is a second effect.
-3. Before each stage opens, call the **next** stage's main route once and record the refusal. A gate that lets you through early is a finding; a gate that refuses with the wrong reason is one too.
 
 ### Stand on what exists
 
 Do not pay, in time or in metered work (paid runs, model calls), to rebuild upstream state for every lane. A late stage of a gated app can sit hours of upstream work (forms, paid runs, approvals) away from a fresh object. A lane that builds its own late-stage object can spend its whole time box on setup and reach none of its checks; a lane that reuses a prepared object already at that stage runs its whole matrix.
 
+- **Mark test data as test data.** Prefer idempotent or clearly prefixed throwaway resources (`STRESS-…`, `COMB-…`, `MISCHIEF-…`), so a later tester can tell them from real data, and clean up what you created.
 - **Survey first.** List every object in the environment with its stage, owner and age. The ones earlier runs left at late stages are your seeds.
 - **One exclusive object per lane**, claimed in a shared file before the first write. Two lanes on one object produce false alarms that look exactly like races.
 - **Write the protected list down.** Client data, demo data, another team's acceptance fixtures: named, in the brief, read-only.
@@ -168,7 +168,7 @@ For each cell: expected (from the docs or the code's own table of legal moves) �
 
 The UI offers only the moves it thinks are legal, in the order its pages lead. The API lets you make the rest:
 
-- **Next stage early.** Call each stage's main route before its predecessor is done ([§4](#a-simulated-flow), step 3).
+- **Next stage early.** Before each stage opens, call the **next** stage's main route once and record the refusal — after the reliability gate, on the lane's own object, never on the gate's fixture. A gate that lets you through early is a finding; a gate that refuses with the wrong reason is one too.
 - **Illegal transitions.** Skip a step, call a later route first, reuse an id after delete, replay a create.
 - **Downstream while upstream is open.** Unlock an upstream stage, then call each downstream sign, lock or start: the refusal must be the one the read route states, and no start route may bypass it — call every route that starts the same work (the census of those routes: [bug-hunter.md](bug-hunter.md), class 7).
 - **A warning the next step accepts.** For every stage that reports problems (conflicts, readiness blockers), read the problem list, then call the next step with the problem standing. It must be unambiguous which problems block (a severity, separate collections or a blocking flag all pass), and the next route's acceptance must match that and the documented gate — two routes that agree with each other but not with the documented gate are still a finding.
@@ -191,7 +191,7 @@ Two to ten threads on one transition, from different people where it makes sense
 
 - **The refusal sweep.** Collect the 4xx body of every route (empty body, wrong type, wrong role, unknown id, wrong state). Assert one envelope (a code and a message), a message that is not the code, that names what is missing, who can fix it and the next action, and a field name on validation errors ("String should have at most 500 characters" with no field is a miss). The same fact carries the same code everywhere (lease held, stage frozen, not linked, stale version), and every code is one the frontend can show (grep the frontend for it). No stack trace, raw SQL or constraint name. Fixing the client to avoid a refusal does not close the class: rerun the sweep after each such fix.
 - **A refused action leaves the audit record its policy documents.** After each authorization or domain refusal of an audited action (a wrong role, a non-member, an anonymous caller, a forbidden state), read the scoped audit trail (never a whole-trail export) and require the documented refusal record with actor, action and outcome — the same expectation as the role matrix. Where the policy is silent, a refusal that leaves no trace of who tried what is a finding to raise; a malformed request rejected before any action may write nothing if that is the contract.
-- **An empty result matches its contract** (for example `200` with an empty list, plus any reason field the contract promises), never a 404 or a 500.
+- **An empty result matches its contract** (for example `200` with an empty list, plus any reason field the contract promises), never a 500.
 
 ### 5.6 Input and hygiene
 
