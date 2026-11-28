@@ -440,7 +440,7 @@ def positive_hours(text: str) -> float:
 
 
 CGROUP = Path("/sys/fs/cgroup")
-UNIT = re.compile(r"\.(scope|service|mount|swap)$|^[0-9a-f]{64}$")  # a bare 64-hex name is a cgroupfs-driver container
+UNIT = re.compile(r"\.(?!slice$)[a-z]+$|^[0-9a-f]{64}$")  # any systemd unit but a slice; a bare 64-hex name is a cgroupfs-driver container  # a bare 64-hex name is a cgroupfs-driver container
 
 
 def memory_current(path: Path) -> int | None:
@@ -452,7 +452,7 @@ def memory_current(path: Path) -> int | None:
 
 def cgroup_units(root: Path) -> list[tuple[Path, int | None, bool]]:
     """(cgroup, memory.current, is_remainder) rows under root. A .scope, .service or container is an owner row. A slice, and a
-    unit holding slices (the user manager), is entered; memory it holds beyond its owners (page cache left by exited scopes)
+    unit holding slices (the user manager), is entered; memory it holds beyond its owners (page cache of exited units, early allocations)
     is one remainder row. memory.current is None for an owner whose memory could not be read."""
     rows: list[tuple[Path, int | None, bool]] = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
@@ -521,7 +521,7 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
         twins = [r for r in rows if r[2] == label and r[3] == remainder]
         depth = next((d for d in range(1, len(rel) + 1) if len({r[1][-d:] for r in twins}) == len(twins)), len(rel))
         name = label if len(twins) == 1 or label.startswith("docker:") else "/".join(rel[-depth:])
-        shown.append((used, "/".join(rel), name + (" (cache of exited units)" if remainder else ""), procs, age))
+        shown.append((used, "/".join(rel), name + (" (unattributed)" if remainder else ""), procs, age))
     rows = shown
     print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
     for used, _, label, procs, age in sorted(rows, key=lambda r: (-r[0], r[1]))[:top]:
