@@ -485,7 +485,7 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
     return table
 
 
-GENERIC_UNITS = ("user@", "session-", "init.scope")
+GENERIC_UNIT = re.compile(r"^(user@[^/]*\.service|session-[^/]*\.scope|init\.scope)$")
 
 
 def unit_name(path: str) -> str:
@@ -503,7 +503,7 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
         name = unit_name(unit)
         if (container := CONTAINER_ID.search(unit)):
             groups.setdefault(f"container:{container[1]}", []).append(pid)
-        elif not unit or name.startswith(GENERIC_UNITS):
+        elif not unit or GENERIC_UNIT.match(name):
             top, seen = pid, {pid}
             while (parent := table[top][0]) in table and parent > 1 and parent not in seen and table[parent][4] not in ("systemd", "sshd", "sshd-session", "login"):
                 top = parent
@@ -562,7 +562,7 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     owners.sort(key=lambda o: -o["rss_kb"])
     print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
     if len(table) < 50 or 1 not in table:
-        print("  partial view: few processes are visible (restricted /proc or PID namespace), ranking is not host-wide")
+        print("  few processes are visible (restricted /proc or PID namespace?): the ranking may not be host-wide")
     if samples is None:
         print("  docker stats unavailable: container memory is summed per-process RSS")
     print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
