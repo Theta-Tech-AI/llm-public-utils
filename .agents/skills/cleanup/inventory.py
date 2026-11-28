@@ -440,7 +440,7 @@ def positive_hours(text: str) -> float:
 
 
 def meminfo_mb() -> dict[str, int]:
-    """MemTotal, MemAvailable and swap used in MB from /proc/meminfo."""
+    """MemTotal, MemAvailable and swap used in MiB from /proc/meminfo."""
     kb = {k: int(v.split()[0]) for k, v in (line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())}
     return {"MemTotal": kb["MemTotal"] // 1024, "MemAvailable": kb["MemAvailable"] // 1024,
             "SwapUsed": (kb["SwapTotal"] - kb["SwapFree"]) // 1024}
@@ -472,6 +472,10 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
             comm = stat[stat.index(b"(") + 1:stat.rindex(b")")].decode(errors="replace").encode("unicode_escape").decode()  # a name may hold a newline
             rest = stat[stat.rindex(b")") + 2:].split()
             rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
+            if rss_kb == 0 and rest[0] == "Z":  # a dead thread-group leader reads 0 while its worker threads keep the memory
+                for tid in os.listdir(f"/proc/{entry}/task"):
+                    if rss_kb := int(Path(f"/proc/{entry}/task/{tid}/statm").read_text().split()[1]) * page_kb:
+                        break
             cgroup = cgroup_path(Path(f"/proc/{entry}/cgroup").read_text())
             if Path(f"/proc/{entry}/stat").read_bytes().rpartition(b")")[2].split()[19] != rest[19]:
                 continue  # the pid was reused while its files were read
@@ -561,12 +565,12 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
         return
     label_owners(owners, samples)
     owners.sort(key=lambda o: -o["rss_kb"])
-    print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
+    print(f"🧠 memory: total {info['MemTotal']:,} MiB, available {info['MemAvailable']:,} MiB, swap used {info['SwapUsed']:,} MiB")
     if len(table) < 50 or 1 not in table:
         print("  few processes are visible (restricted /proc or PID namespace?): the ranking may not be host-wide")
     if samples is None:
         print("  docker stats unavailable: container memory is summed per-process RSS")
-    print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
+    print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
         flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] > old_hours else ""]
         print(f"  {o['shown']:64} {o['procs']:>5} {o['rss_kb'] // 1024:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
