@@ -31,7 +31,7 @@ Each phase hands context to the next: reliability proves the path works, comb ma
 
 **Choose the drive modes** from [driving.md](driving.md): browser for what renders, API for contracts, state, authorization and concurrency, and both for most webapps. Ask consent before installing a browser ([browser.md](browser.md#consent-first)).
 
-**Confirm reporting** only if the user contradicted [findings.md](findings.md).
+**Read [findings.md](findings.md) before the first pass**: findings are filed as they are confirmed. Confirm the reporting policy with the user only if they contradicted it.
 
 ## Phase 1 — Reliability gate (1-3 passes)
 
@@ -63,6 +63,6 @@ Code-first, per [bug-hunter.md](bug-hunter.md). It never touches the running app
 - The user asked for one mode only → run that mode. This process is the default for an open-ended "stress test this."
 - A launch or onboarding change is about to meet strangers → insert Phase 2b, and rerun the same panel after the fixes as its own proof step.
 - The findings are all polish and the panel has not run → the temperaments you did not try are the unexplored surface; run the panel before concluding the app is clean.
-- The late stages of a gated app are under-tested, the box cannot afford browsers, or the user asked for an API-only run → run the requested phases **API-first** ([api.md](api.md)): the generated flow map first, then the reliability gate as one fresh end-to-end flow (code reading, state reads and driver preparation may run meanwhile), then comb and mischief standing on existing late-stage objects. With many testers ([lanes.md](lanes.md)): one lane per part of the app, one code hunt feeding hypotheses to the live lanes, and at least one browser lane (exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).
+- The late stages of a gated app are under-tested, the box cannot afford browsers, or the user asked for an API-only run → run the requested phases **API-first** ([api.md](api.md)): the generated flow map first, then the reliability gate as one fresh end-to-end flow (code reading, state reads and driver preparation may run meanwhile), then whichever of comb and mischief the request includes, standing on existing late-stage objects. With many testers ([lanes.md](lanes.md)): one lane per part of the app, one code hunt feeding hypotheses to the live lanes, and at least one browser lane (exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).
 - Time-boxed → one real pass per phase beats three shallow ones or skipping a phase.
 - Phase 1 keeps failing → the run legitimately ends early; a broken happy path *is* the headline finding.

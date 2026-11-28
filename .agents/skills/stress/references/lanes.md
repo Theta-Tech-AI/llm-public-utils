@@ -51,11 +51,11 @@ The tester's role is to find, prove and file. A lane does not edit or push code;
 Before the first lane launches, the coordinator proves the shared tools and the environment once. Then each lane, in this order:
 
 1. **Check the environment and pin the build:** readiness answers OK, no deploy is in flight, and the API and every background worker serve the same build (a roll in the middle of a run turns into a page of false findings). Record that full commit; when the brief has a deploy gate, wait for it first.
-2. **Generate the flow map** from that commit, into a new directory, with its receipt ([api.md §1](api.md#1-the-api-document-the-flow-map)); never read a saved copy.
+2. **Generate the flow map** (API lanes) from that commit, into a new directory, with its receipt ([api.md §1](api.md#1-the-api-document-the-flow-map)); never read a saved copy.
 3. **Prove the tools run** in the lane's own checkout before the first real call ([api.md §2](api.md#2-tools-proven-before-the-first-call)).
 4. **Check shared budgets.** A third-party service with a daily quota is shared by every lane and by the app's own background work. When the app's own background polling spends such a quota before the lanes start, every lane is blocked from that integration until the reset: the spend is the finding, and every later refusal from that quota is expected, not a finding. Read the remaining quota, the paid-run budget and the claims file before the first write.
-5. **Claim the lane's objects**, and post one start entry on the campaign's tracking issue (or in its findings artifact when there is no tracker: [findings.md](findings.md#artifacts-no-github)).
-6. **Wait for the reliability gate** before mutating shared seeds ([reliability.md](reliability.md#the-gate)); read code, read state and prepare drivers meanwhile.
+5. **Claim the lane's objects**, and post one start entry where the campaign records its findings ([findings.md](findings.md#subagents-must-file-too)).
+6. **Make no test writes until the reliability gate passes** ([reliability.md](reliability.md#the-gate)).
 
 ## During a lane
 
@@ -73,7 +73,7 @@ Do these even when the lane failed or was cut short:
 1. **Release every lease and lock** the lane holds, and free every shared external resource it took (a linked test resource, a reserved name). A lane that ends with a lease still held blocks the next lane on that object.
 2. **Archive what the lane created** unless the brief says keep; release the claims; leave reused objects in a stated state (for example: which state, no lease held).
 3. **Stop every process the lane started** (browsers, servers, containers) and remove its checkout. Find your own processes by an exact id, never by a name pattern that can match other sessions.
-4. **Write the report** and post one end entry on the tracking issue (or the findings artifact).
+4. **Write the report** and post one end entry where the campaign records its findings.
 
 ## The report shape
 
@@ -85,7 +85,7 @@ lane=<NAME> start=<UTC> end=<UTC> calls=<n> medium+=<issue numbers or artifact e
 
 Then the top defects, what held, paid runs used, and cleanup done. The lane folder keeps `REPORT.md` with: **Findings** (issue, severity, one-line failure, class) · **What held** (the coverage record) · **Not covered**, each with why (a deploy window, a spent quota, a missing read route, no time) · **Needs a decision** · **Cleanup**. The call log stays beside it as the evidence and the coverage input.
 
-A coordinator's wave report on the tracking issue uses the three paragraphs of [findings.md → Talk a bug through](findings.md#talk-a-bug-through-with-the-owner-predict-the-critique) for the wave: the bugs, the fixes in progress, and what the owner will say one level deeper.
+A coordinator's wave report, posted where the campaign records its findings, uses the three paragraphs of [findings.md → Talk a bug through](findings.md#talk-a-bug-through-with-the-owner-predict-the-critique) for the wave: the bugs, the fixes in progress, and what the owner will say one level deeper.
 
 ## The coordinator
 

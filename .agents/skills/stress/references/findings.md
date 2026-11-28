@@ -28,7 +28,7 @@ A final-message-only finding is **not durable**. Comments can always be added la
 
 If you spawn subagents, their prompt must **explicitly require** GitHub issue creation or commenting for every confirmed finding (same detail bar as this doc). Do not let a subagent return bugs only in its final message to the parent — that dies with the session. The parent should verify issue URLs exist before treating the hunt as done.
 
-**Many lanes at once** ([lanes.md](lanes.md)): every medium-or-worse finding gets its own issue the moment it is confirmed. A lane may collect its low-severity findings into one list issue when its brief says so — one numbered item per distinct bug, each with its own repro, so any item can become its own issue later.
+**Many lanes at once** ([lanes.md](lanes.md)): every medium-or-worse finding gets its own issue the moment it is confirmed — or its own entry in the findings artifact when there is no tracker ([Artifacts](#artifacts-no-github)). A lane may collect its low-severity findings into one list issue (or one artifact section) when its brief says so — one numbered item per distinct bug, each with its own repro, so any item can become its own issue later. The campaign's tracking issue, or the artifact, also holds each lane's start and end entries and the coordinator's wave reports.
 
 ## What counts as a "real" finding
 

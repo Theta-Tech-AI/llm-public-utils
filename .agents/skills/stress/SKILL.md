@@ -15,8 +15,8 @@ A stress run hardens an app's *functionality* (not load or scale). It is **seque
 | 2 | [driving.md](references/driving.md) | **The two modes, dueling**: why each works, what only each finds, what each costs, how to run them against each other |
 | 3 | [api.md](references/api.md) | **API mode**: the flow map (the API document), shared tools, the tester as a model, and the checks — the reader table first, the role matrix, out-of-order moves, races, refusals and audit, oracles |
 | 3 | [browser.md](references/browser.md) | **Browser mode**: agent browser, and the frontend driving playbook |
-| 4 | [reliability.md](references/reliability.md) · [comb.md](references/comb.md) · [mischief.md](references/mischief.md) · [bug-hunter.md](references/bug-hunter.md) · [personas.md](references/personas.md) | **The phase** for this pass (see below) |
-| 5 | [findings.md](references/findings.md) | **What to do with bugs**: search, file, label, fix the issue behind the issue, talk a fixed bug through with its owner |
+| 4 | [findings.md](references/findings.md) | **What to do with bugs**: search, file, label, fix the issue behind the issue, talk a fixed bug through with its owner |
+| 5 | [reliability.md](references/reliability.md) · [comb.md](references/comb.md) · [mischief.md](references/mischief.md) · [bug-hunter.md](references/bug-hunter.md) · [personas.md](references/personas.md) | **The phase** for this pass (see below) |
 | 6 | [lanes.md](references/lanes.md) | **Many testers at once**: lane split, briefs, start and end of a lane, the report shape, the coordinator, auto-fix through gated fixers |
 
 ## Three separate choices

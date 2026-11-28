@@ -54,7 +54,7 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 
 ## How to duel them
 
-When both modes run — the default for a webapp — lead with the mode the table above names, and let the reliability gate pass before either mode mutates shared state ([reliability.md](reliability.md#the-gate)); mapping, code reading, state reads and driver preparation can run while it does.
+When both modes run — the default for a webapp — lead with the mode the table above names, and make no test writes in either mode until the reliability gate passes ([reliability.md](reliability.md#the-gate)).
 
 1. **The lead mode's pass.**
    - *API-led* (contracts, state, authorization, concurrency, late stages): generate the flow map, then run the reader table, the role matrix, out-of-order moves and races cheaply, standing on late-stage objects ([api.md](api.md)). Every bug found is a bug in every client.
