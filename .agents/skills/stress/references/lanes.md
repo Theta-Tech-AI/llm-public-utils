@@ -26,7 +26,7 @@ Split by **part of the app**, not by mode: each lane owns one stage or one cross
 
 ## The briefs
 
-**One shared brief** holds everything common, and every lane reads it first: the tools and how to load them, the never-call list, the filing rules ([findings.md](findings.md)) with the labels and the first line of every issue body, the claims file, the cleanup steps and the report shape. **Edit the common block in place.** In one campaign each new wave's header said "same rules as wave N−1's header" and appended its new rule there, so a lane had to read a chain of headers to learn the rules; a rule that applies to every lane goes into the common block, and a wave header holds only what differs.
+**One shared brief** holds everything common, and every lane reads it first: the tools and how to load them, the never-call list, the filing rules ([findings.md](findings.md)) with the labels and the first line of every issue body, the claims file, the cleanup steps and the report shape. **Edit the common block in place.** A brief that grows by appending each wave's new rules under "same rules as the last wave" makes every lane read a chain of headers to learn the rules; a rule that applies to every lane goes into the common block, and a wave header holds only what differs.
 
 **Brief from a probe, not from the docs.** Before writing a lane's brief, check its facts against the running system: who can create the lane's objects, who is on each seed's roster, whether the route the lane needs is reachable in the seed's current state, whether the quota it needs is left. Briefs written from reading alone sent lanes to create objects as a role that cannot, and to a page that the seed's state had closed.
 
@@ -53,15 +53,16 @@ Before the first lane launches, the coordinator proves the shared tools and the 
 1. **Check the environment and pin the build:** readiness answers OK, no deploy is in flight, and the API and every background worker serve the same build (a roll in the middle of a run turns into a page of false findings). Record that full commit; when the brief has a deploy gate, wait for it first.
 2. **Generate the flow map** from that commit, into a new directory, with its receipt ([api.md §1](api.md#1-the-api-document-the-flow-map)); never read a saved copy.
 3. **Prove the tools run** in the lane's own checkout before the first real call ([api.md §2](api.md#2-tools-proven-before-the-first-call)).
-4. **Check shared budgets.** A third-party service with a daily quota is shared by every lane and by the app's own background work. In one campaign the app's own polling spent a document store's whole daily quota before the first lane started, so no lane could link a folder until the reset; the spend was filed as a high finding, and every later refusal from that quota was expected, not a finding. Read the remaining quota, the paid-run budget and the claims file before the first write.
-5. **Claim the lane's objects**, and post one start comment on the campaign's tracking issue.
+4. **Check shared budgets.** A third-party service with a daily quota is shared by every lane and by the app's own background work. When the app's own background polling spends such a quota before the lanes start, every lane is blocked from that integration until the reset: the spend is the finding, and every later refusal from that quota is expected, not a finding. Read the remaining quota, the paid-run budget and the claims file before the first write.
+5. **Claim the lane's objects**, and post one start entry on the campaign's tracking issue (or in its findings artifact when there is no tracker: [findings.md](findings.md#artifacts-no-github)).
+6. **Wait for the reliability gate** before mutating shared seeds ([reliability.md](reliability.md#the-gate)); read code, read state and prepare drivers meanwhile.
 
 ## During a lane
 
-- **A deploy window is never a reason to stop.** A 503 "updating" from a rolling deploy stalls a lane; wait for readiness with a deadline, then re-read the serving commit: when it changed, generate a fresh map in a new directory and say so in the report before you continue. Deploy windows do not count against the time box. Log each window's start and end: one reliability lane spent about 100 of 175 minutes in update windows, another retried 848 calls, and windows that long are a finding against the deploy, not against the lane.
+- **A deploy window is never a reason to stop.** A 503 "updating" from a rolling deploy stalls a lane; wait for readiness with a deadline, then re-read the commit the API and the workers serve. When it changed, move the checkout to that commit, re-prove the tools, generate a fresh map in a new directory, treat coverage from the old build as old, and say so in the report before you continue. Deploy windows do not count against the time box. Log each window's start and end: a lane can spend more than half its time in update windows, and windows that long are a finding against the deploy, not against the lane.
 - **Read the logs** after every surprising answer and every paid run ([api.md → Log cross-check](api.md#log-cross-check)).
-- **File as you go**, per [findings.md](findings.md#subagents-must-file-too), and add one line per medium-or-worse issue to the campaign's findings file, `<issue> <severity> <lane> <one-line failure> <class>`, so the coordinator can start a fixer at once.
-- **File the first disagreement** between two readers of one fact, with the reader table ([api.md §5.1](api.md#51-the-reader-table-one-fact-every-reader-every-role)). Never wait for a second.
+- **File as you go**, per [findings.md](findings.md#subagents-must-file-too), and add one line per medium-or-worse finding to the campaign's findings file, `<issue or artifact entry> <severity> <lane> <one-line failure> <class>`, so the coordinator can start a fixer at once.
+- **Run the reader table** on every fact the lane's part decides ([api.md §5.1](api.md#51-the-reader-table-one-fact-every-reader-every-role)).
 - **Check your own test data** before filing a content finding ([findings.md](findings.md#what-counts-as-a-real-finding)).
 - **Work the whole time box.** Progress goes in a clock file in the lane folder, not in messages; send exactly one final report.
 
@@ -69,17 +70,17 @@ Before the first lane launches, the coordinator proves the shared tools and the 
 
 Do these even when the lane failed or was cut short:
 
-1. **Release every lease and lock** the lane holds, and free every shared external resource it took (a linked test folder, a reserved name). A lane that ends with a lease still held blocks the next lane on that object.
-2. **Archive what the lane created** unless the brief says keep; release the claims; leave reused objects in a stated state (for example "round 9, write state, no lease").
+1. **Release every lease and lock** the lane holds, and free every shared external resource it took (a linked test resource, a reserved name). A lane that ends with a lease still held blocks the next lane on that object.
+2. **Archive what the lane created** unless the brief says keep; release the claims; leave reused objects in a stated state (for example: which state, no lease held).
 3. **Stop every process the lane started** (browsers, servers, containers) and remove its checkout. Find your own processes by an exact id, never by a name pattern that can match other sessions.
-4. **Write the report** and post one end comment on the tracking issue.
+4. **Write the report** and post one end entry on the tracking issue (or the findings artifact).
 
 ## The report shape
 
 The final message is at most twelve lines, and its first line is machine-readable:
 
 ```text
-lane=<NAME> start=<UTC> end=<UTC> calls=<n> medium+=<issue numbers> first-bug-after=<minutes>
+lane=<NAME> start=<UTC> end=<UTC> calls=<n> medium+=<issue numbers or artifact entries> first-bug-after=<minutes>
 ```
 
 Then the top defects, what held, paid runs used, and cleanup done. The lane folder keeps `REPORT.md` with: **Findings** (issue, severity, one-line failure, class) · **What held** (the coverage record) · **Not covered**, each with why (a deploy window, a spent quota, a missing read route, no time) · **Needs a decision** · **Cleanup**. The call log stays beside it as the evidence and the coverage input.
@@ -120,4 +121,4 @@ A lane that never got its scenario running has not tested anything: report it as
 
 ### Aim the next wave by coverage
 
-A wave that finds no medium-or-worse bug is good news, and also a signal that the lanes are on worn ground. Aim the next wave at what is still on the coverage overlay's work list ([api.md §1](api.md#1-the-api-document-the-flow-map): routes no lane has called with an authenticated, well-formed request, actions never tried, mutating routes never seen to succeed), and at the classes that produced findings, hunted on new surfaces.
+A wave that finds no medium-or-worse bug is good news, and also a signal that the lanes are on worn ground. Aim the next wave at what is still on the coverage work list ([api.md §1](api.md#1-the-api-document-the-flow-map)), and at the classes that produced findings, hunted on new surfaces.

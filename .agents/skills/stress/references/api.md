@@ -19,7 +19,7 @@ Why this mode works, what it cannot see and how it duels with the browser: [driv
 
 Before the first call, get one document that answers: *which routes exist; who may call each; what each body needs; which routes change data, need a signature or start paid work; which call is refused until which other call happened; and which routes nobody has called.* This document is the **flow map**.
 
-**Generate it at lane start from the deployed build. Never read a saved copy.** Rules and bodies change between deploys, and lock and signature payloads change first. A map from an earlier run sends a lane to removed routes and old bodies; in one overnight campaign every lane brief had to say "regenerate the map, the saved copy is stale". Verify each route and body against the router code at the deployed commit before you call it.
+**Generate it at lane start from the deployed build. Never read a saved copy.** Rules and bodies change between deploys, and lock and signature payloads change first. A map from an earlier run sends a lane to removed routes and old bodies. Verify each route and body against the router code at the deployed commit before you call it.
 
 **An OpenAPI page is the start, not the map.** When the server serves one, fetch it from the deployed build: it gives methods, paths and body and response schemas, but not who may call a route, the stage gates, the state machines, which steps are signed or paid, or which routes the app removes at boot. Those come from the router code at the deployed commit (a read-only checkout); the order of calls comes from the frontend's API client and one real call log of a complete flow. When the app serves no OpenAPI page, the route list *is* the code: grep the router decorators at the exact deployed commit.
 
@@ -37,37 +37,38 @@ Derive each section from the code's own owner of that fact:
 
 Keep hand-written input to one small overlay file for facts the code cannot give (which runs cost money, typical durations), each with its reason. **No silent drop:** every route the code declares is a row of the table or carries a reason why not; an unexplained declaration fails the generator, because a route missing from the map is a route no lane will test.
 
-**Each lane generates its own map, with a receipt.** The code alone gives no coverage, so every lane brief gives the map command and its inputs: the checkout, the full commit actually serving the environment (not a branch tip), the call logs of every earlier lane of the campaign, saved windows of the server's request log, and a new directory for this lane. A sketch, with the project's generator in place of `flow-map`:
+**Each lane generates its own map, with a receipt.** The code alone gives no coverage, so every lane brief gives the map command and its inputs: the checkout, the target environment, the full commit actually serving the environment (not a branch tip), the call logs of every earlier lane of the campaign, saved windows of the server's request log, and a new directory for this lane. A sketch, with the project's generator in place of `flow-map`:
 
 ```bash
-map_dir="$LANE_DIR/map"
+map_dir="$LANE_DIR/map"; inputs="$LANE_DIR/map-inputs.txt"
 test ! -e "$map_dir" || { echo "❌ refusing to reuse an existing flow-map directory: $map_dir" >&2; exit 1; }
+{ printf 'env %s ref %s\n' "$TARGET_ENV" "$DEPLOYED_SHA" &&
+  find "$RUN_ROOT/lanes" -type f -name 'calls.log' -printf 'calls %p\n' &&
+  find "$SERVER_LOG_DIR" -type f -name '*.log' -printf 'server-log %p\n'
+} > "$inputs" || { echo "❌ could not list the map inputs" >&2; exit 1; }
 map_args=()
-while IFS= read -r -d '' log; do map_args+=(--calls "$log"); done \
-  < <(find "$RUN_ROOT/lanes" -type f -name 'calls.log' -print0)
-while IFS= read -r -d '' log; do map_args+=(--server-log "$log"); done \
-  < <(find "$SERVER_LOG_DIR" -type f -name '*.log' -print0)
+while read -r kind path; do map_args+=("--$kind" "$path"); done < <(tail -n +2 "$inputs")
 flow-map --ref "$DEPLOYED_SHA" "${map_args[@]}" --out "$map_dir" \
   || { echo "❌ flow-map failed for ref=$DEPLOYED_SHA; no receipt" >&2; exit 1; }
-printf '🗺️ flow-map ref=%s out=%s\n' "$DEPLOYED_SHA" "$map_dir"
+printf '🗺️ flow-map env=%s ref=%s out=%s inputs=%s\n' "$TARGET_ENV" "$DEPLOYED_SHA" "$map_dir" "$inputs"
 ```
 
-An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final `ref=` line with the exact full commit; a shortened label inside the map is evidence only beside it. Save the server's request log in fixed UTC windows, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
+An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final receipt line and the input list beside it: the environment, the exact full commit (a shortened label inside the map is evidence only beside it) and every file the map was built from. Save the server's request log in fixed UTC windows, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
 
-The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Hand each lane the map and its slice of that list; hand the next wave whatever is still on it. Log the action field of multi-action routes (a transition route that takes `send`, `approve`, `sign`) in the call log, or coverage counts the route and hides the actions nobody tried. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
+The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Hand each lane the map and its slice of that list; hand the next wave whatever is still on it. For a route that takes an action field (a transition route that takes `submit`, `approve`, `reject`), log the action in the call log and count coverage per action: **actions never tried** belong on the work list too, or coverage counts the route and hides them. This work list is the one coverage definition; lane briefs and the next wave point here. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
 
 Render the graphs in a text format that lives next to the code (Mermaid in Markdown), keep the long tables in a machine-readable file beside it, and give every statement its source (file and line, overlay entry, or call log). The map also feeds the cheapest mischief there is: a walker that takes random legal and illegal steps along the edges and checks after each one that the state read still agrees with the map.
 
 ## 2. Tools, proven before the first call
 
-A lane that discovers a broken helper wastes its whole budget: one lane whose client failed to import made six calls in its whole time box. Build and **run** each tool before any lane starts. Keep the tools, the flow-map generator and the check pack ([§7](#7-record-and-re-run)) in the project itself, next to the code they read (a project skill or a scripts folder), so every lane and every session uses the same ones.
+A lane that discovers a broken helper wastes its whole budget: a lane whose client fails to import can spend its whole time box making a handful of calls. Build and **run** each tool before any lane starts. Keep the tools, the flow-map generator and the check pack ([§7](#7-record-and-re-run)) in the project itself, next to the code they read (a project skill or a scripts folder), so every lane and every session uses the same ones.
 
 | Tool | Why |
 |------|-----|
 | **Client** — one function: user, method, path, body → status, body. Never raises on an HTTP status. Logs method, path, status, elapsed time, the actor (anonymous, role, administrator), a test-case id and whether the request was malformed on purpose; never a token or a body with private text. | Every lane asserts on refusals; a client that throws on 4xx hides the data. The call log is the coverage record and the repro. |
-| **Token source, one per role** — per-user file, refreshed under a per-user lock, expiry checked before each call. Prefer a grant that needs no browser for throwaway test accounts (try the identity provider's token endpoint before scripting its sign-in page). | One script acts as every role of the team in the same minute. Lanes run longer than a token lives; two lanes minting one user at once break each other. |
+| **Token source, one per role** — per-user file, refreshed under a per-user lock, expiry checked before each call. Prefer a grant that needs no browser for throwaway test accounts (try the identity provider's token endpoint before scripting its sign-in page); keep a scripted sign-in only for steps that truly need it, such as a re-authentication bound to a challenge. | One script acts as every role of the team in the same minute. Lanes run longer than a token lives; two lanes minting one user at once break each other. |
 | **Signed-step helper** — whatever a re-authenticated or confirmed step needs (a challenge, a fresh sign-in, an attestation id). Hold one lock per signer from the challenge to the signed call: a second challenge for the same signer can replace the first. | The most valuable late-stage tests need it; each lane re-deriving it is hours lost. |
-| **Never-call filter, inside the client** — whole-dataset exports, account deletion, inbound webhooks, bulk imports, anything that changes a real third-party connection. | A sweep that iterates the route map must drop these by path before its first call. One sweep started a whole-trail export this way. |
+| **Never-call filter, inside the client** — whole-dataset exports, account deletion, inbound webhooks, bulk imports, anything that changes a real third-party connection. | A sweep that iterates the route map would otherwise call them; it must drop them by path before its first call. |
 | **Logs helper** — one command that reads the server and worker logs of the target environment, filtered by a request, run or object id. | The second layer for every finding ([§6](#log-cross-check)). |
 | **Code tree at the deployed commit**, read-only. | Route list, bodies, and the code pointer every issue needs. |
 
@@ -101,7 +102,7 @@ A **simulated flow** is the user's path written as the calls the frontend really
 
 ### Stand on what exists
 
-Do not pay, in time or in model spend, to rebuild upstream state for every lane. A late stage of a gated app sits behind hours of upstream work: one fresh project took 2 h 45 min to reach its export. Lanes that tried to build their own late-stage object ran out of time before their target (one spent its whole time box answering a 47-question form and reached none of its checks); lanes that reused a prepared, already-signed object ran their whole matrix in half an hour.
+Do not pay, in time or in model spend, to rebuild upstream state for every lane. A late stage of a gated app can sit hours of upstream work (forms, paid runs, approvals) away from a fresh object. A lane that builds its own late-stage object can spend its whole time box on setup and reach none of its checks; a lane that reuses a prepared object already at that stage runs its whole matrix.
 
 - **Survey first.** List every object in the environment with its stage, owner and age. The ones earlier runs left at late stages are your seeds.
 - **One exclusive object per lane**, claimed in a shared file before the first write. Two lanes on one object produce false alarms that look exactly like races.
@@ -113,32 +114,32 @@ Do not pay, in time or in model spend, to rebuild upstream state for every lane.
 
 ### 5.1 The reader table: one fact, every reader, every role
 
-The most serious bugs an API campaign finds are one fact decided in two or more places that drifted apart: who acts next, what blocks the next step, is it complete, has it been read, how many items are open. In one overnight campaign of 19 API-only waves, about a third of the medium-or-worse findings (33 of 89) were readers of one fact that disagreed — and one of those facts had already been fixed five times, once per reader that happened to look wrong.
+The most serious bugs an API campaign finds are one fact decided in two or more places that drifted apart: who acts next, what blocks the next step, is it complete, has it been read, how many items are open. In one API-only campaign about a third of the medium-or-worse findings were readers of one fact that disagreed, and one such fact had been fixed several times before, each time in the one reader that happened to look wrong.
 
 1. **Pick a fact a person acts on.** Who acts next; what blocks the next step; is it done or ready; how many open items; may I do this.
 2. **List every reader of it** the API exposes: the status line or summary sentence; the "waiting for" list; the actions list with each action's allowed flag and reason; the action route itself (call it — its refusal is the reader that decides); the list row's own status column; a count against the list it counts; readiness reads (can-lock, export readiness, a gap list); notifications; the activity history; the exported document.
-3. **Put the system in one state, preferably an edge.** Readers part at edges: just after a role change, an item answered but not closed, a reopen, a second reviewer, an archived or unlinked object, a check reused because nothing changed.
+3. **Put the system in one state, preferably an edge.** Readers part at edges: just after a role change, an item answered but not closed, a reopen, a second approver, an archived or unlinked object, a check reused because nothing changed.
 4. **Ask every reader, as every role and as a non-member, in the same minute.** The API makes this cheap: one script, one token per role, a few dozen calls.
 5. **Write the table:** reader · called as · what it said. Two rows that disagree for the same input are a finding.
 6. **File the first disagreement; never wait for a second.** Class `one-fact-many-owners`: put the table in the issue, list every reader you reached and the earlier issues of the same fact. The fix is one owner that every reader renders, not a patch to the reader that looked wrong ([findings.md](findings.md#fix-the-issue-behind-the-issue)). If the `deslop` skill is installed, its pattern *one fact, many owners* names the repair.
 
-A table from a real issue, generalized:
+A synthetic example of the shape such a table takes (an approval request, one fact: who acts next):
 
 | Reader | Called as | What it said |
 |---|---|---|
-| state: status line | owner, editor | "Recall the review, answer 1 change request, and send it again." (editor acts) |
-| state: actions | owner, editor | only `recall` allowed (editor acts) |
-| state: waiting for | owner, editor | the reviewer (reviewer acts) |
-| state: status line | reviewer | "The editor must recall the round…" (editor acts) |
-| answer route, called | editor | 423 `round_frozen`: recall first (editor acts; lowercase code) |
-| section save, called | editor | 423 `ROUND_FROZEN` (the same refusal, another spelling) |
+| state: status line | author | "Revise the request and resubmit it." (author acts) |
+| state: allowed actions | author | only `withdraw` allowed (author acts) |
+| state: waiting for | author | the approver (approver acts) |
+| state: status line | approver | "The author must withdraw and revise…" (author acts) |
+| revise route, called | author | 423 `request_locked`: withdraw first (author acts; lowercase code) |
+| attachment upload, called | author | 423 `REQUEST_LOCKED` (the same refusal, another spelling) |
 
 The same table catches these variants:
 
-- **Count parity.** For every list that carries a count, fetch both and compare over all rows: a total against the walked list, a roles count against the member list, a list row's fields against the detail read of the same row, an "N open" sentence against the lists it summarizes. A row that is listed but whose detail read refuses is a third kind: listed but not openable.
+- **Count parity.** For every list that carries a count, fetch both and compare over all rows: a total against the walked list, a roles count against the member list, a list row's fields against the detail read of the same row (a field such as a cost that is null on the detail and set on the list is this class), an "N open" sentence against the lists it summarizes. A row that is listed but whose detail read refuses is a third kind: listed but not openable.
 - **After every upstream change.** After each upstream unlock, edit and re-lock, read every view of readiness (the workflow state, the stage's own read, the refusal text of each downstream move) and require them to agree and to name a reachable next action.
 - **After a replace.** After replacing a source file, read every reader that cites it (source lists, stale flags, evidence search, citations, consistency checks). A reader of the current source must not return the old version except as an explicit "replaced" notice; a version-pinned artifact (a signed report) citing the version it was made from is correct provenance. With no replaced data present the check sees nothing, so make one.
-- **A reader with no read route.** When a fact reaches people only as a push (a notification feed with no GET), no table can include it, and its disagreements stay invisible. File the missing read route as its own finding: in one campaign, three lanes reported the notification reader untestable for this reason.
+- **A reader with no read route.** When a fact reaches people only as a push (a notification feed with no GET), no table can include it, and its disagreements stay invisible. File the missing read route as its own finding.
 - **The page's copy.** The browser shows a fact the API also states; a page that shows something else has re-decided the producer's fact. That row is a browser lane's twin check ([driving.md](driving.md#how-to-duel-them)).
 
 ### 5.2 The role matrix
@@ -154,7 +155,8 @@ A browser pass yields anecdotes. An API pass should yield a table that someone c
 
 For each cell: expected (from the docs or the code's own table of legal moves) → actual (status, error code, the audit record). Legal cells succeed **exactly once**; illegal cells are refused with the documented code, write the documented refusal record, and never answer 5xx. "What held" is part of the report — it is the coverage record that makes the next run cheaper.
 
-- **Authorization comes first in the refusal order.** Expect 403 before any 404, 422 or 423; a body that names the state when the state is the cause; and never two roles each told the other must act. Send an empty or bogus body to mutating routes so nothing real changes when a gate is missing.
+- **Every route that takes an object id**, reads and downloads included, gets the anonymous, non-member and wrong-role calls, not only the mutating routes of the stage.
+- **Authorization comes first in the refusal order.** The documented authorization refusal (often 403; some APIs answer 404 on purpose to hide existence) arrives before any validation, state or lock refusal; a body names the state when the state is the cause; and never are two roles each told the other must act. Send an empty or bogus body to mutating routes so nothing real changes when a gate is missing.
 - **No existence oracle.** A non-member asking for a real object and for a nonexistent id gets the same refusal body.
 - **Isolation.** As a non-member of object A, call every list, search, feed, export, activity and notification route, scoped to A's ids and unscoped, and search the responses for A's private strings (titles, file names, comments, counts). Run the same calls as a member first: the positive control proves the strings would show. Then send another object's child ids inside your own object's routes and bodies (cross-object ids): each must be refused, never accepted or re-parented.
 - **Capability against controls.** Diff the route table's declared capability against what the membership read says the role holds and against the controls the UI shows for that role: a control with no capability is a bug, and so is a capability with no control (a dead end).
@@ -179,7 +181,7 @@ The UI offers only the moves it thinks are legal, in the order its pages lead. T
 Two to ten threads on one transition, from different people where it makes sense, each race repeated about five times (report "N of M": races are intermittent). Keep each burst at ten calls or fewer.
 
 - **Exactly one effect.** One winner, one transition record; losers get the refusal the route's contract documents (usually a clean conflict that names who won). A transition that is idempotent by design, or retries that share one idempotency key, may return success to every caller: assert the count of effects and records, not that every reply differs.
-- **Double-submit.** The same create or submit twice in a row, once with one idempotency key and once with none: duplicate rows, double charges, a second paid run.
+- **Double-submit.** Send each create or submit twice in a row with the same idempotency key, then twice with none: duplicate rows, double charges, a second paid run.
 - **Two writers, one record.** Send every write route twice at once (same body, then two users with different bodies) and once with a stale version token. Expect a read-back showing one body in full. Where a 200 carries a success boolean (`released`, `ok`), force the false path and demand a reason. Two owners claiming one exclusive resource (a folder, a lease, a unique name) must not both be accepted.
 - **Time of check vs time of use.** When a code reader says "the role is read at the request edge and the write happens seconds later under a lock", script the change in between ([lanes.md](lanes.md#the-hypothesis-loop-code-reader-to-live-lane)).
 - **A race is a finding** when the end state is impossible by the rules: two winners, a move applied on a stale state, a lost write behind a 200, counts that never agree again, a lease held by two, an audit record missing or doubled, a 500, or a state no move can leave.
@@ -209,7 +211,7 @@ A driving check walks one path and finds what breaks on it. An **oracle** checks
 | **Liveness** | Every running or waiting state moves within a bound, or names who it waits for | Every few minutes for an hour or two, list queued, running and cancelling work and every waiting state from one system-wide list of active work (sampling each object's newest run hides an older stalled run behind it); read the run history with its timestamps for bounds broken between samples | Silent stalls; cancels that never finish; work queued behind nothing; a terminal row with no reason; an active-run flag that disagrees with the live job |
 | **Log census** | Every distinct error and warning class has an owner | Pull a day or two of error and warning lines, cluster them by site and cause, and match each class to an open issue | Failures nobody filed because each looked like noise; counts that show which class costs most |
 | **Run census** | Every failed or cancelled background run has a named cause | List the failed and cancelled runs of a period, group by kind and cause | Unclassified failures; a cancel reason that is not what happened; one cause behind many kinds |
-| **Ground truth** | A generator's output covers what a known-good output covers, faithfully | Where real finished examples exist, read them first, then compare the generated output by section — length, and each key fact present, missing, wrong or unsupported; check that each citation's page states the value | Systematic gaps by class (a table never filled, a fact always missed); a wrong value with a confident citation |
+| **Ground truth** | A generator's output covers what a known-good output covers, faithfully | Where real finished examples exist, read them first, then compare the generated output by section — length, and each key fact present, missing, wrong or unsupported; where the output cites a source, check that the cited passage states the value | Systematic gaps by class (a table never filled, a fact always missed); a wrong value with a confident citation |
 | **Record** | What is delivered is exactly what was approved | Export after an approval, download the package and inspect its **content**, not only its status: each document's content and version identity against the approved version (the version the approval bound, not the newest), after only the transformations the product declares; every file against its manifest entry; the signatures listed against the approval; then export twice and diff, allowing only the parts the product declares variable (timestamps, provenance, signature material), and require byte equality only where the product promises it | Unapproved text in a delivery; a manifest that does not match its files; a second export whose content differs |
 
 Rules:

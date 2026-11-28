@@ -7,7 +7,7 @@ description: The standard stress run — set up (environments, access, drive mod
 
 A full stress run has a shape. Not a straitjacket — user intent and whatever you find always win — but a default that keeps you from red-teaming a system whose happy path is broken.
 
-| Phase | Mode | Passes | Question it answers |
+| Phase | File | Passes | Question it answers |
 |-------|------|--------|---------------------|
 | 0 | Set up (below) | once | Where may I stress, with which access, by which mode? |
 | 1 | [Reliability](reliability.md) (the gate) | 1-3 | Does the happy path *consistently* complete? |
@@ -63,6 +63,6 @@ Code-first, per [bug-hunter.md](bug-hunter.md). It never touches the running app
 - The user asked for one mode only → run that mode. This process is the default for an open-ended "stress test this."
 - A launch or onboarding change is about to meet strangers → insert Phase 2b, and rerun the same panel after the fixes as its own proof step.
 - The findings are all polish and the panel has not run → the temperaments you did not try are the unexplored surface; run the panel before concluding the app is clean.
-- The late stages of a gated app are under-tested, the box cannot afford many browsers, or the user asked for an API-only run or a swarm → run the phases as an **API-first, multi-lane campaign**: the generated flow map first ([api.md](api.md#1-the-api-document-the-flow-map)), then one lane per part of the app standing on existing late-stage objects, one fresh end-to-end flow as the reliability gate, one code hunt feeding hypotheses to the live lanes, and at least one browser lane ([lanes.md](lanes.md); exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).
+- The late stages of a gated app are under-tested, the box cannot afford browsers, or the user asked for an API-only run → run the requested phases **API-first** ([api.md](api.md)): the generated flow map first, then the reliability gate as one fresh end-to-end flow (code reading, state reads and driver preparation may run meanwhile), then comb and mischief standing on existing late-stage objects. With many testers ([lanes.md](lanes.md)): one lane per part of the app, one code hunt feeding hypotheses to the live lanes, and at least one browser lane (exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).
 - Time-boxed → one real pass per phase beats three shallow ones or skipping a phase.
 - Phase 1 keeps failing → the run legitimately ends early; a broken happy path *is* the headline finding.

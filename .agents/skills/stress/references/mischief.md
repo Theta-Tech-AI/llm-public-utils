@@ -89,7 +89,7 @@ The user isn't on your wide window with a fast connection taking the happy path.
 
 ## Report
 
-Per [findings.md](findings.md): search before filing, file early, over-document repro + evidence + labels. Filing *is* the point unless asked to auto-fix. Then keep hunting.
+Per [findings.md](findings.md). Filing *is* the point unless asked to auto-fix. Then keep hunting.
 
 ## See also
 

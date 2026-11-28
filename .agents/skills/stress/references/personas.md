@@ -111,7 +111,7 @@ A defect that survives its own fix is the most valuable output the panel can pro
 
 ## Personas by API
 
-A persona can also run with no browser, knowing only what the API tells a client: the status lines, the next-step texts, the refusals and their messages. It pursues the same first success in character and logs every response that leaves it not knowing what to do next (quote it), every dead end and every contradiction between two responses. This tests whether the server's own words carry a person through the flow — the class every client inherits ([driving.md](driving.md)). In one API-only campaign, cold API personas found a new project that no one could link, a first owner with no route to get documents in, and an editor told nothing after a returned review. It sees no rendering, so it never replaces the browser panel; say which kind ran.
+A persona can also run with no browser, knowing only what the API tells a client: the status lines, the next-step texts, the refusals and their messages. It pursues the same first success in character and logs every response that leaves it not knowing what to do next (quote it), every dead end and every contradiction between two responses. This tests whether the server's own words carry a person through the flow — the class every client inherits ([driving.md](driving.md)). Cold API personas find dead ends that no single reader flags: a new object nobody can finish setting up, a first owner with no route to add content, a person told nothing after their work was sent back. It sees no rendering, so it never replaces the browser panel; say which kind ran.
 
 ## Anti-patterns
 

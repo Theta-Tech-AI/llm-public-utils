@@ -17,7 +17,7 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 
 **What only it finds, or finds far faster.** One fact that different readers state differently (the reader table, [api.md §5.1](api.md#51-the-reader-table-one-fact-every-reader-every-role)); a move the UI hides but the server accepts; role × state matrices; races with exactly-one-effect checks; refusal typing and refused-action audit records; out-of-order and change-of-mind sequences; late stages of a gated flow that browser runs reach last and least; the content of exports and generated output against ground truth; the background work behind a 202.
 
-**Cost and speed.** Each probe is one HTTP round trip: no browser start, no rendering, no waiting for a selector, no screenshot to read. In one overnight API-only campaign against a gated, multi-role web app, the lanes of one wave that wrote full reports made **169 to 344 calls each in 27 to 37 minutes**; that wave ran eight lanes at once from one machine; each script acted as every person of a four-person team (owner, editor, two reviewers) in the same minute; a ten-reader, three-role reader table took a few minutes and reproduced 3 of 3. Every repro is a call list anyone can run again, with no render flake; for timing-dependent bugs such as races, record the timing and how often it reproduces (N of M). What limits API mode is the target, not the tester: the gateway's rate limit per IP, the worker pool, paid runs, and deploy windows.
+**Cost and speed.** Each probe is one HTTP round trip: no browser start, no rendering, no waiting for a selector, no screenshot to read. In one API-only campaign against a gated, multi-role web app, a lane made roughly **170 to 340 calls in half an hour**, eight lanes ran at once from one machine, each script acted as every member of a team in the same minute, and a reader table of about ten readers across three roles took a few minutes and reproduced every time. These are observations, not budgets: the target sets the real limits. Every repro is a call list anyone can run again, with no render flake; for timing-dependent bugs such as races, record the timing and how often it reproduces (N of M). What limits API mode is the target, not the tester: the gateway's rate limit per IP, the worker pool, paid runs, and deploy windows.
 
 **What it cannot see.** Whether the UI offers the move at all, labels it right, or shows the refusal's reason; first paint, the async settle, stale client state, layout, keyboard, focus and copy as rendered; anything the frontend does between calls (optimistic updates, debounced saves, leave-page saves).
 
@@ -54,14 +54,15 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 
 ## How to duel them
 
-When both modes run — the default for a webapp:
+When both modes run — the default for a webapp — lead with the mode the table above names, and let the reliability gate pass before either mode mutates shared state ([reliability.md](reliability.md#the-gate)); mapping, code reading, state reads and driver preparation can run while it does.
 
-1. **API first, to map and hammer.** Generate the flow map, then run the reader table, the role matrix, out-of-order moves and races cheaply, standing on late-stage objects ([api.md](api.md)). This finds the contract, state, authorization and concurrency bugs — every one of them a bug in every client.
-2. **Browser on the paths people walk**, aimed by what the API pass found load-bearing: the frontend playbook in [browser.md](browser.md).
+1. **The lead mode's pass.**
+   - *API-led* (contracts, state, authorization, concurrency, late stages): generate the flow map, then run the reader table, the role matrix, out-of-order moves and races cheaply, standing on late-stage objects ([api.md](api.md)). Every bug found is a bug in every client.
+   - *Browser-led* (UX, launch, onboarding): walk the paths people walk with the frontend playbook ([browser.md](browser.md)), using the API only to seed state and read backend truth.
+2. **The other mode, aimed by the first.** After an API-led pass, the browser walks the user paths that touch what the API found load-bearing; after a browser-led pass, the API amplifies each suspicious UI sequence with variants, roles and concurrency.
 3. **Cross the results.** A disagreement between what the API says and what the page shows is itself a finding: the frontend has re-decided the producer's fact (if the `deslop` skill is installed, its pattern *consumer re-decides producer* names it). **Twin every gate finding**: a move the API refuses but the UI offers, or the UI blocks but the API allows, is a real bug either way.
 4. **Hybrid patterns** with high leverage:
    - **API setup → browser verify.** Seed and reset state by API; comb or attack only the UI that matters.
-   - **Browser discover → API amplify.** Turn a suspicious UI sequence into a script with variants, roles and concurrency.
    - **API assert while the browser drives.** During a UI pass, read the same resources by API and compare with what renders.
    - **HAR bridge.** Capture a HAR in the browser and turn its hot paths into API scripts.
 
