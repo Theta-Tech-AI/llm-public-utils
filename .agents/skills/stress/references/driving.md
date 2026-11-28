@@ -57,7 +57,7 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 When both modes run — the default for a webapp — lead with the mode the table above names, and make no test writes in either mode until the reliability gate passes ([reliability.md](reliability.md#the-gate)).
 
 1. **The lead mode's pass.**
-   - *API-led* (contracts, state, authorization, concurrency, late stages): generate the flow map, then run the reader table, the role matrix, out-of-order moves and races cheaply, standing on late-stage objects ([api.md](api.md)). Every bug found is a bug in every client.
+   - *API-led* (contracts, state, authorization, concurrency, late stages): generate the flow map, then run the checks of the selected phase cheaply, standing on late-stage objects ([api.md §5](api.md#5-checks-highest-yield-first)) — in a full run, the reader table, the role matrix, out-of-order moves and races. Every bug found is a bug in every client.
    - *Browser-led* (UX, launch, onboarding): walk the paths people walk with the frontend playbook ([browser.md](browser.md)), using the API only to seed state and read backend truth.
 2. **The other mode, aimed by the first.** After an API-led pass, the browser walks the user paths that touch what the API found load-bearing; after a browser-led pass, the API amplifies each suspicious UI sequence with variants, roles and concurrency.
 3. **Cross the results.** A disagreement between what the API says and what the page shows is itself a finding: the frontend has re-decided the producer's fact (if the `deslop` skill is installed, its pattern *consumer re-decides producer* names it). **Twin every gate finding**: a move the API refuses but the UI offers, or the UI blocks but the API allows, is a real bug either way.
