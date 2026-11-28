@@ -446,7 +446,7 @@ def meminfo_mb() -> dict[str, int]:
             "SwapUsed": (kb["SwapTotal"] - kb["SwapFree"]) // 1024}
 
 
-CONTAINER_ID = re.compile(r"(?:^|[/-])([0-9a-f]{64})(?:\.scope)?(?:/|$)")  # systemd and cgroupfs layouts, any parent
+CONTAINER_ID = re.compile(r"(?<!conmon)(?:^|[/-])([0-9a-f]{64})(?:\.scope)?(?:/|$)")  # systemd and cgroupfs layouts, any parent
 
 
 def cgroup_path(text: str) -> str:
