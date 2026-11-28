@@ -8,7 +8,7 @@ keywords: [personas, subagents, launch-qa, first-time-user, onboarding, frequenc
 
 One driver has one temperament — yours. You know the app, you click in the right order, you read the labels, and you forgive the rough edges because you already know what they were meant to say. That is a **blind spot with a shape**: every bug that only fires for an impatient thumb, a literal reader, or someone on a throttled phone is invisible to a sweep run by a single well-informed agent. Comb narrows the happy path; mischief refuses it; the panel tests **whose** happy path the app was built for.
 
-Same rules as every mode: [driving.md](driving.md) for the hands, [findings.md](findings.md) for what happens to a bug.
+Same rules as every mode: [browser.md](browser.md) for the hands, [findings.md](findings.md) for what happens to a bug.
 
 ## When to run the panel
 
@@ -109,6 +109,10 @@ Fixing is not proof. The panel is rerun **as an experiment**, and the experiment
 
 A defect that survives its own fix is the most valuable output the panel can produce: file it with both runs' evidence attached, and say plainly that the first fix did not hold.
 
+## Personas by API
+
+A persona can also run with no browser, knowing only what the API tells a client: the status lines, the next-step texts, the refusals and their messages. It pursues the same first success in character and logs every response that leaves it not knowing what to do next (quote it), every dead end and every contradiction between two responses. This tests whether the server's own words carry a person through the flow — the class every client inherits ([driving.md](driving.md)). Cold API personas find dead ends that no single reader flags: a new object nobody can finish setting up, a first owner with no route to add content, a person told nothing after their work was sent back. It sees no rendering, so it never replaces the browser panel; say which kind ran.
+
 ## Anti-patterns
 
 - **One agent role-playing five personas in sequence.** Cheap, and worthless: contamination plus one temperament wearing five hats. Independence is the method.
@@ -123,5 +127,5 @@ A defect that survives its own fix is the most valuable output the panel can pro
 - [process.md](process.md) — where the panel sits in the standard run (an optional phase 2-alternative / post-comb instrument)
 - [comb.md](comb.md) — gentle happy-path grooming by one deliberate driver
 - [mischief.md](mischief.md) — hostile, deep, escalating abuse
-- [driving.md](driving.md) — browser vs API, resize, occlusion, truth-checks
+- [browser.md](browser.md) — the browser loop, resize, occlusion, truth-checks
 - [findings.md](findings.md) — filing rules, including the subagent rule this mode depends on

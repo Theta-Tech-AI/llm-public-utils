@@ -1,64 +1,41 @@
 ---
 name: stress
-description: "Stress-test apps (especially webapps) — confirm reliability, comb happy paths, cause mischief, run a panel of distinct first-time users, and hunt bugs in code — via agent browser, API scripts, or both. Use whenever the user wants to find bugs, edge cases, knots, break an app, harden UX or APIs, QA a flow, run launch or onboarding QA, test what confuses real users, simulate different users or personas, or catch issues before users do — even if they only say try the app, test this, hit the API, or see what breaks."
+description: "Stress-test apps (especially webapps) — confirm reliability, comb happy paths, cause mischief, run a panel of distinct first-time users, and hunt bugs in code — via agent browser, API scripts, or both, alone or as a swarm of parallel lanes. Use whenever the user wants to find bugs, edge cases, knots, break an app, harden UX or APIs, QA a flow, run launch or onboarding QA, test what confuses real users, simulate different users or personas, run an API-only or headless stress run, or catch issues before users do — even if they only say try the app, test this, hit the API, or see what breaks."
 ---
 
-# Stress: Unearth Bugs Before Users Do
+# Stress: unearth bugs before users do
 
-A stress run is **sequential**, not a pick-list: prove the happy path works, groom it, attack it, then hunt the code. All of it hardens an app's *functionality* (not load/scale — that can be a future `load.md`):
+A stress run hardens an app's *functionality* (not load or scale). It is **sequential**, not a pick-list: prove the happy path works (reliability), groom it (comb), attack it (mischief), and hunt the code (bug hunt). A failed reliability gate ends the run early. Two drive modes put hands on the system — **API mode**, the contract every client inherits, and **browser mode**, what the person actually experiences — and they work best dueling: each finds what the other cannot.
 
-| # | Phase | Temper | Question it answers |
-|---|-------|--------|---------------------|
-| 1 | **Reliability** (gate) | Patient happy-path repetition until it earns trust | Does the happy path *consistently* complete? |
-| 2 | **Comb** | Gentle, repeated happy-path grooming | Where are the knots on and around the path? |
-| 3 | **Mischief** | Hostile, out-of-order chaos | What breaks under abuse the system doesn't expect? |
-| 4 | **Bug hunt** | Code-first, multi-angle review | What do layers, workflows, and data models hide? |
+## Read in this order
 
-Run the phases **in order, 1-3 passes each** for the app-driving phases — the full shape lives in [process.md](references/process.md). A failed reliability gate *ends the run early*: there is no point combing or attacking a system that can't reliably do its one job.
+| # | File | Read it for |
+|---|------|-------------|
+| 1 | [process.md](references/process.md) | **The standard run**: setup, then 1-3 reliability → 1-3 comb → 1-3 mischief passes, the bug hunt, the persona panel, and when to deviate |
+| 2 | [driving.md](references/driving.md) | **The two modes, dueling**: why each works, what only each finds, what each costs, how to run them against each other |
+| 3 | [api.md](references/api.md) | **API mode**: the flow map (the API document), shared tools, the tester as a model, and the checks — the reader table first, the role matrix, out-of-order moves, races, refusals and audit, oracles |
+| 3 | [browser.md](references/browser.md) | **Browser mode**: agent browser, and the frontend driving playbook |
+| 4 | [findings.md](references/findings.md) | **What to do with bugs**: search, file, label, fix the issue behind the issue, talk a fixed bug through with its owner |
+| 5 | [reliability.md](references/reliability.md) · [comb.md](references/comb.md) · [mischief.md](references/mischief.md) · [bug-hunter.md](references/bug-hunter.md) · [personas.md](references/personas.md) | **The phase** for this pass (see below) |
+| 6 | [lanes.md](references/lanes.md) | **Many testers at once**: lane split, briefs, start and end of a lane, the report shape, the coordinator, auto-fix through gated fixers |
 
-Phase 4 is **code review, not app driving** — it never touches the running app, so it may run **in parallel** (a subagent reading code while you drive phases 1-3) instead of strictly last. Run any single phase standalone only when the user asks for exactly that (e.g. "just cause mischief"); otherwise the sequence is the default, and reliability is the entrance fee for everything downstream.
+## Three separate choices
 
-> **If the product is a webapp, start at the front door.** The user only ever touches the UI — every backend route, worker, and DB invariant exists to serve what renders in the browser. A pass that only probes the API or reads code is testing a surface no user sees; it will over-report backend defects and miss the UX, state, timing, and copy bugs that are what actually reach people. Default your *hands* to the agent browser for any webapp, and drive it like a real user, not a quick screenshot check. The frontend driving playbook in [driving.md](references/driving.md) is the core of doing this well.
->
-> This is a **rebalancing, not a replacement.** The code-first ([bug-hunter.md](references/bug-hunter.md)) and API hunts find a different and equally real class — data loss, authz holes, races, audit/compliance gaps, silent corruption — that never shows up on screen until it bites a user. Keep doing that hunt; it's essential. The correction is only that it had been *crowding out* the front door: lead with the browser, then go deep on the backend too. Do both.
+**1. Which phase**, by the request:
 
-## Shared references (read these)
+- **"Does it work?" / sanity check / pre-release confidence** → [reliability](references/reliability.md)
+- **"Walk through the happy path" / "comb" / polish** → [comb](references/comb.md)
+- **"Break it" / "try to mess it up" / chaos** → [mischief](references/mischief.md) (optionally after one comb pass so you know the happy path)
+- **"Review the code for bugs"** → [bug hunter](references/bug-hunter.md)
+- **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents, findings ranked by how many personas hit them, then a rerun of the identical panel to prove the fixes
+- **"Stress test this" / vague** → the standard run in [process.md](references/process.md)
 
-| File | When |
-|------|------|
-| [references/process.md](references/process.md) | **The standard run** — deployment lay of the land, then 1-3 reliability → 1-3 comb → 1-3 mischief passes |
-| [references/driving.md](references/driving.md) | Choosing **browser vs API vs hybrid** — different surfaces catch different bugs |
-| [references/findings.md](references/findings.md) | **What to do with bugs** (GitHub issues by default, artifacts, auto-fix), and **talking a fixed bug through with its owner**: bug, solution, predicted critique; then act on their answer |
-| [references/api-flows.md](references/api-flows.md) | **API-first runs** — the generated flow map (stages, call order, dependency edges, routes nobody has called), simulated user flows from HTTP calls, the move × state × actor matrix, many lanes on one environment, the shared tools and the pacing gate |
-| [references/oracles.md](references/oracles.md) | **Oracle lanes** — one property checked across everything (consistency, cost, liveness, log and run census, ground truth, record), which tester model runs which lane, and why a lane that never started is not a result |
+**2. Which drive mode leads**, by the question: [driving.md → Choose the lead mode](references/driving.md#choose-the-lead-mode-by-the-question). "Hit the API", API-only, headless, contract, authorization or concurrency stress, or late stages nobody reaches in the browser → [API mode](references/api.md), for the phase the intent names (comb for a walk-through or a contract check, mischief for "break it", reliability for "does it work"); a webapp's UX → [browser mode](references/browser.md); most webapps → both.
 
-## Mode references (read the ones you will use)
-
-- [references/reliability.md](references/reliability.md)
-- [references/comb.md](references/comb.md)
-- [references/mischief.md](references/mischief.md)
-- [references/bug-hunter.md](references/bug-hunter.md)
-- [references/personas.md](references/personas.md) — **the first-time-user panel** (5 independent persona agents, findings ranked by how many hit them, rerun to prove the fix)
-
-## Before you start
-
-1. Read **driving** + **findings** (+ **process** for a full run), then the mode file(s) for this pass.
-2. **Get set up** — auth may live in env vars, docs, a local-dev skill, token scripts, or a bypass.
-3. Pick a **drive surface** (browser, API, or hybrid) from [driving.md](references/driving.md). Webapp UX work → browser-heavy; contracts/concurrency/repetition → API-heavy; best results usually hybrid.
-4. Confirm reporting only if the user contradicted [findings.md](references/findings.md).
-
-## How to choose a mode
-
-- **"Does it work?" / sanity check / pre-release confidence** → reliability
-- **"Walk through the happy path" / "comb" / polish** → comb
-- **"Break it" / "try to mess it up" / chaos** → mischief (optionally after one comb pass so you know the happy path)
-- **"Review the code for bugs"** → bug hunter
-- **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents in parallel, merged into one list ranked by how many personas each defect hits, then a rerun of the identical panel to prove the fixes
-- **"Hit the API" / contract / concurrency stress / "simulate the flow with API calls" / late stages nobody reaches in the browser** → comb or mischief with an **API-first** drive plan per [api-flows.md](references/api-flows.md); keep at least one browser lane unless the request is API-only or the target has no UI
-- **"Stress test this" / vague** → the standard run in [process.md](references/process.md): reliability first, then comb, then mischief; bug-hunt ugly code along the way
+**3. One tester or many lanes.** One tester by default. Run [lanes](references/lanes.md) when the user asks for a swarm, or when breadth across the app or its late stages needs testers in parallel.
 
 ## Your job
 
 Stress the system. Unearth bugs. Record them per [findings.md](references/findings.md) (or fix if asked: every fix passes the three-paragraph gate in steps 4 and 7 of [Fix the issue behind the issue](references/findings.md#fix-the-issue-behind-the-issue): written before and after the fix, reread by a fresh reader where one is available, else a disclosed self-review). Summarize with links. Leave the app harder to break than you found it.
 
-**Always look for the issue behind the issue.** A bug is evidence that a design let it happen: a fact with two owners, a rule enforced in one layer only, a check-then-act with no lock, a status and its message decided apart, freshness judged by time instead of content. When you file, name that design decision as your best hypothesis and propose the fix at its owner; when you are fixing (the user asked for it), fix it there so the whole class cannot recur. A guard at the symptom site is a patch, acceptable only with a stated reason the owner cannot enforce it. Details: [findings.md → Fix the issue behind the issue](references/findings.md#fix-the-issue-behind-the-issue).
+**Always look for the issue behind the issue.** A bug is evidence that a design let it happen: a fact with two owners, a rule enforced in one layer only, a check-then-act with no lock, a status and its message decided apart, freshness judged by time instead of content. When you file, name that design decision as your best hypothesis and propose the fix at its owner; when you are fixing, fix it there so the whole class cannot recur ([findings.md → Fix the issue behind the issue](references/findings.md#fix-the-issue-behind-the-issue)).

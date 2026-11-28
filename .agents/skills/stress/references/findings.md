@@ -26,7 +26,9 @@ A final-message-only finding is **not durable**. Comments can always be added la
 
 ### Subagents must file too
 
-If you spawn subagents, their prompt must **explicitly require** GitHub issue creation or commenting for every confirmed finding (same detail bar as this doc). Do not let a subagent return bugs only in its final message to the parent — that dies with the session. The parent should verify issue URLs exist before treating the hunt as done.
+If you spawn subagents, their prompt must **explicitly require** filing every confirmed finding in the destination the defaults above chose — a GitHub issue or comment, or an artifact entry when there is no tracker or no permission (same detail bar as this doc). Do not let a subagent return bugs only in its final message to the parent — that dies with the session. The parent should verify each durable entry (the issue URLs, or the artifact entries) exists before treating the hunt as done.
+
+**Many lanes at once** ([lanes.md](lanes.md)): every medium-or-worse finding is filed the moment it is confirmed, in the campaign's destination chosen by the defaults above — its own issue, or evidence on an existing one when [the search](#search-before-filing-avoid-duplicates) finds a close match, or its own artifact entry when the defaults chose an artifact ([Artifacts](#artifacts-no-github)). A lane may collect its low-severity findings into one list issue (or one artifact section) when its brief says so — one numbered item per distinct bug, each with its own repro, so any item can become its own issue later. The campaign's tracking issue, or the artifact, also holds each lane's start and end entries and the coordinator's wave reports.
 
 ## What counts as a "real" finding
 
@@ -39,9 +41,15 @@ Do **not** file from a single flaky signal. Cross-check before filing:
 
 A scary screenshot is not a bug until another layer agrees. A clean screenshot is not proof the backend is healthy.
 
-Rule out false alarms: deploy/roll in flight, stale SPA, your own earlier mutations, tool limitations. See [driving.md](driving.md).
+Rule out false alarms before filing:
 
-One distinct bug per issue. Don't dump a whole session into a single ticket.
+- **A deploy or roll in flight.** A 503 "updating", a 502 or a stale chunk during a roll voids the ordinary probes it touched; it is not a defect of the feature you were testing (a window that lasts long is a finding against the deploy: [lanes.md](lanes.md#during-a-lane)). Whether the front door handles the window — a maintenance state rather than a raw 502 or a white page — is its own check ([mischief.md](mischief.md#front-door-chaos-the-users-real-environment-not-yours)).
+- **Your own data.** Your earlier mutations, and **test data an earlier tester wrote**: before filing a content finding (a wrong value in a document, export, answer or status), search the testers' own scripts and the object's history for the value. Placeholder answers that an earlier lane saved and that then flowed into an export are test data, not a wrong-content bug; whether the app should have refused that input at save is a separate input check ([api.md §5.6](api.md#56-input-and-hygiene)).
+- **A budget the run spent.** A refusal from a shared quota (a third-party daily limit, a paid-run budget) that the testers or the app's own background work used up is expected; the spend itself may be the finding.
+- **A stale client.** An old tab or a cached bundle on a stable deploy: reproduce in a fresh session before filing.
+- **Tool limitations.** An undriveable widget, a gzipped asset grep, a flaky headless run, a client defaulting to another environment: confirm on a second surface before concluding "missing" or "broken".
+
+One distinct bug per issue (the one exception is a lane's list of low-severity findings, [above](#subagents-must-file-too)). Don't dump a whole session into a single ticket.
 
 ---
 
@@ -75,7 +83,7 @@ Err on the side of **too much detail**. Future you (or another agent/human) shou
 Name the **failure**, not the session:
 
 - Good: `POST /api/orders after DELETE returns 200 and resurrects the row`
-- Good: `Authoring "Continue" stays enabled when SE gate is incomplete`
+- Good: `Wizard "Continue" stays enabled while the required step is incomplete`
 - Bad: `Bug from mischief pass 3`
 - Bad: `Something weird on staging`
 
@@ -197,9 +205,9 @@ Always include both:
 
 Good justification names the failure mode: data integrity, authz hole, user-blocking workflow, incorrect clinical/business output, security, silent wrong answer, accessibility trap, etc.
 
-**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. Before writing the suggestion, ask where the value or rule first enters the system, how many places re-derive or repair it (count them — the count is evidence), and how many readers decide the same fact. Name the class, list its sibling symptoms, and give one live check for the class. Unknowns are fine at filing time: file with what you have and add the owner, siblings and check as you learn them. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
+**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. How to find the owner, count the places that re-derive or repair the fact (the count is evidence) and name the class: [Fix the issue behind the issue](#fix-the-issue-behind-the-issue); how many readers state the fact: the reader table in [api.md](api.md#51-the-reader-table-one-fact-every-reader-every-role). Unknowns are fine at filing time: file with what you have and add the owner, siblings and check as you learn them.
 
-Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.se_complete` is false and match API", "add regression test X".
+Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.step_complete` is false and match the API", "add regression test X".
 
 ---
 
@@ -330,10 +338,10 @@ Periodically:
 
 1. Pull the closed **and** open bugs that originated from human/user feedback (e.g. a `human-feedback` label, or issues filed by real users rather than agents).
 2. Cluster them by *class*, not instance — ask "what kind of check would have caught each?"
-3. For each class, generalize it into a reusable check and add it to the right mode file: [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for state-contradiction and timing, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
+3. For each class, generalize it into a reusable check and add it to the right file: [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for UI state-contradiction and timing, [api.md](api.md) for contract, role, race and reader checks, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
 4. Re-run the sweep with the enriched catalog to find the **still-present** siblings of each human-found bug — the same class almost always has other live instances.
 
-A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see the browser-only callout in [driving.md](driving.md).)
+A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see [driving.md → Browser mode](driving.md#browser-mode-what-the-person-actually-experiences).)
 
 ## Talk a bug through with the owner (predict the critique)
 
@@ -376,4 +384,4 @@ Summarize for the user:
 
 ## See also
 
-- [driving.md](driving.md) · [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md)
+- [driving.md](driving.md) · [api.md](api.md) · [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md) · [lanes.md](lanes.md)
