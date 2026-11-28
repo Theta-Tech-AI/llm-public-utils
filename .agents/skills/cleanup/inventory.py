@@ -472,7 +472,7 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
             comm = stat[stat.index(b"(") + 1:stat.rindex(b")")].decode(errors="replace").encode("unicode_escape").decode()  # a name may hold a newline
             rest = stat[stat.rindex(b")") + 2:].split()
             rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
-            if rss_kb == 0 and rest[0] == "Z":  # a dead thread-group leader reads 0 while its worker threads keep the memory
+            if rss_kb == 0 and rest[0] == b"Z":  # a dead thread-group leader reads 0 while its worker threads keep the memory
                 for tid in os.listdir(f"/proc/{entry}/task"):
                     if rss_kb := int(Path(f"/proc/{entry}/task/{tid}/statm").read_text().split()[1]) * page_kb:
                         break
