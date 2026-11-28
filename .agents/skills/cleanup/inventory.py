@@ -517,7 +517,7 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
         roots = [p for p in pids if table[p][0] not in members]
         reparented = all(table[p][0] == 1 or table.get(table[p][0], (0, 0, 0, "", ""))[4] == "systemd" for p in roots)
         tracks_parent = not key.endswith(".service")
-        owners.append({"owner": key, "container": key.removeprefix("container:") if key.startswith("container:") else None, "procs": len(pids), "rss_mb": sum(table[p][1] for p in pids) // 1024,
+        owners.append({"owner": key, "container": key.removeprefix("container:") if key.startswith("container:") else None, "procs": len(pids), "rss_kb": sum(table[p][1] for p in pids),
                        "age_h": max(table[p][2] for p in pids) / 3600, "reparented": tracks_parent and reparented})
     return owners
 
@@ -540,7 +540,7 @@ def label_owners(owners: list[dict], samples: dict[str, tuple[str, int]] | None)
     """Name each container from docker stats and use its cgroup memory; a container with no sample stays a host row by id."""
     for o in owners:
         if o["container"] and samples and o["container"] in samples:
-            o["owner"], o["rss_mb"] = f"docker:{samples[o['container']][0]}", samples[o["container"]][1]
+            o["owner"], o["rss_kb"] = f"docker:{samples[o['container']][0]}", samples[o["container"]][1] * 1024
         elif o["container"]:
             o["owner"] = f"container:{o['container'][:12]} (no docker stats)"
     names = [unit_name(o["owner"]) for o in owners]
@@ -559,17 +559,17 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
         print(f"  memory report unavailable: {error}")
         return
     label_owners(owners, samples)
-    owners.sort(key=lambda o: -o["rss_mb"])
+    owners.sort(key=lambda o: -o["rss_kb"])
     print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
-    if len(table) < 50 or not Path("/proc/1/cgroup").exists():
+    if len(table) < 50 or 1 not in table:
         print("  partial view: few processes are visible (restricted /proc or PID namespace), ranking is not host-wide")
     if samples is None:
         print("  docker stats unavailable: container memory is summed per-process RSS")
     print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
         flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] > old_hours else ""]
-        print(f"  {o['shown'][:64]:64} {o['procs']:>5} {o['rss_mb']:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
-    print(f"  ({len(owners)} owners; host rows sum per-process RSS, docker rows are docker stats usage without inactive file cache; nothing is stopped)")
+        print(f"  {o['shown'][:64]:64} {o['procs']:>5} {o['rss_kb'] // 1024:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
+    print(f"  ({len(owners)} owners among {len(table)} visible processes; host rows sum per-process RSS, docker rows are docker stats usage without inactive file cache; nothing is stopped)")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
