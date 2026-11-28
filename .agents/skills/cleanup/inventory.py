@@ -474,8 +474,11 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
             rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
             if rss_kb == 0 and rest[0] == b"Z":  # a dead thread-group leader reads 0 while its worker threads keep the memory
                 for tid in os.listdir(f"/proc/{entry}/task"):
-                    if rss_kb := int(Path(f"/proc/{entry}/task/{tid}/statm").read_text().split()[1]) * page_kb:
-                        break
+                    try:
+                        if rss_kb := int(Path(f"/proc/{entry}/task/{tid}/statm").read_text().split()[1]) * page_kb:
+                            break
+                    except OSError:
+                        continue  # that worker exited; try the next
             cgroup = cgroup_path(Path(f"/proc/{entry}/cgroup").read_text())
             if Path(f"/proc/{entry}/stat").read_bytes().rpartition(b")")[2].split()[19] != rest[19]:
                 continue  # the pid was reused while its files were read
@@ -548,6 +551,10 @@ def label_owners(owners: list[dict], samples: dict[str, tuple[str, int]] | None)
             o["owner"], o["rss_kb"] = f"docker:{samples[o['container']][0]}", samples[o["container"]][1]
         elif o["container"]:
             o["owner"] = f"container:{o['container'][:12]} (no docker stats)"
+    seen = {o["container"] for o in owners}
+    for cid, (name, kb) in (samples or {}).items():  # a container whose pids are hidden from this /proc still has a sample
+        if cid not in seen:
+            owners.append({"owner": f"docker:{name}", "container": cid, "procs": None, "rss_kb": kb, "age_h": None, "reparented": False})
     names = [unit_name(o["owner"]) for o in owners]
     for o, name in zip(owners, names):  # a short name that two owners share gets its full path
         o["shown"] = name if names.count(name) == 1 else o["owner"]  # a collision prints the full path, widening the column
@@ -572,8 +579,8 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
         print("  docker stats unavailable: container memory is summed per-process RSS")
     print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
-        flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] > old_hours else ""]
-        print(f"  {o['shown']:64} {o['procs']:>5} {o['rss_kb'] // 1024:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
+        flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] is not None and o["age_h"] > old_hours else ""]
+        print(f"  {o['shown']:64} {o['procs'] if o['procs'] is not None else '-':>5} {o['rss_kb'] // 1024:>8,} {f"{o['age_h']:.1f}" if o['age_h'] is not None else '-':>9}  {' '.join(f for f in flags if f)}")
     print(f"  ({len(owners)} owners among {len(table)} visible processes; host rows sum per-process RSS, docker rows are docker stats usage without inactive file cache; nothing is stopped)")
 
 
