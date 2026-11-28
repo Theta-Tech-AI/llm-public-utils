@@ -440,7 +440,7 @@ def positive_hours(text: str) -> float:
 
 
 CGROUP = Path("/sys/fs/cgroup")
-UNIT = re.compile(r"\.(scope|service)$")
+UNIT = re.compile(r"\.(scope|service)$|^[0-9a-f]{64}$")  # a bare 64-hex name is a cgroupfs-driver container
 
 
 def cgroup_units(root: Path) -> list[Path]:
@@ -449,13 +449,17 @@ def cgroup_units(root: Path) -> list[Path]:
     units = []
     for child in sorted(p for p in root.iterdir() if p.is_dir()):
         slices = [p for p in child.iterdir() if p.is_dir() and p.name.endswith(".slice")] if UNIT.search(child.name) else []
-        if slices:
-            units += [u for s in slices for u in cgroup_units(s)]
+        if slices:  # the manager's own units (init.scope) sit beside its slices
+            units += [u for s in slices for u in cgroup_units(s)] + cgroup_units_direct(child)
         elif UNIT.search(child.name):
             units.append(child)
-        elif child.name.endswith(".slice"):
+        elif child.name.endswith(".slice") or child.name == "docker":
             units += cgroup_units(child)
     return units
+
+
+def cgroup_units_direct(manager: Path) -> list[Path]:
+    return [p for p in sorted(manager.iterdir()) if p.is_dir() and UNIT.search(p.name)]
 
 
 def unit_pids(unit: Path) -> list[int]:
@@ -494,22 +498,23 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     if not (CGROUP / "cgroup.controllers").exists():
         print("  memory by owner needs cgroup v2")
         return
-    uptime, ticks, names, rows = float(Path("/proc/uptime").read_text().split()[0]), os.sysconf("SC_CLK_TCK"), container_names(), []
+    uptime, ticks, names, rows, unmeasured = float(Path("/proc/uptime").read_text().split()[0]), os.sysconf("SC_CLK_TCK"), container_names(), [], 0
     for unit in cgroup_units(CGROUP):
         try:
-            mib = int((unit / "memory.current").read_text()) // 1048576
+            used = int((unit / "memory.current").read_text())
         except (OSError, ValueError):
-            continue  # removed mid-scan, or no memory controller
+            unmeasured += 1  # removed mid-scan, or no memory controller
+            continue
         pids = unit_pids(unit)
         ages = [a for pid in pids if (a := pid_age_hours(pid, uptime, ticks)) is not None]
-        cid = re.search(r"docker-([0-9a-f]{64})\.scope", unit.name)
+        cid = re.search(r"(?:docker-)?([0-9a-f]{64})(?:\.scope)?$", unit.name)
         label = f"docker:{names[cid[1]]}" if cid and cid[1] in names else f"docker:{cid[1][:12]}" if cid else unit.name
-        rows.append((mib, label, len(pids), max(ages, default=None)))
+        rows.append((used, unit.as_posix(), label, len(pids), max(ages, default=None)))
     print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
-    for mib, label, procs, age in sorted(rows, reverse=True)[:top]:
+    for used, _, label, procs, age in sorted(rows, key=lambda r: (-r[0], r[1]))[:top]:
         flag = f"older than {old_hours:g}h" if age is not None and age > old_hours else ""
-        print(f"  {label:64} {procs:>5} {mib:>8,} {'-' if age is None else f'{age:.1f}':>9}  {flag}")
-    print(f"  ({len(rows)} owners; kernel memory.current per cgroup unit, includes page cache; nothing is stopped)")
+        print(f"  {label:64} {procs:>5} {used // 1048576:>8,} {'-' if age is None else f'{age:.1f}':>9}  {flag}")
+    print(f"  ({len(rows)} owners; kernel memory.current per cgroup unit, includes page cache; {unmeasured} without memory.current; nothing is stopped)")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
