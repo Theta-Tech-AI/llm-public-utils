@@ -432,6 +432,13 @@ def list_stale_browsers(hours: float) -> None:
           f" {unknown} with unknown scope")
 
 
+def positive_hours(text: str) -> float:
+    value = float(text)
+    if not 0 < value < float("inf"):
+        raise argparse.ArgumentTypeError("must be a positive number of hours")
+    return value
+
+
 def meminfo_mb() -> dict[str, int]:
     """MemTotal, MemAvailable and swap used in MB from /proc/meminfo."""
     kb = {k: int(v.split()[0]) for k, v in (line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())}
@@ -455,29 +462,37 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
             cgroup = Path(f"/proc/{entry}/cgroup").read_text().strip().split(":", 2)[-1]
         except (OSError, ValueError, IndexError):
             continue
-        units = [part for part in cgroup.split("/") if part.endswith((".scope", ".service"))]
-        table[int(entry)] = (int(rest[1]), rss_kb, int(uptime - int(rest[19]) / ticks), units[-1] if units else "", comm)
+        parts = cgroup.split("/")
+        last = max((i for i, part in enumerate(parts) if part.endswith((".scope", ".service"))), default=-1)
+        # The path through the owning unit keeps two users' same-named services apart.
+        table[int(entry)] = (int(rest[1]), rss_kb, int(uptime - int(rest[19]) / ticks), "/".join(parts[:last + 1]) if last >= 0 else "", comm)
     return table
 
 
 GENERIC_UNITS = ("user@", "session-", "init.scope")
-PANE_UNITS = ("tmux-spawn", "vte-spawn")  # one scope per terminal pane: its shell is the owner's root
 
 
-def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list[dict]:
+def unit_name(path: str) -> str:
+    return path.rsplit("/", 1)[-1]
+
+
+def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]], docker_known: bool) -> list[dict]:
     """Host processes grouped by owner: the cgroup unit (a tmux pane, an app, a service). A process in a generic unit
     (login session, user manager) is grouped by the top of its parent chain. Container processes are left to docker stats.
-    A pane or parent-chain owner is an orphan when every root process was reparented to init or the user manager,
-    so the shell or agent that started it is gone."""
+    An owner is flagged reparented when every root process has init or the user manager as parent: its starter is gone
+    or was never tracked (a pane shell started by the user manager looks the same), so check it before stopping it.
+    Container groups are kept as host groups when docker stats gave no sample."""
     groups: dict[str, list[int]] = {}
     for pid, (_, _, _, unit, _) in table.items():
-        if "docker-" in unit or "containerd" in unit:
+        name = unit_name(unit)
+        if docker_known and name.startswith("docker-"):
             continue
-        if not unit or unit.startswith(GENERIC_UNITS):
-            top = pid
-            while (parent := table[top][0]) in table and parent > 1 and table[parent][4] not in ("systemd", "sshd", "login"):
+        if not unit or name.startswith(GENERIC_UNITS):
+            top, seen = pid, {pid}
+            while (parent := table[top][0]) in table and parent > 1 and parent not in seen and table[parent][4] not in ("systemd", "sshd", "login"):
                 top = parent
-            groups.setdefault(f"{table[top][4]}[{top}] in {unit or 'no unit'}", []).append(pid)
+                seen.add(top)  # a pid reused during the scan can make a parent cycle
+            groups.setdefault(f"{table[top][4]}[{top}] in {name or 'no unit'}", []).append(pid)
         else:
             groups.setdefault(unit, []).append(pid)
     owners = []
@@ -485,35 +500,45 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list
         members = set(pids)
         roots = [p for p in pids if table[p][0] not in members]
         reparented = all(table[p][0] == 1 or table.get(table[p][0], (0, 0, 0, "", ""))[4] == "systemd" for p in roots)
-        tracks_parent = key.startswith(PANE_UNITS) or " in " in key
+        tracks_parent = not key.endswith(".service")
         owners.append({"owner": key, "procs": len(pids), "rss_mb": sum(table[p][1] for p in pids) // 1024,
-                       "age_h": max(table[p][2] for p in pids) / 3600, "orphan": tracks_parent and reparented})
+                       "age_h": max(table[p][2] for p in pids) / 3600, "reparented": tracks_parent and reparented})
     return owners
 
 
-def docker_memory_owners() -> list[dict]:
-    """Running containers by memory (docker stats names the owner); empty when docker is absent."""
+def docker_memory_owners() -> list[dict] | None:
+    """Running containers by memory (docker stats names the owner); None when docker gave no sample."""
     out = soft("docker", "stats", "--no-stream", "--format", "{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
+    if out is None:
+        return None
     scale = {"B": 1 / 1048576, "KiB": 1 / 1024, "MiB": 1, "GiB": 1024, "TiB": 1048576}
     owners = []
-    for line in (out or "").splitlines():
+    for line in out.splitlines():
         name, _, usage = line.partition("\t")
         if m := re.match(r"([\d.]+)\s*([KMGT]?i?B)", usage):
-            owners.append({"owner": f"docker:{name}", "procs": 0, "rss_mb": int(float(m[1]) * scale.get(m[2], 0)), "age_h": None, "orphan": False})
+            owners.append({"owner": f"docker:{name}", "procs": 0, "rss_mb": int(float(m[1]) * scale.get(m[2], 0)), "age_h": None, "reparented": False})
     return owners
 
 
 def print_memory_report(old_hours: float, top: int = 15) -> None:
-    """List-only: host memory totals, then the top owners by resident memory, with orphans and old owners flagged."""
-    info = meminfo_mb()
+    """List-only: host memory totals, then the top owners by memory, with reparented and old owners flagged."""
+    try:
+        info = meminfo_mb()
+        containers = docker_memory_owners()
+        owners = sorted(host_memory_owners(proc_table(), containers is not None) + (containers or []), key=lambda o: -o["rss_mb"])
+    except (OSError, ValueError, KeyError) as error:  # /proc missing (not Linux) must not stop the rest of the inventory
+        print(f"  memory report unavailable: {error}")
+        return
     print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
-    owners = sorted(host_memory_owners(proc_table()) + docker_memory_owners(), key=lambda o: -o["rss_mb"])
-    print(f"  {'owner':64} {'procs':>5} {'rss MB':>8} {'oldest h':>9}  flags")
+    if containers is None:
+        print("  docker stats unavailable: container memory shown as host cgroups")
+    print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
-        flags = ["orphan" if o["orphan"] else "", f"older than {old_hours:g}h" if (o["age_h"] or 0) > old_hours else ""]
+        flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] is not None and o["age_h"] > old_hours else ""]
         age = f"{o['age_h']:.1f}" if o["age_h"] is not None else "-"
-        print(f"  {o['owner'][:64]:64} {o['procs'] or '-':>5} {o['rss_mb']:>8,} {age:>9}  {' '.join(f for f in flags if f)}")
-    print(f"  ({len(owners)} owners; RSS counts shared pages once per process; nothing is stopped)")
+        shown = o["owner"] if len(o["owner"]) <= 64 else "…" + o["owner"][-63:]
+        print(f"  {shown:64} {o['procs'] or '-':>5} {o['rss_mb']:>8,} {age:>9}  {' '.join(f for f in flags if f)}")
+    print(f"  ({len(owners)} owners; host rows sum per-process RSS, docker rows are cgroup memory; nothing is stopped)")
 
 
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
@@ -556,7 +581,7 @@ def main() -> None:
     parser.add_argument("--review-label", help="issue label meaning 'waiting for a human', counted when given")
     parser.add_argument("--list-browsers-older-than", type=float, metavar="HOURS",
                         help="list agent-browser Chrome and node dev-server processes older than HOURS and exit (listing only)")
-    parser.add_argument("--memory-old-hours", type=float, default=6, help="flag memory owners older than this many hours (default 6)")
+    parser.add_argument("--memory-old-hours", type=positive_hours, default=6, help="flag memory owners older than this many hours (default 6)")
     args = parser.parse_args()
     if args.list_browsers_older_than is not None:
         list_stale_browsers(args.list_browsers_older_than)
