@@ -440,7 +440,7 @@ def positive_hours(text: str) -> float:
 
 
 CGROUP = Path("/sys/fs/cgroup")
-UNIT = re.compile(r"\.(?!slice$)[a-z]+$|^[0-9a-f]{64}$")  # any systemd unit but a slice; a bare 64-hex name is a cgroupfs-driver container  # a bare 64-hex name is a cgroupfs-driver container
+UNIT = re.compile(r"(?!.*\.slice$).+")  # any cgroup under a slice that is not itself a slice: a unit, a build step, a cgroupfs container
 
 
 def memory_current(path: Path) -> int | None:
