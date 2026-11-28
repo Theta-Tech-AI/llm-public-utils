@@ -40,10 +40,11 @@ Keep hand-written input to one small overlay file for facts the code cannot give
 **Each API lane generates its own map, with a receipt.** The code alone gives no coverage, so every lane brief gives the map command and its inputs: the checkout, the target environment, the full commit actually serving it (not a branch tip), the campaign's call logs and saved server request-log windows **for that environment and build only**, and a new directory for this lane. Evidence from an older build never counts toward the current coverage: a route the deploy changed is not covered by an old success. Report older coverage apart, if at all. A sketch, with the project's generator in place of `flow-map`:
 
 ```bash
-map_dir="$LANE_DIR/map"; inputs="$LANE_DIR/map-inputs.txt"; logs="$SERVER_LOG_DIR/$TARGET_ENV-$DEPLOYED_SHA"
+map_dir="$LANE_DIR/map-$(date -u +%Y%m%dT%H%M%SZ)"; inputs="$map_dir.inputs.txt"
+logs="$SERVER_LOG_DIR/$TARGET_ENV-$DEPLOYED_SHA"
 test ! -e "$map_dir" || { echo "❌ refusing to reuse an existing flow-map directory: $map_dir" >&2; exit 1; }
 { printf 'env %s ref %s\n' "$TARGET_ENV" "$DEPLOYED_SHA" &&
-  find "$RUN_ROOT/lanes" -type f -name "calls-$TARGET_ENV-$DEPLOYED_SHA.log" -printf 'calls %p\n' &&
+  { test ! -d "$RUN_ROOT/lanes" || find "$RUN_ROOT/lanes" -type f -name "calls-$TARGET_ENV-$DEPLOYED_SHA.log" -printf 'calls %p\n'; } &&
   { test ! -d "$logs" || find "$logs" -type f -name '*.log' -printf 'server-log %p\n'; }
 } > "$inputs" || { echo "❌ could not list the map inputs" >&2; exit 1; }
 map_args=()
@@ -53,7 +54,7 @@ flow-map --ref "$DEPLOYED_SHA" "${map_args[@]}" --out "$map_dir" \
 printf '🗺️ flow-map env=%s ref=%s out=%s inputs=%s\n' "$TARGET_ENV" "$DEPLOYED_SHA" "$map_dir" "$inputs"
 ```
 
-No saved windows or call logs for this build yet (a fresh environment) is not an error: the map is static and its coverage pending. A listing that fails on evidence that does exist is an error. An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final receipt line and the input list beside it: the environment, the exact full commit (a shortened label inside the map is evidence only beside it) and every file the map was built from. Save the server's request log in fixed UTC windows that start after the build began serving, filed under that environment and build, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
+No saved windows or call logs for this build yet (a fresh environment) is not an error: the map is static and its coverage pending. A listing that fails on evidence that does exist is an error. Every generation — the static map, the regeneration after the gate, a map for a new build — gets its own directory and receipt; an existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final receipt line and the input list beside it: the environment, the exact full commit (a shortened label inside the map is evidence only beside it) and every file the map was built from. Save the server's request log in fixed UTC windows that start after the build began serving, filed under that environment and build, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
 
 The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Hand each lane the map and its slice of that list; hand the next wave whatever is still on it. For a route that takes an action field (a transition route that takes `submit`, `approve`, `reject`), log the action in the call log and count coverage per action: **actions never tried** belong on the work list too, or coverage counts the route and hides them. This work list is the one coverage definition; lane briefs and the next wave point here. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
 
@@ -189,7 +190,7 @@ Two to ten threads on one transition, from different people where it makes sense
 ### 5.5 Refusals and audit
 
 - **The refusal sweep.** Collect the 4xx body of every route (empty body, wrong type, wrong role, unknown id, wrong state). Assert one envelope (a code and a message), a message that is not the code, that names what is missing, who can fix it and the next action, and a field name on validation errors ("String should have at most 500 characters" with no field is a miss). The same fact carries the same code everywhere (lease held, stage frozen, not linked, stale version), and every code is one the frontend can show (grep the frontend for it). No stack trace, raw SQL or constraint name. Fixing the client to avoid a refusal does not close the class: rerun the sweep after each such fix.
-- **A refused action leaves an audit record.** After each refused call, read the scoped audit trail (never a whole-trail export) and require one record with actor, action and outcome.
+- **A refused action leaves the audit record its policy documents.** After each authorization or domain refusal of an audited action (a wrong role, a non-member, an anonymous caller, a forbidden state), read the scoped audit trail (never a whole-trail export) and require the documented refusal record with actor, action and outcome — the same expectation as the role matrix. Where the policy is silent, a refusal that leaves no trace of who tried what is a finding to raise; a malformed request rejected before any action may write nothing if that is the contract.
 - **An empty result matches its contract** (for example `200` with an empty list, plus any reason field the contract promises), never a 404 or a 500.
 
 ### 5.6 Input and hygiene

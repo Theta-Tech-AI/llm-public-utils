@@ -60,7 +60,7 @@ Code-first, per [bug-hunter.md](bug-hunter.md). It never touches the running app
 
 ## When to deviate
 
-- The user asked for one phase only → run that phase, after the gate's confirmation pass ([reliability.md](reliability.md#the-gate)). This process is the default for an open-ended "stress test this."
+- The user asked for one phase only → run that phase; an app-driving phase first takes the gate's confirmation pass ([reliability.md](reliability.md#the-gate)), and a code-only bug hunt needs none. This process is the default for an open-ended "stress test this."
 - A launch or onboarding change is about to meet strangers → insert Phase 2b, and rerun the same panel after the fixes as its own proof step.
 - The findings are all polish and the panel has not run → the temperaments you did not try are the unexplored surface; run the panel before concluding the app is clean.
 - The late stages of a gated app are under-tested, the box cannot afford browsers, or the user asked for an API-only run → run the requested phases **API-first** ([api.md](api.md)): the generated flow map first, then the reliability gate as one fresh end-to-end flow (code reading, state reads and driver preparation may run meanwhile), then whichever of comb and mischief the request includes, standing on existing late-stage objects. With many testers ([lanes.md](lanes.md)): one lane per part of the app, one code hunt feeding hypotheses to the live lanes, and at least one browser lane (exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).

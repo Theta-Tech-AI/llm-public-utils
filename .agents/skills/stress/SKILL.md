@@ -30,7 +30,7 @@ A stress run hardens an app's *functionality* (not load or scale). It is **seque
 - **"Test it as a real user" / launch QA / onboarding / "what confuses people" / "simulate N different users"** → the [persona panel](references/personas.md): independent first-time-user agents, findings ranked by how many personas hit them, then a rerun of the identical panel to prove the fixes
 - **"Stress test this" / vague** → the standard run in [process.md](references/process.md)
 
-**2. Which drive mode leads**, by the question: [driving.md → Choose the lead mode](references/driving.md#choose-the-lead-mode-by-the-question). "Hit the API", API-only, headless, contract, authorization or concurrency stress, or late stages nobody reaches in the browser → [API mode](references/api.md) for the requested phase; a webapp's UX → [browser mode](references/browser.md); most webapps → both.
+**2. Which drive mode leads**, by the question: [driving.md → Choose the lead mode](references/driving.md#choose-the-lead-mode-by-the-question). "Hit the API", API-only, headless, contract, authorization or concurrency stress, or late stages nobody reaches in the browser → [API mode](references/api.md), for the phase the intent names (comb for a walk-through or a contract check, mischief for "break it", reliability for "does it work"); a webapp's UX → [browser mode](references/browser.md); most webapps → both.
 
 **3. One tester or many lanes.** One tester by default. Run [lanes](references/lanes.md) when the user asks for a swarm, or when breadth across the app or its late stages needs testers in parallel.
 
