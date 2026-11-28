@@ -432,6 +432,90 @@ def list_stale_browsers(hours: float) -> None:
           f" {unknown} with unknown scope")
 
 
+def meminfo_mb() -> dict[str, int]:
+    """MemTotal, MemAvailable and swap used in MB from /proc/meminfo."""
+    kb = {k: int(v.split()[0]) for k, v in (line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())}
+    return {"MemTotal": kb["MemTotal"] // 1024, "MemAvailable": kb["MemAvailable"] // 1024,
+            "SwapUsed": (kb["SwapTotal"] - kb["SwapFree"]) // 1024}
+
+
+def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
+    """pid -> (ppid, rss KB, age seconds, cgroup unit, comm) from /proc; a process that exits mid-scan is skipped."""
+    page_kb = os.sysconf("SC_PAGE_SIZE") // 1024
+    ticks = os.sysconf("SC_CLK_TCK")
+    uptime = float(Path("/proc/uptime").read_text().split()[0])
+    table = {}
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            stat = Path(f"/proc/{entry}/stat").read_text()
+            comm, rest = stat[stat.index("(") + 1:stat.rindex(")")], stat[stat.rindex(")") + 2:].split()
+            rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
+            cgroup = Path(f"/proc/{entry}/cgroup").read_text().strip().split(":", 2)[-1]
+        except (OSError, ValueError, IndexError):
+            continue
+        units = [part for part in cgroup.split("/") if part.endswith((".scope", ".service"))]
+        table[int(entry)] = (int(rest[1]), rss_kb, int(uptime - int(rest[19]) / ticks), units[-1] if units else "", comm)
+    return table
+
+
+GENERIC_UNITS = ("user@", "session-", "init.scope")
+PANE_UNITS = ("tmux-spawn", "vte-spawn")  # one scope per terminal pane: its shell is the owner's root
+
+
+def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list[dict]:
+    """Host processes grouped by owner: the cgroup unit (a tmux pane, an app, a service). A process in a generic unit
+    (login session, user manager) is grouped by the top of its parent chain. Container processes are left to docker stats.
+    A pane or parent-chain owner is an orphan when every root process was reparented to init or the user manager,
+    so the shell or agent that started it is gone."""
+    groups: dict[str, list[int]] = {}
+    for pid, (_, _, _, unit, _) in table.items():
+        if "docker-" in unit or "containerd" in unit:
+            continue
+        if not unit or unit.startswith(GENERIC_UNITS):
+            top = pid
+            while (parent := table[top][0]) in table and parent > 1 and table[parent][4] not in ("systemd", "sshd", "login"):
+                top = parent
+            groups.setdefault(f"{table[top][4]}[{top}] in {unit or 'no unit'}", []).append(pid)
+        else:
+            groups.setdefault(unit, []).append(pid)
+    owners = []
+    for key, pids in groups.items():
+        members = set(pids)
+        roots = [p for p in pids if table[p][0] not in members]
+        reparented = all(table[p][0] == 1 or table.get(table[p][0], (0, 0, 0, "", ""))[4] == "systemd" for p in roots)
+        tracks_parent = key.startswith(PANE_UNITS) or " in " in key
+        owners.append({"owner": key, "procs": len(pids), "rss_mb": sum(table[p][1] for p in pids) // 1024,
+                       "age_h": max(table[p][2] for p in pids) / 3600, "orphan": tracks_parent and reparented})
+    return owners
+
+
+def docker_memory_owners() -> list[dict]:
+    """Running containers by memory (docker stats names the owner); empty when docker is absent."""
+    out = soft("docker", "stats", "--no-stream", "--format", "{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
+    scale = {"B": 1 / 1048576, "KiB": 1 / 1024, "MiB": 1, "GiB": 1024, "TiB": 1048576}
+    owners = []
+    for line in (out or "").splitlines():
+        name, _, usage = line.partition("\t")
+        if m := re.match(r"([\d.]+)\s*([KMGT]?i?B)", usage):
+            owners.append({"owner": f"docker:{name}", "procs": 0, "rss_mb": int(float(m[1]) * scale.get(m[2], 0)), "age_h": None, "orphan": False})
+    return owners
+
+
+def print_memory_report(old_hours: float, top: int = 15) -> None:
+    """List-only: host memory totals, then the top owners by resident memory, with orphans and old owners flagged."""
+    info = meminfo_mb()
+    print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
+    owners = sorted(host_memory_owners(proc_table()) + docker_memory_owners(), key=lambda o: -o["rss_mb"])
+    print(f"  {'owner':64} {'procs':>5} {'rss MB':>8} {'oldest h':>9}  flags")
+    for o in owners[:top]:
+        flags = ["orphan" if o["orphan"] else "", f"older than {old_hours:g}h" if (o["age_h"] or 0) > old_hours else ""]
+        age = f"{o['age_h']:.1f}" if o["age_h"] is not None else "-"
+        print(f"  {o['owner'][:64]:64} {o['procs'] or '-':>5} {o['rss_mb']:>8,} {age:>9}  {' '.join(f for f in flags if f)}")
+    print(f"  ({len(owners)} owners; RSS counts shared pages once per process; nothing is stopped)")
+
+
 def optional_rows(ref: str, args: argparse.Namespace, issues: list[dict] | None) -> dict[str, int]:
     """Rows that exist only when the project has the input; each is skipped, not failed, when it is missing."""
     rows: dict[str, int] = {}
@@ -472,6 +556,7 @@ def main() -> None:
     parser.add_argument("--review-label", help="issue label meaning 'waiting for a human', counted when given")
     parser.add_argument("--list-browsers-older-than", type=float, metavar="HOURS",
                         help="list agent-browser Chrome and node dev-server processes older than HOURS and exit (listing only)")
+    parser.add_argument("--memory-old-hours", type=float, default=6, help="flag memory owners older than this many hours (default 6)")
     args = parser.parse_args()
     if args.list_browsers_older_than is not None:
         list_stale_browsers(args.list_browsers_older_than)
@@ -507,6 +592,7 @@ def main() -> None:
     for key, value in now.items():
         delta = value - before[key] if key in before else None
         print(f"  {key:28} {value:>9,}" + (f"  ({delta:+,})" if delta else ""))
+    print_memory_report(args.memory_old_hours)
     if detail is not None:
         print_detail(detail, issues)
     args.state.parent.mkdir(parents=True, exist_ok=True)
