@@ -440,7 +440,7 @@ def positive_hours(text: str) -> float:
 
 
 CGROUP = Path("/sys/fs/cgroup")
-UNIT = re.compile(r"\.(scope|service)$|^[0-9a-f]{64}$")  # a bare 64-hex name is a cgroupfs-driver container
+UNIT = re.compile(r"\.(scope|service|mount|swap)$|^[0-9a-f]{64}$")  # a bare 64-hex name is a cgroupfs-driver container
 
 
 def memory_current(path: Path) -> int | None:
@@ -505,24 +505,24 @@ def print_memory_report(old_hours: float, top: int = 15) -> None:
     if not (CGROUP / "cgroup.controllers").exists():
         print("  memory by owner needs cgroup v2")
         return
-    uptime, ticks, names, rows, unmeasured = float(Path("/proc/uptime").read_text().split()[0]), os.sysconf("SC_CLK_TCK"), container_names(), [], 0
-    found = cgroup_units(CGROUP)
-    names_count = {}
-    for u, _, _ in found:
-        names_count[u.name] = names_count.get(u.name, 0) + 1
+    uptime, ticks, names, rows = float(Path("/proc/uptime").read_text().split()[0]), os.sysconf("SC_CLK_TCK"), container_names(), []
+    every = cgroup_units(CGROUP)
+    found = [r for r in every if r[1] is not None]
+    unmeasured = len(every) - len(found)
     for unit, used, remainder in found:
-        if used is None:
-            unmeasured += 1
-            continue
         pids = [] if remainder else unit_pids(unit)
         ages = [a for pid in pids if (a := pid_age_hours(pid, uptime, ticks)) is not None]
+        rel = unit.relative_to(CGROUP).parts
         cid = re.fullmatch(r"(?:docker-)?([0-9a-f]{64})(?:\.scope)?", unit.name)
         label = f"docker:{names[cid[1]]}" if cid and cid[1] in names else f"docker:{cid[1][:12]}" if cid else unit.name
-        if remainder:
-            label += " (cache of exited units)"
-        elif names_count[unit.name] > 1:
-            label = unit.parent.name + "/" + label  # the same unit name under another slice or manager
-        rows.append((used, unit.as_posix(), label, len(pids), max(ages, default=None)))
+        rows.append((used, rel, label, remainder, len(pids), max(ages, default=None)))
+    shown = []
+    for used, rel, label, remainder, procs, age in rows:
+        twins = [r for r in rows if r[2] == label and r[3] == remainder]
+        depth = next((d for d in range(1, len(rel) + 1) if len({r[1][-d:] for r in twins}) == len(twins)), len(rel))
+        name = label if len(twins) == 1 or label.startswith("docker:") else "/".join(rel[-depth:])
+        shown.append((used, "/".join(rel), name + (" (cache of exited units)" if remainder else ""), procs, age))
+    rows = shown
     print(f"  {'owner':64} {'procs':>5} {'mem MiB':>8} {'oldest h':>9}  flags")
     for used, _, label, procs, age in sorted(rows, key=lambda r: (-r[0], r[1]))[:top]:
         flag = f"older than {old_hours:g}h" if age is not None and age > old_hours else ""
