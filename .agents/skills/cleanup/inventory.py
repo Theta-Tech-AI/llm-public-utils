@@ -446,6 +446,18 @@ def meminfo_mb() -> dict[str, int]:
             "SwapUsed": (kb["SwapTotal"] - kb["SwapFree"]) // 1024}
 
 
+CONTAINER_ID = re.compile(r"docker[-/]([0-9a-f]{64})")
+
+
+def cgroup_path(text: str) -> str:
+    """The cgroup path to own a process by: a container record first, else the v2 record, else the systemd hierarchy."""
+    records = [line.split(":", 2)[-1] for line in text.splitlines() if line.count(":") >= 2]
+    for pick in (lambda l: CONTAINER_ID.search(l), lambda l: True):
+        if match := next((r for r in records if pick(r)), None):
+            return match
+    return ""
+
+
 def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
     """pid -> (ppid, rss KB, age seconds, cgroup unit, comm) from /proc; a process that exits mid-scan is skipped."""
     page_kb = os.sysconf("SC_PAGE_SIZE") // 1024
@@ -456,16 +468,18 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
         if not entry.isdigit():
             continue
         try:
-            stat = Path(f"/proc/{entry}/stat").read_text()
-            comm, rest = stat[stat.index("(") + 1:stat.rindex(")")], stat[stat.rindex(")") + 2:].split()
+            stat = Path(f"/proc/{entry}/stat").read_bytes()
+            comm = stat[stat.index(b"(") + 1:stat.rindex(b")")].decode(errors="replace")
+            rest = stat[stat.rindex(b")") + 2:].split()
             rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
-            cgroup = Path(f"/proc/{entry}/cgroup").read_text().strip().split(":", 2)[-1]
+            cgroup = cgroup_path(Path(f"/proc/{entry}/cgroup").read_text())
         except (OSError, ValueError, IndexError):
             continue
         parts = cgroup.split("/")
         last = max((i for i, part in enumerate(parts) if part.endswith((".scope", ".service"))), default=-1)
-        # The path through the owning unit keeps two users' same-named services apart.
-        table[int(entry)] = (int(rest[1]), rss_kb, int(uptime - int(rest[19]) / ticks), "/".join(parts[:last + 1]) if last >= 0 else "", comm)
+        # A container keeps its id as the unit; otherwise the path through the owning unit keeps two users' same-named services apart.
+        unit = cgroup if CONTAINER_ID.search(cgroup) else "/".join(parts[:last + 1]) if last >= 0 else ""
+        table[int(entry)] = (int(rest[1]), rss_kb, int(uptime - int(rest[19]) / ticks), unit, comm)
     return table
 
 
@@ -476,18 +490,18 @@ def unit_name(path: str) -> str:
     return path.rsplit("/", 1)[-1]
 
 
-def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]], docker_known: bool) -> list[dict]:
+def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]]) -> list[dict]:
     """Host processes grouped by owner: the cgroup unit (a tmux pane, an app, a service). A process in a generic unit
     (login session, user manager) is grouped by the top of its parent chain. Container processes are left to docker stats.
     An owner is flagged reparented when every root process has init or the user manager as parent: its starter is gone
     or was never tracked (a pane shell started by the user manager looks the same), so check it before stopping it.
-    Container groups are kept as host groups when docker stats gave no sample."""
+    Container processes form one group per container id, matched to docker stats by the report."""
     groups: dict[str, list[int]] = {}
     for pid, (_, _, _, unit, _) in table.items():
         name = unit_name(unit)
-        if docker_known and name.startswith("docker-"):
-            continue
-        if not unit or name.startswith(GENERIC_UNITS):
+        if (container := CONTAINER_ID.search(unit)):
+            groups.setdefault(f"container:{container[1]}", []).append(pid)
+        elif not unit or name.startswith(GENERIC_UNITS):
             top, seen = pid, {pid}
             while (parent := table[top][0]) in table and parent > 1 and parent not in seen and table[parent][4] not in ("systemd", "sshd", "login"):
                 top = parent
@@ -501,43 +515,55 @@ def host_memory_owners(table: dict[int, tuple[int, int, int, str, str]], docker_
         roots = [p for p in pids if table[p][0] not in members]
         reparented = all(table[p][0] == 1 or table.get(table[p][0], (0, 0, 0, "", ""))[4] == "systemd" for p in roots)
         tracks_parent = not key.endswith(".service")
-        owners.append({"owner": key, "procs": len(pids), "rss_mb": sum(table[p][1] for p in pids) // 1024,
+        owners.append({"owner": key, "container": key.removeprefix("container:") if key.startswith("container:") else None, "procs": len(pids), "rss_mb": sum(table[p][1] for p in pids) // 1024,
                        "age_h": max(table[p][2] for p in pids) / 3600, "reparented": tracks_parent and reparented})
     return owners
 
 
-def docker_memory_owners() -> list[dict] | None:
-    """Running containers by memory (docker stats names the owner); None when docker gave no sample."""
-    out = soft("docker", "stats", "--no-stream", "--format", "{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
+def docker_memory_samples() -> dict[str, tuple[str, int]] | None:
+    """Container id -> (name, cgroup memory MB) from docker stats; None when docker gave no sample."""
+    out = soft("docker", "stats", "--no-stream", "--no-trunc", "--format", "{{.ID}}\t{{.Name}}\t{{.MemUsage}}") if shutil.which("docker") else None
     if out is None:
         return None
     scale = {"B": 1 / 1048576, "KiB": 1 / 1024, "MiB": 1, "GiB": 1024, "TiB": 1048576}
-    owners = []
+    samples = {}
     for line in out.splitlines():
-        name, _, usage = line.partition("\t")
+        cid, name, usage = (line.split("\t") + ["", ""])[:3]
         if m := re.match(r"([\d.]+)\s*([KMGT]?i?B)", usage):
-            owners.append({"owner": f"docker:{name}", "procs": 0, "rss_mb": int(float(m[1]) * scale.get(m[2], 0)), "age_h": None, "reparented": False})
-    return owners
+            samples[cid] = (name, int(float(m[1]) * scale.get(m[2], 0)))
+    return samples
+
+
+def label_owners(owners: list[dict], samples: dict[str, tuple[str, int]] | None) -> None:
+    """Name each container from docker stats and use its cgroup memory; a container with no sample stays a host row by id."""
+    for o in owners:
+        if o["container"] and samples and o["container"] in samples:
+            o["owner"], o["rss_mb"] = f"docker:{samples[o['container']][0]}", samples[o["container"]][1]
+        elif o["container"]:
+            o["owner"] = f"container:{o['container'][:12]} (no docker stats)"
+    names = [unit_name(o["owner"]) for o in owners]
+    for o, name in zip(owners, names):  # a short name that two owners share gets its full path
+        o["shown"] = name if names.count(name) == 1 else o["owner"]
 
 
 def print_memory_report(old_hours: float, top: int = 15) -> None:
     """List-only: host memory totals, then the top owners by memory, with reparented and old owners flagged."""
     try:
         info = meminfo_mb()
-        containers = docker_memory_owners()
-        owners = sorted(host_memory_owners(proc_table(), containers is not None) + (containers or []), key=lambda o: -o["rss_mb"])
+        owners = host_memory_owners(proc_table())
+        samples = docker_memory_samples()
     except (OSError, ValueError, KeyError) as error:  # /proc missing (not Linux) must not stop the rest of the inventory
         print(f"  memory report unavailable: {error}")
         return
+    label_owners(owners, samples)
+    owners.sort(key=lambda o: -o["rss_mb"])
     print(f"🧠 memory: total {info['MemTotal']:,} MB, available {info['MemAvailable']:,} MB, swap used {info['SwapUsed']:,} MB")
-    if containers is None:
-        print("  docker stats unavailable: container memory shown as host cgroups")
+    if samples is None:
+        print("  docker stats unavailable: container memory is summed per-process RSS")
     print(f"  {'owner':64} {'procs':>5} {'mem MB':>8} {'oldest h':>9}  flags")
     for o in owners[:top]:
-        flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] is not None and o["age_h"] > old_hours else ""]
-        age = f"{o['age_h']:.1f}" if o["age_h"] is not None else "-"
-        shown = o["owner"] if len(o["owner"]) <= 64 else "…" + o["owner"][-63:]
-        print(f"  {shown:64} {o['procs'] or '-':>5} {o['rss_mb']:>8,} {age:>9}  {' '.join(f for f in flags if f)}")
+        flags = ["reparented" if o["reparented"] else "", f"older than {old_hours:g}h" if o["age_h"] > old_hours else ""]
+        print(f"  {o['shown'][:64]:64} {o['procs']:>5} {o['rss_mb']:>8,} {o['age_h']:>9.1f}  {' '.join(f for f in flags if f)}")
     print(f"  ({len(owners)} owners; host rows sum per-process RSS, docker rows are cgroup memory; nothing is stopped)")
 
 
