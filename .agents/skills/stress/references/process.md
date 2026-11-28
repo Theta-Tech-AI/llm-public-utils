@@ -1,62 +1,68 @@
 ---
 name: process
-description: The standard stress run — get the deployment lay of the land, then 1-3 reliability passes, 1-3 e2e comb passes, and 1-3 mischief passes, then the code-first bug hunt (optionally in parallel), filing findings throughout. Use as the default shape of a full stress engagement.
+description: The standard stress run — set up (environments, access, drive modes), then 1-3 reliability passes, 1-3 comb passes, and 1-3 mischief passes, with the code-first bug hunt last or in parallel and the persona panel before a launch, filing findings throughout. Use as the default shape of a full stress engagement, and for when to deviate from it.
 ---
 
-# Process: The Standard Stress Run
+# Process: the standard stress run
 
-A full stress run has a shape. Not a straitjacket — user intent and whatever you find always win — but a default that keeps you from red-teaming a system whose happy path is broken. Four phases, in order; 1-3 passes each for the app-driving phases:
+A full stress run has a shape. Not a straitjacket — user intent and whatever you find always win — but a default that keeps you from red-teaming a system whose happy path is broken.
 
 | Phase | Mode | Passes | Question it answers |
 |-------|------|--------|---------------------|
-| 1 | [Reliability](reliability.md) | 1-3 | Does the happy path *consistently* complete? |
-| 2 | E2E stress — [comb](comb.md) | 1-3 | Where are the knots on and around the happy path? |
+| 0 | Set up (below) | once | Where may I stress, with which access, by which mode? |
+| 1 | [Reliability](reliability.md) (the gate) | 1-3 | Does the happy path *consistently* complete? |
+| 2 | [Comb](comb.md) | 1-3 | Where are the knots on and around the happy path? |
+| 2b | [Persona panel](personas.md) (optional; the default before a launch) | 1, then a rerun | Will strangers get through it, and where do they quit? |
 | 3 | [Mischief](mischief.md) | 1-3 | What breaks under hostile, out-of-order abuse? |
 | 4 | [Bug hunt](bug-hunter.md) | once per area | What do layers, workflows, and data models hide? |
 
-Each phase hands context to the next: reliability proves the path works, comb maps where it's rough, mischief attacks whatever turns out to be load-bearing, and the bug hunt finds the code address of every knot and crack. Phase 4 is **code review, not app driving** — it never touches the running app, so it may run **in parallel** (a subagent reading code while you drive phases 1-3) instead of strictly last.
+Each phase hands context to the next: reliability proves the path works, comb maps where it is rough, mischief attacks whatever turns out to be load-bearing, and the bug hunt finds the code address of every knot and crack. A failed reliability gate **ends the run early**: there is no point combing or attacking a system that cannot reliably do its one job.
 
-## Phase 0 — Deployment lay of the land
+## Phase 0 — Set up
 
-Before any pass, per [reliability.md](reliability.md): know which environments exist (localhost, cloud dev, staging, prod), which one you're allowed to stress, and how they deploy. Scout the CI/CD yaml; ask if unclear. **Never touch prod unless explicitly instructed, and confirm any prod change with the user before acting.** Do all real iteration on staging or lower; prod is a final "works just like staging" checkbox, and prod-only bugs get reproduced on staging first.
+**Know the environments.** A stress run needs at least one environment where the happy path can run. Web apps usually have layers, some missing, some under CI/CD (scout the pipeline files to learn how each deploys; ask if unclear):
+
+1. **localhost** — rapid code iterations and local development.
+2. **Cloud development** — a no-cost-to-break cloud deployment, per developer or shared.
+3. **Cloud staging** — as close to production as possible, for quality assurance before production; real-user pretending happens here.
+4. **Production** — never touch it unless explicitly instructed, and confirm any production change with the user before acting. It is a final "works just like staging" check, not a feedback loop: reproduce a production-only bug on staging first.
+
+**Get access.** Auth may live in env vars, docs, a local-dev skill, token scripts, or a bypass. Use throwaway accounts and data, one per role you need.
+
+**Choose the drive modes** from [driving.md](driving.md): browser for what renders, API for contracts, state, authorization and concurrency, and both for most webapps. Ask consent before installing a browser ([browser.md](browser.md#consent-first)).
+
+**Confirm reporting** only if the user contradicted [findings.md](findings.md).
 
 ## Phase 1 — Reliability gate (1-3 passes)
 
-Run the primary happy path end to end. Then again, up to 3 times total. Details and motivation: [reliability.md](reliability.md).
+Run the primary happy path end to end, up to three times; pass and fail rules are in [reliability.md](reliability.md). Fail = stop, file, and hold the run here.
 
-- **Pass** = the run completes successfully, with the same result each time — no flakiness, silent retries, or console/network errors along the way.
-- **Fail** = stop. File per [findings.md](findings.md) and hold the run here. There is no point combing or attacking a system that can't reliably do its one job — fix (or report and wait) before continuing.
+## Phase 2 — Comb (1-3 passes)
 
-If the happy path is already proven reliable (fresh green e2e in CI, a just-completed reliability pass on this deploy), a single confirmation pass suffices.
+Groom the path per [comb.md](comb.md): repeat it with slight deviations, start wide, go finer each pass.
 
-## Phase 2 — E2E stress / comb (1-3 passes)
+## Phase 2b — Persona panel
 
-Once the path reliably completes, groom it per [comb.md](comb.md): repeat the happy path with slight deviations — different data, states, accounts, valid payloads — teasing out knots (wrong copy, stale state, dead ends, loading polish). Start wide, go finer each pass. Browser-heavy for webapps per [driving.md](driving.md); API or hybrid when the happy path is a call sequence.
-
-## Phase 2b — Persona panel (optional, and the default before a launch)
-
-Where comb grooms the path with **your** temperament, the panel replaces the driver: five independent first-time users — impatient, skeptic, mobile, literal reader, breaker — each cold, each alone, each pursuing first success in character and recording exactly where they get confused or quit. Merge their findings into one list ranked by how many personas hit each defect; a defect four strangers meet outranks anything you found by introspection. Full protocol, including the fix-then-rerun-the-identical-panel proof: [personas.md](personas.md).
-
-Run it **instead of** a comb pass when the question is "will strangers get through this?", and **after** comb when you want the breadth signal before release. It does not replace the reliability gate — the panel assumes the happy path completes — and it does not replace mischief, whose breaker persona contributes jitter rather than deep abuse.
+Five independent first-time users replace the driver and record where they get confused or quit ([personas.md](personas.md)). Run it **instead of** a comb pass when the question is "will strangers get through this?", and **after** comb for a breadth signal before release. It assumes the reliability gate passed and does not replace mischief.
 
 ## Phase 3 — Mischief (1-3 passes)
 
-Now that you know the happy path cold, refuse it per [mischief.md](mischief.md): wrong order, double-submit, mid-abandon, garbage input, concurrent mutation across tabs/clients. Aim the waves at whatever Phase 2 revealed as load-bearing.
+Now that you know the happy path cold, refuse it per [mischief.md](mischief.md). Aim the waves at whatever Phase 2 revealed as load-bearing.
 
 ## Phase 4 — Bug hunt (last, or in parallel)
 
-Code-first, per [bug-hunter.md](bug-hunter.md): multi-angle review of layers, workflows, data models, and error handling. Because it never touches the running app, it doesn't contend for it — either run it **in parallel** (a subagent reading code while you drive phases 1-3) or as the final sweep once the app-driving phases are done. Feed it what the earlier phases smelled: every knot from comb and every crack from mischief has a code address, and ugly code surfaced in any phase is fair game.
+Code-first, per [bug-hunter.md](bug-hunter.md). It never touches the running app, so it may run **in parallel** (a subagent reading code while you drive phases 1-3) or as the final sweep. Feed it what the earlier phases smelled: every knot and crack has a code address.
 
 ## Throughout
 
 - **File findings as you go** per [findings.md](findings.md); never batch them to the end.
-- **Drive deliberately** per [driving.md](driving.md) — webapp work defaults to the agent browser, with API scripts for seeding, repetition, and backend truth-checks.
+- **Cross-check every finding** on a second layer before you believe it ([findings.md](findings.md#what-counts-as-a-real-finding)).
 
 ## When to deviate
 
 - The user asked for one mode only → run that mode. This process is the default for an open-ended "stress test this."
-- It's a launch / onboarding change about to meet strangers → insert [Phase 2b, the persona panel](personas.md), and rerun that same panel after the fixes as its own proof step.
-- The findings are all polish and the panel hasn't run → the temperaments you didn't try are the unexplored surface; run the panel before concluding the app is clean.
-- The late stages of a gated app are under-tested, or the box cannot afford many browsers → run the phases as an **API-first, multi-lane campaign** ([api-flows.md](api-flows.md)): first the generated flow map (stages, call order, routes nobody has called), then one lane per part of the app standing on existing late-stage objects, one fresh end-to-end flow as the reliability gate, one code hunt feeding hypotheses to the live lanes, and at least one browser lane.
+- A launch or onboarding change is about to meet strangers → insert Phase 2b, and rerun the same panel after the fixes as its own proof step.
+- The findings are all polish and the panel has not run → the temperaments you did not try are the unexplored surface; run the panel before concluding the app is clean.
+- The late stages of a gated app are under-tested, the box cannot afford many browsers, or the user asked for an API-only run or a swarm → run the phases as an **API-first, multi-lane campaign**: the generated flow map first ([api.md](api.md#1-the-api-document-the-flow-map)), then one lane per part of the app standing on existing late-stage objects, one fresh end-to-end flow as the reliability gate, one code hunt feeding hypotheses to the live lanes, and at least one browser lane unless the request is API-only ([lanes.md](lanes.md)).
 - Time-boxed → one real pass per phase beats three shallow ones or skipping a phase.
 - Phase 1 keeps failing → the run legitimately ends early; a broken happy path *is* the headline finding.

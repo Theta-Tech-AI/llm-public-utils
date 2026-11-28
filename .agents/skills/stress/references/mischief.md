@@ -43,13 +43,7 @@ Gross first, all of it, across the whole app. Sweep **breadth until dry**, then 
 
 ### 3. Pick your hands — browser, API, or both
 
-These are **how you touch the app**, not "attack surfaces" (that's the page/route/API you're targeting after recon). Full install/usage and API technique tables: [driving.md](driving.md). Ask consent before installing agent-browser.
-
-| Hands | Best for |
-|-------|----------|
-| **Browser** | Chaotic user: wrong-order clicks, Back, multi-tab, abandon mid-wizard, every workbench control |
-| **API** | Contracts, concurrency, illegal sequences, payload matrices — fast and systematic |
-| **Both (hybrid)** | Discover in UI → amplify with scripts; or break API → see if UI recovers or lies |
+These are **how you touch the app**, not "attack surfaces" (that's the page/route/API you're targeting after recon). **Browser** for the chaotic user: wrong-order clicks, Back, multi-tab, abandon mid-wizard, every workbench control ([browser.md](browser.md)). **API** for contracts, concurrency, illegal sequences and payload matrices, fast and systematic ([api.md](api.md)). **Both** to discover in the UI and amplify by script, or to break the API and see whether the UI recovers or lies ([driving.md](driving.md#how-to-duel-them)). Ask consent before installing agent-browser.
 
 ### 4. Invent the attack *this* page invites (radio test in practice)
 
@@ -61,24 +55,11 @@ A clean snapshot is **not** proof. Mischief triggers 4xx/5xx constantly; SPAs sw
 
 ### 6. Patterns that flush bugs
 
-**Poke every tool, not only the forward CTA.** Each route is a workbench — demo-untouched tools hide unguarded mutations (secondary checkers, attach/verify, version rails, per-row links, regenerate, review handshakes, advanced panels). Hostile-drive each: wrong time, twice, while a job is live, after delete, second token. Once tier-1 on the page is dry, prefer obscure tools. **Agent-browser:** refs go stale after re-renders — re-`snapshot -i` before each repeated click; read content via snapshot/get-text; wrap `eval` in an IIFE ([driving.md](driving.md)). **Human factor:** start mid-flight → navigate away → other entity → return; interrupt with Back, tab close, second session, competing API; watch for leaked pollers, orphaned leases/locks, stranded modals, lost/zombie drafts, cross-entity data bleed (tier 1–2). **Moves that hurt:** wrong order/time; create→delete→mutate; double-submit; stale token; two writers on one lock; multi-actor; force the "disabled" action via API (or reverse); use ugly code as a map of where to strike; escalate on quiet.
+**Poke every tool, not only the forward CTA.** Each route is a workbench — demo-untouched tools hide unguarded mutations (secondary checkers, attach/verify, version rails, per-row links, regenerate, review handshakes, advanced panels). Hostile-drive each: wrong time, twice, while a job is live, after delete, second token. Once tier-1 on the page is dry, prefer obscure tools. Browser mechanics for repeated clicks: [browser.md → Gotchas](browser.md#gotchas). **Human factor:** start mid-flight → navigate away → other entity → return; interrupt with Back, tab close, second session, competing API; watch for leaked pollers, orphaned leases/locks, stranded modals, lost/zombie drafts, cross-entity data bleed (tier 1–2). **Moves that hurt:** wrong order/time; create→delete→mutate; double-submit; stale token; two writers on one lock; multi-actor; force the "disabled" action via API (or reverse); use ugly code as a map of where to strike; escalate on quiet.
 
-### 7. API frontend-simulator (high-yield hands)
+### 7. Mischief by API
 
-No browser required: reverse-engineer what the frontend would send, then break that conversation. Map mutations from SPA client / OpenAPI / HAR; create disposable scratch (superuser OK for *create* only); attack with normal user tokens; prefix `MISCHIEF-…` / `SCRATCH-…`; clean up. Blast each mutation: malformed, contradictory, **cross-resource IDs**, wrong order/time, unexpected concurrency. Often finds validation gaps, cross-tenant/project refs accepted, and audit/atomicity failures.
-
-```bash
-SCRATCH=$(curl -sS -X POST "$BASE/api/projects" -H "authorization: Bearer $SUPERUSER_TOKEN" \
-  -H 'content-type: application/json' -d '{"name":"MISCHIEF-scratch-1"}' | jq -r .id)
-curl -sS -X PATCH "$BASE/api/projects/$SCRATCH/items/$OTHER_PROJECT_ITEM_ID" \
-  -H "authorization: Bearer $USER_TOKEN" -H 'content-type: application/json' \
-  -d '{"project_id":"'"$SCRATCH"'"}'
-seq 1 10 | xargs -P 10 -I{} curl -sS -o /dev/null -w "%{http_code}\n" -X POST \
-  "$BASE/api/projects/$SCRATCH/submit" -H "authorization: Bearer $USER_TOKEN"
-```
-
-
-**Typed-input fuzz per route.** For each route that takes an id, enum, free text or typed answer, send: (a) a well-formed id that does not exist, to every route taking that id kind (all must answer in the same status class, never 200 with invented data); (b) the wrong JSON type; (c) a value outside the option list; (d) gateway-sensitive text (`>=`, `; select`, quoted phrases, `<script>`); (e) 501 and 20 000 characters (a gateway may answer an HTML error above its URL limit); (f) a null byte. Then read back: what was stored equals what was sent, and derived counters agree with the stored values. A refused input must queue no paid job.
+No browser required: reverse-engineer what the frontend would send, then break that conversation. Create disposable scratch objects (an administrator may *create* them; attack with normal user tokens), prefix them (`MISCHIEF-…`, `SCRATCH-…`), and clean up. Blast each mutation with the checks in [api.md §5](api.md#5-checks-highest-yield-first): out-of-order moves, races, wrong roles and other objects' ids, refusal and audit checks, typed-input fuzz. They often find validation gaps, cross-object references accepted, and audit or atomicity failures.
 
 ## Field-proven state-contradiction classes (bugs users hit first)
 
@@ -96,29 +77,15 @@ These classes repeatedly reach a human before a sweep catches them, because they
 
 6. **Return-to-in-flight-job orphaning.** Start a long-running job on a page, navigate away, then return (or refresh) while it's still running. The page must re-attach to the in-flight run and keep reporting progress (or offer cancel) — not silently orphan the run, prompt a conflicting "re-run" that could double-fire, or leave the user unsure whether work is happening in the background. Test every page that launches an async job this way.
 
-7. **Role x route x state matrix.** For every mutating route, call it as owner, editor, reviewer, non-member and a disabled account, once per project state (open, in review, approved, signed, archived), with an empty or bogus body so nothing real changes. Expect 403 before any 404/422/423, a body naming the state when the state is the cause, and never two roles told to be each other. Diff the route table's declared capability against what the membership endpoint says the role holds and against the controls the UI shows for that role: a control with no capability is a bug, and so is a capability with no control (a dead end).
-
-8. **Upstream-edit ladder.** After each upstream unlock, edit and re-lock, read every view of readiness (the workflow state, the stage's own latest endpoint, the gate text of each downstream mutation) and require them to agree and to name a reachable next action. Then call each downstream sign, lock or start while the upstream is unlocked: the refusal must be the one the read endpoint states, and no start route may bypass it.
-
-9. **Two writers, one record.** Send every write route twice at once (same body, then two users with different bodies) and once with a stale version token. Expect one winner, the loser refused and told who won, and a read-back showing one body in full. Where a 200 carries a success boolean (`released`, `ok`, `accepted`), force the false path and demand a reason. Two owners picking the same exclusive resource (a folder, a lease, a unique name) must not both be accepted, with the refusal arriving later and naming no holder.
-
-10. **Stuck runs.** List every run and job collection and flag any `queued`/`running` row older than its stage budget, any terminal row with no reason, and any project whose active-run flag disagrees with the live job the release guard finds.
-
-11. **Warning accepted by the next step.** For every stage that reports problems (conflicts, readiness blockers, gate messages), read the problem list, then call the next step's route with the problem standing. It must be unambiguous which problems block (a severity, separate collections or a blocking flag all pass), and the next route's acceptance must match that and the documented gate.
-
-12. **Replaced source still cited.** After replacing a source file, read every citation and evidence reader (source lists, stale-source flags, evidence search, section citations, consistency checks). A reader of the current source must not return the old version except as an explicit "replaced" notice; a version-pinned or historical artifact (a signed report) citing the version it was made from is correct provenance. Test each reader against its documented replacement policy. This needs a real replace; with no replaced data present the sweep sees nothing, so create one first.
+The API-side classes — the role × route × state matrix, the upstream-edit ladder, two writers on one record, stuck runs, a warning the next step accepts, a replaced source still cited — live in [api.md](api.md#5-checks-highest-yield-first), where they are run.
 
 These pair with the rendered-output knots in [comb.md](comb.md) and the statically-catchable roots in [bug-hunter.md](bug-hunter.md) — the same bug often has a comb symptom, a mischief trigger, and a bug-hunter root.
 
 ### Front-door chaos (the user's real environment, not yours)
 
-The user isn't on your wide window with a fast connection taking the happy path. Recreate their hostile reality — full technique list in the frontend playbook in [driving.md](driving.md):
+The user isn't on your wide window with a fast connection taking the happy path. Run the [frontend playbook](browser.md#the-frontend-driving-playbook) with hostile timing — its items 5 to 8 name the mid-flow variants (reload before a change settles, resize inside a wizard, a covered control, Back and a cold deep link). And:
 
-- **Resize mid-flow.** Shrink to mobile/tablet width during a wizard and keep going; watch controls overflow, overlap, slide under a sticky header, or fall off-screen.
-- **Cover the control.** When a banner/toast/sticky header/modal overlays an interactive element, it is unusable even though it's in the DOM — screenshot and look, don't just trust that a ref click "succeeded."
-- **Reload mid-change.** Make a change (select, toggle, inline-edit) and hard-reload *before* it visually settles; it must have persisted or clearly not. Silent loss and optimistic-UI lies fall straight out.
-- **Back-button and cold deep-link.** Bounce Back mid-wizard then forward; paste each stage's URL cold in a fresh tab. State must rebuild and gates must hold on direct entry, not just via nav.
-- **Deploy / degraded window.** Hit the app while the backend is rolling or down. The front door should show a maintenance/updating state, not a raw 502 or a white screen. (Also rule this out as a false alarm before filing — see [findings.md](findings.md).)
+- **Deploy / degraded window.** Hit the app while the backend is rolling or down. The front door should show a maintenance/updating state, not a raw 502 or a white screen. (Also rule this out as a false alarm before filing — see [findings.md](findings.md#what-counts-as-a-real-finding).)
 
 ## Report
 
@@ -128,4 +95,4 @@ Per [findings.md](findings.md): search before filing, file early, over-document 
 
 - [comb.md](comb.md) — gentle happy-path grooming (sibling, opposite temper)
 - [bug-hunter.md](bug-hunter.md) — code-first hunt
-- [driving.md](driving.md) · [findings.md](findings.md)
+- [driving.md](driving.md) · [browser.md](browser.md) · [api.md](api.md) · [findings.md](findings.md)

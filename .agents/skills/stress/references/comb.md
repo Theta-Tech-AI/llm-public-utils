@@ -7,7 +7,7 @@ description: Repeatedly walk the happy path of an app, gently teasing out subtle
 
 Go through the happy path over and over, with slight deviations, until the app feels silky smooth. This is **grooming**, not sabotage (that's [mischief.md](mischief.md)) and not a code review (that's [bug-hunter.md](bug-hunter.md)). You are simulating a calm, competent user — or a well-behaved API client — who keeps using the product as intended, then noticing every little snag.
 
-Shared how-to: [driving.md](driving.md) (browser vs API) · [findings.md](findings.md) (what to do with knots).
+Shared how-to: [driving.md](driving.md) (which mode) · [findings.md](findings.md) (what to do with knots).
 
 ## The combing metaphor
 
@@ -30,11 +30,9 @@ Start wide every time you hit a fresh surface or a new deploy. Breadth-first on 
 
 ## Driving while combing
 
-Read [driving.md](driving.md). Short version for comb:
-
-- **Browser-heavy** when grooming a webapp's UX (labels, CTAs, spinners, client state).
-- **API-heavy** when the happy path is a sequence of calls (integrations, backend workflows) or you need many gentle repetitions with varied valid payloads.
-- **Hybrid (preferred for webapps):** API to seed/reset state and assert backend truth; browser to confirm the human path still feels silky. After a UI pass, optionally replay the same happy path as a script so regressions are cheap to re-check.
+- **Browser-heavy** when grooming a webapp's UX (labels, CTAs, spinners, client state): [browser.md](browser.md).
+- **API-heavy** when the happy path is a sequence of calls or you need many gentle repetitions with varied valid payloads: [api.md](api.md).
+- **Hybrid** for most webapps: API to seed and reset state and to read backend truth, the browser to confirm the human path still feels silky ([driving.md](driving.md#how-to-duel-them)). After a UI pass, optionally replay the same happy path as a script so regressions are cheap to re-check.
 
 ## Field-proven knots (read the rendered output, not just the flow)
 
@@ -44,7 +42,7 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 1. **Leaked internal representation.** A surface shows an internal value instead of a human one: a raw UUID/id instead of a name, a raw enum/status constant, an internal project code or jargon (ticket/spec/phase identifiers meant for the team, not the user), an ISO/UTC timestamp instead of localized time, or a raw ratio/counter. Walk every badge, toast, header, status line, and label — each raw internal value is a knot. **Special case — flash of raw value:** a field shows the raw id for a fraction of a second, then swaps to the resolved name once a lookup returns. Resolve first, render once; never paint the placeholder id. (Also grep-able — see [bug-hunter.md](bug-hunter.md).)
 
-2. **Copy that isn't written for the reader.** Trigger each error, warning, and empty state (including zero results from a filter that matches nothing, or an empty container) and read it cold. Flag: jargon the user can't act on; a warning that doesn't say *which* entity, *why*, or *what to do*; the wrong term for a concept (e.g. an "admin" vs "superuser" mismatch); and the same condition worded differently in different places. Good status/error copy states what happened, why, and the next action — in plain language, naming the specific entities involved.
+2. **Copy that isn't written for the reader.** Trigger each error, warning, and empty state (including zero results from a filter that matches nothing, or an empty container) and read it cold. Flag: jargon the user can't act on; a warning that doesn't say *which* entity, *why*, or *what to do*; the wrong term for a concept (e.g. an "admin" vs "superuser" mismatch); the same condition worded differently in different places; and copy that names a stage or page that does not exist. Good status/error copy states what happened, why, and the next action — in plain language, naming the specific entities involved.
 
 3. **Non-cumulative aggregate metric.** A number meant to summarize across many contributors instead flips to whatever sub-source reported last (a running error/progress count that jumps 13 → 157 → 6 as different workers report in). A user-facing aggregate must be cumulative across all contributors, not last-writer-wins.
 
@@ -56,21 +54,17 @@ The calmest, highest-value comb pass is to *read every user-facing string and th
 
 7. **Read the generated artifact itself.** When the product produces an output document/report/export, open it and read it — structure, ordering, and every value — not just the flow that made it. Thin, duplicated, mis-ordered, or scaffold-leaking output is invisible to a flow-only pass. (Deeper failure modes and the code-first version live in [bug-hunter.md](bug-hunter.md).)
 
-8. **Blank vs loading.** A surface that renders empty/blank while data is still loading reads as "there is no data." Distinguish the two: show a real (loud, unmistakable, even blocking) loading indicator with granular status where possible, and an explicit empty state *only* once loading has truly finished with nothing to show; that empty state says that nothing matched, why, and what to do next. At the API, an empty result must match its contract (for example `200` with an empty list, plus any reason field the contract promises). A blank card mid-load is a knot.
+8. **Blank vs loading.** A surface that renders empty/blank while data is still loading reads as "there is no data." Distinguish the two: show a real (loud, unmistakable, even blocking) loading indicator with granular status where possible, and an explicit empty state *only* once loading has truly finished with nothing to show; that empty state says that nothing matched, why, and what to do next. A blank card mid-load is a knot.
 
 9. **Generic where it should be contextual.** A warning, error, or status that shows a templated message without interpolating the *actual* affected entities and current situation forces the user to guess. Name which items are affected, what state they're in, and what to do next — written for a non-expert who just wants to know what happened and what to do.
 
 10. **Generated content too thin for its slot.** When the product generates prose/content into a structured slot, check depth and shape against what that slot expects — a one-sentence stub where a full paragraph belongs is a quality bug even though "content appeared." (Pairs with item 7 — read the artifact.)
 
-11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran. Examples: a job that reports `succeeded` while the thing it should have changed is untouched (a link run, then the bound state; an import, then the rows), with the cause only in another field or a warning log; an expected no-op must say so.
+11. **Activity/telemetry that shows a reference, not verifiable substance.** A "what the system did" surface (tool-call log, activity feed, result preview) that shows only a bare reference — a file path, an id, a "success" — without enough to confirm the operation was actually *correct* invites silent wrong behavior. Prefer showing (or letting the user open) the real substance, and separately confirm the underlying operation did the right thing, not merely that it ran: a job that reports `succeeded` while the thing it should have changed is untouched is the plain case ([api.md §3](api.md#3-the-tester-is-a-model-of-the-system)).
 
-12. **Refusal sweep.** Collect the 4xx body of every route (empty body, wrong type, wrong role, unknown id, wrong state). Assert one envelope (a code and a message), a message that is not the code, that names what is missing, who can fix it and the next action, and a field name on validation errors ("String should have at most 500 characters" with no field is a miss). Fixing the client to avoid the refusal does not close the class: re-run the sweep against the API after each such fix.
+12. **Link that does not name its item.** Take each link that promises one specific item (a card about one record, the source of one statement), follow it, and check that the resolved content names that item. A bare API endpoint, or a site root or hub page that does not itself state the item, fails; a site root that does state it (a one-page product site) passes, and one URL shared by many different titles is a probe, not a failure: the test is always whether the destination supports the promised item. Collection and download links that promise no single item are out of scope. Also read the card's own text: it often prints the same generic link.
 
-13. **Browser-only layout classes.** Add to the width-and-state matrix, in a headed browser: overlap or clipping at half width, layout shift on tab or device switch, control style drift between sibling panels, a URL that loses its state on Back, and copy that names a stage with no page.
-
-14. **Link that does not name its item.** Take each link that promises one specific item (a card about one record, the source of one statement), follow it, and check that the resolved content names that item. A bare API endpoint, or a site root or hub page that does not itself state the item, fails; a site root that does state it (a one-page product site) passes, and one URL shared by many different titles is a probe, not a failure: the test is always whether the destination supports the promised item. Collection and download links that promise no single item are out of scope. Also read the card's own text: it often prints the same generic link.
-
-15. **Activity or history list drowned in machine rows.** Seed a known recent human action among automated events (trigger rows, a `system` actor, digests, test sentinel names), then open the list as its default view: where the list's documented purpose and ordering put recent events first, the action must be findable on the first page, without a filter. Use the product's own page size for what counts as the first page, and keep the fixture's automated events fewer than that.
+13. **Activity or history list drowned in machine rows.** Seed a known recent human action among automated events (trigger rows, a `system` actor, digests, test sentinel names), then open the list as its default view: where the list's documented purpose and ordering put recent events first, the action must be findable on the first page, without a filter. Use the product's own page size for what counts as the first page, and keep the fixture's automated events fewer than that.
 
 ## Sweep surface-by-surface, not path-by-path
 
@@ -106,47 +100,7 @@ it, not the conclusion.
 
 ## Time-dependent knots (the ones a settled snapshot cannot see)
 
-The reading-level knots above assume you can look at the screen. Several whole
-classes are invisible to the way an agent normally drives: `open` → wait for the
-page to settle → `snapshot`. That rhythm observes the **settled** state by
-construction, so anything that exists only *during* a transition, *after*
-idling, or *across* two views is structurally unreachable — the checklist above
-can ask for it and you will still never see it.
-
-Typical misses, all of which reach real users:
-
-- a control that appears for a second or two while the page loads and then
-  vanishes as the work it offered starts by itself — gone before the first
-  snapshot exists, yet long enough for a user to click it
-- a session/token expiry warning that only fires when you come back to a tab
-  left open — needs idling
-- a summary figure that changes when you switch tabs, with nothing spent or
-  saved in between — needs comparing one widget across two views
-- an error toast produced by navigating *during* a long-running job — needs
-  acting while async work is in flight
-
-### Drive for time, not just for path
-
-1. **Sample during load, not after it.** Snapshot immediately on navigation and
-   again a beat later, before the settle, and diff them. Anything present early
-   and absent later is a flash — and a control that flashes is a control a user
-   can click by mistake, which matters far more than cosmetics when the action
-   is destructive or costs money.
-2. **Idle deliberately.** Leave a page open past a session, lease, or token
-   lifetime and return to it. Anything that fires on return is invisible to a
-   pass that never stops moving.
-3. **Diff one widget across navigations.** Note a count, cost, or status; go
-   elsewhere; come back or switch tabs; compare. A figure that changes without a
-   corresponding action is wrong even when each view looks right on its own.
-4. **Act during async work, not after it.** Long-running work is exactly when
-   real users click elsewhere. Switch tabs, navigate away and back, and open
-   sibling views *while* a job is live, rather than waiting for it to finish.
-5. **Watch the console for the whole pass.** Repeated 4xx/5xx from background
-   polls and auto-started work never appear in the DOM, and are often the first
-   evidence of a doomed request the UI is quietly retrying.
-
-This is a second axis over the reading-level pass, not a replacement. A knot
-that exists for two seconds still reached a user.
+A control that flashes during load, a warning that fires only after idling, a figure that changes between two views, an error from navigating while a job runs: each reaches real users and each is invisible to the agent's usual open → settle → snapshot rhythm. Drive for them per [browser.md → Drive for time](browser.md#drive-for-time-not-only-for-path); it is a second axis over the reading-level pass, not a replacement.
 
 ## Comparison knots (one path, walked once, can never find these)
 
@@ -190,7 +144,7 @@ an entity name — go find its other rendering and compare formatting, units,
 rounding and wording. Decide which is canonical; a mismatch is a knot even when
 both are individually readable.
 
-The interaction-level checks — persistence-by-reload, responsive resize, occlusion, hover/keyboard, and every-clickable-goes-somewhere — live in the frontend driving playbook in [driving.md](driving.md); run them alongside these reading-level knots. Comb reads the front door; the playbook drives it.
+The interaction-level checks — persistence-by-reload, responsive resize, occlusion, hover/keyboard, and every-clickable-goes-somewhere — live in the frontend driving playbook in [browser.md](browser.md#the-frontend-driving-playbook); run them alongside these reading-level knots. Comb reads the front door; the playbook drives it. The API side of the same comparison — every reader of one fact asked the same question — is the reader table in [api.md](api.md#51-the-reader-table-one-fact-every-reader-every-role).
 
 ## Knots
 
@@ -200,4 +154,4 @@ Handle per [findings.md](findings.md). Default: file GitHub issues with links; a
 
 - [mischief.md](mischief.md) — opposite temper: break expected flow on purpose
 - [bug-hunter.md](bug-hunter.md) — code-first hunt across many dimensions
-- [driving.md](driving.md) · [findings.md](findings.md)
+- [driving.md](driving.md) · [browser.md](browser.md) · [api.md](api.md) · [findings.md](findings.md)

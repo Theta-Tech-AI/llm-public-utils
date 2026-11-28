@@ -1,243 +1,74 @@
 ---
 name: driving
-description: How to drive an app under stress — agent browser vs API vs hybrid — and when each surface finds different bugs.
+description: The two drive modes of a stress run — API and agent browser — as dueling lenses. What each is, why it works, why it matters, what only it can find, what it costs, and how to run them against each other so that each catches what the other cannot. Read before choosing how to put hands on the system.
 ---
 
-# Driving: Browser vs API
+# Driving: two modes, dueling
 
-Stress testing needs hands on the system. Two primary surfaces, different bugs:
+Stress testing needs hands on the system, and there are two kinds. **API mode** talks to the backend the way every client does. **Browser mode** uses the real UI the way a person does. They are not a fast mode and a thorough mode: they are two lenses that see different bugs, and each is strongest when it checks the other. How to drive each: [api.md](api.md) · [browser.md](browser.md).
 
-| Surface | What it is | Bugs it catches well | Weak at |
-|---------|------------|----------------------|---------|
-| **Agent browser** (real UI) | Click/type like a user in the real SPA | Enabled/disabled controls, nav traps, modal races, labels, spinners, client-only state, "looks fine but feels broken" | Fast combinatorial sequences, auth-edge floods, pure contract bugs |
-| **API** (`curl`, scripts, HTTP clients) | Talk to backends the way the frontend (or other services) would | Ordering, idempotency, authz, validation, concurrency, stale tokens, double-submit, schema drift, worker/queue failures | Visual/UX knots, wrong button affordances, layout/state that never hits the network |
+## API mode: the contract every client inherits
 
-Neither replaces the other. Prefer **hybrid**: use the API to set up state and probe contracts fast; use the browser to confirm what a human would actually experience.
+**What it is.** A script sends the same HTTP calls the frontend sends, as every role, in any order, with no browser.
 
-**But for a webapp, the browser is not the "confirm" step — it is the product.** The user never sees your `curl`; their entire experience is what renders, when it renders, what it says, and whether the controls behave. It is easy to slide into API/code hunting because it's fast and systematic — and then report a pile of backend defects while the bugs users actually hit (a stage you can reach too early, a value that flashes raw, a save that didn't save, a control a banner covers) sit untouched. **Default your hands to the browser for any webapp** and drive it deliberately with the playbook below. Treat "my findings are all backend/contract" as a symptom that you skipped the front door, not that the UI is clean.
+**Why it works.** The API is one layer deeper than any page. Every frontend, mobile app, integration, agent and future client goes through it, and none of them can be safer than it: a page can hide a move, but anyone with a token can still make it. So **a bug in the API is a bug in every client at once**, one API finding covers every surface, and a fix there fixes them all. The UI also hides most of the state space — it offers only the moves it thinks are legal, as the signed-in role, in the order its pages lead. The API lets you make every other move: out of order, twice at once, as another role, with a stale version, against another tenant's object; and it gives you the server's own answer and its own refusal, unfiltered by a page.
 
----
+**Why it matters.** Data loss, authorization holes, races, audit gaps, silent corruption, and status messages that contradict the rules never show on a screen until they bite a person — and then they bite everyone who uses that route.
 
-## Agent browser
+**What only it finds, or finds far faster.** One fact that different readers state differently (the reader table, [api.md §5.1](api.md#51-the-reader-table-one-fact-every-reader-every-role)); a move the UI hides but the server accepts; role × state matrices; races with exactly-one-effect checks; refusal typing and refused-action audit records; out-of-order and change-of-mind sequences; late stages of a gated flow that browser runs reach last and least; the content of exports and generated output against ground truth; the background work behind a 202.
 
-**[agent-browser](https://github.com/vercel-labs/agent-browser)** (Vercel Labs) is a browser automation CLI built for AI agents — open pages, snapshot interactive elements as `@refs`, click/fill, screenshot, and inspect network. Docs and releases:
+**Cost and speed.** Each probe is one HTTP round trip: no browser start, no rendering, no waiting for a selector, no screenshot to read. In one overnight API-only campaign against a gated, multi-role web app, each lane made **169 to 344 calls in 27 to 37 minutes**; eight lanes ran at once from one machine; each script acted as every person of a four-person team (owner, editor, two reviewers) in the same minute; a ten-reader, three-role reader table took a few minutes and reproduced 3 of 3. Every repro is a call list anyone can run again: deterministic, with no render flake. What limits API mode is the target, not the tester: the gateway's rate limit per IP, the worker pool, paid runs, and deploy windows.
 
-| Resource | URL |
-|----------|-----|
-| GitHub | https://github.com/vercel-labs/agent-browser |
-| npm | https://www.npmjs.com/package/agent-browser |
-| Site / changelog | https://agent-browser.dev/changelog |
-| Skills directory | https://skills.sh/vercel-labs/agent-browser |
-| Built-in dogfood skill (exploratory QA) | `agent-browser skills get dogfood` after install |
+**What it cannot see.** Whether the UI offers the move at all, labels it right, or shows the refusal's reason; first paint, the async settle, stale client state, layout, keyboard, focus and copy as rendered; anything the frontend does between calls (optimistic updates, debounced saves, leave-page saves).
 
-### Consent first
+## Browser mode: what the person actually experiences
 
-Before installing or driving a real browser against a target app:
+**What it is.** An agent drives the real UI in a real browser: it clicks, types, waits, reads and resizes like a user.
 
-1. **Ask the user** for explicit consent to install/use agent-browser (it downloads a Chrome for Testing binary and can interact with live apps, including login flows).
-2. Confirm the **target URL / environment** (local, staging, prod) and that throwaway accounts/data are OK.
-3. Do **not** store secrets in chat logs or commit auth state files; add `auth.json` / session dumps to `.gitignore` and delete when done.
+**Why it works.** The person never sees the API. Their whole experience is what renders, when it renders, what it says, and whether the controls behave. And the frontend is a second decider: it filters, caches, re-derives and times what the server said. Each of those steps can be wrong while the API is right — a page that re-decides a fact the server already decided is its own bug class.
 
-If they decline, fall back to **API-only** driving (below) and say so.
+**Why it matters.** Bugs that real people report first skew heavily to this class, because backend-first sweeps never see them ([findings.md → Learn from bugs users found first](findings.md#learn-from-bugs-users-found-first)). A clean API under a confusing page still loses the user.
 
-### Install
+**What only it finds.**
 
-After consent:
+- gate or nav state that disagrees with the backend's prerequisite state (a reachable stage with an unmet predecessor);
+- first-visit and transient render races (stale "not ready" until a manual refresh; a control that flashes, then hides);
+- a raw internal value that flashes before its lookup resolves;
+- loading-state and progress-indicator polish; blank read as "no data";
+- error and status copy that a person cannot act on;
+- hide-vs-disable, dead-end panels, occluded controls, layout at other widths, keyboard traps;
+- optimistic UI that claims a save the server never made.
 
-```bash
-# CLI (recommended)
-npm install -g agent-browser
-agent-browser install                 # Chrome for Testing (first time)
-# Linux if system libs are missing:
-agent-browser install --with-deps
+**Cost and speed.** A browser session costs gigabytes of memory and seconds to minutes per step; one session acts as one role; refs go stale on every re-render; timing makes some runs flaky. Spend it where it pays: on the paths people walk.
 
-# Optional: Homebrew (macOS) or Cargo
-# brew install agent-browser && agent-browser install
-# cargo install agent-browser && agent-browser install
+## How to duel them
 
-agent-browser doctor                  # sanity-check install
-agent-browser upgrade                 # later updates
-```
+1. **API first, to map and hammer.** Generate the flow map, then run the reader table, the role matrix, out-of-order moves and races cheaply, standing on late-stage objects ([api.md](api.md)). This finds the contract, state, authorization and concurrency bugs — every one of them a bug in every client.
+2. **Browser on the paths people walk**, aimed by what the API pass found load-bearing: the frontend playbook in [browser.md](browser.md).
+3. **Cross the results.** A disagreement between what the API says and what the page shows is itself a finding: the frontend has re-decided the producer's fact (if the `deslop` skill is installed, its pattern *consumer re-decides producer* names it). **Twin every gate finding**: a move the API refuses but the UI offers, or the UI blocks but the API allows, is a real bug either way.
+4. **Hybrid patterns** with high leverage:
+   - **API setup → browser verify.** Seed and reset state by API; comb or attack only the UI that matters.
+   - **Browser discover → API amplify.** Turn a suspicious UI sequence into a script with variants, roles and concurrency.
+   - **API assert while the browser drives.** During a UI pass, read the same resources by API and compare with what renders.
+   - **HAR bridge.** Capture a HAR in the browser and turn its hot paths into API scripts.
 
-Also install the **agent skill** so coding agents know the workflow (version-matched content lives in the CLI):
+## Choose the lead mode by the question
 
-```bash
-npx skills add vercel-labs/agent-browser -y
-# After CLI install, load current instructions:
-agent-browser skills get core         # snapshot/ref/act loop + troubleshooting
-agent-browser skills get core --full  # full command reference
-agent-browser skills get dogfood      # exploratory testing / bug-hunt patterns
-```
+| The question | Lead with | Also run |
+|---|---|---|
+| "Does this webapp feel right / will strangers get through it?" (UX, launch, onboarding) | browser (and the [persona panel](personas.md)) | API to seed state and confirm backend truth |
+| Contracts, state machines, authorization, concurrency, idempotency, audit, data integrity | API | one browser lane on the user paths that touch them |
+| The late stages of a gated flow; many repetitions; many roles at once | API | browser twins for each gate finding |
+| An agent swarm, or a box that cannot afford many browsers | API ([lanes.md](lanes.md)) | at least one browser lane when the target has a UI |
+| The surface is API-native (CLI, mobile backend, partner integration) | API | — |
+| "Stress test this" on a webapp | both, per [process.md](process.md) | — |
 
-### Brief usage (stress loop)
+## Keep the balance honest
 
-Core pattern: **open → snapshot → act → re-snapshot**. Refs go stale after DOM changes — always re-snapshot.
+**For a webapp, the front door is not optional.** Every backend route exists to serve what renders; a pass that only probes the API or reads code over-reports backend defects and misses the UX, state, timing and copy bugs that actually reach people. **And API-first is not skipping the front door.** For contract, state, authorization and concurrency hunts and for agent swarms it is the right lead, because it finds the class every client inherits, fastest — as long as some browser lane walks the user paths (unless the request is API-only, the user declined a browser, or the target has no UI; say so in the report).
 
-```bash
-agent-browser open https://staging.example.com
-agent-browser snapshot -i             # interactive elements → @e1, @e2, ...
-agent-browser fill @e1 "user@example.com"
-agent-browser fill @e2 "password"
-agent-browser click @e3
-agent-browser wait --load networkidle # use sparingly; prefer wait --text / wait @ref
-agent-browser snapshot -i             # fresh refs after navigation
-agent-browser screenshot --full
-agent-browser network requests --type xhr,fetch   # cross-check what the UI actually called
-agent-browser close
-```
+The diagnostic cuts both ways. Findings that are *all* backend mean the front door was skipped; findings that are *all* polish mean the logic behind the door was never attacked. A full run does both, and an API-first run says plainly which pages no lane looked at.
 
-Useful under stress:
+## A third surface: logs and infrastructure
 
-- `agent-browser batch "open …" "snapshot -i"` — chain when you don't need intermediate output
-- `network requests` / `network request <id>` — pair with API asserts (hybrid)
-- `network route "**/api/*" --abort` — mischief: break the frontend's dependencies
-- Auth: prefer project token scripts or `--state ./auth.json` / `--session-name …` over typing prod passwords into the agent; see the CLI's auth docs via `agent-browser skills get core --full`
-- If a click fails because something covers the target (banner/modal), dismiss the cover, re-snapshot, retry
-
-For deeper command reference, prefer `agent-browser skills get core` over copying stale snippets from memory.
-
----
-
-### Agent-browser gotchas while poking tools
-
-- **Refs shift** after every click that re-renders. For repeated clicks, grab the ref **fresh** each iteration (`snapshot -i` again) — do not reuse `@e3` from three actions ago.
-- **Read rendered document/content via snapshot** (or dedicated get-text on a scoped ref). Some layouts do not expose body text to a naive page `eval`; don't conclude "empty/missing" from a bad eval.
-- **Wrap every `eval` body in an IIFE** — a bare `return` throws `Illegal return statement`. Prefer snapshot/get over eval when either works.
-
-## Frontend driving playbook — be the user at the front door
-
-Driving the UI well is a skill, not a screenshot. A whole class of real bugs exists *only* here — what renders, when, what it says, and how controls behave — and none of it shows up in an API response or a code read. Run these deliberately on **every** page you touch, not just the one you came to test. The list is roughly ordered from "do nothing" to "abuse it":
-
-1. **Watch the first paint.** Land cold and *do nothing* for a few seconds. Note anything that flashes, a raw value (id/UUID) that appears then resolves to a name, a control that shows then hides, a "not ready"/empty state that self-corrects, or blank skeletons that read as "no data." First-visit races are invisible if you interact immediately — most of them only exist in the first second.
-
-2. **Read every rendered string** as a real, non-expert user: headings, badges, toasts, status lines, timestamps, empty states, error and warning copy. Flag raw internal values (ids, enums, UTC, internal codes/jargon), wrong terms, and generic templated messages that should name the *actual* affected entity and current state. The words on screen are the product; read them, don't skim past them.
-
-3. **Drive the async settle.** Trigger loads and long-running jobs and watch the loading→loaded transition end to end. Is progress loud enough for a blocking wait? Leftover or technical loading text? When several progress indicators run at once, is it clear which is the overall vs a sub-task? Then leave the page idle for a couple of poll intervals and watch for stale toasts or leaked pollers still firing.
-
-4. **Exercise every affordance, not just the forward CTA.** Click every clickable thing and confirm it goes somewhere *real* — a badge, count, or link that references an entity must navigate or scroll to it, never open an empty panel or do nothing. Open every drawer/panel/modal and confirm it has a visible close. Check hover and focus states, not just the resting look — missing or inconsistent hover/focus affordances on sibling controls are real bugs.
-
-5. **Reload to verify persistence — the single highest-yield frontend check.** After *any* change (select a row, toggle, inline-edit, autosave), hard-reload and confirm it actually stuck. This catches optimistic-UI lies, silent non-persistence (the click looked saved but no write happened), and 500s hidden behind a cheerful success toast. If a change the user expects to auto-save requires a non-obvious explicit "save," that's also a bug.
-
-6. **Resize.** Drive the same flow at mobile, tablet, and desktop widths. Watch for overflow, overlapping elements, controls pushed off-screen or under other elements, and layouts that become unusable. "Works on my 1440px window" is not "works."
-
-7. **Check occlusion.** Sticky headers, banners, toasts, and modals can *cover* interactive controls — a button present in the DOM but visually covered is unusable. If a click fails because something overlays the target, that is often a real user-facing bug, not merely a test annoyance to route around.
-
-8. **Stress navigation.** Back/forward/reload at each step; paste every route's deep-link URL directly (not only via the nav); move between stages in illegal orders. Confirm the page rebuilds correct state from a cold URL and that gates hold on direct entry as well as via the nav control.
-
-9. **Keyboard** (cite the project's written design standard when it has one). Tab order, Enter-to-submit, Escape-to-close. A form you can't complete or a modal you can't dismiss from the keyboard is broken for many users.
-
-10. **Feel the latency.** Time frequent, simple actions (lock, toggle, save). A multi-second wait on something that should feel instant, with no immediate feedback, reads as broken even when it eventually succeeds — file it as a perceived-performance bug, and consider optimistic feedback.
-
-**Cross-check stays mandatory** (a clean render is not proof — see [findings.md](findings.md)): the browser is the source of truth for *what the user sees*; `console` + `network` + API/logs are the truth for *what actually happened*. Pair them — when they disagree (UI says success, network shows a 500; UI blocks, API allows), you've found something.
-
-### Agent-browser mechanics for this playbook
-
-- Resize via the CLI's viewport/window sizing before a mobile pass; re-`snapshot -i` after — layout refs move.
-- **Reload-to-verify** is just `open <same url>` (or a reload) then re-`snapshot`/get-text and compare to the pre-reload state.
-- To catch occlusion, don't only trust a ref click "succeeding" — screenshot and look, and check whether a banner/toast/modal is on top.
-- Read rendered text via snapshot/get-text on a scoped ref, not a naive page `eval` (some layouts don't expose body text to eval).
-
-## API driving
-
-Talk to the backend the way a client would. This is not a lesser substitute for the browser — it finds a **different and equally real class** of bugs, often faster: authz/IDOR, concurrency and lost updates, idempotency, validation gaps, state-machine holes, data-integrity and audit/compliance failures — landmines that never surface in the UI until they've already corrupted something. On a webapp, **lead with the browser but do not skip this** — spend real time here too; the correction is only that API/code hunting should no longer *crowd out* the front door, not that it's optional. Use it to set up state, probe contracts, amplify a UI-discovered suspicion, and hunt the invisible class the browser can't reach.
-
-### Setup
-
-1. Find the contract: OpenAPI/Swagger, frontend API client, gateway routes, or HAR from a browser pass (`agent-browser network har start` / `… stop ./capture.har`).
-2. Get auth the cheap way: env token, service principal, or a small mint script — same throwaway accounts as UI.
-3. Prefer idempotent or clearly prefixed throwaway resources (`STRESS-…`, `COMB-…`).
-
-### Concrete techniques
-
-| Technique | How | What it finds |
-|-----------|-----|----------------|
-| **Happy-path script** | Ordered `curl`/httpx/fetch calls mirroring the UI flow; assert status + key body fields each step | Regressions, broken gates, wrong payloads |
-| **Payload matrix** | Same endpoint, many *valid* variants (optional fields, empty strings, unicode, large bodies, boundary IDs) | Validation gaps, 500s on weird-but-legal input |
-| **Illegal transitions** | Skip steps, call later endpoints first, reuse IDs after delete, replay create | State-machine holes the UI never exposes |
-| **Idempotency / double-submit** | Same POST twice (same key or none); parallel identical writes | Duplicate rows, double charges, non-idempotent "create" |
-| **Concurrency** | `xargs -P`, GNU parallel, or a short async script — two tokens, one resource | Lost updates, lock races, last-write-wins corruption |
-| **Authz** | Token A creates; token B reads/writes/deletes; anonymous hits | IDOR, missing checks, role confusion |
-| **Stale credentials** | Expired/revoked token, wrong `Authorization` scheme, CSRF-less cookie-only routes | Auth middleware bugs |
-| **Contract drift** | Compare response shape to OpenAPI or to what the SPA expects | Field renames, null vs missing, pagination surprises |
-| **Worker/async** | Trigger job via API; poll status; kill/retry mid-flight if you can | Stuck jobs, duplicate processing, silent failure |
-
-Minimal sketch (adapt to the app):
-
-```bash
-# Login / mint (example — use the project's real script when one exists)
-TOKEN=$(curl -sS -X POST "$BASE/auth/token" -H 'content-type: application/json' \
-  -d '{"user":"'"$STRESS_USER"'","password":"'"$STRESS_PASS"'"}' | jq -r .access_token)
-
-# Happy path step
-curl -sS -o /tmp/create.json -w "%{http_code}" -X POST "$BASE/api/items" \
-  -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
-  -d '{"name":"STRESS-comb-1"}'
-
-# Mischief: delete then mutate
-ID=$(jq -r .id /tmp/create.json)
-curl -sS -X DELETE "$BASE/api/items/$ID" -H "authorization: Bearer $TOKEN"
-curl -sS -X PATCH "$BASE/api/items/$ID" -H "authorization: Bearer $TOKEN" \
-  -H 'content-type: application/json' -d '{"name":"after-delete"}'   # expect 404, not 200/500
-
-# Concurrency sketch: two writers
-seq 1 20 | xargs -P 10 -I{} curl -sS -X POST "$BASE/api/items/$ID/lock" \
-  -H "authorization: Bearer $TOKEN"
-```
-
-Record repros as **method + path + headers (secrets redacted) + body + expected vs actual**. That travels better than "I clicked around."
-
-### When to lean API-first
-
-- Many repetitions (50× variants) — browsers are slow; scripts are cheap
-- Contracts, pagination, filters, webhooks, batch endpoints
-- Concurrency and idempotency
-- Auth is easier via tokens than full IdP UI
-- Bug is behind the UI (worker, DB invariant, permission check)
-- Surface is API-native (CLI, mobile, partner integrations)
-- A late stage of a gated flow that browser runs reach last and least — stand on an existing object and attack the stage alone ([api-flows.md](api-flows.md))
-
----
-
-## When to lean browser-first
-
-- Product *is* a webapp and the user cares about **UX knots**
-- Affordance bugs: wrong enabled buttons, bad CTAs, modal traps
-- Client-only failure modes: stale chunks, optimistic UI lies, local cache vs server
-- Still learning the happy path and need to *see* the app
-
----
-
-## A large class of real bugs is browser-only — budget live passes
-
-Code review and API probes systematically miss an entire population of bugs that real users report first, because these exist only in the rendered UI and its async timing:
-
-- gate/nav state that disagrees with the backend's authoritative prerequisite state (a reachable stage with an unmet predecessor);
-- first-visit / transient render races (stale "not ready" until a manual refresh; a control that flashes then auto-hides);
-- flash of a raw internal value before a lookup resolves;
-- loading-state and progress-indicator polish;
-- error/status copy clarity;
-- hide-vs-disable and dead-end panels.
-
-**Diagnostic:** if your findings are dominated by backend/code defects and you have few or no UI knots, you are *under-driving the browser* — not out of bugs. Budget explicit live-browser passes that: load each page on **first visit** and watch the async settle without interacting; read **every** rendered string (badges, toasts, headers, timestamps); and reach each stage **both** via its nav control and by pasting its deep-link URL. The state-contradiction catalog is in [mischief.md](mischief.md); the rendered-output knots are in [comb.md](comb.md).
-
-## Hybrid patterns (high leverage)
-
-1. **API setup → browser verify.** Seed entities via API; comb/mischief only the UI that matters.
-2. **Browser discover → API amplify.** Suspicious UI sequence → script it with variants and concurrency.
-3. **API assert while browser drives.** During a UI pass, `network requests` + `curl` the same resources.
-4. **Twin mischief.** Illegal order in UI *and* via API — UI blocked but API allowed (or reverse) is a real bug class.
-5. **HAR bridge.** Capture HAR in the browser, turn hot paths into API stress scripts.
-
----
-
-## Practical notes
-
-- Prefer throwaway accounts/data for destructive probes.
-- Don't conclude "missing/broken" from a tool miss (undriveable widget, gzipped asset grep, flaky headless). Confirm with a second surface.
-- Infra CLIs and logs (`gh run`, cloud logs, worker tails) are a third surface for deploy/roll false alarms — see [findings.md](findings.md).
-- Sweep hygiene: time-ordered ids share a long common prefix, so never key sweep results by a short prefix. A 503 "updating" mid-sweep voids the probes it touched: retry them with a deadline before concluding anything from them, and keep findings that were confirmed independently. A route that "exists but returns empty" may need a query parameter (search routes): read the route code before calling it a gap.
-- Reporting policy (issues vs fix vs artifacts) lives in [findings.md](findings.md).
-
-## See also
-
-- [api-flows.md](api-flows.md) · [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md) · [findings.md](findings.md)
+Server and worker logs, deploy runs and cloud state show what neither a response nor a page shows: what the background work did, and whether a deploy was rolling. They are the second layer for every finding ([api.md → Log cross-check](api.md#log-cross-check)) and the first check before a 502, a blank page or a stale chunk is filed ([findings.md](findings.md#what-counts-as-a-real-finding)).

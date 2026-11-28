@@ -39,7 +39,12 @@ Do **not** file from a single flaky signal. Cross-check before filing:
 
 A scary screenshot is not a bug until another layer agrees. A clean screenshot is not proof the backend is healthy.
 
-Rule out false alarms: deploy/roll in flight, stale SPA, your own earlier mutations, tool limitations. See [driving.md](driving.md).
+Rule out false alarms before filing:
+
+- **A deploy or roll in flight.** A 503 "updating", a 502 or a stale chunk during a roll is a deploy window, not an app defect (a window that lasts long is a finding against the deploy: [lanes.md](lanes.md#during-a-lane)).
+- **Your own data.** Your earlier mutations, and **test data an earlier tester wrote**: before filing a content finding (a wrong value in a document, export, answer or status), search the testers' own scripts and the object's history for the value. Placeholder answers that an earlier lane saved and that then flowed into an export are test data, not a wrong-content bug; whether the app should have refused that input at save is a separate input check ([api.md §5.6](api.md#56-input-and-hygiene)).
+- **A budget the run spent.** A refusal from a shared quota (a third-party daily limit, a paid-run budget) that the testers or the app's own background work used up is expected; the spend itself may be the finding.
+- **Tool limitations.** An undriveable widget, a gzipped asset grep, a flaky headless run, a client defaulting to another environment: confirm on a second surface before concluding "missing" or "broken".
 
 One distinct bug per issue. Don't dump a whole session into a single ticket.
 
@@ -197,7 +202,7 @@ Always include both:
 
 Good justification names the failure mode: data integrity, authz hole, user-blocking workflow, incorrect clinical/business output, security, silent wrong answer, accessibility trap, etc.
 
-**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. Before writing the suggestion, ask where the value or rule first enters the system, how many places re-derive or repair it (count them — the count is evidence), and how many readers decide the same fact. Name the class, list its sibling symptoms, and give one live check for the class. Unknowns are fine at filing time: file with what you have and add the owner, siblings and check as you learn them. A guard at the symptom site is acceptable only with a stated reason why the owner cannot enforce it.
+**Aim the fix at the owner of the fact, not at the site of the symptom.** A padded value that passed validation and was stored padded is not fixed by "trim before storing": the checker normalised a private copy and the raw value travelled on, so the fix is one parse at the boundary into the canonical value that every later reader and writer uses. How to find the owner, count the places that re-derive or repair the fact (the count is evidence) and name the class: [Fix the issue behind the issue](#fix-the-issue-behind-the-issue); how many readers state the fact: the reader table in [api.md](api.md#51-the-reader-table-one-fact-every-reader-every-role). Unknowns are fine at filing time: file with what you have and add the owner, siblings and check as you learn them.
 
 Good fix suggestions are small and testable: "reject PATCH after DELETE with 404", "disable Continue when `workflow-state.se_complete` is false and match API", "add regression test X".
 
@@ -330,10 +335,10 @@ Periodically:
 
 1. Pull the closed **and** open bugs that originated from human/user feedback (e.g. a `human-feedback` label, or issues filed by real users rather than agents).
 2. Cluster them by *class*, not instance — ask "what kind of check would have caught each?"
-3. For each class, generalize it into a reusable check and add it to the right mode file: [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for state-contradiction and timing, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
+3. For each class, generalize it into a reusable check and add it to the right file: [comb.md](comb.md) for rendered-output/UX/copy knots, [mischief.md](mischief.md) for UI state-contradiction and timing, [api.md](api.md) for contract, role, race and reader checks, [bug-hunter.md](bug-hunter.md) for statically-catchable roots.
 4. Re-run the sweep with the enriched catalog to find the **still-present** siblings of each human-found bug — the same class almost always has other live instances.
 
-A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see the browser-only callout in [driving.md](driving.md).)
+A human-found bug is a hole in the catalog; the durable fix is the generalized check, not just patching the one instance. These mode files are living documents — extend them whenever a bug slips past. (A recurring finding from this exercise: user-reported bugs skew heavily toward *browser-only* UX/state/timing/copy defects that backend-first sweeps never see — see [driving.md → Browser mode](driving.md#browser-mode-what-the-person-actually-experiences).)
 
 ## Talk a bug through with the owner (predict the critique)
 
@@ -376,4 +381,4 @@ Summarize for the user:
 
 ## See also
 
-- [driving.md](driving.md) · [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md)
+- [driving.md](driving.md) · [api.md](api.md) · [comb.md](comb.md) · [mischief.md](mischief.md) · [bug-hunter.md](bug-hunter.md) · [lanes.md](lanes.md)
