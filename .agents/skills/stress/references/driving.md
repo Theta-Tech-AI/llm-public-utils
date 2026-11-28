@@ -50,7 +50,7 @@ Stress testing needs hands on the system, and there are two kinds. **API mode** 
 | The late stages of a gated flow; many repetitions; many roles at once | API | browser twins for each gate finding |
 | An agent swarm, or a box that cannot afford many browsers | API ([lanes.md](lanes.md)) | at least one browser lane ([exceptions](#keep-the-balance-honest)) |
 | The surface is API-native (CLI, mobile backend, partner integration) | API | — |
-| "Stress test this" on a webapp | both, per [process.md](process.md) | — |
+| "Stress test this" on a webapp | browser, per [process.md](process.md) | API-led passes for the questions above |
 
 ## How to duel them
 

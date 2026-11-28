@@ -9,14 +9,14 @@ A **lane** is one tester (usually a subagent) that owns one part of the app or o
 
 ## Split the app into lanes
 
-Split by **part of the app**, not by mode: each lane owns one stage or one cross-cutting concern and runs comb *and* mischief on it. A split that worked for a gated authoring app (adapt the names):
+Split by **part of the app**, not by phase: each lane owns one stage or one cross-cutting concern and runs on it only the phases the run selected ([process.md](process.md)) — comb and mischief in a full run — after the reliability gate for app-driving phases. A split that worked for a full run of a gated authoring app (keep only the lanes the selected phases need; adapt the names):
 
 - one lane per late stage (review/approval machine · drafting and run control · lock/export/deliverable content);
 - one fresh end-to-end flow (the reliability gate, [reliability.md](reliability.md));
 - one lane for objects, membership, roles and leases — it also owns the **authorization matrix of the whole API** ([api.md §5.2](api.md#52-the-role-matrix));
 - one lane per early stage;
 - one lane for everything outside the main object (feeds, admin, webhooks) plus the **API hygiene sweep** ([api.md §5.6](api.md#56-input-and-hygiene));
-- one **code bug-hunt** lane ([bug-hunter.md](bug-hunter.md)) and **oracle** lanes ([api.md §6](api.md#6-oracles-one-property-across-everything)), for example a log census — mostly read-only, with any audited reads named in the brief;
+- one **code bug-hunt** lane when the run includes a bug hunt ([bug-hunter.md](bug-hunter.md)), and **oracle** lanes ([api.md §6](api.md#6-oracles-one-property-across-everything)), for example a log census — mostly read-only, with any audited reads named in the brief;
 - persona lanes, which may run by API ([personas.md](personas.md#personas-by-api));
 - at least one **browser** lane, because none of the above sees a pixel (the exceptions: [driving.md → Keep the balance honest](driving.md#keep-the-balance-honest)).
 
@@ -112,8 +112,8 @@ When the user asked for fixes, the coordinator watches the findings file and sta
 - **Group by fact, not by issue.** Findings that are readers of one fact (often from different lanes) go to one fixer, which lists every reader and makes one owner ([findings.md → Fix the issue behind the issue](findings.md#fix-the-issue-behind-the-issue)).
 - **Gate every fix** with steps 4 and 7 of that section, exactly as written there; the coordinator's step-4 paragraphs go into the fixer's brief.
 - **Land the passing fixes in batches**, by the repository's own merge rules (the `swarm-orchestration` skill's *integrate and deliver* stage covers batching, when installed).
-- **Live-check after the deploy.** Each fix leaves a "live check after landing" comment with the exact calls and expected answers; a live-check lane runs each one exactly on the deployed build and records the result where the finding lives: closed on PASS with the evidence, reopened with the failing call on FAIL.
-- Then a sibling lane hunts the same class on other surfaces ("class still open at …" on the closed issue).
+- **Live-check after the deploy.** Each fix leaves a "live check after landing" note with the exact calls and expected answers where its finding lives; a live-check lane runs each one exactly on the deployed build and records the result where the finding lives: closed on PASS with the evidence, reopened with the failing call on FAIL.
+- Then a sibling lane hunts the same class on other surfaces ("class still open at …" on the closed finding).
 
 ### A setup failure is not a result
 
