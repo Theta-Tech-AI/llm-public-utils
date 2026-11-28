@@ -59,6 +59,6 @@ Phase 4 is **code review, not app driving** — it never touches the running app
 
 ## Your job
 
-Stress the system. Unearth bugs. Record them per [findings.md](references/findings.md) (or fix if asked). Summarize with links. Leave the app harder to break than you found it.
+Stress the system. Unearth bugs. Record them per [findings.md](references/findings.md) (or fix if asked: every fix passes its three-paragraph talk-through, written before and after the fix and reread by a fresh reader, per step 6 of "Fix the issue behind the issue"). Summarize with links. Leave the app harder to break than you found it.
 
 **Always look for the issue behind the issue.** A bug is evidence that a design let it happen: a fact with two owners, a rule enforced in one layer only, a check-then-act with no lock, a status and its message decided apart, freshness judged by time instead of content. When you file, name that design decision as your best hypothesis and propose the fix at its owner; when you are fixing (the user asked for it), fix it there so the whole class cannot recur. A guard at the symptom site is a patch, acceptable only with a stated reason the owner cannot enforce it. Details: [findings.md → Fix the issue behind the issue](references/findings.md#fix-the-issue-behind-the-issue).
