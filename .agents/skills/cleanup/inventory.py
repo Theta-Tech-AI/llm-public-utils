@@ -392,7 +392,7 @@ def list_stale_browsers(hours: float) -> None:
         try:
             before = Path(f"/proc/{pid}/stat").read_bytes().rsplit(b")", 1)[1].split()[19]
             raw = Path(f"/proc/{pid}/cmdline").read_bytes()
-            argv = [x.decode(errors="replace").encode("unicode_escape").decode()  # a process name may hold a newline for x in raw.removesuffix(b"\0").split(b"\0")]
+            argv = [x.decode(errors="replace") for x in raw.removesuffix(b"\0").split(b"\0")]
             rss = next(int(l.split()[1]) for l in Path(f"/proc/{pid}/status").read_text().splitlines() if l.startswith("VmRSS:"))
             cgroup = Path(f"/proc/{pid}/cgroup").read_text(errors="replace")
             cgroup_ns = os.readlink(f"/proc/{pid}/ns/cgroup")
@@ -469,7 +469,7 @@ def proc_table() -> dict[int, tuple[int, int, int, str, str]]:
             continue
         try:
             stat = Path(f"/proc/{entry}/stat").read_bytes()
-            comm = stat[stat.index(b"(") + 1:stat.rindex(b")")].decode(errors="replace")
+            comm = stat[stat.index(b"(") + 1:stat.rindex(b")")].decode(errors="replace").encode("unicode_escape").decode()  # a name may hold a newline
             rest = stat[stat.rindex(b")") + 2:].split()
             rss_kb = int(Path(f"/proc/{entry}/statm").read_text().split()[1]) * page_kb
             cgroup = cgroup_path(Path(f"/proc/{entry}/cgroup").read_text())
