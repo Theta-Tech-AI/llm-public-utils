@@ -108,7 +108,7 @@ When the user asked for fixes, the coordinator watches the findings file and sta
 
 - **Group by fact, not by issue.** Findings that are readers of one fact (often from different lanes) go to one fixer, which lists every reader and makes one owner ([findings.md → Fix the issue behind the issue](findings.md#fix-the-issue-behind-the-issue)).
 - **Gate every fix** with steps 4 and 7 of that section: the coordinator writes the three paragraphs before briefing the fixer and puts them in the brief; the fixer refreshes them after the fix and has a reader with no stake reread the candidate; a second-model review must pass on the exact head.
-- **Land in checked batches**, one push per batch, then a deploy (the `swarm-orchestration` skill's *integrate and deliver* stage, when installed).
+- **Land the passing fixes in batches**, by the repository's own merge rules (the `swarm-orchestration` skill's *integrate and deliver* stage covers batching, when installed).
 - **Live-check after the deploy.** Each fix leaves a "live check after landing" comment with the exact calls and expected answers; a live-check lane runs each one exactly on the deployed build, closes the issue on PASS with the evidence, and reopens it with the failing call on FAIL.
 - Then a sibling lane hunts the same class on other surfaces ("class still open at …" on the closed issue).
 

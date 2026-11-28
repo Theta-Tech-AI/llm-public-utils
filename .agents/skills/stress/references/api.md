@@ -37,6 +37,22 @@ Derive each section from the code's own owner of that fact:
 
 Keep hand-written input to one small overlay file for facts the code cannot give (which runs cost money, typical durations), each with its reason. **No silent drop:** every route the code declares is a row of the table or carries a reason why not; an unexplained declaration fails the generator, because a route missing from the map is a route no lane will test.
 
+**Each lane generates its own map, with a receipt.** The code alone gives no coverage, so every lane brief gives the map command and its inputs: the checkout, the full commit actually serving the environment (not a branch tip), the call logs of every earlier lane of the campaign, saved windows of the server's request log, and a new directory for this lane. A sketch, with the project's generator in place of `flow-map`:
+
+```bash
+map_dir="$LANE_DIR/map"
+test ! -e "$map_dir" || { echo "❌ refusing to reuse an existing flow-map directory: $map_dir" >&2; exit 1; }
+map_args=()
+while IFS= read -r -d '' log; do map_args+=(--calls "$log"); done \
+  < <(find "$RUN_ROOT/lanes" -type f -name 'calls.log' -print0)
+while IFS= read -r -d '' log; do map_args+=(--server-log "$log"); done \
+  < <(find "$SERVER_LOG_DIR" -type f -name '*.log' -print0)
+flow-map --ref "$DEPLOYED_SHA" "${map_args[@]}" --out "$map_dir"
+printf '🗺️ flow-map ref=%s out=%s\n' "$DEPLOYED_SHA" "$map_dir"
+```
+
+An existing map directory is a stop condition, never a shortcut: never write to a shared default output or copy a map from an earlier lane. The lane report keeps the final `ref=` line with the exact full commit; a shortened label inside the map is evidence only beside it. Save the server's request log in fixed UTC windows, and when the log tool truncates a window (many keep only the newest few hundred lines), split it into non-overlapping windows and pass each as its own input. Keep these receipts with the report, and never claim coverage from a call file the command did not include.
+
 The coverage overlay turns the map into a work list: **routes no lane has called with an authenticated, well-formed request**, and **mutating routes never seen to succeed**. Log the action field of multi-action routes (a transition route that takes `send`, `approve`, `sign`) in the call log, or coverage counts the route and hides the actions nobody tried. Diff the maps of two commits or two environments to get the gates and routes that changed — the first place to look after a release.
 
 Render the graphs in a text format that lives next to the code (Mermaid in Markdown), keep the long tables in a machine-readable file beside it, and give every statement its source (file and line, overlay entry, or call log). The map also feeds the cheapest mischief there is: a walker that takes random legal and illegal steps along the edges and checks after each one that the state read still agrees with the map.
